@@ -135,3 +135,7 @@ At the end of M0.01 no application test, formatter run, frontend build, PostgreS
 Composer emitted a temporary-directory warning when validation ran inside the read-only sandbox; validation and platform checks still exited successfully. No global PHP or Composer settings were changed.
 
 M0.02 follow-up: Git and the Laravel/Inertia/React skeleton are now initialized, dependencies installed, and local boot/build verified without changing resolved package versions. See [BOOTSTRAP.md](BOOTSTRAP.md). Next: M0.03, Docker with PHP 8.4, PostgreSQL 16, Redis 7 and dedicated processes.
+
+## M0.03 container image reference
+
+The official PHP 8.4 CLI Bookworm, Composer 2, PostgreSQL 16 Bookworm, Redis 7 Bookworm and Node 22 Bookworm slim images are pinned to multi-platform registry index digests in `docker/php/Dockerfile`, `docker/node/Dockerfile` and `compose.yaml`. Digest values were resolved with `docker buildx imagetools inspect`; update these explicitly rather than removing pins. Native PHP extensions use the official image helpers. No Composer/npm package constraint or lockfile changed. See [DOCKER.md](DOCKER.md) for service configuration, verification and rebuild limitations.

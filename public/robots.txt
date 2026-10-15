@@ -1,0 +1,3 @@
+# Allow crawlers to discover public application routes.
+User-agent: *
+Disallow:

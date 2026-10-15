@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Configure deterministic bootstrap smoke tests without external infrastructure. -->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+    <!-- Keep HTTP integration checks discoverable by Pest and PHPUnit. -->
+    <testsuites>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <!-- Restrict source coverage discovery to project application code. -->
+    <source>
+        <include><directory>app</directory></include>
+    </source>
+    <php>
+        <!-- Isolate runtime state and secrets from a developer's local .env file. -->
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_NAME" value="Signalbox" force="true"/>
+        <env name="APP_DEBUG" value="false" force="true"/>
+        <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" force="true"/>
+        <!-- This static key is public test data, never an application credential. -->
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="LOG_CHANNEL" value="null" force="true"/>
+        <env name="DB_CONNECTION" value="pgsql" force="true"/>
+    </php>
+</phpunit>

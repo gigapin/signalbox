@@ -1,0 +1,6 @@
+/* Compile Tailwind utilities used by the React pages and Blade document shell. */
+@import 'tailwindcss';
+
+/* Scan application source files explicitly rather than traversing vendor output. */
+@source '../js';
+@source '../views';

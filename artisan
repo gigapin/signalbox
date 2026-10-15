@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Boot the Signalbox application for Artisan console commands.
+ */
+
+use Illuminate\Foundation\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+
+/** Record the request start time in seconds for framework timing. */
+define('LARAVEL_START', microtime(true));
+
+require __DIR__.'/vendor/autoload.php';
+
+/** @var Application $app Application container handling the requested command. */
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+/** @var int $status Process exit status returned by Artisan. */
+$status = $app->handleCommand(new ArgvInput());
+
+exit($status);

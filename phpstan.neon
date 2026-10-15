@@ -1,0 +1,16 @@
+# Analyze application-owned PHP at the required Larastan level.
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # Reject type errors at the required project baseline.
+    level: 8
+    # Include bootstrap and routes as well as application classes and database helpers.
+    paths:
+        - app
+        - bootstrap/app.php
+        - bootstrap/providers.php
+        - database
+        - routes
+    # Keep generated analysis artifacts outside version control.
+    tmpDir: .phpstan-cache

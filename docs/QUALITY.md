@@ -1,6 +1,6 @@
 # Code quality baseline
 
-M0.05 completes local quality tooling. Application behavior, tenant authorization and runtime safety still need their own tests; lint and formatting are not substitutes. See [TASKS.md](TASKS.md) for M0.06 test work and M0.07 CI, and [DEPENDENCIES.md](DEPENDENCIES.md) for exact resolved package versions.
+M0.05 completes local quality tooling. Application behavior, tenant authorization and runtime safety still need their own tests; lint and formatting are not substitutes. See [TESTING.md](TESTING.md) for the implemented test workflow and [TASKS.md](TASKS.md) for M0.07 CI, and [DEPENDENCIES.md](DEPENDENCIES.md) for exact resolved package versions.
 
 ## Commands and ownership
 
@@ -31,9 +31,9 @@ Use PHP 8.4 to match the minimum runtime. Local PHP 8.5 also runs the checks but
 
 The official React Hooks recommended configuration applies to browser source, including unconditional hook ordering and dependency checks. Browser globals apply to React modules; Node globals apply to Vite and the JavaScript configuration/test tooling. Type-only imports are enforced. The lint command exits unsuccessfully on any warning. Generated bundles, dependencies, runtime storage and PHP caches are globally ignored.
 
-ESLint 9 is [end of life](https://eslint.org/version-support/). The current `eslint-plugin-jsx-a11y` 6.10.2 declares peer support only through ESLint 9, so it is deliberately excluded rather than installing incompatible peers or an unmaintained lint major. This baseline does **not** claim JSX accessibility lint coverage. Accessibility, keyboard interaction and rendered UI tests remain required in M0.06 and each feature milestone; a compatible static plugin can be added in a separately verified update. See [typescript-eslint compatibility](https://typescript-eslint.io/users/dependency-versions/) and [React editor guidance](https://react.dev/learn/editor-setup).
+ESLint 9 is [end of life](https://eslint.org/version-support/). The current `eslint-plugin-jsx-a11y` 6.10.2 declares peer support only through ESLint 9, so it is deliberately excluded rather than installing incompatible peers or an unmaintained lint major. This baseline does **not** claim JSX accessibility lint coverage. Initial DOM/keyboard tests are documented in [TESTING.md](TESTING.md); feature-specific accessibility and interaction coverage remain required in each milestone; a compatible static plugin can be added in a separately verified update. See [typescript-eslint compatibility](https://typescript-eslint.io/users/dependency-versions/) and [React editor guidance](https://react.dev/learn/editor-setup).
 
-The tooling requires Node 22 **at least 22.13.0**, raised from the earlier 22.12 floor because ESLint 10 requires it on the Node 22 line. Node's major stays 22 and npm stays 10. New quality packages are pinned exactly and stored in `package-lock.json`; all existing direct frontend package versions remain unchanged.
+ESLint 10 requires Node 22 at least 22.13.0; the complete current toolchain requires **22.22.2** after M0.06 added jsdom. Node's major stays 22 and npm stays 10. New quality packages are pinned exactly and stored in `package-lock.json`; all existing direct frontend package versions remain unchanged.
 
 ## Formatting scope
 
@@ -68,7 +68,7 @@ The existing `strict`, `noUncheckedIndexedAccess`, isolated-module checking and 
 
 Typed linting needs a real project file. Tests create unique `resources/js/quality-probe-*` directories and always remove their own fixtures in `finally`; no existing source file is overwritten. The compiler fixture inherits the root `tsconfig.json` and narrows only its input list. Child compilers have a 30-second failure timeout and emit no assets. Run the suite serially through the provided command; an abrupt process kill can leave a temporary directory that should be removed before continuing development. Such directories are ignored by Git to prevent accidental commits. No Git command, external service, browser or real-time sleep is used by these tests.
 
-These are quality-tool regression checks, not React interaction coverage. M0.06 still introduces the frontend interaction suite and dedicated PostgreSQL test database.
+These are quality-tool regression checks, not React interaction coverage. The frontend interaction suite and dedicated PostgreSQL test database are now documented in [TESTING.md](TESTING.md).
 
 ## Rector evaluation
 
@@ -86,7 +86,11 @@ docker compose run --rm node npm run check
 docker compose run --rm node npm run build
 docker compose exec web composer format:check -- --sequential
 docker compose exec web composer analyse -- --debug
-docker compose exec -e RUN_DOCKER_TESTS=1 web php vendor/bin/pest
+docker compose run --rm php-test php vendor/bin/pest
 ```
 
-`npm ci` also works without `--ignore-scripts`; none of these quality tools requires a lifecycle install script. Host and Linux dependencies remain separate. Do not add Git hooks: Git operations are reserved to the user, and M0.07 will enforce the same non-mutating commands in CI. The unified full-stack verification/test workflow remains M0.06/M0.07; this task only adds the frontend quality command.
+`npm ci` also works without `--ignore-scripts`; none of these quality tools requires a lifecycle install script. Host and Linux dependencies remain separate. Do not add Git hooks: Git operations are reserved to the user, and M0.07 will enforce the same non-mutating commands in CI. The complete local verification command is now `./scripts/verify.sh`, documented in [TESTING.md](TESTING.md); CI enforcement remains M0.07.
+
+## M0.06 follow-up
+
+[TESTING.md](TESTING.md) adds the React DOM suite, isolated PostgreSQL/Redis test services and `./scripts/verify.sh`. Current lint/format/type scopes include `tests/frontend` and `vitest.config.ts`; `npm run verify` extends quality checks with DOM tests and build. `composer verify` aggregates existing PHP checks. Node 22 now requires at least 22.22.2 for jsdom; the earlier M0.05 floor above records that milestone’s original requirements.

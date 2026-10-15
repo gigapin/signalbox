@@ -17,7 +17,6 @@ beforeEach(
             return;
         }
 
-        DB::beginTransaction();
         Route::get(
             '/_test/token',
             /**
@@ -29,14 +28,6 @@ beforeEach(
     },
 );
 
-afterEach(
-    /** Roll back synthetic accounts, tokens and temporary relations even after failed assertions. */
-    function (): void {
-        if (getenv('RUN_DOCKER_TESTS') === '1') {
-            DB::rollBack();
-        }
-    },
-);
 
 it(
     'stores only a token hash and enforces bearer abilities',

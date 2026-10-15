@@ -83,11 +83,11 @@ Ordinary tests have fake package credentials and empty operator allowlists force
 
 ```sh
 docker compose exec web composer test
-docker compose exec -e RUN_DOCKER_TESTS=1 web php vendor/bin/pest
+docker compose run --rm php-test php vendor/bin/pest
 docker compose exec web composer format:check -- --sequential
 docker compose exec web composer analyse -- --debug
 ```
 
-The `docker` group adds real PostgreSQL/Redis tests. Sanctum tests use synthetic accounts inside rolled-back transactions and test hashed token lookup, bearer abilities, revocation, explicit expiry and the exact 24-hour boundary via simulated time. Scout uses a temporary PostgreSQL relation, verifies constrained search results and the empty case, then rolls it back. The tests do not reset application tables; fixtures are never committed. PostgreSQL sequence values may advance despite rollback. A dedicated test database and broader lifecycle tooling remain M0.06; production database access must never be used for this suite.
+The `docker` group adds real PostgreSQL/Redis tests. Sanctum tests use synthetic accounts inside rolled-back transactions and test hashed token lookup, bearer abilities, revocation, explicit expiry and the exact 24-hour boundary via simulated time. Scout uses a temporary PostgreSQL relation, verifies constrained search results and the empty case, then rolls it back. The tests now refresh only the dedicated test schema and never reset development application tables; synthetic account/token fixtures are rolled back. PostgreSQL sequence values may advance despite rollback. M0.06 now supplies a dedicated PostgreSQL/Redis test lifecycle and pre-migration guards; see [TESTING.md](TESTING.md). Integration tests no longer run against development services.
 
 Manual local smoke verification additionally checks that Horizon is running with all three supervisors, snapshots can be stored, backend Reverb publishing succeeds with the real signature and is rejected with HTTP 401 using an invalid secret. A full browser real-time workflow, team billing, real Stripe test account integration and CI remain outside this milestone.

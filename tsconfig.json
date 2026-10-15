@@ -21,5 +21,12 @@
     "exactOptionalPropertyTypes": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["resources/js/**/*.ts", "resources/js/**/*.tsx", "vite.config.ts"]
+  "include": [
+    "resources/js/**/*.ts",
+    "resources/js/**/*.tsx",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "tests/frontend/**/*.ts",
+    "tests/frontend/**/*.tsx"
+  ]
 }

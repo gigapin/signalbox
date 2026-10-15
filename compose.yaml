@@ -14,7 +14,7 @@ x-php: &php
   working_dir: /var/www/html
   volumes:
     - .:/var/www/html
-  environment:
+  environment: &php-environment
     # Container DNS names override host-oriented values in the developer's .env.
     DB_HOST: postgres
     DB_PORT: 5432
@@ -86,6 +86,58 @@ services:
       # Keep platform-specific dependencies separate from host installations.
       - node-modules:/var/www/html/node_modules
     command: [npm, run, build]
+
+  # Run integration checks only against disposable services, without starting application processes.
+  php-test:
+    <<: *php
+    profiles: [testing]
+    environment:
+      <<: *php-environment
+      APP_ENV: testing
+      RUN_DOCKER_TESTS: '1'
+      DB_HOST: postgres-test
+      DB_DATABASE: signalbox_test
+      DB_USERNAME: signalbox_test
+      DB_PASSWORD: signalbox_test
+      DB_URL: ''
+      REDIS_HOST: redis-test
+      REDIS_URL: ''
+      REDIS_PREFIX: 'signalbox_test:'
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    command: [composer, verify]
+
+  # Public fixture credentials are limited to this unpublished, temporary PostgreSQL instance.
+  postgres-test:
+    image: postgres:16-bookworm@sha256:0ea6700a3b4f0ae6ce746519073558aed4d88a79d8d07622a9a644946c7319c4
+    profiles: [testing]
+    environment:
+      POSTGRES_DB: signalbox_test
+      POSTGRES_USER: signalbox_test
+      POSTGRES_PASSWORD: signalbox_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD, pg_isready, -U, signalbox_test, -d, signalbox_test]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # Test queue/cache operations cannot flush or consume application Redis data.
+  redis-test:
+    image: redis:7-bookworm@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
+    profiles: [testing]
+    command: [redis-server, '--save', '', '--appendonly', 'no']
+    tmpfs:
+      - /data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 2s
+      timeout: 3s
+      retries: 15
 
   # Persist local relational data without exposing a database port on the host.
   postgres:

@@ -248,3 +248,10 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Note operative: PHP-CS-Fixer locale parallelo impedito dal sandbox, eseguito con `--sequential`; Larastan con `--debug` per evitare worker TCP nel sandbox. Primo pin Composer errato corretto prima della build riuscita; interruzione temporanea rete npm nel volume isolato risolta ripetendo `npm ci --prefer-offline`. Dipendenze native del Mac ripristinate tramite `npm ci --ignore-scripts --strict-peer-deps`.
 - Limiti: nessuna prova browser interattiva, CI PHP 8.4/8.5 o installazione completa da checkout pulito ancora eseguita; restano rispettivamente M0.06/M0.07 e criterio finale di M0. Horizon, broadcasting e policy origini/credenziali Reverb applicative restano M0.04; nessun checker o scheduler di dominio anticipato. Nessun commit/push/merge eseguito.
 - Completato M0.03: build finale frontend nel volume isolato e TypeScript host superati; guida di primo avvio, uso quotidiano e reset disponibile in `docs/DOCKER.md`. Servizi lasciati attivi per la revisione locale. Prossimo passo: M0.04, configurazione applicativa Horizon/Reverb/Sanctum/Scout/Cashier; M0 complessiva resta aperta.
+
+### 2026-10-15 — Gestione Git riservata all’utente
+
+- Richiesta esplicita: tutti i comandi Git vengono eseguiti dall’utente; l’agente fornisce soltanto istruzioni. Regola registrata in `AGENTS.md`, inclusi comandi di lettura, GitHub CLI e operazioni equivalenti.
+- Come ultima eccezione richiesta dall’utente, rimosso il branch locale `chore/laravel-services` creato dall’agente, dopo verifica dell’assenza di commit esclusivi; tornati su `chore/docker`. Nessuna eliminazione remota o modifica alla PR.
+- Verifica: eliminazione del branch confermata dal comando; riletta la regola salvata. Nessun test applicativo necessario per la sola documentazione. Nessun comando Git eseguito dopo l’introduzione della regola.
+- Prossimo passo: l’utente gestisce merge e creazione del branch per M0.04; implementazione M0.04 non iniziata.

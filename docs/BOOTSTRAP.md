@@ -118,3 +118,7 @@ No real browser execution, frontend interaction suite, PostgreSQL/Redis test, mi
 ## M0.03 infrastructure follow-up
 
 [DOCKER.md](DOCKER.md) documents the Compose runtime, internal database/Redis addresses, process environment overrides, explicit migration/startup commands and opt-in real-service tests. Host bootstrap defaults remain file/sync; Compose selects Redis sessions/cache/queues. Historical M0.02 verification above describes the state at that milestone, not the current Git remote or infrastructure state.
+
+## M0.04 service integration follow-up
+
+[SERVICES.md](SERVICES.md) documents Horizon supervisors and operator access, Reverb origins and signed internal publishing, Sanctum token storage/abilities, fixed database Scout search and test-only Cashier credentials. Package billing routes are disabled and team billing migrations remain M9. The new token migration is explicit; historical M0.02/M0.03 notes above describe those milestones at their completion.

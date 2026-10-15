@@ -20,8 +20,17 @@
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_NAME" value="Signalbox" force="true"/>
         <env name="APP_DEBUG" value="false" force="true"/>
+        <!-- The static application key is public test data, never a production credential. -->
         <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" force="true"/>
-        <!-- This static key is public test data, never an application credential. -->
+        <!-- Isolate integration configuration from real local package credentials and operator lists. -->
+        <env name="STRIPE_KEY" value="" force="true"/>
+        <env name="STRIPE_SECRET" value="" force="true"/>
+        <env name="HORIZON_ADMIN_EMAILS" value="" force="true"/>
+        <env name="REVERB_APP_ID" value="signalbox-test" force="true"/>
+        <env name="REVERB_APP_KEY" value="public-test-key" force="true"/>
+        <env name="REVERB_APP_SECRET" value="fake-test-secret" force="true"/>
+        <env name="REVERB_ALLOWED_ORIGINS" value="localhost,127.0.0.1" force="true"/>
+        <env name="SANCTUM_EXPIRATION" value="1440" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>

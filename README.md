@@ -2,11 +2,13 @@
 
 SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; le funzionalità di dominio devono ancora essere implementate.
 
-Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md).
+Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md); i pacchetti applicativi in [docs/SERVICES.md](docs/SERVICES.md).
 
 ## Avvio con Docker
 
 Il setup completo, i servizi, le verifiche e il reset locale sono documentati in [docs/DOCKER.md](docs/DOCKER.md). Usare questo percorso per PHP 8.4, PostgreSQL 16 e Redis 7 senza installare il runtime sul computer.
+
+Horizon gestisce ora le code; `/horizon` restituisce `403` finché non è autenticato un operatore verificato e autorizzato. Per aggiornare un ambiente Docker esistente dopo M0.04, seguire [docs/SERVICES.md](docs/SERVICES.md).
 
 ## Avvio locale senza container
 

@@ -4,7 +4,7 @@
 
 Specifica: [03-Progetto-B-Signalbox-Laravel.md](03-Progetto-B-Signalbox-Laravel.md). Regole di lavoro: [AGENTS.md](../AGENTS.md). Dipendenze verificate e riferimento manifest: [DEPENDENCIES.md](DEPENDENCIES.md). Bootstrap e configurazioni iniziali: [BOOTSTRAP.md](BOOTSTRAP.md).
 
-Alla pianificazione iniziale del 2026-10-15 era presente soltanto la specifica. M0.01 ha aggiunto manifest e lockfile; M0.02 ha inizializzato Git e lo scheletro Laravel/Inertia/React con avvio, test iniziali e build verificati. Docker, configurazione dei servizi e CI restano da implementare.
+Alla pianificazione iniziale del 2026-10-15 era presente soltanto la specifica. M0.01 ha aggiunto manifest e lockfile; M0.02 ha inizializzato Git e lo scheletro Laravel/Inertia/React con avvio, test iniziali e build verificati. M0.03 aggiunge l’ambiente Docker locale; configurazione applicativa dei pacchetti e CI restano da implementare.
 
 Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID sono stabili: non rinumerarli. Per ogni task in corso o bloccato aggiungere una nota nel registro con dipendenze, evidenza e prossimo passo. Le checklist di milestone sono il riferimento operativo, non attestano implementazioni già presenti.
 
@@ -20,7 +20,7 @@ Dipendenze: nessuna. Sblocca tutte le milestone.
 
 - [x] M0.01 Verificare matrice ufficiale PHP/Laravel/Inertia/React/Pest/Cashier e disponibilità JSON:API; fissare versioni e lockfile, registrando eventuali incompatibilità.
 - [x] M0.02 Inizializzare Git e Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; configurare variabili di ambiente di esempio senza segreti.
-- [ ] M0.03 Preparare Docker/Sail con PHP 8.4, PostgreSQL 16, Redis 7 e processi web, queue, scheduler e Reverb; documentare avvio e reset locale.
+- [x] M0.03 Preparare Docker/Sail con PHP 8.4, PostgreSQL 16, Redis 7 e processi web, queue, scheduler e Reverb; documentare avvio e reset locale.
 - [ ] M0.04 Installare e configurare Horizon, Reverb, Sanctum, Scout database driver e strumenti test; predisporre Cashier in modalità Stripe test.
 - [ ] M0.05 Configurare PHP-CS-Fixer come formatter PHP di riferimento, Larastan livello 8, valutazione Rector, lint/format frontend e TypeScript rigoroso; documentare la sostituzione di Pint. PHP-CS-Fixer e Larastan livello 8 già configurati e verificati in M0.02; restano lint/format frontend, valutazione Rector e consolidamento.
 - [ ] M0.06 Configurare Pest e test frontend, database di test PostgreSQL, factory iniziali e comandi unificati di verifica. Pest e quattro smoke test HTTP già operativi in M0.02; restano suite frontend e integrazione PostgreSQL.
@@ -234,3 +234,17 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Smoke HTTP reale superato: home HTML, risposta JSON Inertia con versione asset, `/up` e tre asset compilati; server temporaneo arrestato. Verificata esclusione Git di `.env`, vendor, node_modules, build e cache.
 - Limiti: verifiche eseguite su PHP 8.5.9; runtime PHP 8.4, database/Redis, migration, test browser/frontend e CI ancora da verificare. Nessun commit o remote creato. M0 complessiva ancora aperta.
 - Prossimo passo: M0.03, ambiente Docker con PHP 8.4, PostgreSQL 16, Redis 7 e processi distinti web/queue/scheduler/Reverb.
+
+### 2026-10-15 — M0.03: ambiente Docker
+
+- Dipendenze M0.01/M0.02 soddisfatte; lavoro sul branch `chore/docker`, destinazione `staging` e successivamente `main`.
+- Docker daemon inizialmente non disponibile, poi avviato; build e prove reali eseguite sul motore locale.
+- Decisione: Docker Compose diretto, senza aggiungere Sail; processi separati e riuso della stessa immagine PHP. Reverb predisposto come processo opzionale fino alla configurazione applicativa M0.04.
+- File: `compose.yaml`, `.dockerignore`, `docker/php/Dockerfile`, `docker/php/local.ini`, `docker/node/Dockerfile`, `.env.example`, `tests/Feature/DockerInfrastructureTest.php`, `docs/DOCKER.md`; aggiornati README, bootstrap, dipendenze e piano.
+- Configurazione: immagini ufficiali fissate per digest multiarch, PHP 8.4.26, PostgreSQL 16, Redis 7 persistente, processi non-root, health gate per database/Redis, web su loopback, queue con un tentativo e timeout 30 s, scheduler foreground; Node 22/npm 10 con volume dipendenze separato dal Mac. Nessun cambio ai lockfile.
+- Generati soltanto nel `.env` ignorato password PostgreSQL e credenziali Reverb locali; chiave Laravel preesistente preservata. Porta 8080 già occupata da altro servizio: `REVERB_FORWARD_PORT=18080` nel solo `.env` locale, senza modificare altri container.
+- Verifiche superate: `docker compose config --quiet`, build immagini PHP/Node, Composer install/discovery e `check-platform-reqs` su PHP 8.4.26; migration iniziali sul nuovo PostgreSQL; avvio web/queue/scheduler; formatter dry-run sequenziale (32 file), Larastan livello 8 (zero errori); `docker compose exec -e RUN_DOCKER_TESTS=1 web php vendor/bin/pest` (7 test, 38 asserzioni). Suite ordinaria host: 4 passati/3 integrazione saltati come previsto.
+- Prove reali: home HTTP e asset compilati serviti; processo scheduler attivo senza task di dominio; Reverb avviato con upgrade WebSocket HTTP 101; web/PostgreSQL/Redis healthy. Test infrastrutturali: transazione PostgreSQL con rollback, cache Redis, esclusione lock e prenotazione/eliminazione su coda Redis dedicata. Nessuna cancellazione dei volumi applicativi eseguita.
+- Note operative: PHP-CS-Fixer locale parallelo impedito dal sandbox, eseguito con `--sequential`; Larastan con `--debug` per evitare worker TCP nel sandbox. Primo pin Composer errato corretto prima della build riuscita; interruzione temporanea rete npm nel volume isolato risolta ripetendo `npm ci --prefer-offline`. Dipendenze native del Mac ripristinate tramite `npm ci --ignore-scripts --strict-peer-deps`.
+- Limiti: nessuna prova browser interattiva, CI PHP 8.4/8.5 o installazione completa da checkout pulito ancora eseguita; restano rispettivamente M0.06/M0.07 e criterio finale di M0. Horizon, broadcasting e policy origini/credenziali Reverb applicative restano M0.04; nessun checker o scheduler di dominio anticipato. Nessun commit/push/merge eseguito.
+- Completato M0.03: build finale frontend nel volume isolato e TypeScript host superati; guida di primo avvio, uso quotidiano e reset disponibile in `docs/DOCKER.md`. Servizi lasciati attivi per la revisione locale. Prossimo passo: M0.04, configurazione applicativa Horizon/Reverb/Sanctum/Scout/Cashier; M0 complessiva resta aperta.

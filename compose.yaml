@@ -1,0 +1,117 @@
+# Local development only; production deployment is implemented in M12.
+name: signalbox
+
+# Share PHP dependencies, network configuration and source across application processes.
+x-php: &php
+  image: signalbox-php:local
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile
+    args:
+      LOCAL_UID: ${LOCAL_UID:-1000}
+      LOCAL_GID: ${LOCAL_GID:-1000}
+  init: true
+  working_dir: /var/www/html
+  volumes:
+    - .:/var/www/html
+  environment:
+    # Container DNS names override host-oriented values in the developer's .env.
+    DB_HOST: postgres
+    DB_PORT: 5432
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    SESSION_DRIVER: redis
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  # Serve Laravel and prebuilt frontend assets on loopback only.
+  web:
+    <<: *php
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    healthcheck:
+      test: [CMD, php, -r, "exit(@file_get_contents('http://127.0.0.1:8000/up') === false ? 1 : 0);"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # A check failure must not be hidden by automatic queue retries.
+  queue:
+    <<: *php
+    command: [php, artisan, 'queue:work', redis, '--queue=default,checks:eu,checks:us', '--tries=1', '--timeout=30', '--sleep=1']
+    stop_grace_period: 40s
+
+  # Run Laravel's local foreground scheduler; distributed scheduling belongs to M3.
+  scheduler:
+    <<: *php
+    command: [php, artisan, 'schedule:work']
+    stop_grace_period: 70s
+
+  # Opt in after supplying local Reverb credentials; full integration belongs to M0.04/M6.
+  reverb:
+    <<: *php
+    profiles: [realtime]
+    command: [php, artisan, 'reverb:start', '--host=0.0.0.0', '--port=8080']
+    ports:
+      - "127.0.0.1:${REVERB_FORWARD_PORT:-8080}:8080"
+    stop_grace_period: 40s
+
+  # Install locked frontend dependencies and build assets without host Node requirements.
+  node:
+    image: signalbox-node:local
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+      args:
+        LOCAL_UID: ${LOCAL_UID:-1000}
+        LOCAL_GID: ${LOCAL_GID:-1000}
+    profiles: [tools]
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    working_dir: /var/www/html
+    environment:
+      npm_config_cache: /tmp/npm-cache
+    volumes:
+      - .:/var/www/html
+      # Keep platform-specific dependencies separate from host installations.
+      - node-modules:/var/www/html/node_modules
+    command: [npm, run, build]
+
+  # Persist local relational data without exposing a database port on the host.
+  postgres:
+    image: postgres:16-bookworm@sha256:0ea6700a3b4f0ae6ce746519073558aed4d88a79d8d07622a9a644946c7319c4
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-signalbox}
+      POSTGRES_USER: ${DB_USERNAME:-signalbox}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set a non-empty DB_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Keep Redis queue data across container restarts; no host port is published.
+  redis:
+    image: redis:7-bookworm@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
+    command: [redis-server, '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+# Named volumes survive compose down; deleting them is an explicit destructive reset.
+volumes:
+  postgres-data:
+  redis-data:
+  node-modules:

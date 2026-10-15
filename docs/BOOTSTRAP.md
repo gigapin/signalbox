@@ -114,3 +114,7 @@ Verified on local PHP 8.5.9 and Node 22.23.2:
 - Real HTTP responses for the initial document, versioned Inertia JSON and `/up`; all three compiled JavaScript/CSS assets served successfully. The temporary server was stopped after the check.
 
 No real browser execution, frontend interaction suite, PostgreSQL/Redis test, migration execution, PHP 8.4 runtime check or GitHub Actions run is claimed. Those checks remain in their owning milestones.
+
+## M0.03 infrastructure follow-up
+
+[DOCKER.md](DOCKER.md) documents the Compose runtime, internal database/Redis addresses, process environment overrides, explicit migration/startup commands and opt-in real-service tests. Host bootstrap defaults remain file/sync; Compose selects Redis sessions/cache/queues. Historical M0.02 verification above describes the state at that milestone, not the current Git remote or infrastructure state.

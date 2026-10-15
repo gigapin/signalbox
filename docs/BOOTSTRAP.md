@@ -126,3 +126,7 @@ No real browser execution, frontend interaction suite, PostgreSQL/Redis test, mi
 ## M0.05 quality follow-up
 
 [QUALITY.md](QUALITY.md) documents ESLint 10/type-aware React checks, Prettier scope, additional strict TypeScript fields, the five quality-tool regression tests, and the decision to evaluate but not install Rector without a concrete refactoring target. Node 22 now requires at least 22.13.0 for ESLint 10; PHP-CS-Fixer and Larastan remain the existing PHP baseline. New package.json fields and resolved dependencies are documented in [DEPENDENCIES.md](DEPENDENCIES.md).
+
+## M0.06 testing follow-up
+
+[TESTING.md](TESTING.md) documents Unit/Feature/Integration suites, guarded ephemeral PostgreSQL/Redis services, User factory coverage, Vitest/Testing Library and the executable full-stack verification command. Ordinary Pest runs skip integration without connecting; full verification uses `php-test` and refreshes only its dedicated schema. New JSON scripts, Node patch requirements and test dependencies are documented in [DEPENDENCIES.md](DEPENDENCIES.md).

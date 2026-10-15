@@ -98,7 +98,7 @@ Package keys and their individual purposes are listed in the frontend table abov
 | `type` | Interpret JavaScript configuration as ECMAScript modules. |
 | `description` | Purpose of the frontend dependency manifest. |
 | `engines` | Supported toolchain ranges for this project; npm may only warn unless engine enforcement is enabled later. |
-| `engines.node` | Restrict runtime to Node 22, at least 22.13.0 after the M0.05 ESLint 10 addition (initial baseline: 22.12.0). |
+| `engines.node` | Restrict runtime to Node 22, at least 22.22.2 after M0.06 jsdom (initial floor 22.12.0, M0.05 floor 22.13.0). |
 | `engines.npm` | Restrict the initial package manager major to npm 10. |
 | `packageManager` | Record npm 10.9.8 used to create the baseline; this field alone does not install or enforce npm. |
 | `dependencies` | Inertia and React browser runtime dependencies. |
@@ -170,3 +170,20 @@ The JSX accessibility plugin was considered but excluded: current 6.10.2 peer me
 | `check` | Sequentially run lint, format check, type check and quality-tool tests; production build remains separate. |
 
 The existing `dev`, `build`, `types:check`, runtime dependencies and npm major constraints are unchanged. [QUALITY.md](QUALITY.md) documents the six new tsconfig compiler fields, formatting policy and exclusions; no comments were inserted into JSON or generated locks.
+
+## M0.06 test dependencies and manifest reference
+
+Compatibility was checked against official npm engine/peer metadata, [Vitest requirements](https://vitest.dev/guide/), [Testing Library setup](https://testing-library.com/docs/react-testing-library/setup/) and [jsdom](https://github.com/jsdom/jsdom). Node stays 22/npm 10; the minimum Node patch rises to 22.22.2 to meet jsdom 30.1.3. Existing host and pinned Docker runtime satisfy it. No runtime frontend dependency or Composer package constraint changes.
+
+| Added development dependency | Exact version | Responsibility |
+|---|---|---|
+| `vitest` | `5.0.5` | Vite 8-compatible test runner; supports the installed Node/TypeScript types. |
+| `jsdom` | `30.1.3` | DOM environment without downloading a real browser. |
+| `@testing-library/react` | `16.3.3` | React 19 rendering and component queries. |
+| `@testing-library/dom` | `10.4.2` | Explicit DOM peer shared by React, user-event and assertion helpers. |
+| `@testing-library/user-event` | `14.6.8` | Keyboard/focus interaction simulation. |
+| `@testing-library/jest-dom` | `7.0.1` | DOM matchers registered through its Vitest entry point. |
+
+`package.json` adds `test` (non-watch Vitest), `test:watch` (explicit watch mode) and `verify` (quality checks, DOM tests, build). Lint/format scopes and tsconfig `include` now cover `tests/frontend` and `vitest.config.ts`, without relaxing existing strictness. `composer.json` adds only `scripts.verify`, sequencing the existing formatter dry-run with `--sequential`, Larastan with `--debug`, and Pest. Composer's dependency graph/content hash is unaffected by a script-only change; no lock regeneration is needed for that addition. JSON remains comment-free, with fields documented here and in [TESTING.md](TESTING.md).
+
+Compose reuses the pinned PHP/PostgreSQL/Redis images and adds only a test profile, unpublished ephemeral service storage and public fixture credentials. No application database credential or volume is replaced. Backend test support classes are covered by the existing development autoload namespace; no new PHP package is required.

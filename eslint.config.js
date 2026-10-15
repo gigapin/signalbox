@@ -18,7 +18,12 @@ export default defineConfig([
     ]),
     {
         // Keep typed rules inside the TypeScript project's declared source files.
-        files: ['resources/js/**/*.{ts,tsx}', 'vite.config.ts'],
+        files: [
+            'resources/js/**/*.{ts,tsx}',
+            'tests/frontend/**/*.{ts,tsx}',
+            'vite.config.ts',
+            'vitest.config.ts',
+        ],
         extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
         languageOptions: {
             parserOptions: {
@@ -33,7 +38,7 @@ export default defineConfig([
         },
     },
     {
-        files: ['resources/js/**/*.{ts,tsx}'],
+        files: ['resources/js/**/*.{ts,tsx}', 'tests/frontend/**/*.{ts,tsx}'],
         extends: [hooks.configs.flat.recommended],
         languageOptions: { globals: globals.browser },
     },
@@ -44,7 +49,7 @@ export default defineConfig([
         languageOptions: { globals: globals.node },
     },
     {
-        files: ['vite.config.ts'],
+        files: ['vite.config.ts', 'vitest.config.ts'],
         languageOptions: { globals: globals.node },
     },
     // Let Prettier own formatting, without competing style fixes from ESLint.

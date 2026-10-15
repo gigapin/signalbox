@@ -139,3 +139,7 @@ M0.02 follow-up: Git and the Laravel/Inertia/React skeleton are now initialized,
 ## M0.03 container image reference
 
 The official PHP 8.4 CLI Bookworm, Composer 2, PostgreSQL 16 Bookworm, Redis 7 Bookworm and Node 22 Bookworm slim images are pinned to multi-platform registry index digests in `docker/php/Dockerfile`, `docker/node/Dockerfile` and `compose.yaml`. Digest values were resolved with `docker buildx imagetools inspect`; update these explicitly rather than removing pins. Native PHP extensions use the official image helpers. No Composer/npm package constraint or lockfile changed. See [DOCKER.md](DOCKER.md) for service configuration, verification and rebuild limitations.
+
+## M0.04 package configuration
+
+No dependency version, manifest or lockfile changed. Application-owned configuration now overrides the installed package defaults for Horizon, Reverb, Sanctum, Scout and Cashier; see [SERVICES.md](SERVICES.md) for file responsibilities, environment settings, security boundaries and verification. Cashier migration adaptation is deferred until the Team billable model exists, avoiding incorrect User-owned subscriptions.

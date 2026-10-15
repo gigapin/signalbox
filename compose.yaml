@@ -23,6 +23,10 @@ x-php: &php
     SESSION_DRIVER: redis
     CACHE_STORE: redis
     QUEUE_CONNECTION: redis
+    # Backend publishing uses container DNS; browser WebSocket coordinates are separate.
+    REVERB_HOST: reverb
+    REVERB_PORT: 8080
+    REVERB_SCHEME: http
   depends_on:
     postgres:
       condition: service_healthy
@@ -42,11 +46,11 @@ services:
       retries: 5
       start_period: 15s
 
-  # A check failure must not be hidden by automatic queue retries.
+  # Horizon supervises independent workers; each check queue has one attempt.
   queue:
     <<: *php
-    command: [php, artisan, 'queue:work', redis, '--queue=default,checks:eu,checks:us', '--tries=1', '--timeout=30', '--sleep=1']
-    stop_grace_period: 40s
+    command: [php, artisan, horizon]
+    stop_grace_period: 60s
 
   # Run Laravel's local foreground scheduler; distributed scheduling belongs to M3.
   scheduler:

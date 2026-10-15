@@ -11,6 +11,12 @@ Signalbox è un SaaS multi-tenant di monitoraggio applicativo, incident manageme
 - Leggere questi riferimenti prima di iniziare; rispettare le istruzioni esplicite dell'utente. Registrare decisioni, deviazioni e loro motivazioni nel piano; non modificare tacitamente la specifica.
 - Non implementare funzioni estranee al perimetro. Non eliminare M3, M4 o M5. Eventuali riduzioni di dominio personalizzato, PDF e portale clienti richiedono una decisione di scope registrata.
 
+## Gestione Git riservata all’utente
+
+- Tutti i comandi Git, inclusi quelli di sola lettura, sono eseguiti esclusivamente dall’utente. L’agente fornisce soltanto i comandi e le spiegazioni, senza eseguirli direttamente, tramite script o altri strumenti.
+- Anche GitHub CLI (`gh`), operazioni su branch, commit, sincronizzazione, merge, rebase e pull request sono riservati all’utente.
+- Non modificare `.git` e non usare librerie o API per aggirare questa regola. Se serve conoscere lo stato Git, chiedere all’utente l’output pertinente.
+
 ## Flusso di ogni sessione
 
 1. Leggere questo file, la specifica, lo stato dei task e le note dell'ultima sessione.

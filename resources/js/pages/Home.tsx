@@ -25,7 +25,10 @@ export default function Home() {
                     <p className="mb-5 text-sm font-semibold uppercase tracking-widest text-emerald-400">
                         Application monitoring
                     </p>
-                    <h1 id="page-title" className="text-5xl font-semibold tracking-tight sm:text-7xl">
+                    <h1
+                        id="page-title"
+                        className="text-5xl font-semibold tracking-tight sm:text-7xl"
+                    >
                         {appName}
                     </h1>
                     <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">

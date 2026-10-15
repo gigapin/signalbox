@@ -12,7 +12,7 @@ Horizon gestisce ora le code; `/horizon` restituisce `403` finché non è autent
 
 ## Avvio locale senza container
 
-Requisiti: PHP 8.4 o 8.5 con le estensioni richieste da Composer, Composer 2, Node 22 (almeno 22.12), npm 10. PostgreSQL e Redis sono predisposti tramite Compose; questo avvio senza container mantiene sessioni/cache su file e code sincrone come da `.env.example`.
+Requisiti: PHP 8.4 o 8.5 con le estensioni richieste da Composer, Composer 2, Node 22 (almeno 22.13), npm 10. PostgreSQL e Redis sono predisposti tramite Compose; questo avvio senza container mantiene sessioni/cache su file e code sincrone come da `.env.example`.
 
 ```sh
 composer install
@@ -31,10 +31,10 @@ Aprire http://127.0.0.1:8000. Per lo sviluppo frontend con aggiornamenti live, e
 composer test
 composer format:check
 composer analyse
-npm run types:check
+npm run check
 npm run build
 ```
 
-`composer format` applica la formattazione PHP. I test iniziali verificano HTML, protocollo Inertia, liveness e 404 senza database o Redis. I test infrastrutturali PostgreSQL/Redis sono disponibili esplicitamente in Docker, come descritto in `docs/DOCKER.md`; verifiche di dominio e frontend saranno aggiunte nelle rispettive milestone. `/up` indica soltanto che il framework si avvia: il controllo di readiness dell'infrastruttura appartiene a M11.
+`composer format` applica la formattazione PHP; `npm run format` quella frontend. `npm run check` verifica lint, formato, TypeScript e i cinque test degli strumenti di qualità. Configurazione e valutazione di Rector sono in [docs/QUALITY.md](docs/QUALITY.md). I test iniziali verificano HTML, protocollo Inertia, liveness e 404 senza database o Redis. I test infrastrutturali PostgreSQL/Redis sono disponibili esplicitamente in Docker, come descritto in `docs/DOCKER.md`; verifiche di dominio e frontend saranno aggiunte nelle rispettive milestone. `/up` indica soltanto che il framework si avvia: il controllo di readiness dell'infrastruttura appartiene a M11.
 
 Non eseguire ancora migration su database di produzione: lo schema importato è quello di base del framework, da estendere con il dominio. `.env`, dipendenze, build, cache e log sono esclusi da Git.

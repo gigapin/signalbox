@@ -122,3 +122,7 @@ No real browser execution, frontend interaction suite, PostgreSQL/Redis test, mi
 ## M0.04 service integration follow-up
 
 [SERVICES.md](SERVICES.md) documents Horizon supervisors and operator access, Reverb origins and signed internal publishing, Sanctum token storage/abilities, fixed database Scout search and test-only Cashier credentials. Package billing routes are disabled and team billing migrations remain M9. The new token migration is explicit; historical M0.02/M0.03 notes above describe those milestones at their completion.
+
+## M0.05 quality follow-up
+
+[QUALITY.md](QUALITY.md) documents ESLint 10/type-aware React checks, Prettier scope, additional strict TypeScript fields, the five quality-tool regression tests, and the decision to evaluate but not install Rector without a concrete refactoring target. Node 22 now requires at least 22.13.0 for ESLint 10; PHP-CS-Fixer and Larastan remain the existing PHP baseline. New package.json fields and resolved dependencies are documented in [DEPENDENCIES.md](DEPENDENCIES.md).

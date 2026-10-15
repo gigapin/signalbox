@@ -98,7 +98,7 @@ Package keys and their individual purposes are listed in the frontend table abov
 | `type` | Interpret JavaScript configuration as ECMAScript modules. |
 | `description` | Purpose of the frontend dependency manifest. |
 | `engines` | Supported toolchain ranges for this project; npm may only warn unless engine enforcement is enabled later. |
-| `engines.node` | Restrict the initial supported runtime to Node 22, at least 22.12.0. |
+| `engines.node` | Restrict runtime to Node 22, at least 22.13.0 after the M0.05 ESLint 10 addition (initial baseline: 22.12.0). |
 | `engines.npm` | Restrict the initial package manager major to npm 10. |
 | `packageManager` | Record npm 10.9.8 used to create the baseline; this field alone does not install or enforce npm. |
 | `dependencies` | Inertia and React browser runtime dependencies. |
@@ -143,3 +143,30 @@ The official PHP 8.4 CLI Bookworm, Composer 2, PostgreSQL 16 Bookworm, Redis 7 B
 ## M0.04 package configuration
 
 No dependency version, manifest or lockfile changed. Application-owned configuration now overrides the installed package defaults for Horizon, Reverb, Sanctum, Scout and Cashier; see [SERVICES.md](SERVICES.md) for file responsibilities, environment settings, security boundaries and verification. Cashier migration adaptation is deferred until the Team billable model exists, avoiding incorrect User-owned subscriptions.
+
+## M0.05 frontend quality dependencies and manifest reference
+
+Node 22/npm 10 remain the toolchain. The minimum Node patch rises to 22.13.0 because ESLint 10 requires it on Node 22; Docker and the actual host runtime satisfy the requirement. Version selection was checked against official npm package metadata, [ESLint support status](https://eslint.org/version-support/), [typescript-eslint compatibility](https://typescript-eslint.io/users/dependency-versions/), [React Hooks guidance](https://react.dev/learn/editor-setup), and [Prettier installation](https://prettier.io/docs/install). No Composer constraint/lockfile or existing direct frontend dependency version changed.
+
+| Added development dependency | Exact version | Responsibility |
+|---|---|---|
+| `eslint` | `10.12.0` | Maintained lint CLI and flat-configuration API. |
+| `@eslint/js` | `10.0.1` | Recommended JavaScript correctness rules. |
+| `typescript-eslint` | `8.71.2` | Parser, project service and typed TypeScript lint rules; compatible with TypeScript 5.9.3 and ESLint 10. |
+| `eslint-plugin-react-hooks` | `7.1.1` | Official recommended hook/compiler correctness diagnostics. |
+| `eslint-config-prettier` | `10.1.8` | Disable lint formatting rules that could conflict with Prettier. |
+| `prettier` | `3.9.10` | Explicit frontend formatting and non-mutating format check. |
+| `globals` | `17.13.0` | Browser/Node global-name definitions scoped to the relevant source files. |
+
+The JSX accessibility plugin was considered but excluded: current 6.10.2 peer metadata supports only ESLint through 9, which is EOL. No peer override or unsupported ESLint major is retained. Accessibility remains a feature/test requirement. Rector was evaluated and not installed; the scoped rationale is in [QUALITY.md](QUALITY.md). Newly added dependencies are exact-pinned; the regenerated npm lock records their transitive graph and preserves the original direct versions.
+
+| Added `scripts` field | Meaning |
+|---|---|
+| `lint` | Lint browser source, Vite config, root JS configuration and quality scripts; fail on warnings. |
+| `lint:fix` | Run lint with explicit fixes; never used by a read-only check. |
+| `format` | Apply Prettier only to frontend source and selected JS/TS/JSON tooling files. |
+| `format:check` | Verify the same Prettier scope without rewriting files. |
+| `test:quality` | Run the five Node built-in tests of real lint/compiler/formatter gates. |
+| `check` | Sequentially run lint, format check, type check and quality-tool tests; production build remains separate. |
+
+The existing `dev`, `build`, `types:check`, runtime dependencies and npm major constraints are unchanged. [QUALITY.md](QUALITY.md) documents the six new tsconfig compiler fields, formatting policy and exclusions; no comments were inserted into JSON or generated locks.

@@ -1,0 +1,18 @@
+# Exclude dependencies, generated artifacts and private runtime state.
+node_modules/
+vendor/
+public/
+storage/
+bootstrap/cache/
+.env*
+# Generated lockfiles are owned by their package managers.
+package-lock.json
+composer.lock
+# PHP and Blade remain outside the frontend formatter; PHP-CS-Fixer owns PHP source.
+**/*.php
+resources/views/
+# Planning and infrastructure documents retain their existing formatting.
+docs/
+*.md
+*.yaml
+*.yml

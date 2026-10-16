@@ -46,3 +46,7 @@ npm run verify
 `composer format` applica la formattazione PHP; `npm run format` quella frontend. `npm run check` verifica lint, formato, TypeScript e i cinque test degli strumenti di qualità. Configurazione e valutazione di Rector sono in [docs/QUALITY.md](docs/QUALITY.md). I test iniziali verificano HTML, protocollo Inertia, liveness e 404 senza database o Redis. I test infrastrutturali PostgreSQL/Redis sono disponibili esplicitamente in Docker, come descritto in `docs/DOCKER.md`; i primi test frontend DOM sono operativi e le verifiche di dominio saranno aggiunte nelle rispettive milestone. `/up` indica soltanto che il framework si avvia: il controllo di readiness dell'infrastruttura appartiene a M11.
 
 Non eseguire ancora migration su database di produzione: lo schema importato è quello di base del framework, da estendere con il dominio. `.env`, dipendenze, build, cache e log sono esclusi da Git.
+
+## GitHub Actions
+
+La [pipeline CI](docs/CI.md) esegue backend PHP 8.4 e frontend Node 22 su tutte le pull request e sui push a staging/main. Il backend PHP 8.5 viene verificato soltanto sui push a main e sugli avvii manuali su main. I job backend usano PostgreSQL 16 e Redis 7 dedicati; formatter, analisi, test e build hanno step distinti. Gli esiti remoti ancora da verificare sono registrati in [docs/TASKS.md](docs/TASKS.md).

@@ -112,3 +112,7 @@ npm run verify
 New test dependencies are exact-pinned in npm's lock. React 19, Inertia 2, Vite 8 and all existing direct dependency versions are preserved. jsdom 30.1.3 requires Node 22.22.2 on Node 22, so the minimum patch rises from 22.13.0 to **22.22.2**; the major stays 22, npm stays 10, and the existing host/pinned Docker image satisfy the floor. This is documented in [DEPENDENCIES.md](DEPENDENCIES.md).
 
 No real browser, Stripe account, external network or CI execution is claimed here. GitHub Actions for PHP 8.4/8.5 remains M0.07, and the final full-project clean-checkout proof remains a milestone exit criterion. The dedicated database/service lifecycle and complete verification command have been exercised locally with actual PostgreSQL 16 and Redis 7.
+
+## M0.07 CI follow-up
+
+[CI.md](CI.md) documents the implemented workflow, event policy and every gate. CI explicitly enables integration tests and uses `--fail-on-skipped`; the same database guard accepts its dedicated loopback services. PHP 8.4 and frontend run on PRs and staging/main pushes; PHP 8.5 runs only on main pushes or manual dispatch on main by explicit user decision. Historical M0.06 evidence above does not claim remote workflow execution; current evidence and remaining acceptance checks are in [TASKS.md](TASKS.md).

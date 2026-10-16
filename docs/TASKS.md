@@ -25,7 +25,7 @@ Dipendenze: nessuna. Sblocca tutte le milestone.
 - [x] M0.05 Configurare PHP-CS-Fixer come formatter PHP di riferimento, Larastan livello 8, valutazione Rector, lint/format frontend e TypeScript rigoroso; documentare la sostituzione di Pint. Baseline PHP di M0.02 confermata; completati lint/format frontend, controllo TypeScript, test degli strumenti e valutazione Rector.
 - [x] M0.06 Configurare Pest e test frontend, database di test PostgreSQL, factory iniziali e comandi unificati di verifica. Completati suite Unit/Feature/Integration, test DOM, servizi test effimeri separati, verifica factory User e comando completo.
 - [x] M0.07 Creare GitHub Actions con PHP 8.4/8.5, PostgreSQL/Redis, formatter dry-run, analisi, test e build frontend.
-- [ ] M0.08 Registrare decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione.
+- [x] M0.08 Registrare decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione.
 - [ ] M0.09 Definire semantica scheduler sotto-minuto, prenotazione/invio affidabile, retention/partizioni, SLA e p50/p95; definire matrice dei piani (Free: massimo cinque monitor; altri valori da decidere).
 
 Uscita: ambiente riproducibile da checkout pulito, smoke test eseguito e controlli CI verdi per entrambe le versioni PHP.
@@ -203,6 +203,7 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-15 | Stack verificato con Pest 4 e Inertia 2 esplicito | Plugin Pest 3 non supporta Laravel 13; starter React attuale usa Inertia 3. Vincoli e lockfile in root, dettagli in DEPENDENCIES.md. |
 | 2026-10-15 | Baseline PHP 8.4, Node 22/npm 10 e Predis 3 | Composer risolve per PHP 8.4; runtime locale 8.5 verificato. Client Redis senza estensione locale aggiuntiva. |
 | 2026-10-15 | Bootstrap senza accessi infrastrutturali impliciti | Sessioni/cache locali su file e coda sync temporanea; PostgreSQL e Predis restano i driver selezionati. Configurazione Redis/worker in M0.03. |
+| 2026-10-16 | ADR-001–ADR-005 adottati in M0.08 | [ARCHITECTURE.md](ARCHITECTURE.md): monolite modulare con action coese; Strategy/adapter; tenant context esplicito con rifiuto in sua assenza; policy e limiti centralizzati; documentazione inglese e record evolutivi. Implementazione progressiva M1–M12, senza classi speculative; semantiche quantitative/affidabilità restano M0.09. |
 
 ## Registro sessioni
 
@@ -316,3 +317,15 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Composer host PHP 8.5.9: `composer validate --strict --no-check-publish` e `composer check-platform-reqs` superati; `composer check-platform-reqs` superato anche nel runner locale Docker PHP 8.4.26. Prova negativa `composer test -- --fail-on-skipped --compact` senza opt-in: 37 test/88 asserzioni passati e 9 integrazioni saltate, uscita 1 attesa; conferma che l'opzione CI non può produrre verde saltando i servizi. Non è una suite di regressione ancora rossa né una verifica completa delle integrazioni PHP 8.5.
 - Frontend host Node 22.23.2/npm 10.9.8: `npm run verify` superato (lint/formato/tipi, 5 test qualità, 3 test DOM, build). Linux Docker con npm 10.9.9 già presente nell'immagine locale: `npm ci --ignore-scripts --strict-peer-deps` superato, 292 pacchetti installati, zero advisory riportati al momento; `npm run verify` superato anche dopo questa installazione pulita (lint/formato/tipi, 5 test qualità, 3 test DOM e build). La CI seleziona esplicitamente npm 10.9.8 come da piano; non è stata modificata l'immagine locale.
 - Chiusura: l’utente conferma che la CI funziona, inclusa l’esecuzione PHP 8.5 su main dopo le indicazioni su merge/avvio manuale. M0.07 completato; nessun URL run o dettaglio di log remoto fornito, nessuna modifica branch protection o prova locale completa da checkout pulito dichiarata. Aggiornamento documentale senza rieseguire test: nessuna modifica al workflow o al codice. Prossimo task M0.08: decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione. M0.09 e M0 complessiva restano aperte.
+
+### 2026-10-16 — M0.08: decisioni architetturali (completato)
+
+- Dipendenze M0.01–M0.07 soddisfatte; esiti CI confermati dall’utente, incluso PHP 8.5 su main. Branch docs/architecture-decisions gestito dall’utente; nessun comando Git/gh eseguito.
+- Obiettivo: documentare confini del dominio, Strategy dei checker, tenant context, policy limiti e convenzioni di documentazione, distinguendo decisioni approvate dall’implementazione futura.
+- Perimetro: documentazione e collegamenti; nessuna classe, migration, interfaccia vuota, dipendenza o funzionalità anticipata. Semantiche quantitative e affidabilità dettagliata restano M0.09.
+- File: nuovo `docs/ARCHITECTURE.md` con ADR-001–ADR-005 (contesto, decisione, alternative, conseguenze e verifiche delle milestone proprietarie); collegamenti in README, BOOTSTRAP e registro decisioni di TASKS.
+- Decisioni: monolite modulare con convenzioni Laravel e action per ambito; Strategy con adapter e heartbeat push separato; contesto tenant limitato all’unità di lavoro, scope con rifiuto in assenza di contesto e proiezioni pubbliche dedicate; autorizzazioni e limiti componibili con quota protetta da transazione/lock Team; documentazione inglese nel codice e record architetturali evolutivi. Nessuna funzionalità futura presentata come disponibile.
+- Confini confermati: Free massimo cinque monitor; gli altri valori e le semantiche scheduler/recupero crash, retry/conferma regionale, retention/partizioni, SLA/percentili e riconciliazione restano M0.09. Nessuna riduzione di scope o modifica tacita alla specifica.
+- Verifiche: controllo Python locale superato su quattro Markdown, 36 destinazioni di link locali esistenti, cinque sezioni ADR complete, presenza del limite Free e dei rinvii M0.09, newline finale e assenza di spazi finali. Revisione di coerenza con specifica, AGENTS e bootstrap effettivo.
+- Formatter PHP, Larastan, TypeScript, lint/build e suite applicative non rieseguiti: modifiche esclusivamente Markdown, escluso dal formatter frontend esistente; nessun comportamento eseguibile aggiunto da coprire con nuovi test. La verifica documentale non certifica le implementazioni future.
+- Completato M0.08; prossimo passo M0.09 per chiudere le decisioni fondanti residue prima di M1. M0 complessiva resta aperta, inclusi i criteri di uscita non ancora attestati; nessun comando Git/gh eseguito.

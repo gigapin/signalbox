@@ -2,6 +2,8 @@
 
 M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, TypeScript and Tailwind 4. See [TASKS.md](TASKS.md) for remaining work and [DEPENDENCIES.md](DEPENDENCIES.md) for package constraints. The framework configuration and initial migrations were adapted from the [official Laravel 13 skeleton](https://github.com/laravel/laravel/tree/13.x); project-specific source documentation and entry points were added locally.
 
+[ARCHITECTURE.md](ARCHITECTURE.md) records M0.08 decisions for future domain boundaries, checker strategies, tenant context, plan limits and documentation. These decisions do not imply that the corresponding domain classes or features already exist.
+
 ## Application structure
 
 | Path | Responsibility |

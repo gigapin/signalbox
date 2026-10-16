@@ -4,6 +4,8 @@ SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: boot
 
 Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md); i pacchetti applicativi in [docs/SERVICES.md](docs/SERVICES.md).
 
+Le [decisioni architetturali](docs/ARCHITECTURE.md) definiscono confini del dominio, checker Strategy, contesto tenant, limiti centralizzati e convenzioni di documentazione, distinguendo le scelte adottate dalle funzionalità ancora da implementare.
+
 ## Avvio con Docker
 
 Il setup completo, i servizi, le verifiche e il reset locale sono documentati in [docs/DOCKER.md](docs/DOCKER.md). Usare questo percorso per PHP 8.4, PostgreSQL 16 e Redis 7 senza installare il runtime sul computer.

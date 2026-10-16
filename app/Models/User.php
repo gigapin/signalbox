@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Store user identity while hiding authentication secrets from serialization.
@@ -31,6 +32,9 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> Generate synthetic users through the dedicated factory. */
     use HasFactory;
+
+    /** Issue hashed API tokens with explicit abilities; tenant policy enforcement belongs to M10. */
+    use HasApiTokens;
 
     use Notifiable;
 

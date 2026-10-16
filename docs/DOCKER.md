@@ -34,10 +34,12 @@ Open <http://127.0.0.1:8000>. `APP_PORT` changes the published web port; also up
 | Service / path | Responsibility |
 |---|---|
 | `web` | Laravel local development server, port 8000 inside the container; `/up` liveness check. |
-| `queue` | Redis worker for `default`, `checks:eu`, `checks:us`; one attempt, 30-second timeout, 40-second shutdown grace. Horizon configuration follows in M0.04; regional worker isolation follows in M3. |
-| `scheduler` | Foreground `schedule:work`; no monitoring schedule is implemented yet. |
-| `reverb` | Optional `realtime` profile, internal port 8080; full credentials, origin policy, broadcasting and UI configuration follow in M0.04/M6. |
+| `queue` | Horizon with separate workers for `default`, `checks:eu`, `checks:us`; one attempt, 30-second timeout, 60-second shutdown grace. Application configuration and operator access are documented in [SERVICES.md](SERVICES.md). |
+| `scheduler` | Foreground `schedule:work`; Horizon snapshots every five minutes, with monitor dispatch deferred to M3. |
+| `reverb` | Optional `realtime` profile, internal port 8080; explicit local origins and signed backend transport configured in M0.04. Browser UI and private channels follow in M6. |
 | `node` | One-off frontend tool, Node 22/npm 10; `tools` profile avoids a permanent idle container. Explicit `compose run node` activates it automatically. |
+| `php-test` | One-off isolated backend verification, with dedicated test service dependencies; see [TESTING.md](TESTING.md). |
+| `postgres-test` / `redis-test` | Unpublished ephemeral services for integration tests; no application volumes or credentials are reused. |
 | `postgres` | PostgreSQL 16 with a named data volume and `pg_isready` health check. |
 | `redis` | Redis 7 with append-only persistence and a named data volume; `PING` health check. |
 | `docker/php/Dockerfile` | Official PHP image, required extensions, official Composer binary and configurable non-root user. |
@@ -61,14 +63,14 @@ docker compose exec web composer check-platform-reqs
 docker compose exec web composer format:check -- --sequential
 docker compose exec web composer analyse -- --debug
 docker compose exec web composer test
-docker compose exec -e RUN_DOCKER_TESTS=1 web php vendor/bin/pest --group=docker
+docker compose run --rm php-test php vendor/bin/pest --group=docker
 docker compose run --rm node npm run build
 docker compose ps
 docker compose logs --tail=50 web queue scheduler
 curl --fail http://127.0.0.1:8000/up
 ```
 
-The opt-in `docker` Pest group uses real PostgreSQL transactions, Redis cache round trips, competing locks and reserve/delete queue transport behavior. It uses disposable temporary tables and unique Redis keys/queues, and skips during ordinary tests. It does not execute domain jobs, verify distributed scheduling or implement the separate PostgreSQL test database planned for M0.06. Ordinary tests continue to use memory cache/session and synchronous jobs.
+The opt-in `docker` Pest group uses real PostgreSQL transactions, Redis cache round trips, competing locks and reserve/delete queue transport behavior. M0.04 added Sanctum bearer-token and Scout query tests; M0.06 now runs all integration cases against dedicated ephemeral services, with migrations managed by RefreshDatabase. See [TESTING.md](TESTING.md). It uses disposable temporary tables and unique Redis keys/queues, and skips during ordinary tests. It does not execute domain jobs or verify distributed scheduling. Ordinary tests continue to use memory cache/session and synchronous jobs.
 
 For the optional Reverb process, set local `REVERB_APP_KEY` and `REVERB_APP_SECRET` in `.env` before starting it:
 
@@ -77,7 +79,7 @@ docker compose --profile realtime up -d reverb
 docker compose logs --tail=50 reverb
 ```
 
-`REVERB_APP_ID` identifies the local application and `REVERB_FORWARD_PORT` selects the host port. Broadcasting stays on the log driver until M0.04; starting a listener does not enable private channels or application event publishing.
+`REVERB_APP_ID` identifies the local application and `REVERB_FORWARD_PORT` selects the host port. Broadcasting defaults to the log driver until explicitly selected; [SERVICES.md](SERVICES.md) documents how to enable signed backend publishing. Starting the listener does not create private channels or domain events.
 
 ## Daily use and reset
 
@@ -85,7 +87,7 @@ docker compose logs --tail=50 reverb
 docker compose up -d web queue scheduler
 docker compose restart queue scheduler
 docker compose logs -f --tail=50
-docker compose --profile realtime down
+docker compose --profile realtime --profile testing down
 ```
 
 Restart long-lived workers after PHP source changes. `down` preserves named volumes. Rebuild `web` after changing the Dockerfile or local user IDs; the other PHP services reuse its image.
@@ -95,7 +97,7 @@ For a disposable local database only, `docker compose exec web php artisan migra
 A complete local reset is more destructive:
 
 ```sh
-docker compose --profile realtime down --volumes
+docker compose --profile realtime --profile testing down --volumes
 docker compose up -d postgres redis
 docker compose run --rm web php artisan migrate
 docker compose up -d web queue scheduler

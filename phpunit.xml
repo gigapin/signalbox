@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Configure deterministic bootstrap smoke tests without external infrastructure. -->
+<!-- Configure offline tests and explicitly enabled isolated PostgreSQL/Redis integration suites. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
@@ -7,6 +7,12 @@
          cacheDirectory=".phpunit.cache">
     <!-- Keep HTTP integration checks discoverable by Pest and PHPUnit. -->
     <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
@@ -20,13 +26,38 @@
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_NAME" value="Signalbox" force="true"/>
         <env name="APP_DEBUG" value="false" force="true"/>
+        <!-- The static application key is public test data, never a production credential. -->
         <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" force="true"/>
-        <!-- This static key is public test data, never an application credential. -->
+        <!-- Isolate integration configuration from real local package credentials and operator lists. -->
+        <env name="STRIPE_KEY" value="" force="true"/>
+        <env name="STRIPE_SECRET" value="" force="true"/>
+        <env name="HORIZON_ADMIN_EMAILS" value="" force="true"/>
+        <env name="REVERB_APP_ID" value="signalbox-test" force="true"/>
+        <env name="REVERB_APP_KEY" value="public-test-key" force="true"/>
+        <env name="REVERB_APP_SECRET" value="fake-test-secret" force="true"/>
+        <env name="REVERB_ALLOWED_ORIGINS" value="localhost,127.0.0.1" force="true"/>
+        <env name="SANCTUM_EXPIRATION" value="1440" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="LOG_CHANNEL" value="null" force="true"/>
         <env name="DB_CONNECTION" value="pgsql" force="true"/>
+        <!-- Test identities cannot inherit application credentials or a connection URL from .env. -->
+        <env name="DB_DATABASE" value="signalbox_test" force="true"/>
+        <env name="DB_USERNAME" value="signalbox_test" force="true"/>
+        <env name="DB_PASSWORD" value="signalbox_test" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="5432" force="true"/>
+        <!-- Integration Redis is isolated by service and prefix; offline cache remains in memory. -->
+        <env name="REDIS_HOST" value="127.0.0.1"/>
+        <env name="REDIS_URL" value="" force="true"/>
+        <env name="REDIS_PORT" value="6379" force="true"/>
+        <env name="REDIS_PASSWORD" value="null" force="true"/>
+        <env name="REDIS_PREFIX" value="signalbox_test:" force="true"/>
+        <env name="REDIS_DB" value="0" force="true"/>
+        <env name="REDIS_CACHE_DB" value="1" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
     </php>
 </phpunit>

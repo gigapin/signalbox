@@ -31,3 +31,10 @@ Thumbs.db
 .php-cs-fixer.cache
 .phpunit.cache/
 .phpstan-cache/
+
+# Keep interrupted quality-tool test fixtures out of commits.
+/resources/js/quality-probe-*/
+
+# Ignore local frontend test reports and coverage artifacts.
+/.vitest/
+/coverage/

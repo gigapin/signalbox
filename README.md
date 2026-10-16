@@ -49,4 +49,4 @@ Non eseguire ancora migration su database di produzione: lo schema importato è 
 
 ## GitHub Actions
 
-La [pipeline CI](docs/CI.md) esegue backend PHP 8.4 e frontend Node 22 su tutte le pull request e sui push a staging/main. Il backend PHP 8.5 viene verificato soltanto sui push a main e sugli avvii manuali su main. I job backend usano PostgreSQL 16 e Redis 7 dedicati; formatter, analisi, test e build hanno step distinti. Gli esiti remoti ancora da verificare sono registrati in [docs/TASKS.md](docs/TASKS.md).
+La [pipeline CI](docs/CI.md) esegue backend PHP 8.4 e frontend Node 22 su tutte le pull request e sui push a staging/main. Il backend PHP 8.5 viene verificato soltanto sui push a main e sugli avvii manuali su main. I job backend usano PostgreSQL 16 e Redis 7 dedicati; formatter, analisi, test e build hanno step distinti. Gli esiti locali e la conferma utente dei controlli remoti sono registrati in [docs/TASKS.md](docs/TASKS.md).

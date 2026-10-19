@@ -1,8 +1,10 @@
 # Signalbox
 
-SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; le funzionalità di dominio devono ancora essere implementate.
+SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; M0 completata, con bootstrap da checkout pulito e verifiche finali superate il 2026-10-19. Ripartenza concordata per il 2026-10-20 con M1.01 (utenti, team e membership), ancora da iniziare; le funzionalità di dominio devono ancora essere implementate.
 
 Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md); i pacchetti applicativi in [docs/SERVICES.md](docs/SERVICES.md).
+
+Le [decisioni architetturali](docs/ARCHITECTURE.md) definiscono confini del dominio, checker Strategy, contesto tenant, scheduling recuperabile, conferma regionale, retention, SLA, piani e convenzioni di documentazione, distinguendo le scelte adottate dalle funzionalità ancora da implementare.
 
 ## Avvio con Docker
 

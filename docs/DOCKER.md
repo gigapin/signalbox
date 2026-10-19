@@ -104,3 +104,11 @@ docker compose up -d web queue scheduler
 ```
 
 `down --volumes` permanently deletes this Compose project's PostgreSQL and Redis volumes, including queued jobs, and the Docker frontend dependency volume. Run `docker compose run --rm node npm ci` again after a full reset. It does not delete host source, `.env`, `vendor` or `node_modules`. No reset command is run automatically.
+
+## M0 final verification evidence
+
+The complete bootstrap passed from a fresh user-created checkout on 2026-10-19, with empty dependency directories and new application/test services and volumes. Use `COMPOSE_PROJECT_NAME=signalbox-m0-clean` in that checkout's local `.env` to override the default project name, and distinct `APP_PORT`/`APP_URL` and `REVERB_FORWARD_PORT` values when running beside development. The verified ports were 18090 and 18091. Generate new local credentials rather than copying development secrets; keep the environment file untracked.
+
+The proof reused image build layers but installed all locked application dependencies from scratch. PHP 8.4.26, Node 22.23.3 and npm 10.9.9 passed bootstrap, migrations, the full verification script and HTTP/process/WebSocket smoke checks. No source, dependency constraint or lockfile change was required. Details, counts, earlier user-confirmed PHP 8.5 CI evidence and limitations are recorded in [TASKS.md](TASKS.md). The runtime smoke checks do not establish browser end-to-end behavior or production readiness.
+
+The isolated environment remains available at `http://127.0.0.1:18090`. Run `docker compose --profile realtime --profile testing down` from `/private/tmp/signalbox-m0-clean` when finished reviewing it; this preserves its named volumes and does not target development services. No volume deletion is needed to complete the proof.

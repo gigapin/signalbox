@@ -10,11 +10,20 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione e ripartenza — 2026-10-20
+
+- M0 completata il 2026-10-19: decisioni fondanti e prova finale da checkout pulito concluse. Gli esiti dettagliati e i limiti restano nel registro; le note precedenti descrivono lo stato storico delle rispettive sessioni.
+- Su indicazione dell'utente, riprendere il 2026-10-20 con M1, partendo da **M1.01**: utenti, team, membership, ruoli owner/admin/member/viewer, timezone e team corrente; migration, factory, seeder e test PostgreSQL pertinenti.
+- M1.01 è pronto ma non ancora avviato. Alla ripresa leggere AGENTS, specifica, questo registro e ADR-003/ADR-004/ADR-010; ispezionare User e schema attuali, poi segnare il task in corso prima delle modifiche. Autenticazione UI, inviti e TeamScope restano nei rispettivi task M1 successivi.
+- Lavorare nel progetto principale `/Users/pino/Projects/signalbox`, non nel checkout temporaneo della prova. Nessuna operazione Git/gh dell'agente; branch e commit restano all'utente.
+- Ultima verifica completa: 46 test Pest/125 asserzioni senza skip, controlli PHP/frontend e smoke test superati. Nessun nuovo test applicativo eseguito per questa consegna solo Markdown.
+- Ambiente isolato della prova lasciato attivo alla fine della verifica su `http://127.0.0.1:18090`; log in `/private/tmp/signalbox-m0-final-verify.log`. Non assumerne lo stato alla ripresa: controllare Docker prima di usare i servizi. Nessun arresto o reset eseguito per questa consegna.
+
 ## Criterio comune di completamento
 
 Per ogni task: comportamento verificato, autorizzazioni e isolamento rispettati, documentazione in inglese per tutti gli elementi del codice come da AGENTS, test automatici pertinenti superati, PHP-CS-Fixer e controlli statici applicabili superati, piano aggiornato. Non completare una milestone prima dei suoi criteri di uscita. Annotare comandi e risultati effettivi nel registro di sessione.
 
-## M0 — Setup e decisioni fondanti (8 h della specifica)
+## M0 — Setup e decisioni fondanti (8 h della specifica, completata)
 
 Dipendenze: nessuna. Sblocca tutte le milestone.
 
@@ -25,10 +34,10 @@ Dipendenze: nessuna. Sblocca tutte le milestone.
 - [x] M0.05 Configurare PHP-CS-Fixer come formatter PHP di riferimento, Larastan livello 8, valutazione Rector, lint/format frontend e TypeScript rigoroso; documentare la sostituzione di Pint. Baseline PHP di M0.02 confermata; completati lint/format frontend, controllo TypeScript, test degli strumenti e valutazione Rector.
 - [x] M0.06 Configurare Pest e test frontend, database di test PostgreSQL, factory iniziali e comandi unificati di verifica. Completati suite Unit/Feature/Integration, test DOM, servizi test effimeri separati, verifica factory User e comando completo.
 - [x] M0.07 Creare GitHub Actions con PHP 8.4/8.5, PostgreSQL/Redis, formatter dry-run, analisi, test e build frontend.
-- [ ] M0.08 Registrare decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione.
-- [ ] M0.09 Definire semantica scheduler sotto-minuto, prenotazione/invio affidabile, retention/partizioni, SLA e p50/p95; definire matrice dei piani (Free: massimo cinque monitor; altri valori da decidere).
+- [x] M0.08 Registrare decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione.
+- [x] M0.09 Definire semantica scheduler sotto-minuto, prenotazione/invio affidabile, retention/partizioni, SLA e p50/p95; definire matrice dei piani. Decisioni adottate in ADR-006–ADR-010, implementazione nelle milestone proprietarie.
 
-Uscita: ambiente riproducibile da checkout pulito, smoke test eseguito e controlli CI verdi per entrambe le versioni PHP.
+Uscita soddisfatta il 2026-10-19: bootstrap e smoke test da checkout pulito con PHP 8.4 superati; esiti CI PHP 8.4/8.5 già confermati dall’utente in M0.07. Dettagli e limiti nel registro della verifica finale. Prossimo task pronto: M1.01.
 
 ## M1 — Autenticazione e tenancy (14 h)
 
@@ -190,7 +199,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Da risolvere nel resto di M0: valori Pro/Business e trial; semantica conferma regionale e retry di dominio; finestre SLA e dati mancanti; retention esatta o arrotondata alle partizioni mensili; percentili aggregabili; garanzie del dispatch in caso di crash. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. Il prossimo task applicativo pronto è M1.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -203,6 +212,8 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-15 | Stack verificato con Pest 4 e Inertia 2 esplicito | Plugin Pest 3 non supporta Laravel 13; starter React attuale usa Inertia 3. Vincoli e lockfile in root, dettagli in DEPENDENCIES.md. |
 | 2026-10-15 | Baseline PHP 8.4, Node 22/npm 10 e Predis 3 | Composer risolve per PHP 8.4; runtime locale 8.5 verificato. Client Redis senza estensione locale aggiuntiva. |
 | 2026-10-15 | Bootstrap senza accessi infrastrutturali impliciti | Sessioni/cache locali su file e coda sync temporanea; PostgreSQL e Predis restano i driver selezionati. Configurazione Redis/worker in M0.03. |
+| 2026-10-16 | ADR-001–ADR-005 adottati in M0.08 | [ARCHITECTURE.md](ARCHITECTURE.md): monolite modulare con action coese; Strategy/adapter; tenant context esplicito con rifiuto in sua assenza; policy e limiti centralizzati; documentazione inglese e record evolutivi. Implementazione progressiva M1–M12, senza classi speculative; semantiche quantitative/affidabilità restano M0.09. |
+| 2026-10-19 | ADR-006–ADR-010 adottati in M0.09 | [ARCHITECTURE.md](ARCHITECTURE.md): scheduling sotto-minuto e consegna recuperabile, campioni regionali senza retry, retention logica di 30 giorni con drop fisico mensile, percentili esatti aggregabili, SLA con copertura, matrice piani e ripresa esplicita. Scelte quantitative e adeguamento retention approvati dall'utente; implementazioni M1–M10. M0 resta aperta per i criteri finali. |
 
 ## Registro sessioni
 
@@ -316,3 +327,44 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Composer host PHP 8.5.9: `composer validate --strict --no-check-publish` e `composer check-platform-reqs` superati; `composer check-platform-reqs` superato anche nel runner locale Docker PHP 8.4.26. Prova negativa `composer test -- --fail-on-skipped --compact` senza opt-in: 37 test/88 asserzioni passati e 9 integrazioni saltate, uscita 1 attesa; conferma che l'opzione CI non può produrre verde saltando i servizi. Non è una suite di regressione ancora rossa né una verifica completa delle integrazioni PHP 8.5.
 - Frontend host Node 22.23.2/npm 10.9.8: `npm run verify` superato (lint/formato/tipi, 5 test qualità, 3 test DOM, build). Linux Docker con npm 10.9.9 già presente nell'immagine locale: `npm ci --ignore-scripts --strict-peer-deps` superato, 292 pacchetti installati, zero advisory riportati al momento; `npm run verify` superato anche dopo questa installazione pulita (lint/formato/tipi, 5 test qualità, 3 test DOM e build). La CI seleziona esplicitamente npm 10.9.8 come da piano; non è stata modificata l'immagine locale.
 - Chiusura: l’utente conferma che la CI funziona, inclusa l’esecuzione PHP 8.5 su main dopo le indicazioni su merge/avvio manuale. M0.07 completato; nessun URL run o dettaglio di log remoto fornito, nessuna modifica branch protection o prova locale completa da checkout pulito dichiarata. Aggiornamento documentale senza rieseguire test: nessuna modifica al workflow o al codice. Prossimo task M0.08: decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione. M0.09 e M0 complessiva restano aperte.
+
+### 2026-10-16 — M0.08: decisioni architetturali (completato)
+
+- Dipendenze M0.01–M0.07 soddisfatte; esiti CI confermati dall’utente, incluso PHP 8.5 su main. Branch docs/architecture-decisions gestito dall’utente; nessun comando Git/gh eseguito.
+- Obiettivo: documentare confini del dominio, Strategy dei checker, tenant context, policy limiti e convenzioni di documentazione, distinguendo decisioni approvate dall’implementazione futura.
+- Perimetro: documentazione e collegamenti; nessuna classe, migration, interfaccia vuota, dipendenza o funzionalità anticipata. Semantiche quantitative e affidabilità dettagliata restano M0.09.
+- File: nuovo `docs/ARCHITECTURE.md` con ADR-001–ADR-005 (contesto, decisione, alternative, conseguenze e verifiche delle milestone proprietarie); collegamenti in README, BOOTSTRAP e registro decisioni di TASKS.
+- Decisioni: monolite modulare con convenzioni Laravel e action per ambito; Strategy con adapter e heartbeat push separato; contesto tenant limitato all’unità di lavoro, scope con rifiuto in assenza di contesto e proiezioni pubbliche dedicate; autorizzazioni e limiti componibili con quota protetta da transazione/lock Team; documentazione inglese nel codice e record architetturali evolutivi. Nessuna funzionalità futura presentata come disponibile.
+- Confini confermati: Free massimo cinque monitor; gli altri valori e le semantiche scheduler/recupero crash, retry/conferma regionale, retention/partizioni, SLA/percentili e riconciliazione restano M0.09. Nessuna riduzione di scope o modifica tacita alla specifica.
+- Verifiche: controllo Python locale superato su quattro Markdown, 36 destinazioni di link locali esistenti, cinque sezioni ADR complete, presenza del limite Free e dei rinvii M0.09, newline finale e assenza di spazi finali. Revisione di coerenza con specifica, AGENTS e bootstrap effettivo.
+- Formatter PHP, Larastan, TypeScript, lint/build e suite applicative non rieseguiti: modifiche esclusivamente Markdown, escluso dal formatter frontend esistente; nessun comportamento eseguibile aggiunto da coprire con nuovi test. La verifica documentale non certifica le implementazioni future.
+- Completato M0.08; prossimo passo M0.09 per chiudere le decisioni fondanti residue prima di M1. M0 complessiva resta aperta, inclusi i criteri di uscita non ancora attestati; nessun comando Git/gh eseguito.
+
+### 2026-10-19 — M0.09: semantiche operative (completato)
+
+- Dipendenze M0.01–M0.08 soddisfatte. Piano approvato dall'utente: consegna documentale, senza anticipare implementazioni applicative; nessun comando Git/gh.
+- Scelte confermate: Free/Pro/Business 5/50/200 monitor, intervalli minimi 300/60/30 secondi, 1/3/10 status page; trial Pro di 14 giorni senza carta; grezzi per 30 giorni logici, rollup per 90/365/730 giorni; dati mancanti separati e ripresa esplicita dopo upgrade.
+- File: `docs/ARCHITECTURE.md` (ADR-006–ADR-010 e rinvii aggiornati), `docs/TASKS.md`, `docs/BOOTSTRAP.md` e README. Nessuna modifica a codice, manifest, lockfile, workflow o scheduler.
+- Decisioni tecniche: prenotazione transazionale con registro persistente di pubblicazione, acquisizione atomica e recupero terminale senza replay di check iniziati; nessun retry di dominio; soglia iniziale tre e conferma dello stesso slot per due regioni; percentili nearest-rank da frequenze di millisecondi; SLA temporale con copertura e sconosciuti espliciti.
+- Adeguamenti approvati alla specifica: 30 giorni di accessibilità logica dei grezzi, permanenza fisica fino a circa 61 giorni più ritardo di pulizia con drop mensile verificato; dispatch ogni secondo per intervalli Business di 30 secondi; chiarito il riferimento a retry HTTP escludendo retry che nascondano campioni falliti. Specifica originale conservata, senza riduzioni di scope.
+- Scenari automatici assegnati alle milestone proprietarie: crash e duplicati, concorrenza PostgreSQL, risultati fuori ordine, soglie regionali, confini mese/anno/DST, percentili aggregati, dati mancanti, downgrade e isolamento tenant. Le verifiche documentali non certificano queste implementazioni future.
+- Verifiche documentali: controllo Python locale superato su quattro Markdown e 39 destinazioni di link locali esistenti; dieci ADR ordinati con sezioni richieste, metadati dei cinque nuovi record, matrice dei piani e invarianti principali coerenti, M0.09 completato/M1.01 ancora aperto, newline finali e assenza di spazi finali. Revisione manuale di coerenza con piano approvato, specifica e configurazioni esistenti; corretta la continuità della tabella del registro decisioni. Formatter PHP, Larastan, TypeScript, lint/build e suite applicative non eseguiti: sole modifiche Markdown e nessun comportamento eseguibile aggiunto.
+- M0.09 completato come consegna documentale; M0 complessiva resta aperta. Prossimo passo: attestare smoke test e riproducibilità da checkout pulito, con operazioni Git esclusivamente dell'utente; poi M1.01 (utenti, team, membership, ruoli, timezone e team corrente). Nessuna nuova verifica CI dichiarata.
+
+### 2026-10-19 — M0: verifica finale da checkout pulito (completata)
+
+- Checkout creato dall'utente in `/private/tmp/signalbox-m0-clean`; nessun comando Git/gh eseguito dall'agente. Verificata l'assenza iniziale di `.env`, vendor, node_modules, build frontend e config cache.
+- Prova con progetto Compose `signalbox-m0-clean`, nuovi volumi, porta web 18090 e credenziali locali generate senza stampa. Nessuna modifica ai servizi o volumi di sviluppo.
+- Bootstrap superato: `docker compose config --quiet`, `docker compose build web node` (layer in cache), `docker compose run --rm --no-deps web composer install --prefer-dist --no-interaction --no-progress` (157 installazioni, nessun aggiornamento), `docker compose run --rm node npm ci --ignore-scripts --strict-peer-deps` (292 pacchetti), generazione chiave, config clear, build iniziale, avvio PostgreSQL/Redis, quattro migration su database nuovo e avvio web/Horizon/scheduler. Nessuna pretesa di build immagini senza cache; installazioni applicative realmente da zero.
+- `./scripts/verify.sh` superato con exit 0: PHP 8.4.26, PHP-CS-Fixer dry-run 49 file senza modifiche, Larastan livello 8 zero errori, Pest 46 test/125 asserzioni senza skip; ESLint, Prettier, TypeScript, 5 test strumenti, 3 test DOM su 2 file e build Vite 8.3.4. Runtime frontend effettivo Node 22.23.3/npm 10.9.9: compatibile con i vincoli del progetto, distinto dai patch CI già documentati. Audit npm zero vulnerabilità note al momento della prova.
+- `composer validate --strict --no-check-publish` e `composer check-platform-reqs` superati nel container web. Confronto SHA-256 senza Git: 70 file di sorgente/configurazione/manifest/lock corrispondono al progetto di lavoro. Il clone contiene la documentazione committata fino a M0.08; gli aggiornamenti Markdown M0.09 presenti nel progetto principale non sono stati copiati nel checkout né necessari per eseguire il codice invariato. Nessun identificatore di commit dichiarato senza output utente.
+- Smoke reale: home e `/up` HTTP 200 dalla porta host 18090; tutti e tre gli asset CSS/JS del manifest serviti, protocollo JSON Inertia con versione corrente e componente Home corretti; `/horizon` anonimo HTTP 403, `horizon:status` running, `schedule:list` con snapshot ogni cinque minuti e log del processo scheduler attivo. Reverb avviato con credenziali locali generate e handshake WebSocket HTTP 101 riuscito. Web/PostgreSQL/Redis (inclusi servizi test) healthy; queue/scheduler/Reverb running.
+- Primo lancio dello script e prima richiesta HTTP host bloccati dal sandbox, poi rieseguiti con autorizzazione estesa e superati; non erano errori applicativi. Avvio Compose parallelo iniziale ha segnalato rete già creata dall'altro runner, senza impedire installazioni o controlli. Nessuna correzione applicativa necessaria.
+- Evidenza completa di verifica conservata localmente in `/private/tmp/signalbox-m0-final-verify.log`. Ambiente di prova lasciato attivo su `http://127.0.0.1:18090` per revisione; da quella cartella `docker compose --profile realtime --profile testing down` arresta/rimuove i soli container del progetto isolato preservando i volumi. Nessuna cancellazione di dati o volumi eseguita.
+- Documenti aggiornati nel progetto principale: TASKS, ARCHITECTURE, BOOTSTRAP, DOCKER e README. Controllo Python finale superato su cinque Markdown, 46 destinazioni di link locali, newline/spazi finali e coerenza dello stato M0 completata/M1.01 aperto.
+- Limiti: nessuna sessione browser end-to-end, benchmark, test delle funzionalità di dominio o nuova esecuzione remota CI; PHP 8.5 non rieseguito in questa prova. La CI verde per PHP 8.4/8.5 resta l'evidenza confermata dall'utente in M0.07. M0 completata sulla base di questa evidenza e della nuova riproducibilità/smoke locale. Prossimo task pronto M1.01: utenti, team, membership, ruoli, timezone e team corrente.
+
+### 2026-10-19 — Consegna per avvio M1 il 2026-10-20
+
+- Richiesta utente: aggiornare i documenti e riprendere domani con M1. Aggiornati TASKS e README con data di ripartenza, primo task pronto, riferimenti da rileggere e distinzione tra progetto principale e checkout temporaneo.
+- Nessun task M1 avviato, nessuna modifica al codice e nessun comando Git/gh eseguito. Verifica limitata ai documenti modificati; le suite applicative restano quelle già superate nella prova finale M0.

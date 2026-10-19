@@ -2,6 +2,8 @@
 
 M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, TypeScript and Tailwind 4. See [TASKS.md](TASKS.md) for remaining work and [DEPENDENCIES.md](DEPENDENCIES.md) for package constraints. The framework configuration and initial migrations were adapted from the [official Laravel 13 skeleton](https://github.com/laravel/laravel/tree/13.x); project-specific source documentation and entry points were added locally.
 
+[ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
+
 ## Application structure
 
 | Path | Responsibility |
@@ -130,3 +132,11 @@ No real browser execution, frontend interaction suite, PostgreSQL/Redis test, mi
 ## M0.06 testing follow-up
 
 [TESTING.md](TESTING.md) documents Unit/Feature/Integration suites, guarded ephemeral PostgreSQL/Redis services, User factory coverage, Vitest/Testing Library and the executable full-stack verification command. Ordinary Pest runs skip integration without connecting; full verification uses `php-test` and refreshes only its dedicated schema. New JSON scripts, Node patch requirements and test dependencies are documented in [DEPENDENCIES.md](DEPENDENCIES.md).
+
+## M0 final clean-checkout verification
+
+On 2026-10-19 the user created a fresh checkout at `/private/tmp/signalbox-m0-clean`. It initially had no environment file, vendor directory, frontend dependencies, build output or cached application configuration. The documented Docker bootstrap installed 157 Composer packages and 292 npm packages from the locks, created a fresh application database and ran all four baseline migrations. Image layers reused the Docker build cache; this was not a cache-free image rebuild.
+
+The isolated Compose project `signalbox-m0-clean` passed `./scripts/verify.sh`: PHP 8.4.26, formatter dry-run on 49 files, Larastan level 8, 46 Pest tests with 125 assertions and no skips, frontend lint/format/types, five quality tests, three DOM tests and production build. The actual Docker frontend runtime was Node 22.23.3/npm 10.9.9, within the manifest constraints. HTTP home/liveness/assets, versioned Inertia JSON, anonymous Horizon denial, Horizon/scheduler processes and Reverb WebSocket upgrade passed. See [TASKS.md](TASKS.md) for commands, evidence and limitations.
+
+This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI results; no new remote CI run or local PHP 8.5 integration run is claimed. Application source, configuration, manifests and locks matched the working project across 70 compared files; the checkout's older committed Markdown did not affect runtime verification. Next: M1.01, identity and team data models.

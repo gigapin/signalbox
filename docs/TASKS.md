@@ -13,10 +13,10 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 ## Consegna di sessione e ripartenza — 2026-10-20
 
 - M0 completata il 2026-10-19: decisioni fondanti e prova finale da checkout pulito concluse. Gli esiti dettagliati e i limiti restano nel registro; le note precedenti descrivono lo stato storico delle rispettive sessioni.
-- Su indicazione dell'utente, riprendere il 2026-10-20 con M1, partendo da **M1.01**: utenti, team, membership, ruoli owner/admin/member/viewer, timezone e team corrente; migration, factory, seeder e test PostgreSQL pertinenti.
-- M1.01 è pronto ma non ancora avviato. Alla ripresa leggere AGENTS, specifica, questo registro e ADR-003/ADR-004/ADR-010; ispezionare User e schema attuali, poi segnare il task in corso prima delle modifiche. Autenticazione UI, inviti e TeamScope restano nei rispettivi task M1 successivi.
+- M1.01 completato il 2026-10-20: utenti, team, membership, ruoli owner/admin/member/viewer, timezone e team corrente; migration, factory, seeder e test PostgreSQL. Dettagli e limiti in [IDENTITY.md](IDENTITY.md) e nel registro di sessione.
+- Prossimo task pronto: **M1.02**, registrazione, login/logout, recupero password, verifica email e 2FA con UI. Alla ripresa leggere AGENTS, specifica, questo registro, IDENTITY e ADR-003/ADR-004/ADR-010. Inviti, gestione membri/cambio team, TeamScope e policy restano nei rispettivi task M1 successivi.
 - Lavorare nel progetto principale `/Users/pino/Projects/signalbox`, non nel checkout temporaneo della prova. Nessuna operazione Git/gh dell'agente; branch e commit restano all'utente.
-- Ultima verifica completa: 46 test Pest/125 asserzioni senza skip, controlli PHP/frontend e smoke test superati. Nessun nuovo test applicativo eseguito per questa consegna solo Markdown.
+- Ultima verifica completa M1.01: `./scripts/verify.sh` superato con PHP 8.4.26, formatter/Larastan livello 8, 76 test Pest/255 asserzioni senza skip, controlli frontend, 5 test qualità, 3 test DOM e build. Anche Pest con `--fail-on-skipped` superato. Smoke e CI M0 restano evidenze storiche, senza nuova verifica remota o PHP 8.5 integrato dichiarata.
 - Ambiente isolato della prova lasciato attivo alla fine della verifica su `http://127.0.0.1:18090`; log in `/private/tmp/signalbox-m0-final-verify.log`. Non assumerne lo stato alla ripresa: controllare Docker prima di usare i servizi. Nessun arresto o reset eseguito per questa consegna.
 
 ## Criterio comune di completamento
@@ -37,13 +37,13 @@ Dipendenze: nessuna. Sblocca tutte le milestone.
 - [x] M0.08 Registrare decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione.
 - [x] M0.09 Definire semantica scheduler sotto-minuto, prenotazione/invio affidabile, retention/partizioni, SLA e p50/p95; definire matrice dei piani. Decisioni adottate in ADR-006–ADR-010, implementazione nelle milestone proprietarie.
 
-Uscita soddisfatta il 2026-10-19: bootstrap e smoke test da checkout pulito con PHP 8.4 superati; esiti CI PHP 8.4/8.5 già confermati dall’utente in M0.07. Dettagli e limiti nel registro della verifica finale. Prossimo task pronto: M1.01.
+Uscita soddisfatta il 2026-10-19: bootstrap e smoke test da checkout pulito con PHP 8.4 superati; esiti CI PHP 8.4/8.5 già confermati dall’utente in M0.07. Dettagli e limiti nel registro della verifica finale. Alla chiusura M0 il primo task pronto era M1.01, completato il 2026-10-20; ora procedere con M1.02.
 
 ## M1 — Autenticazione e tenancy (14 h)
 
 Dipendenze: M0.
 
-- [ ] M1.01 Creare utenti, team, membership, ruoli, timezone e team corrente con migration, factory e seeder.
+- [x] M1.01 Creare utenti, team, membership, ruoli, timezone e team corrente con migration, factory e seeder.
 - [ ] M1.02 Implementare registrazione, login/logout, recupero password, verifica email e 2FA con UI.
 - [ ] M1.03 Implementare inviti email, accettazione, gestione membri e cambio team; definire scadenza inviti e vincoli sull'ultimo owner.
 - [ ] M1.04 Implementare TeamScope, tenant context esplicito nei processi asincroni e policy per owner/admin/member/viewer.
@@ -199,7 +199,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. Il prossimo task applicativo pronto è M1.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 completato il 2026-10-20; il prossimo task applicativo pronto è M1.02. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -368,3 +368,19 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 
 - Richiesta utente: aggiornare i documenti e riprendere domani con M1. Aggiornati TASKS e README con data di ripartenza, primo task pronto, riferimenti da rileggere e distinzione tra progetto principale e checkout temporaneo.
 - Nessun task M1 avviato, nessuna modifica al codice e nessun comando Git/gh eseguito. Verifica limitata ai documenti modificati; le suite applicative restano quelle già superate nella prova finale M0.
+
+### 2026-10-20 — M1.01: identità e team (completato)
+
+- Dipendenze M0 soddisfatte; implementazione autorizzata del piano M1.01. Nessun comando Git/gh.
+- Perimetro: migration incrementali, Team/Membership, enum ruoli/piani, CreateTeam transazionale, team corrente verificato tramite membership, factory e seeder sintetico local/testing, test PostgreSQL.
+- Decisione utente: più owner consentiti; owner_id identifica il titolare principale, sempre owner nella membership. Timezone default UTC; trial iniziale di 14 giorni esatti. UI/auth/2FA, inviti, gestione membri, TeamScope e policy restano nei task successivi.
+- File applicativi: `app/Actions/Identity/CreateTeam.php`, enum in `app/Enums/Identity` e `app/Enums/Billing`, modelli User/Team/Membership; tre nuove migration incrementali, factory Team/Membership e seeder DatabaseSeeder/IdentitySeeder. Nuovi test in `tests/Integration/TeamIdentityTest.php`. Documenti: nuovo IDENTITY, aggiornati README, BOOTSTRAP, ARCHITECTURE, TESTING e questo piano. Nessuna dipendenza, manifest, lockfile o rotta modificata.
+- Implementazione: slug univoco, vincoli PostgreSQL su ruolo/piano/coppia membership/FK/ordine trial; owner principale non eliminabile mentre possiede team; eliminazione team con cascade membership e azzeramento preferenze. CreateTeam valida input, blocca la riga utente e scrive aggregato/preferenza nella stessa transazione, preservando selezioni esistenti. Resolver rilegge preferenza e membership senza fallback né fiducia nelle relazioni già caricate. Protezione owner e trial contro mass assignment; nessun diritto effettivo o policy anticipato.
+- Factory User resta indipendente; factory Team crea il titolare come owner, Membership supporta tutti i ruoli. Seeder local/testing sintetico e ripetibile: quattro utenti condivisi fra due team, nessuna rete, password fixture pubblica e hashata; rifiutato anche con --force in produzione. Trial storico e credenziali non vengono rinnovati al rerun.
+- Test nuovi: 30 casi/130 asserzioni sul PostgreSQL isolato, inclusi invalidi, duplicati, rollback dopo inserimento team, membership revocata/ID estraneo/selezione obsoleta, ruoli e più owner, cancellazioni, durata UTC del trial attraverso cambio DST, factory, seeder ripetuto/guard produzione e rollback/reapply migration senza alterare utenti esistenti. Due connessioni reali verificano la contesa sulla riga owner: la seconda creazione incontra SQLSTATE 55P03 con lock timeout 100 ms mentre la prima è non confermata; fixture committata di prova rimossa in finally. Non è una dichiarazione di suite parallel-safe.
+- Controlli superati: `docker compose run --rm php-test composer format -- --sequential` con PHP 8.4.26; `./scripts/verify.sh` exit 0, formatter dry-run su 61 file, Larastan livello 8 zero errori, 76 test Pest/255 asserzioni senza skip; ESLint, Prettier, TypeScript, 5 test qualità, 3 test DOM e build Vite 8.3.4. Anche `docker compose run --rm php-test composer test -- --fail-on-skipped --compact` exit 0 con gli stessi 76 test/255 asserzioni. Log locali `/private/tmp/signalbox-m1-verify.log` e `/private/tmp/signalbox-m1-no-skips.log`.
+- Host PHP 8.5.9: analisi Larastan iniziale superata; `composer test -- --compact` exit 0 con 37 test/88 asserzioni e 39 integrazioni saltate come atteso senza opt-in. Non equivale a verifica integrata PHP 8.5. Formatter host iniziale senza modifiche, poi rieseguito nel runtime PHP 8.4 di riferimento. Nessuna nuova CI remota o sessione browser end-to-end.
+- Correzioni durante verifica: API Pest di skip a livello file non supportata, sostituita con beforeEach senza accesso DB in assenza di opt-in; test guard seeder inizialmente fermato dalla conferma standard di Artisan, corretto usando --force per raggiungere e verificare il rifiuto applicativo. Tutti i controlli finali sopra sono successivi alle correzioni.
+- Docker accessibile con esecuzione autorizzata fuori sandbox; avviati soltanto servizi test isolati, lasciati attivi. Nessuna migration/seeding sul database di sviluppo, nessuna modifica .env, reset applicativo o operazione Git/gh. L'ambiente temporaneo M0 non è stato usato né gestito.
+- Verifica documentale finale superata su sei Markdown e 54 destinazioni di link locali, newline/spazi finali e coerenza checklist M1.01 completato/M1.02 aperto; revisione della documentazione inglese del codice.
+- Completato soltanto M1.01. M1 complessiva resta aperta; prossimo passo M1.02. Cambi team/inviti/ultimo owner M1.03, TeamScope/contesto/policy M1.04 e matrice ingressi M1.05 restano espliciti.

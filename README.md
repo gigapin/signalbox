@@ -1,6 +1,6 @@
 # Signalbox
 
-SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; M0 completata, con bootstrap da checkout pulito e verifiche finali superate il 2026-10-19. Ripartenza concordata per il 2026-10-20 con M1.01 (utenti, team e membership), ancora da iniziare; le funzionalità di dominio devono ancora essere implementate.
+SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; M0 completata, con bootstrap da checkout pulito e verifiche finali superate il 2026-10-19. M1.01 introduce utenti, team, membership, ruoli e creazione transazionale; autenticazione UI e isolamento tenant completo restano nei task M1 successivi. La fondazione dati è documentata in [docs/IDENTITY.md](docs/IDENTITY.md).
 
 Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md); i pacchetti applicativi in [docs/SERVICES.md](docs/SERVICES.md).
 
@@ -47,7 +47,7 @@ npm run verify
 
 `composer format` applica la formattazione PHP; `npm run format` quella frontend. `npm run check` verifica lint, formato, TypeScript e i cinque test degli strumenti di qualità. Configurazione e valutazione di Rector sono in [docs/QUALITY.md](docs/QUALITY.md). I test iniziali verificano HTML, protocollo Inertia, liveness e 404 senza database o Redis. I test infrastrutturali PostgreSQL/Redis sono disponibili esplicitamente in Docker, come descritto in `docs/DOCKER.md`; i primi test frontend DOM sono operativi e le verifiche di dominio saranno aggiunte nelle rispettive milestone. `/up` indica soltanto che il framework si avvia: il controllo di readiness dell'infrastruttura appartiene a M11.
 
-Non eseguire ancora migration su database di produzione: lo schema importato è quello di base del framework, da estendere con il dominio. `.env`, dipendenze, build, cache e log sono esclusi da Git.
+Non eseguire ancora migration su database di produzione: lo schema comprende le prime entità di identità, mentre il dominio e le autorizzazioni sono ancora in sviluppo. `.env`, dipendenze, build, cache e log sono esclusi da Git.
 
 ## GitHub Actions
 

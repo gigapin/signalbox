@@ -279,3 +279,11 @@ UI, API, CLI e job condividono la definizione centralizzata. Un job vecchio riva
 ADR-006–ADR-010 chiudono le decisioni fondanti residue e completano ADR-001–ADR-005. Tutte sono indirizzi adottati per le milestone indicate, non funzionalità disponibili. M0.09 non aggiunge API pubbliche, contratti PHP/TypeScript eseguibili, tabelle, dipendenze o cambi allo scheduler corrente. Le future interfacce rappresenteranno identità di esecuzione, classificazione infrastrutturale, copertura SLA e motivi distinti di sospensione nei task proprietari.
 
 La verifica finale del 2026-10-19 ha completato i criteri di uscita di M0: bootstrap e smoke test da checkout pulito superati, con gli esiti CI PHP 8.4/8.5 precedentemente confermati dall’utente. Evidenze e limiti sono nel registro di [TASKS.md](TASKS.md); questi record non certificano le funzionalità future. Il prossimo task pronto è M1.01.
+
+## M1.01 — Chiarimento proprietà e implementazione iniziale
+
+Data: 2026-10-20. Decisione esplicita utente: più membership owner sono consentite; `teams.owner_id` identifica il titolare principale, che la creazione transazionale registra anche come owner. Non viene introdotto un vincolo di unicità sul ruolo owner. Trasferimento e protezione dell'ultimo owner restano M1.03.
+
+M1.01 implementa soltanto la fondazione dati di ADR-003/004/010: identità Team/Membership, ruoli/piani tipizzati, timezone, preferenza team corrente risolta attraverso membership attuale e trial iniziale con inizio/fine persistiti. La creazione usa action coesa e lock transazionale sull'utente per non sovrascrivere la prima selezione sotto concorrenza; nessun repository o contratto senza varianti reali. L'invariante del titolare owner è mantenuta dalla creazione e dalle factory, non da un trigger che anticipi la gestione membri.
+
+Dettagli e limiti in [IDENTITY.md](IDENTITY.md). TeamScope, tenant context, policy e risoluzione del diritto effettivo non sono implementati da questo task; gli ADR precedenti restano adottati per le rispettive milestone. Nessuna deviazione dallo stack o riduzione di scope.

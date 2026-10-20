@@ -15,10 +15,10 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 | `app/Providers/AppServiceProvider.php` | Extension point for later domain bindings and boot behavior. |
 | `app/Http/Controllers/HomeController.php` | Select the public `Home` Inertia page. |
 | `app/Http/Middleware/HandleInertiaRequests.php` | Share the public product name and select the Blade document shell. |
-| `app/Models/User.php` | Baseline user identity, password hashing and protected serialization; team rules are M1. |
+| `app/Models/User.php` | User identity, protected authentication fields and membership-based team resolution; see IDENTITY.md. |
 | `database/factories/UserFactory.php` | Generate non-production synthetic user identities. |
-| `database/seeders/DatabaseSeeder.php` | Explicit seeding entry point; currently creates no accounts. |
-| `database/migrations` | Unexecuted baseline framework schemas for users, reset tokens, sessions, cache and queue storage. |
+| `database/seeders/DatabaseSeeder.php` | Explicit entrypoint for guarded, repeatable local/testing identity fixtures; see IDENTITY.md. |
+| `database/migrations` | Baseline framework schemas plus incremental team, membership and current-team preference migrations. |
 | `routes/web.php` | Public home route; authentication and monitoring routes are not implemented. |
 | `routes/console.php` | Reserved command and scheduling extension point for later milestones. |
 | `resources/views/app.blade.php` | Accessible HTML document with Vite and Inertia directives. |
@@ -139,4 +139,8 @@ On 2026-10-19 the user created a fresh checkout at `/private/tmp/signalbox-m0-cl
 
 The isolated Compose project `signalbox-m0-clean` passed `./scripts/verify.sh`: PHP 8.4.26, formatter dry-run on 49 files, Larastan level 8, 46 Pest tests with 125 assertions and no skips, frontend lint/format/types, five quality tests, three DOM tests and production build. The actual Docker frontend runtime was Node 22.23.3/npm 10.9.9, within the manifest constraints. HTTP home/liveness/assets, versioned Inertia JSON, anonymous Horizon denial, Horizon/scheduler processes and Reverb WebSocket upgrade passed. See [TASKS.md](TASKS.md) for commands, evidence and limitations.
 
-This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI results; no new remote CI run or local PHP 8.5 integration run is claimed. Application source, configuration, manifests and locks matched the working project across 70 compared files; the checkout's older committed Markdown did not affect runtime verification. Next: M1.01, identity and team data models.
+This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI results; no new remote CI run or local PHP 8.5 integration run is claimed. Application source, configuration, manifests and locks matched the working project across 70 compared files; the checkout's older committed Markdown did not affect runtime verification. At M0 closure the next task was M1.01, now implemented as described below.
+
+## M1.01 identity foundation
+
+[IDENTITY.md](IDENTITY.md) documents the new Team/Membership models, role/plan enums, transactional creation action, safe current-team resolver, incremental migrations, factories and explicit synthetic local/testing seeder. Authentication UI, invitations, switching, tenant context and policies remain subsequent M1 tasks. Existing users are preserved without automatic team assignment. No dependency, manifest or lockfile changed.

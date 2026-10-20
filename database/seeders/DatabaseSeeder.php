@@ -1,20 +1,17 @@
 <?php
 
-/**
- * Reserve the main database seeding entry point for explicit synthetic datasets.
- */
+/** Seed the explicitly synthetic identity dataset for local development and automated tests. */
 
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-/** Avoid silently creating accounts before the authentication milestone. */
+/** Delegate to the environment-guarded, repeatable identity fixture seeder. */
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed only datasets explicitly introduced by later feature milestones.
-     */
+    /** Seed local/testing fixtures; IdentitySeeder refuses all other environments. */
     public function run(): void
     {
+        $this->call(IdentitySeeder::class);
     }
 }

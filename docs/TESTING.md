@@ -65,7 +65,7 @@ Twelve pure unit cases verify accepted configuration and rejection of cached sta
 
 `tests/Pest.php` attaches the Laravel test case to Feature/Integration. It attaches `RefreshDatabase` only when integration opt-in is enabled, so an ordinary offline run does not initialize a database trait merely because integration tests are discovered and skipped. The historical `docker` group name and `RUN_DOCKER_TESTS` flag are retained; the execution destination is now strictly isolated.
 
-Integration tests cover PostgreSQL transactions, Redis cache/lock/queue transport, Sanctum hash/abilities/revocation/expiry and Scout queries with an explicit synthetic owner constraint. User factory tests verify distinct synthetic emails, verified/unverified states, hashed sample passwords, persistence and hiding authentication fields in serialization. No customer, team, monitor or billing factory is invented before its domain model exists. Factory passwords are non-production fixtures; no new demo accounts are seeded.
+Integration tests cover PostgreSQL transactions, Redis cache/lock/queue transport, Sanctum hash/abilities/revocation/expiry and Scout queries with an explicit synthetic owner constraint. User factory tests verify distinct synthetic emails, verified/unverified states, hashed sample passwords, persistence and hiding authentication fields in serialization. M1.01 adds coherent Team/Membership factories and an explicit, environment-guarded synthetic seeder; see [IDENTITY.md](IDENTITY.md). Factory passwords are non-production fixtures. Ordinary test startup does not seed demo accounts.
 
 Commands:
 
@@ -83,7 +83,7 @@ docker compose run --rm php-test php vendor/bin/pest --group=docker
 docker compose run --rm php-test composer verify
 ```
 
-The PHP suite is currently sequential. Parallel database provisioning and race-condition tests must be added when concurrency-sensitive domain work requires them; a shared single test database is not presented as parallel-safe.
+The PHP suite is currently sequential. M1.01 adds a two-session PostgreSQL owner-lock contention test with a bounded database lock timeout and explicit fixture cleanup. This does not make the shared test database parallel-safe; parallel database provisioning remains future work.
 
 ## React DOM tests
 
@@ -116,3 +116,7 @@ No real browser, Stripe account, external network or CI execution is claimed her
 ## M0.07 CI follow-up
 
 [CI.md](CI.md) documents the implemented workflow, event policy and every gate. CI explicitly enables integration tests and uses `--fail-on-skipped`; the same database guard accepts its dedicated loopback services. PHP 8.4 and frontend run on PRs and staging/main pushes; PHP 8.5 runs only on main pushes or manual dispatch on main by explicit user decision. Historical M0.06 evidence above does not claim remote workflow execution; current evidence and remaining acceptance checks are in [TASKS.md](TASKS.md).
+
+## M1.01 domain verification
+
+[IDENTITY.md](IDENTITY.md) documents the identity integration scenarios: creation and full rollback, real constraints, stale selection and membership revocation, owner roles, trial timestamps, factory states, guarded/repeatable seeding, incremental migration reversal and two-session owner-lock contention. Tests use the existing opt-in database guard and do not migrate or seed the development database. The contention probe connection copies only the already guarded test connection settings.

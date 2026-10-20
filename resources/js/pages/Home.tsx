@@ -1,21 +1,23 @@
 /** Render the initial public entry point without invented monitoring data. */
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
-/** Shared public props supplied by the Laravel Inertia middleware. */
+/** Shared non-secret props supplied by the Laravel Inertia middleware. */
 interface HomePageProps {
     /** Public product name configured by the server. */
     appName: string;
+    /** Explicit current identity projection, absent for older public-only fixtures. */
+    auth?: { user: { name: string; email: string } | null };
     /** Standard protocol props provided by Inertia and its middleware. */
     [key: string]: unknown;
 }
 
 /**
- * Present the product identity while authenticated features are implemented.
+ * Present the product identity with session-appropriate account navigation.
  * @returns Accessible initial application page.
  */
 export default function Home() {
     /** Public product identity received through the Inertia response. */
-    const { appName } = usePage<HomePageProps>().props;
+    const { appName, auth } = usePage<HomePageProps>().props;
 
     return (
         <>
@@ -35,8 +37,21 @@ export default function Home() {
                         A clear view of your services, incidents, and public status.
                     </p>
                     <p className="mt-10 border-t border-slate-800 pt-6 text-sm text-slate-400">
-                        The application is being built. Monitoring and account features will follow.
+                        The application is being built. Monitoring features will follow.
                     </p>
+                    <nav
+                        aria-label="Account navigation"
+                        className="mt-6 flex gap-6 text-emerald-300"
+                    >
+                        {auth?.user ? (
+                            <Link href="/account">Open account</Link>
+                        ) : (
+                            <>
+                                <Link href="/login">Sign in</Link>
+                                <Link href="/register">Create an account</Link>
+                            </>
+                        )}
+                    </nav>
                 </section>
             </main>
         </>

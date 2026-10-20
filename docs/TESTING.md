@@ -120,3 +120,15 @@ No real browser, Stripe account, external network or CI execution is claimed her
 ## M1.01 domain verification
 
 [IDENTITY.md](IDENTITY.md) documents the identity integration scenarios: creation and full rollback, real constraints, stale selection and membership revocation, owner roles, trial timestamps, factory states, guarded/repeatable seeding, incremental migration reversal and two-session owner-lock contention. Tests use the existing opt-in database guard and do not migrate or seed the development database. The contention probe connection copies only the already guarded test connection settings.
+
+## M1.02 authentication verification
+
+[AUTHENTICATION.md](AUTHENTICATION.md) documents the exact HTTP/security surface. Public-page and guest-boundary tests remain infrastructure-free. New PostgreSQL suites exercise registration with post-commit notification fakes, case-insensitive constraints, atomic rollback, login/logout/session revocation, email verification, reset-token lifetime/consumption, mandatory verification, confirmed/pending authenticators, challenge fingerprints/expiry, secret omission and recovery-code replacement. TOTP uses the application clock through a maintained-engine adapter; numeric cache counters are normalized before replay comparison.
+
+Two-session probes verify contention for case-variant registration, reset-token consumption and recovery-code mutation. They use only connections copied from the guarded test database, bounded 100 ms PostgreSQL lock timeouts and explicit committed-fixture cleanup. They combine real lock contention with successful/replayed HTTP cases; they do not provision independent databases or make the complete suite safe for parallel execution.
+
+DOM tests mount the real Inertia forms/provider and intercept only routing/fetch boundaries. They cover submit/loading/error behavior and credential clearing, registration fields, keyboard switching between TOTP/recovery methods, verification resend, missing-team state, sensitive fetches only on demand, recovery-code hiding/remount and HTTP 423 reauthentication handling. No real email provider or full-browser end-to-end run is claimed.
+
+## HTTP child environment regression
+
+`ContainerWebEnvironmentTest` starts the actual Dockerfile server argument vector on an ephemeral loopback port, supplies only guarded test database coordinates, and performs a real CSRF-protected login lookup for a nonexistent `.invalid` account. HTTP 422 confirms the child reached PostgreSQL and rejected credentials normally; the old command returned HTTP 500 after losing its container environment overrides. The test uses only test storage, keeps cookies in memory and stops the child in `finally`. It requires integration opt-in and does not create development accounts.

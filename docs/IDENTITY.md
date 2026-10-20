@@ -54,3 +54,7 @@ docker compose run --rm php-test php vendor/bin/pest --filter=TeamIdentity --fai
 ```
 
 M1.01 introduces no public HTTP/TypeScript API and does not establish complete tenant authorization. M1.02–M1.05 remain open.
+
+## M1.02 follow-up
+
+[AUTHENTICATION.md](AUTHENTICATION.md) now documents the implemented authentication UI, email verification and optional 2FA. The M1.01-only statements above describe that task’s historical boundary. User now normalizes assigned emails, implements mandatory verification and hides Fortify-encrypted authenticator fields. Registration uses the existing CreateTeam action inside an outer transaction, then notifies after commit; it does not introduce general team creation/switching or tenant authorization. M1.03–M1.05 remain open.

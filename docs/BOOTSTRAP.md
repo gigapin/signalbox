@@ -10,16 +10,16 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 |---|---|
 | `artisan` | Load Composer and run a console request through Laravel. |
 | `public/index.php` | Honor maintenance mode and dispatch incoming HTTP requests. |
-| `bootstrap/app.php` | Register browser/console routes, framework liveness, Inertia middleware and the standard exception handler. |
+| `bootstrap/app.php` | Register routes, liveness, Inertia/session revocation middleware and sensitive-field flash exclusions. |
 | `bootstrap/providers.php` | Register the application's service provider. |
 | `app/Providers/AppServiceProvider.php` | Extension point for later domain bindings and boot behavior. |
 | `app/Http/Controllers/HomeController.php` | Select the public `Home` Inertia page. |
-| `app/Http/Middleware/HandleInertiaRequests.php` | Share the public product name and select the Blade document shell. |
-| `app/Models/User.php` | User identity, protected authentication fields and membership-based team resolution; see IDENTITY.md. |
+| `app/Http/Middleware/HandleInertiaRequests.php` | Share product name, a minimal current-identity projection and safe status; select the Blade shell. |
+| `app/Models/User.php` | User identity, mandatory email verification, hidden encrypted 2FA fields and membership-based team resolution. |
 | `database/factories/UserFactory.php` | Generate non-production synthetic user identities. |
 | `database/seeders/DatabaseSeeder.php` | Explicit entrypoint for guarded, repeatable local/testing identity fixtures; see IDENTITY.md. |
 | `database/migrations` | Baseline framework schemas plus incremental team, membership and current-team preference migrations. |
-| `routes/web.php` | Public home route; authentication and monitoring routes are not implemented. |
+| `routes/web.php` | Public home route plus the explicitly declared authentication routes in routes/auth.php; monitoring remains future work. |
 | `routes/console.php` | Reserved command and scheduling extension point for later milestones. |
 | `resources/views/app.blade.php` | Accessible HTML document with Vite and Inertia directives. |
 | `resources/js/app.tsx` | Discover React pages at build time and mount the Inertia client. |
@@ -144,3 +144,7 @@ This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI res
 ## M1.01 identity foundation
 
 [IDENTITY.md](IDENTITY.md) documents the new Team/Membership models, role/plan enums, transactional creation action, safe current-team resolver, incremental migrations, factories and explicit synthetic local/testing seeder. Authentication UI, invitations, switching, tenant context and policies remain subsequent M1 tasks. Existing users are preserved without automatic team assignment. No dependency, manifest or lockfile changed.
+
+## M1.02 web authentication
+
+[AUTHENTICATION.md](AUTHENTICATION.md) documents implemented registration, login/logout, password recovery, mandatory email verification and optional 2FA with English Inertia pages. Registration creates the initial team atomically; existing users remain intact. One incremental migration adds nullable encrypted-secret storage and case-insensitive email uniqueness. Apply migrations deliberately to the intended local environment; automatic checks continue to use only the isolated test database. Fortify and its lock changes, including the targeted HttpFoundation advisory fix, are documented in [DEPENDENCIES.md](DEPENDENCIES.md). Invitations/switching and tenant policies remain M1.03–M1.04.

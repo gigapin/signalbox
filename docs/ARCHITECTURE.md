@@ -287,3 +287,13 @@ Data: 2026-10-20. Decisione esplicita utente: più membership owner sono consent
 M1.01 implementa soltanto la fondazione dati di ADR-003/004/010: identità Team/Membership, ruoli/piani tipizzati, timezone, preferenza team corrente risolta attraverso membership attuale e trial iniziale con inizio/fine persistiti. La creazione usa action coesa e lock transazionale sull'utente per non sovrascrivere la prima selezione sotto concorrenza; nessun repository o contratto senza varianti reali. L'invariante del titolare owner è mantenuta dalla creazione e dalle factory, non da un trigger che anticipi la gestione membri.
 
 Dettagli e limiti in [IDENTITY.md](IDENTITY.md). TeamScope, tenant context, policy e risoluzione del diritto effettivo non sono implementati da questo task; gli ADR precedenti restano adottati per le rispettive milestone. Nessuna deviazione dallo stack o riduzione di scope.
+
+## M1.02 — Autenticazione web e protezione dell'identità
+
+Data: 2026-10-20. Decisioni confermate dall'utente: registrazione con nome del primo team, slug generato dal server, verifica email obbligatoria, 2FA facoltativa, UI/email in inglese. Fortify fornisce pipeline/controller e primitive mantenute; le rotte sono dichiarate dall'applicazione e i form restano Inertia 2/React, senza cambiare starter o stack.
+
+L'action RegisterUser compone CreateTeam nella stessa transazione e pubblica Registered dopo commit. L'identità email è normalizzata e protetta da indice PostgreSQL case-insensitive; collisioni pregresse fermano la migration senza fusioni. La registrazione non accetta owner, ruolo, piano o trial dal client.
+
+Conferma password recente, challenge pendente a tempo e fingerprint delle credenziali proteggono le transizioni. Consumo/rigenerazione recovery e reset password si coordinano sulla riga User; uno scope tenant non è appropriato per queste operazioni di identità. Il provider TOTP delega la crittografia alla libreria e adatta soltanto clock/replay cache, isolando i contatori per segreto. Props condivise e pagina account espongono proiezioni minime; dettagli 2FA restano su JSON no-store e stato UI non ricordato. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md).
+
+Questa attuazione non sostituisce ADR-003/004: tenant context, policy e gestione membri restano nei task successivi. Adeguamento dipendenze registrato: Fortify ^1.41 e correzione mirata dell'advisory HttpFoundation con versione compatibile 7.4.21; nessuna riduzione di scope.

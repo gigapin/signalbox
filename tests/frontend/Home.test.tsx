@@ -9,7 +9,7 @@ function rendersPublicHome(): void {
     expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Signalbox Test' })).toBeVisible();
     expect(screen.getByRole('region', { name: 'Signalbox Test' })).toBeInTheDocument();
-    expect(screen.getByText(/Monitoring and account features will follow/)).toBeVisible();
+    expect(screen.getByText(/Monitoring features will follow/)).toBeVisible();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
 }
 

@@ -34,7 +34,9 @@ Each job provisions fresh PostgreSQL 16 and Redis 7 service containers using the
 
 `RUN_DOCKER_TESTS=1` opts into real integrations even though PHP runs directly on the runner. `phpunit.xml` supplies forced test identities, connection settings and fake package credentials. The existing pre-migration guard verifies the server identity before `RefreshDatabase` migrates the dedicated database. Tests run sequentially; separate jobs do not share their database or Redis. Services disappear with the job and never use local development data.
 
-The workflow does not copy a developer `.env`, generate private keys or cache Laravel configuration. A public fixture APP_KEY and testing environment allow package discovery without application secrets. Tests continue to force their own isolated settings. YAML anchors reuse backend services and steps between the two jobs; their PHP versions remain explicit per-job environment values.
+Before Composer installation, both backend jobs create an empty `.env.testing`. Runtime values still come from the job environment and PHPUnit's isolated settings; no developer `.env` is copied, private key generated or Laravel configuration cached. The empty file prevents phpdotenv's missing-file reads from becoming PHPUnit warnings on fresh runners. A public fixture APP_KEY and testing environment allow package discovery without application secrets. YAML anchors reuse backend services and steps between the two jobs; their PHP versions remain explicit per-job environment values.
+
+Backend jobs do not build frontend assets or receive the independent frontend job's build output. `ContainerWebEnvironmentTest` therefore requests the login page through the Inertia JSON protocol, with the current asset version (empty when no build exists), before exercising the real CSRF-protected login POST against PostgreSQL. It does not render the Vite-dependent HTML shell. The isolated HTTP process reports errors through stderr, included in failure diagnostics without printing response bodies or cookies; it is stopped in `finally`.
 
 ## Frontend gates
 

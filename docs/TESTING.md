@@ -17,6 +17,8 @@ The existing PHP/Node images, Composer dependencies and configured local `.env` 
 
 The verification command starts only `postgres-test` and `redis-test` as backend dependencies. Web, Horizon, scheduler and Reverb need not be running. Existing application containers are not stopped, recreated or reset. Test services are left running so subsequent test runs can start quickly.
 
+On CI, backend jobs create an empty `.env.testing` before installing PHP dependencies. This file supplies no configuration values; PHPUnit and the job environment remain authoritative. It avoids missing `.env` warnings on runners without a developer environment file. Local verification does not create or overwrite either environment file.
+
 ## Isolated services
 
 | Service | Purpose | Storage / access |
@@ -84,6 +86,8 @@ docker compose run --rm php-test composer verify
 ```
 
 The PHP suite is currently sequential. M1.01 adds a two-session PostgreSQL owner-lock contention test with a bounded database lock timeout and explicit fixture cleanup. This does not make the shared test database parallel-safe; parallel database provisioning remains future work.
+
+`ContainerWebEnvironmentTest` starts the Dockerfile's actual development-server command on a temporary loopback port using only the guarded test database. Its initial GET requests the `Auth/Login` Inertia JSON response with a matching asset version, so it works both with and without compiled Vite assets. Cookie sessions persist CSRF state for the subsequent POST, which must return validation error `errors.email` for a nonexistent synthetic account. A failed probe includes the isolated server's console output, never response bodies or cookies; the child process is always stopped. To reproduce fresh-runner behavior, use a temporary source copy without `.env`, `public/hot` or `public/build`, prepare only an empty `.env.testing`, and mount that copy into `php-test`; do not rename or remove the development project's environment or assets.
 
 ## React DOM tests
 

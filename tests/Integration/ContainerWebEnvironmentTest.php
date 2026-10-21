@@ -2,8 +2,10 @@
 
 /** Verify the actual image server command preserves container database overrides for HTTP requests. */
 
+use App\Http\Middleware\HandleInertiaRequests;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use Illuminate\Http\Request;
 use Symfony\Component\Process\Process;
 
 it('preserves PostgreSQL container coordinates in the development HTTP server', /** Start the configured server against guarded test services without mutating development data. */ function (): void {
@@ -39,28 +41,38 @@ it('preserves PostgreSQL container coordinates in the development HTTP server', 
         'CACHE_STORE' => 'array',
         'QUEUE_CONNECTION' => 'sync',
         'MAIL_MAILER' => 'array',
-        'LOG_CHANNEL' => 'null',
+        // Only synthetic test requests reach this process; stderr makes HTTP failures diagnosable in CI.
+        'LOG_CHANNEL' => 'stderr',
         'PHP_CLI_SERVER_WORKERS' => '1',
     ]);
     $server->setTimeout(10);
     try {
         $server->start();
-        $server->waitUntil(/**
+        expect($server->waitUntil(/**
          * @param string $type Process output channel.
          * @param string $output Incremental server readiness message.
          * @return bool Whether HTTP requests can start.
-         */ static fn (string $type, string $output): bool => str_contains($output, 'Server running on'));
+        */ static fn (string $type, string $output): bool => str_contains($output, 'Server running on')))->toBeTrue();
         /** @var CookieJar $cookies CSRF/session cookies kept only in memory, never written or printed. */
         $cookies = new CookieJar();
         /** @var Client $client Loopback HTTP transport targeting only the dedicated test server. */
         $client = new Client(['base_uri' => 'http://'.$address, 'cookies' => $cookies, 'http_errors' => false, 'timeout' => 5]);
-        expect($client->get('/login')->getStatusCode())->toBe(200);
+        /** @var string $version Match the server's asset version with or without a local build, without rendering Blade. */
+        $version = app(HandleInertiaRequests::class)->version(Request::create('/login')) ?? '';
+        /** @var \Psr\Http\Message\ResponseInterface $page Inertia response exercises HTTP middleware without requiring compiled frontend assets. */
+        $page = $client->get('/login', ['headers' => ['Accept' => 'application/json', 'X-Inertia' => 'true', 'X-Inertia-Version' => $version]]);
+        expect($page->getStatusCode())->toBe(200)
+            ->and($page->getHeaderLine('X-Inertia'))->toBe('true')
+            ->and(json_decode((string) $page->getBody(), true, flags: JSON_THROW_ON_ERROR))->toHaveKey('component', 'Auth/Login');
         /** @var string $csrf Encrypted cookie value required by the real HTTP CSRF middleware. */
         $csrf = rawurldecode($cookies->getCookieByName('XSRF-TOKEN')->getValue());
         /** @var \Psr\Http\Message\ResponseInterface $response Nonexistent-account lookup exercises PostgreSQL without creating any account. */
         $response = $client->post('/login', ['headers' => ['Accept' => 'application/json', 'X-XSRF-TOKEN' => $csrf], 'json' => ['email' => 'container-web-probe@example.invalid', 'password' => 'not-a-valid-password']]);
         expect($response->getStatusCode())->toBe(422)
             ->and(json_decode((string) $response->getBody(), true, flags: JSON_THROW_ON_ERROR))->toHaveKey('errors.email');
+    } catch (Throwable $exception) {
+        // Keep response bodies and cookies private; report only the isolated server's console diagnostics.
+        throw new RuntimeException('Isolated HTTP probe failed. Server output: '.$server->getOutput().$server->getErrorOutput(), previous: $exception);
     } finally {
         $server->stop(2);
     }

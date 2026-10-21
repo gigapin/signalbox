@@ -2,6 +2,8 @@
 
 SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; M0 completata, con bootstrap da checkout pulito e verifiche finali superate il 2026-10-19. M1.01 introduce utenti, team e membership; M1.02 aggiunge registrazione, accesso, recupero password, verifica email e 2FA facoltativa con UI. Dettagli in [docs/IDENTITY.md](docs/IDENTITY.md) e [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md). Inviti, cambio team e isolamento tenant completo restano nei task M1 successivi.
 
+Ripresa concordata per **21 ottobre 2026** da **M1.03**: inviti, gestione membri e cambio team. Ambiente browser principale: http://127.0.0.1:8000; email locali su Mailtrap Email Sandbox, con funzionamento confermato dall’utente. Dettagli di avvio e ripartenza nel registro dei task.
+
 Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md); i pacchetti applicativi in [docs/SERVICES.md](docs/SERVICES.md).
 
 Le [decisioni architetturali](docs/ARCHITECTURE.md) definiscono confini del dominio, checker Strategy, contesto tenant, scheduling recuperabile, conferma regionale, retention, SLA, piani e convenzioni di documentazione, distinguendo le scelte adottate dalle funzionalità ancora da implementare.

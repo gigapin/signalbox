@@ -10,14 +10,16 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
-## Consegna di sessione e ripartenza — 2026-10-20
+## Consegna di sessione — 2026-10-20; ripartenza 2026-10-21
 
 - M0 completata il 2026-10-19: decisioni fondanti e prova finale da checkout pulito concluse. Gli esiti dettagliati e i limiti restano nel registro; le note precedenti descrivono lo stato storico delle rispettive sessioni.
 - M1.01 completato il 2026-10-20: utenti, team, membership, ruoli owner/admin/member/viewer, timezone e team corrente; migration, factory, seeder e test PostgreSQL. Dettagli e limiti in [IDENTITY.md](IDENTITY.md) e nel registro di sessione.
 - M1.02 completato il 2026-10-20: registrazione con primo team, login/logout, recupero password, verifica email obbligatoria e 2FA facoltativa con UI inglese. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md). Prossimo task pronto: **M1.03**, inviti email, accettazione, gestione membri/cambio team, scadenze e ultimo owner. Leggere AGENTS, specifica, questo registro, IDENTITY/AUTHENTICATION e ADR pertinenti; TeamScope/policy restano M1.04.
+- Ripresa concordata per **2026-10-21**, partendo da **M1.03**, pronto ma non avviato. Prima delle modifiche rileggere specifica, AGENTS, questo registro, IDENTITY, AUTHENTICATION e ADR-003/ADR-004/ADR-010; definire scadenza/accettazione degli inviti e vincoli su owner multipli e titolare principale. Non anticipare TeamScope/policy di M1.04.
 - Lavorare nel progetto principale `/Users/pino/Projects/signalbox`, non nel checkout temporaneo della prova. Nessuna operazione Git/gh dell'agente; branch e commit restano all'utente.
+- Ultima verifica backend dopo la correzione HTTP: PHP-CS-Fixer su 86 file, Larastan livello 8 zero errori, **128 test Pest/632 asserzioni senza skip**; `composer verify` superato. Browser principale su **http://127.0.0.1:8000**; migration locali risultavano applicate dall’utente. Invio a Mailtrap Sandbox confermato dall’utente; nessun test manuale completo di tutti i flussi 2FA o consegna a caselle reali dichiarato.
 - Ultima verifica completa M1.02: `./scripts/verify.sh` superato con PHP 8.4.26, PHP-CS-Fixer su 85 file, Larastan livello 8, 127 test Pest/629 asserzioni senza skip; lint/formato/TypeScript, 5 test qualità, 10 test DOM e build. Anche Pest con `--fail-on-skipped` e controlli piattaforma PHP 8.4/8.5 superati. Nessuna nuova CI remota o integrazione completa PHP 8.5 dichiarata.
-- Ambiente isolato della prova lasciato attivo alla fine della verifica su `http://127.0.0.1:18090`; log in `/private/tmp/signalbox-m0-final-verify.log`. Non assumerne lo stato alla ripresa: controllare Docker prima di usare i servizi. Nessun arresto o reset eseguito per questa consegna.
+- Il vecchio ambiente isolato M0 su porta 18090 non è quello di sviluppo corrente; non è stato ricontrollato o gestito oggi. Alla ripresa controllare Docker e usare la porta 8000 del progetto principale. Nessun arresto, reset o riavvio aggiuntivo eseguito per questa consegna documentale.
 
 ## Criterio comune di completamento
 
@@ -411,3 +413,13 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Smoke sulla porta pubblicata 8000: GET /login HTTP 200, POST /login con credenziali sintetiche inesistenti HTTP 422, POST /register con password volutamente troppo corta HTTP 422. Query reali verso il database di sviluppo riuscite senza creare account/team; cookie/token tenuti in memoria e non stampati.
 - Verifiche superate: formatter PHP nel container e `docker compose run --rm php-test composer verify` exit 0, PHP-CS-Fixer su 86 file, Larastan livello 8 zero errori, 128 test Pest/632 asserzioni senza skip. Il nuovo test mirato è passato anche con --fail-on-skipped. Log in `/private/tmp/signalbox-web-env-red.log`, `signalbox-web-env-green.log`, `signalbox-web-env-build.log` e `signalbox-web-env-verify.log`. Frontend non rieseguito: nessuna modifica JS/CSS o agli asset; restano gli esiti M1.02. Nessuna nuova CI/PHP 8.5 integrata o verifica completa browser dichiarata.
 - Documenti aggiornati: DOCKER, TESTING e TASKS. Correzione completata; prossimo task funzionale resta M1.03.
+
+### 2026-10-20 — Chiusura sessione e ripresa il 2026-10-21
+
+- Richiesta utente: aggiornare i documenti e riprendere domani. M1.01/M1.02 e correzione HTTP completati; M1.03 resta pronto, non avviato. Nessun nuovo codice, test, task implementativo o operazione Git/gh in questa consegna.
+- Ambiente principale: http://127.0.0.1:8000. La porta 18090 appartiene alla vecchia prova M0. Le migration M1 sono state osservate applicate nel database locale dall'utente; l'agente non le ha rieseguite. Il comando HTTP usa ora --no-reload: dopo modifiche .env riavviare esplicitamente web.
+- Mailer locale verificato tramite sola configurazione non sensibile: smtp verso sandbox.smtp.mailtrap.io, porta 2525. L'utente conferma che funziona. Le email vanno nell'inbox Email Sandbox del proprio progetto Mailtrap, non alle caselle reali dei destinatari. Nessuna credenziale, email personale o link/token di verifica copiato nei documenti.
+- Nel .env locale sono stati rilevati due MAIL_MAILER (prima log, poi smtp); la configurazione effettiva verificata usa smtp. Il template resta log e l'agente non ha modificato il .env. Mantenere una sola assegnazione per chiave quando si riordina la configurazione locale; questo non blocca M1.03.
+- Evidenze conservate: ultimo backend 128 test/632 asserzioni, formatter/Larastan superati; ultima verifica frontend M1.02 con 5 test qualità, 10 DOM e build superati. Il riscontro utente su Mailtrap è una conferma manuale, non una nuova suite automatica, verifica di tutte le schermate o consegna email di produzione.
+- Documenti aggiornati: TASKS, README e AUTHENTICATION. Verifica limitata a coerenza dello stato, link locali e formattazione Markdown; suite applicative non rieseguite perché non cambia comportamento eseguibile. Servizi lasciati nello stato corrente, senza arresti/reset aggiuntivi.
+- Prossima sessione: M1.03 inviti email, accettazione, gestione membri e cambio team; fissare scadenze e transizioni di proprietà coerenti con owner multipli/owner_id principale, mantenendo i confini M1.04/M1.05. Git e branch restano gestiti esclusivamente dall'utente.

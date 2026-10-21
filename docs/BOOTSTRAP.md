@@ -2,22 +2,24 @@
 
 M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, TypeScript and Tailwind 4. See [TASKS.md](TASKS.md) for remaining work and [DEPENDENCIES.md](DEPENDENCIES.md) for package constraints. The framework configuration and initial migrations were adapted from the [official Laravel 13 skeleton](https://github.com/laravel/laravel/tree/13.x); project-specific source documentation and entry points were added locally.
 
+[ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
+
 ## Application structure
 
 | Path | Responsibility |
 |---|---|
 | `artisan` | Load Composer and run a console request through Laravel. |
 | `public/index.php` | Honor maintenance mode and dispatch incoming HTTP requests. |
-| `bootstrap/app.php` | Register browser/console routes, framework liveness, Inertia middleware and the standard exception handler. |
+| `bootstrap/app.php` | Register routes, liveness, Inertia/session revocation middleware and sensitive-field flash exclusions. |
 | `bootstrap/providers.php` | Register the application's service provider. |
 | `app/Providers/AppServiceProvider.php` | Extension point for later domain bindings and boot behavior. |
 | `app/Http/Controllers/HomeController.php` | Select the public `Home` Inertia page. |
-| `app/Http/Middleware/HandleInertiaRequests.php` | Share the public product name and select the Blade document shell. |
-| `app/Models/User.php` | Baseline user identity, password hashing and protected serialization; team rules are M1. |
+| `app/Http/Middleware/HandleInertiaRequests.php` | Share product name, a minimal current-identity projection and safe status; select the Blade shell. |
+| `app/Models/User.php` | User identity, mandatory email verification, hidden encrypted 2FA fields and membership-based team resolution. |
 | `database/factories/UserFactory.php` | Generate non-production synthetic user identities. |
-| `database/seeders/DatabaseSeeder.php` | Explicit seeding entry point; currently creates no accounts. |
-| `database/migrations` | Unexecuted baseline framework schemas for users, reset tokens, sessions, cache and queue storage. |
-| `routes/web.php` | Public home route; authentication and monitoring routes are not implemented. |
+| `database/seeders/DatabaseSeeder.php` | Explicit entrypoint for guarded, repeatable local/testing identity fixtures; see IDENTITY.md. |
+| `database/migrations` | Baseline framework schemas plus incremental team, membership and current-team preference migrations. |
+| `routes/web.php` | Public home route plus the explicitly declared authentication routes in routes/auth.php; monitoring remains future work. |
 | `routes/console.php` | Reserved command and scheduling extension point for later milestones. |
 | `resources/views/app.blade.php` | Accessible HTML document with Vite and Inertia directives. |
 | `resources/js/app.tsx` | Discover React pages at build time and mount the Inertia client. |
@@ -130,3 +132,19 @@ No real browser execution, frontend interaction suite, PostgreSQL/Redis test, mi
 ## M0.06 testing follow-up
 
 [TESTING.md](TESTING.md) documents Unit/Feature/Integration suites, guarded ephemeral PostgreSQL/Redis services, User factory coverage, Vitest/Testing Library and the executable full-stack verification command. Ordinary Pest runs skip integration without connecting; full verification uses `php-test` and refreshes only its dedicated schema. New JSON scripts, Node patch requirements and test dependencies are documented in [DEPENDENCIES.md](DEPENDENCIES.md).
+
+## M0 final clean-checkout verification
+
+On 2026-10-19 the user created a fresh checkout at `/private/tmp/signalbox-m0-clean`. It initially had no environment file, vendor directory, frontend dependencies, build output or cached application configuration. The documented Docker bootstrap installed 157 Composer packages and 292 npm packages from the locks, created a fresh application database and ran all four baseline migrations. Image layers reused the Docker build cache; this was not a cache-free image rebuild.
+
+The isolated Compose project `signalbox-m0-clean` passed `./scripts/verify.sh`: PHP 8.4.26, formatter dry-run on 49 files, Larastan level 8, 46 Pest tests with 125 assertions and no skips, frontend lint/format/types, five quality tests, three DOM tests and production build. The actual Docker frontend runtime was Node 22.23.3/npm 10.9.9, within the manifest constraints. HTTP home/liveness/assets, versioned Inertia JSON, anonymous Horizon denial, Horizon/scheduler processes and Reverb WebSocket upgrade passed. See [TASKS.md](TASKS.md) for commands, evidence and limitations.
+
+This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI results; no new remote CI run or local PHP 8.5 integration run is claimed. Application source, configuration, manifests and locks matched the working project across 70 compared files; the checkout's older committed Markdown did not affect runtime verification. At M0 closure the next task was M1.01, now implemented as described below.
+
+## M1.01 identity foundation
+
+[IDENTITY.md](IDENTITY.md) documents the new Team/Membership models, role/plan enums, transactional creation action, safe current-team resolver, incremental migrations, factories and explicit synthetic local/testing seeder. Authentication UI, invitations, switching, tenant context and policies remain subsequent M1 tasks. Existing users are preserved without automatic team assignment. No dependency, manifest or lockfile changed.
+
+## M1.02 web authentication
+
+[AUTHENTICATION.md](AUTHENTICATION.md) documents implemented registration, login/logout, password recovery, mandatory email verification and optional 2FA with English Inertia pages. Registration creates the initial team atomically; existing users remain intact. One incremental migration adds nullable encrypted-secret storage and case-insensitive email uniqueness. Apply migrations deliberately to the intended local environment; automatic checks continue to use only the isolated test database. Fortify and its lock changes, including the targeted HttpFoundation advisory fix, are documented in [DEPENDENCIES.md](DEPENDENCIES.md). Invitations/switching and tenant policies remain M1.03–M1.04.

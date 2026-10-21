@@ -45,7 +45,7 @@ it(
             ->assertHeader('X-Inertia', 'true')
             ->assertJsonPath('component', 'Home')
             ->assertJsonPath('props.appName', 'Signalbox')
-            ->assertJsonMissingPath('props.auth')
+            ->assertJsonPath('props.auth.user', null)
             ->assertJsonMissingPath('props.monitors')
             ->assertJsonMissingPath('props.appKey');
     },

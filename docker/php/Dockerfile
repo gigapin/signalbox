@@ -19,4 +19,5 @@ ARG LOCAL_GID=1000
 RUN groupadd --non-unique --gid "$LOCAL_GID" signalbox \
     && useradd --uid "$LOCAL_UID" --gid signalbox --create-home signalbox
 USER signalbox
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Preserve Compose environment overrides when spawning the HTTP server child.
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]

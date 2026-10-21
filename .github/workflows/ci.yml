@@ -77,6 +77,9 @@ jobs:
         with:
           path: ${{ steps.composer-cache.outputs.path }}
           key: composer-${{ runner.os }}-${{ runner.arch }}-${{ env.PHP_VERSION }}-${{ hashFiles('composer.lock') }}
+      - name: Prepare empty testing environment file
+        # Runtime values come from the job and PHPUnit; no developer environment is copied.
+        run: ': > .env.testing'
       - name: Install locked PHP dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
       - name: Check actual PHP and extension requirements

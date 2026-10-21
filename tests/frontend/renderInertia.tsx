@@ -8,16 +8,18 @@ import Home from '../../resources/js/pages/Home';
  * Render a page with a synthetic, public-only server response and the actual Inertia React provider.
  * @param appName Public product identity supplied by the simulated Laravel response.
  * @param component Page component to mount; defaults to the existing public home page.
+ * @param props Additional explicit page props, including safe auth status or validation fixtures.
  * @returns DOM queries and cleanup handles from React Testing Library.
  */
 export function renderInertia(
     appName = 'Signalbox',
     component: ComponentType = Home,
+    props: Record<string, unknown> = {},
 ): RenderResult {
     /** Inertia page shape derived from the installed adapter rather than a duplicate protocol interface. */
     const page: ComponentProps<typeof App>['initialPage'] = {
         component: 'Home',
-        props: { appName, errors: {} },
+        props: { appName, errors: {}, ...props },
         url: '/',
         version: null,
         clearHistory: false,

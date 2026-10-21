@@ -1,8 +1,10 @@
 # Signalbox
 
-SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; le funzionalità di dominio devono ancora essere implementate.
+SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; M0 completata, con bootstrap da checkout pulito e verifiche finali superate il 2026-10-19. M1.01 introduce utenti, team e membership; M1.02 aggiunge registrazione, accesso, recupero password, verifica email e 2FA facoltativa con UI. Dettagli in [docs/IDENTITY.md](docs/IDENTITY.md) e [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md). Inviti, cambio team e isolamento tenant completo restano nei task M1 successivi.
 
 Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md); i pacchetti applicativi in [docs/SERVICES.md](docs/SERVICES.md).
+
+Le [decisioni architetturali](docs/ARCHITECTURE.md) definiscono confini del dominio, checker Strategy, contesto tenant, scheduling recuperabile, conferma regionale, retention, SLA, piani e convenzioni di documentazione, distinguendo le scelte adottate dalle funzionalità ancora da implementare.
 
 ## Avvio con Docker
 
@@ -45,8 +47,8 @@ npm run verify
 
 `composer format` applica la formattazione PHP; `npm run format` quella frontend. `npm run check` verifica lint, formato, TypeScript e i cinque test degli strumenti di qualità. Configurazione e valutazione di Rector sono in [docs/QUALITY.md](docs/QUALITY.md). I test iniziali verificano HTML, protocollo Inertia, liveness e 404 senza database o Redis. I test infrastrutturali PostgreSQL/Redis sono disponibili esplicitamente in Docker, come descritto in `docs/DOCKER.md`; i primi test frontend DOM sono operativi e le verifiche di dominio saranno aggiunte nelle rispettive milestone. `/up` indica soltanto che il framework si avvia: il controllo di readiness dell'infrastruttura appartiene a M11.
 
-Non eseguire ancora migration su database di produzione: lo schema importato è quello di base del framework, da estendere con il dominio. `.env`, dipendenze, build, cache e log sono esclusi da Git.
+Non eseguire ancora migration su database di produzione: lo schema comprende le prime entità di identità, mentre il dominio e le autorizzazioni sono ancora in sviluppo. `.env`, dipendenze, build, cache e log sono esclusi da Git.
 
 ## GitHub Actions
 
-La [pipeline CI](docs/CI.md) esegue backend PHP 8.4 e frontend Node 22 su tutte le pull request e sui push a staging/main. Il backend PHP 8.5 viene verificato soltanto sui push a main e sugli avvii manuali su main. I job backend usano PostgreSQL 16 e Redis 7 dedicati; formatter, analisi, test e build hanno step distinti. Gli esiti remoti ancora da verificare sono registrati in [docs/TASKS.md](docs/TASKS.md).
+La [pipeline CI](docs/CI.md) esegue backend PHP 8.4 e frontend Node 22 su tutte le pull request e sui push a staging/main. Il backend PHP 8.5 viene verificato soltanto sui push a main e sugli avvii manuali su main. I job backend usano PostgreSQL 16 e Redis 7 dedicati; formatter, analisi, test e build hanno step distinti. Gli esiti locali e la conferma utente dei controlli remoti sono registrati in [docs/TASKS.md](docs/TASKS.md).

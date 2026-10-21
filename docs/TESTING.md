@@ -17,6 +17,8 @@ The existing PHP/Node images, Composer dependencies and configured local `.env` 
 
 The verification command starts only `postgres-test` and `redis-test` as backend dependencies. Web, Horizon, scheduler and Reverb need not be running. Existing application containers are not stopped, recreated or reset. Test services are left running so subsequent test runs can start quickly.
 
+On CI, backend jobs create an empty `.env.testing` before installing PHP dependencies. This file supplies no configuration values; PHPUnit and the job environment remain authoritative. It avoids missing `.env` warnings on runners without a developer environment file. Local verification does not create or overwrite either environment file.
+
 ## Isolated services
 
 | Service | Purpose | Storage / access |
@@ -65,7 +67,7 @@ Twelve pure unit cases verify accepted configuration and rejection of cached sta
 
 `tests/Pest.php` attaches the Laravel test case to Feature/Integration. It attaches `RefreshDatabase` only when integration opt-in is enabled, so an ordinary offline run does not initialize a database trait merely because integration tests are discovered and skipped. The historical `docker` group name and `RUN_DOCKER_TESTS` flag are retained; the execution destination is now strictly isolated.
 
-Integration tests cover PostgreSQL transactions, Redis cache/lock/queue transport, Sanctum hash/abilities/revocation/expiry and Scout queries with an explicit synthetic owner constraint. User factory tests verify distinct synthetic emails, verified/unverified states, hashed sample passwords, persistence and hiding authentication fields in serialization. No customer, team, monitor or billing factory is invented before its domain model exists. Factory passwords are non-production fixtures; no new demo accounts are seeded.
+Integration tests cover PostgreSQL transactions, Redis cache/lock/queue transport, Sanctum hash/abilities/revocation/expiry and Scout queries with an explicit synthetic owner constraint. User factory tests verify distinct synthetic emails, verified/unverified states, hashed sample passwords, persistence and hiding authentication fields in serialization. M1.01 adds coherent Team/Membership factories and an explicit, environment-guarded synthetic seeder; see [IDENTITY.md](IDENTITY.md). Factory passwords are non-production fixtures. Ordinary test startup does not seed demo accounts.
 
 Commands:
 
@@ -83,7 +85,9 @@ docker compose run --rm php-test php vendor/bin/pest --group=docker
 docker compose run --rm php-test composer verify
 ```
 
-The PHP suite is currently sequential. Parallel database provisioning and race-condition tests must be added when concurrency-sensitive domain work requires them; a shared single test database is not presented as parallel-safe.
+The PHP suite is currently sequential. M1.01 adds a two-session PostgreSQL owner-lock contention test with a bounded database lock timeout and explicit fixture cleanup. This does not make the shared test database parallel-safe; parallel database provisioning remains future work.
+
+`ContainerWebEnvironmentTest` starts the Dockerfile's actual development-server command on a temporary loopback port using only the guarded test database. Its initial GET requests the `Auth/Login` Inertia JSON response with a matching asset version, so it works both with and without compiled Vite assets. Cookie sessions persist CSRF state for the subsequent POST, which must return validation error `errors.email` for a nonexistent synthetic account. A failed probe includes the isolated server's console output, never response bodies or cookies; the child process is always stopped. To reproduce fresh-runner behavior, use a temporary source copy without `.env`, `public/hot` or `public/build`, prepare only an empty `.env.testing`, and mount that copy into `php-test`; do not rename or remove the development project's environment or assets.
 
 ## React DOM tests
 
@@ -116,3 +120,19 @@ No real browser, Stripe account, external network or CI execution is claimed her
 ## M0.07 CI follow-up
 
 [CI.md](CI.md) documents the implemented workflow, event policy and every gate. CI explicitly enables integration tests and uses `--fail-on-skipped`; the same database guard accepts its dedicated loopback services. PHP 8.4 and frontend run on PRs and staging/main pushes; PHP 8.5 runs only on main pushes or manual dispatch on main by explicit user decision. Historical M0.06 evidence above does not claim remote workflow execution; current evidence and remaining acceptance checks are in [TASKS.md](TASKS.md).
+
+## M1.01 domain verification
+
+[IDENTITY.md](IDENTITY.md) documents the identity integration scenarios: creation and full rollback, real constraints, stale selection and membership revocation, owner roles, trial timestamps, factory states, guarded/repeatable seeding, incremental migration reversal and two-session owner-lock contention. Tests use the existing opt-in database guard and do not migrate or seed the development database. The contention probe connection copies only the already guarded test connection settings.
+
+## M1.02 authentication verification
+
+[AUTHENTICATION.md](AUTHENTICATION.md) documents the exact HTTP/security surface. Public-page and guest-boundary tests remain infrastructure-free. New PostgreSQL suites exercise registration with post-commit notification fakes, case-insensitive constraints, atomic rollback, login/logout/session revocation, email verification, reset-token lifetime/consumption, mandatory verification, confirmed/pending authenticators, challenge fingerprints/expiry, secret omission and recovery-code replacement. TOTP uses the application clock through a maintained-engine adapter; numeric cache counters are normalized before replay comparison.
+
+Two-session probes verify contention for case-variant registration, reset-token consumption and recovery-code mutation. They use only connections copied from the guarded test database, bounded 100 ms PostgreSQL lock timeouts and explicit committed-fixture cleanup. They combine real lock contention with successful/replayed HTTP cases; they do not provision independent databases or make the complete suite safe for parallel execution.
+
+DOM tests mount the real Inertia forms/provider and intercept only routing/fetch boundaries. They cover submit/loading/error behavior and credential clearing, registration fields, keyboard switching between TOTP/recovery methods, verification resend, missing-team state, sensitive fetches only on demand, recovery-code hiding/remount and HTTP 423 reauthentication handling. No real email provider or full-browser end-to-end run is claimed.
+
+## HTTP child environment regression
+
+`ContainerWebEnvironmentTest` starts the actual Dockerfile server argument vector on an ephemeral loopback port, supplies only guarded test database coordinates, and performs a real CSRF-protected login lookup for a nonexistent `.invalid` account. HTTP 422 confirms the child reached PostgreSQL and rejected credentials normally; the old command returned HTTP 500 after losing its container environment overrides. The test uses only test storage, keeps cookies in memory and stops the child in `finally`. It requires integration opt-in and does not create development accounts.

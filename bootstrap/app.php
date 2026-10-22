@@ -6,19 +6,32 @@
 
 use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Support\MonitorInputTransport;
+use App\Services\Monitoring\MonitorConfigurationMapper;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
+
+/**
+ * Preserve exact monitor payload bytes until the dedicated normalizer handles each field.
+ *
+ * @param Request $request Request examined before routing and input transformation.
+ * @return bool Whether standard trimming and empty-to-null conversion must be skipped.
+ */
+$preserveMonitorInput = static fn (Request $request): bool => MonitorInputTransport::matches($request);
 
 /**
  * Configure web authentication, tenant binding order and token ability middleware.
  *
  * @param Middleware $middleware Framework middleware configuration builder.
  */
-$configureMiddleware = function (Middleware $middleware): void {
+$configureMiddleware = function (Middleware $middleware) use ($preserveMonitorInput): void {
+    $middleware->trimStrings(except: [$preserveMonitorInput]);
+    $middleware->convertEmptyStringsToNull(except: [$preserveMonitorInput]);
     $middleware->web(append: [HandleInertiaRequests::class]);
     $middleware->authenticateSessions();
     $middleware->prependToPriorityList(SubstituteBindings::class, EstablishTeamContext::class);
@@ -30,12 +43,15 @@ $configureMiddleware = function (Middleware $middleware): void {
 };
 
 /**
- * Prevent second-factor credentials from being flashed after validation errors.
+ * Prevent second-factor credentials and private monitor configuration from being flashed after validation errors.
  *
  * @param Exceptions $exceptions Framework exception and validation configuration builder.
  */
 $configureExceptions = function (Exceptions $exceptions): void {
-    $exceptions->dontFlash(['code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes']);
+    $exceptions->dontFlash([
+        'code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes',
+        ...MonitorConfigurationMapper::COLUMNS, 'headers',
+    ]);
 };
 
 return Application::configure(basePath: dirname(__DIR__))

@@ -156,3 +156,7 @@ This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI res
 ## M2.01 monitor persistence
 
 [MONITORS.md](MONITORS.md) documents the new incremental monitors migration, DTOs and encrypted network fields. Apply the migration deliberately to the intended local database; automated verification uses isolated PostgreSQL only. There is no new route, checker, scheduled execution, seed data or dependency in this task. Existing application keys remain unchanged.
+
+## Monitor input boundary (M2.02)
+
+[MONITOR-INPUT.md](MONITOR-INPUT.md) describes the new `config/monitor-input.php` operational bounds and the narrowly scoped global string-middleware exceptions. No environment variables, dependencies, migration, production routes or process changes are required. The Form Requests deny without future monitor policies; test routes and Gate grants exist only in the isolated test application. SSRF protection remains M2.03 before any outbound monitor I/O.

@@ -152,3 +152,9 @@ DOM tests mount the real Inertia forms/provider and intercept only routing/fetch
 ## M2.01 monitor foundation
 
 [MONITORS.md](MONITORS.md) describes MonitorConfigurationTest and MonitorModelTest: immutable variant structure, exact typed round trips, encrypted storage/hidden fields, canonical regions, irrelevant-field cleanup, SQL constraints, UTC/DST, cascade/rollback and tenant isolation on the real model. Monitor factories require explicit tenant context and never provision a team. The identity rollback test includes the dependent monitors migration before removing teams, then reapplies it after its prerequisites; no baseline user data is dropped. Existing M1 authorization and worker/concurrency coverage remains enabled.
+
+## M2.02 monitor input
+
+[MONITOR-INPUT.md](MONITOR-INPUT.md) documents the reusable validator and HTTP adapter contract. MonitorInputSyntaxTest runs local parsers and byte/count boundaries without infrastructure; MonitorInputValidationTest uses the Laravel validator without database access. MonitorInputRequestTest opts into isolated PostgreSQL and exercises real Form Requests, global string middleware, tenant binding, explicit test-only Gate grants, denied access before decryption, exact sensitive bytes, partial updates and safe JSON/web errors. It registers test-only routes and asserts no monitor persistence. The explicit-patch test revalidates against a changed snapshot; database locking and mutation concurrency remain M2.04. No network requests or development database operations are needed.
+
+Run `docker compose run --rm php-test composer test -- --filter=MonitorInput --fail-on-skipped --fail-on-warning` for this boundary and `./scripts/verify.sh` for the full regression suite, including existing authentication/authorization tests affected by global middleware configuration.

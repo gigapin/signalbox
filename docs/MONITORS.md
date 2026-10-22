@@ -53,7 +53,7 @@ URL, HTTP headers and body use Laravel encrypted/encrypted:array casts with the 
 
 All type-specific configuration columns are hidden from automatic Eloquent array/JSON serialization, including keyword, DNS and TLS fields. Future authorized API/Inertia projections must select safe fields explicitly. This does not make raw attributes, DTOs, debug dumps or deliberately unhidden fields safe to publish. No raw URL/header/body payload is added to events or logs. Caches and queue payloads must follow the scalar-identifier tenancy contract rather than serializing configuration-bearing models.
 
-DTO construction is not destination authorization. URL/host syntax, header rules and operational bounds are completed by M2.02. DNS resolution, redirect checks, SSRF defenses and full secret redaction policy are M2.03. No application ingress or checker may perform network I/O from this foundation before those boundaries are implemented.
+DTO construction is not destination authorization. M2.02 adds URL/host syntax, header rules and operational bounds at the [input boundary](MONITOR-INPUT.md); trusted model/DTO construction retains its structural contract. DNS resolution, redirect checks, SSRF defenses and full secret redaction policy are M2.03. No application ingress or checker may perform network I/O from this foundation before those boundaries are implemented.
 
 ## Database invariants and fixtures
 
@@ -74,4 +74,4 @@ docker compose run --rm php-test composer test -- --filter='MonitorConfiguration
 ./scripts/verify.sh
 ```
 
-M2.02 adds Form Request/input validation; M2.03 adds outbound security; M2.04 adds authorized CRUD, transitions and centralized concurrent plan limits; M2.05 adds UI/search and M2.06 completes their integration coverage. M2.01 does not declare these later acceptance criteria complete.
+M2.02 provides [Form Request/input validation](MONITOR-INPUT.md), complete typed candidates and explicit patches. M2.03 adds outbound security; M2.04 adds authorized CRUD, transitions and centralized concurrent plan limits; M2.05 adds UI/search and M2.06 completes their integration coverage. The model and input foundation do not declare these later acceptance criteria complete.

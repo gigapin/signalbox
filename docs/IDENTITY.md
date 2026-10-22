@@ -57,8 +57,12 @@ M1.01 introduces no public HTTP/TypeScript API and does not establish complete t
 
 ## M1.02 follow-up
 
-[AUTHENTICATION.md](AUTHENTICATION.md) now documents the implemented authentication UI, email verification and optional 2FA. The M1.01-only statements above describe that task’s historical boundary. User now normalizes assigned emails, implements mandatory verification and hides Fortify-encrypted authenticator fields. Registration uses the existing CreateTeam action inside an outer transaction, then notifies after commit; it does not introduce general team creation/switching or tenant authorization. M1.03 is documented in [TEAMS.md](TEAMS.md); M1.04 is documented in [TENANCY.md](TENANCY.md); M1.05 remains open.
+[AUTHENTICATION.md](AUTHENTICATION.md) now documents the implemented authentication UI, email verification and optional 2FA. The M1.01-only statements above describe that task’s historical boundary. User now normalizes assigned emails, implements mandatory verification and hides Fortify-encrypted authenticator fields. Registration uses the existing CreateTeam action inside an outer transaction, then notifies after commit; it does not introduce general team creation/switching or tenant authorization. M1.03 is documented in [TEAMS.md](TEAMS.md); M1.04 is documented in [TENANCY.md](TENANCY.md); M1.05 coverage is documented in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
 
 ## M1.03 follow-up
 
 [TEAMS.md](TEAMS.md) documents invitation storage, verified explicit acceptance, invited accounts without a personal team, membership mutations, primary-owner transfer and team switching. These operations coordinate on the Team row and lock the affected User when changing preferences. Direct composite-key membership writes avoid standalone Pivot relation metadata assumptions. M1.04 adds TeamScope on private invitations, explicit context and team/invitation policies; [TENANCY.md](TENANCY.md) describes the implemented boundary. Earlier milestone-only descriptions above are historical.
+
+## M1 completion
+
+M1.05 adds the [parametrized authorization matrix](AUTHORIZATION-MATRIX.md) for the available team, invitation and account surface, including revoked membership, foreign nested IDs and actor/target roles. M1 is complete for these implemented paths; monitor and other domain resources must extend scope/policy and entrance coverage in their own milestones.

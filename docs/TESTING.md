@@ -144,3 +144,7 @@ DOM tests mount the real Inertia forms/provider and intercept only routing/fetch
 ## M1.04 tenant boundaries
 
 [TENANCY.md](TENANCY.md) describes the new unit and PostgreSQL integration tests. Tests cover fail-closed context, nesting and cleanup, tenant reads/writes/reloads, HTTP binding before private queries and policy roles. Redis serializes scalar fixture jobs consumed by one real worker across failure and a subsequent tenant; a test-only Artisan command verifies bounded CLI work. No application command or product job is added. Existing M1.03 concurrency and invitation regressions remain enabled; direct invitation assertions now establish explicit context.
+
+## M1.05 authorization matrix
+
+[AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) documents TeamAuthorizationMatrixTest, its route catalogue and the two synthetic-aggregate fixture. Every private route is crossed with actor role and current/foreign/revoked access; separate tests check guest/verification gates, the complete actor/target hierarchy, requested roles, nested foreign IDs, account projections, switching and invitation capabilities. Rejected writes compare raw guarded-test database snapshots and fake notifications; successful operations assert actual domain effects and unchanged foreign data. Route discovery fails when domain routes are not classified, making extension an explicit requirement of later milestones. Existing concurrency, scope and real-worker suites remain required.

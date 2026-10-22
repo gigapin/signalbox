@@ -1,6 +1,6 @@
 # Tenant context and authorization
 
-M1.04 implements ADR-003/004 for the currently available team and invitation surface. It builds on [IDENTITY.md](IDENTITY.md) and [TEAMS.md](TEAMS.md). The complete parametrized entrance matrix remains M1.05; resource policies for monitors and later domains are introduced with those resources. Actual verification evidence is recorded in [TASKS.md](TASKS.md).
+M1.04 implements ADR-003/004 for the currently available team and invitation surface. It builds on [IDENTITY.md](IDENTITY.md) and [TEAMS.md](TEAMS.md). M1.05 adds the [complete parametrized entrance matrix](AUTHORIZATION-MATRIX.md); resource policies for monitors and later domains are introduced with those resources. Actual verification evidence is recorded in [TASKS.md](TASKS.md).
 
 ## Explicit lifetime and authority
 
@@ -62,3 +62,7 @@ docker compose run --rm php-test composer test -- --filter='TenantContext|Tenant
 ```
 
 No schema migration, dependency change or development database reset is needed for M1.04.
+
+## M1.05 authorization matrix
+
+[AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) classifies the current private team, capability and account routes and explains the independent actor/target-role datasets, foreign IDs, stale memberships and side-effect snapshots. M1.04 scope/worker tests remain enabled alongside the matrix. New milestones must extend both HTTP coverage and their actual asynchronous/public boundaries.

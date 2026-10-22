@@ -14,15 +14,16 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 - M0 completata il 2026-10-19: decisioni fondanti e prova finale da checkout pulito concluse. Gli esiti dettagliati e i limiti restano nel registro; le note precedenti descrivono lo stato storico delle rispettive sessioni.
 - M1.01 completato il 2026-10-20: utenti, team, membership, ruoli owner/admin/member/viewer, timezone e team corrente; migration, factory, seeder e test PostgreSQL. Dettagli e limiti in [IDENTITY.md](IDENTITY.md) e nel registro di sessione.
-- M1.02 completato il 2026-10-20: registrazione con primo team, login/logout, recupero password, verifica email obbligatoria e 2FA facoltativa con UI inglese. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md). M1.03 completato il 2026-10-21: inviti email, accettazione, gestione membri/cambio team e proprietà; dettagli in [TEAMS.md](TEAMS.md). M1.04 completato il 2026-10-22: contesto tenant, TeamScope sugli inviti privati e policy team/inviti; dettagli in [TENANCY.md](TENANCY.md). Prossimo task pronto: **M1.05**, matrice parametrica di isolamento degli ingressi disponibili. Leggere AGENTS, specifica, questo registro, IDENTITY/AUTHENTICATION/TEAMS e ADR pertinenti.
+- M1.02 completato il 2026-10-20: registrazione con primo team, login/logout, recupero password, verifica email obbligatoria e 2FA facoltativa con UI inglese. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md). M1.03 completato il 2026-10-21: inviti email, accettazione, gestione membri/cambio team e proprietà; dettagli in [TEAMS.md](TEAMS.md). M1.04 completato il 2026-10-22: contesto tenant, TeamScope sugli inviti privati e policy team/inviti; dettagli in [TENANCY.md](TENANCY.md). M1.05 completato il 2026-10-22: matrice parametrica degli ingressi disponibili, documentata in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md). M1 completata; prossimo task pronto: **M2.01**, modello Monitor con configurazioni tipizzate e scheduling. Leggere AGENTS, specifica, questo registro, IDENTITY/AUTHENTICATION/TEAMS e ADR pertinenti.
 - Lavorare nel progetto principale `/Users/pino/Projects/signalbox`, non nel checkout temporaneo della prova. Nessuna operazione Git/gh dell'agente; branch e commit restano all'utente.
-- Ultima verifica completa M1.04: `./scripts/verify.sh` superato con PHP 8.4.26, formatter su 119 file, Larastan livello 8, 195 test Pest/1039 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Dettagli nel registro; nessuna nuova CI remota o integrazione PHP 8.5 dichiarata.
+- Ultima verifica completa M1.05: `./scripts/verify.sh` exit 0 con PHP 8.4.26, formatter su 122 file, Larastan livello 8, 449 test Pest/3163 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Nessuna nuova CI remota o integrazione completa PHP 8.5 dichiarata.
+- Baseline storica M1.04: `./scripts/verify.sh` superato con PHP 8.4.26, formatter su 119 file, Larastan livello 8, 195 test Pest/1039 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Dettagli nel registro; nessuna nuova CI remota o integrazione PHP 8.5 dichiarata.
 - Baseline storica M1.03: `./scripts/verify.sh` superato con PHP 8.4.26, PHP-CS-Fixer su 106 file, Larastan livello 8, 178 test Pest/924 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Suite finale anche senza asset/.env di sviluppo con zero skip e warning; dettagli nel registro. Nessuna nuova CI remota o integrazione completa PHP 8.5 dichiarata.
 - Ambiente applicativo principale su `http://127.0.0.1:8000`; servizi test isolati usati e lasciati attivi. Nessun riavvio/reset applicativo o migration sul database di sviluppo; applicare esplicitamente la migration inviti prima della prova manuale. L'ambiente temporaneo M0 su porta 18090 non è stato usato o gestito.
 
 ## Criterio comune di completamento
 
-Correzione CI backend del 2026-10-21 verificata localmente e conservata nell’implementazione e nella revisione M1.03 completate successivamente. Conferma GitHub dopo push dell’utente ancora pendente; prossimo task funzionale M1.05 dopo il completamento locale M1.04. Vedere il registro delle sessioni.
+Correzione CI backend del 2026-10-21 verificata localmente e conservata nell’implementazione e nella revisione M1.03 completate successivamente. Conferma GitHub dopo push dell’utente ancora pendente; prossimo task funzionale M2.01 dopo il completamento locale M1.05 e della milestone M1. Vedere il registro delle sessioni.
 
 Per ogni task: comportamento verificato, autorizzazioni e isolamento rispettati, documentazione in inglese per tutti gli elementi del codice come da AGENTS, test automatici pertinenti superati, PHP-CS-Fixer e controlli statici applicabili superati, piano aggiornato. Non completare una milestone prima dei suoi criteri di uscita. Annotare comandi e risultati effettivi nel registro di sessione.
 
@@ -40,9 +41,9 @@ Dipendenze: nessuna. Sblocca tutte le milestone.
 - [x] M0.08 Registrare decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione.
 - [x] M0.09 Definire semantica scheduler sotto-minuto, prenotazione/invio affidabile, retention/partizioni, SLA e p50/p95; definire matrice dei piani. Decisioni adottate in ADR-006–ADR-010, implementazione nelle milestone proprietarie.
 
-Uscita soddisfatta il 2026-10-19: bootstrap e smoke test da checkout pulito con PHP 8.4 superati; esiti CI PHP 8.4/8.5 già confermati dall’utente in M0.07. Dettagli e limiti nel registro della verifica finale. Alla chiusura M0 il primo task pronto era M1.01, completato il 2026-10-20; anche M1.02, M1.03 e M1.04 sono ora completati: procedere con M1.05.
+Uscita soddisfatta il 2026-10-19: bootstrap e smoke test da checkout pulito con PHP 8.4 superati; esiti CI PHP 8.4/8.5 già confermati dall’utente in M0.07. Dettagli e limiti nel registro della verifica finale. Alla chiusura M0 il primo task pronto era M1.01, completato il 2026-10-20; anche M1.02–M1.05 sono ora completati: procedere con M2.01.
 
-## M1 — Autenticazione e tenancy (14 h)
+## M1 — Autenticazione e tenancy (14 h della specifica, completata)
 
 Dipendenze: M0.
 
@@ -50,9 +51,9 @@ Dipendenze: M0.
 - [x] M1.02 Implementare registrazione, login/logout, recupero password, verifica email e 2FA con UI.
 - [x] M1.03 Implementare inviti email, accettazione, gestione membri e cambio team; definire scadenza inviti e vincoli sull'ultimo owner.
 - [x] M1.04 Implementare TeamScope, tenant context esplicito nei processi asincroni e policy per owner/admin/member/viewer.
-- [ ] M1.05 Testare accessi diretti con ID di altri team, cambio team, inviti, ruoli e isolamento parametrico delle rotte disponibili; estendere la matrice a ogni milestone.
+- [x] M1.05 Testare accessi diretti con ID di altri team, cambio team, inviti, ruoli e isolamento parametrico delle rotte disponibili; estendere la matrice a ogni milestone.
 
-Uscita: nessun accesso tra tenant nei percorsi testati, inclusi job e scope; autenticazione e ruoli verificati.
+Uscita soddisfatta il 2026-10-22: nessun accesso tra tenant nei percorsi testati, inclusi job e scope; autenticazione, quattro ruoli e matrice delle rotte attuali verificati. M1.05 aggiunge 254 casi, suite complessiva 449 test/3163 asserzioni; dettagli, copertura e limiti nel registro e in AUTHORIZATION-MATRIX. Estendere i test alle nuove risorse/ingressi di ogni milestone.
 
 ## M2 — CRUD monitor (14 h)
 
@@ -202,7 +203,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. Il prossimo task applicativo pronto è M1.05, dopo M1.04 completato il 2026-10-22. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. Il prossimo task applicativo pronto è M2.01, dopo M1.05 e milestone M1 completati il 2026-10-22. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -483,3 +484,20 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 
 - Estratti configureMiddleware e configureExceptions prima della catena Application; entrambi hanno il proprio PHPDoc con @param prima della dichiarazione. Nessun tag negli argomenti delle chiamate; configurazione invariata.
 - Verifiche superate: php -l, PHP-CS-Fixer dry-run su 119 file, Larastan livello 8 senza errori e 17 test mirati/88 asserzioni. Log /private/tmp/signalbox-bootstrap-readability.log e signalbox-bootstrap-readability-analyse.log. Suite completa/frontend non ripetuti per il refactoring circoscritto dei callback PHP. Prossimo task invariato M1.05.
+
+### 2026-10-22 — M1.05: matrice parametrica degli ingressi (completato)
+
+- Richiesta utente: procedere con il prossimo task sul nuovo branch. Dipendenze M1.01–M1.04 soddisfatte secondo il registro; nessuna operazione Git/gh.
+- Piano: catalogo verificato delle rotte team/inviti e test parametrizzati per quattro ruoli, team estraneo e membership revocata; ID annidati di altri team, richieste guest/non verificate, stato persistito immutato sui rifiuti e assenza di notifiche. Verificare proiezioni account/elenco, cambio team e capability che non autorizza il team; mantenere i test di scope/worker/concorrenza esistenti. Formatter, Larastan, test mirati e verifica completa; aggiornare documentazione e criteri di uscita M1 con risultati reali.
+
+- Implementazione conclusa senza modifiche al codice applicativo: TeamRouteMatrix dichiara nove rotte private e nove ingressi account/capability; TeamAuthorizationFixture costruisce due aggregati disgiunti, attori con quattro ruoli e ID annidati reali, snapshot raw del database test senza credenziali account. TeamAuthorizationMatrixTest verifica l’inventario registrato, i verbi e i middleware, fallendo su rotte di dominio non classificate.
+- Matrice principale: nove rotte × quattro ruoli × membership valida/team estraneo/membership revocata = 108 casi; 18 casi per guest e non verificato. Tutti i rifiuti verificano stato persistito immutato e notifiche assenti; i successi verificano modifiche effettive, proiezioni consentite e aggregato estraneo invariato. Campi team/attore contraffatti non sostituiscono contesto o identità autenticata; contesto privato sempre ripulito.
+- Gerarchia: 80 casi attore/ruolo target su update/remove membri e create/resend/revoke inviti; altri 16 casi sul ruolo richiesto per una membership member esistente. Target owner non principale e altro owner disponibile evitano che un invariante di proprietà nasconda l’autorizzazione. Restano le regressioni M1.03 su ultimo/titolare owner e la contesa PostgreSQL.
+- Ulteriori casi: ID figli di altri team sotto URL accessibile, successore owner estraneo, elenchi/account senza dati estranei per i quattro ruoli e preferenza revocata, ID account query ignorati, cambio owner-A → viewer-B senza trasferire privilegi, capability valida senza accesso privato prima dell’accettazione, ID/token di team diversi e credenziali invito nel payload senza continuazione provata. Verificati anche guest/verification gate degli ingressi account e logout dell’invitato non verificato senza adesione implicita.
+- Copertura nuova: **254 casi/2124 asserzioni** oltre la baseline M1.04. Test mirati intermedi con --fail-on-skipped --fail-on-warning: 246 casi/2082 asserzioni superati; gli otto casi finali sono inclusi nella verifica completa. Nessun difetto applicativo rilevato e nessun comportamento o permesso di prodotto modificato. Test con tempo congelato, fake mail/cache di test e PostgreSQL isolato; nessuna rete di consegna reale.
+- Verifiche finali: `./scripts/verify.sh` exit 0, PHP 8.4.26, PHP-CS-Fixer dry-run su **122 file**, Larastan livello 8 zero errori, **449 test Pest/3163 asserzioni** tutti superati, ESLint/Prettier/TypeScript, 5 test qualità, **20 test DOM** e build Vite. Inclusi scope, binding, job serializzati sul worker Redis reale, CLI, auth/2FA e test concorrenti precedenti. Log /private/tmp/signalbox-m1.05-targeted.log, signalbox-m1.05-format.log e signalbox-m1.05-verify.log.
+- Documentazione: nuovo AUTHORIZATION-MATRIX con tabella rotte, condizioni dei fixture, collegamento ai test precedenti e regola di estensione per nuove risorse/ingressi; aggiornati TENANCY, TEAMS, TESTING, IDENTITY, ARCHITECTURE, README e TASKS. Nessun manifest, lockfile, migration o configurazione applicativa modificati.
+- Limiti: nessuna nuova CI remota/PHP 8.5 integrata, browser end-to-end, benchmark o audit completo dichiarato. API tenant, canali privati di prodotto, ricerca/cache di risorse, status pubblici e job di monitoraggio non ancora implementati restano alle proprie milestone: la matrice verrà estesa allora. Nessuna operazione Git/gh, modifica .env/chiavi, migration/seeding sul database di sviluppo, reset/riavvio applicativo. Servizi test isolati lasciati attivi.
+- M1.05 e milestone M1 completati nei percorsi disponibili. Prossimo task pronto **M2.01**: modellare Monitor con enum, configurazioni tipizzate HTTP/TLS/DNS/heartbeat/keyword, regioni, pause e campi di scheduling, rispettando ADR-003/006/007/010; nessun anticipo di CRUD/checker/SSRF oltre il perimetro dei task M2 successivi.
+
+- Verifica documentale finale: otto Markdown, 80 collegamenti locali validi, newline/spazi finali e coerenza checklist M1.05 completo/M2.01 non avviato verificati. Nessuna modifica al codice dopo la verifica completa.

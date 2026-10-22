@@ -64,3 +64,7 @@ Apply the new migration explicitly to the intended development environment when 
 ## M1.04 follow-up
 
 Private invitation reads and model writes now require explicit tenant context. HTTP establishes an authorized route team before tenant binding; issuance/revocation and capability acceptance also establish context for direct action calls. The capability-only resolver remains the restricted entry for anonymous invitation flows. [TENANCY.md](TENANCY.md) documents policy behavior, reload safeguards and queue/CLI contracts. Existing user-visible flows and ownership invariants remain unchanged.
+
+## M1.05 isolation coverage
+
+[AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) records the parametrized HTTP contract, independent actor/target role hierarchy and tests for foreign nested IDs, revoked membership, account selection and capability entry. The test suite checks both authorization responses and persistent effects; no team-management behavior changes in this task.

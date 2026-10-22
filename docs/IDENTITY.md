@@ -28,7 +28,7 @@ The action locks the owner's row inside a transaction, then creates the team, ow
 
 ## Factories and explicit synthetic seeding
 
-`UserFactory` continues to create identities without implicit teams. `TeamFactory` creates the designated owner's membership after persistence and supports `free()`, `pro()` and `business()` states. These are base-plan fixtures, not simulated subscriptions. `MembershipFactory` creates an additional participant and supports all four role states; `owner()` adds an owner without replacing `owner_id`. Factory `make()` does not persist membership side effects.
+`UserFactory` continues to create identities without implicit teams. `TeamFactory` creates the designated owner's membership after persistence and supports `free()`, `pro()` and `business()` states, plus `trialEnded()` (added in M2.04) for teams whose initial trial is over. These are base-plan fixtures, not simulated subscriptions. `MembershipFactory` creates an additional participant and supports all four role states; `owner()` adds an owner without replacing `owner_id`. Factory `make()` does not persist membership side effects.
 
 After applying migrations to a configured local database, explicitly seed with:
 

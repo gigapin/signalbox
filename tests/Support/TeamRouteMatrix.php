@@ -7,7 +7,7 @@ namespace Tests\Support;
 /** Keep expected permissions explicit rather than deriving test outcomes from production policies. */
 final class TeamRouteMatrix
 {
-    /** @var array<string, array{method: string, status: int, roles: list<string>}> Route contract and successful actor roles; owner fixtures are primary owners. */
+    /** @var array<string, array{method: string, status: int, roles: list<string>, methods?: list<string>}> Route contract and successful actor roles; owner fixtures are primary owners; `methods` lists every verb when a route accepts more than the tested one. */
     public const array PRIVATE_ROUTES = [
         'teams.show' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.select' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member', 'viewer']],
@@ -18,6 +18,11 @@ final class TeamRouteMatrix
         'teams.invitations.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.invitations.resend' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.invitations.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.monitors.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member'], 'methods' => ['PUT', 'PATCH']],
+        'teams.monitors.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.pause' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.resume' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
     ];
 
     /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */

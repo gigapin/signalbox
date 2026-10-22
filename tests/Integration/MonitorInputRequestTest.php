@@ -6,13 +6,12 @@ declare(strict_types=1);
 
 use App\Data\Monitoring\ValidatedMonitorInput;
 use App\Exceptions\MissingTenantContext;
+use App\Models\Membership;
 use App\Models\Monitor;
 use App\Models\Team;
-use App\Models\User;
 use App\Services\Monitoring\MonitorInputValidator;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Tests\Support\MonitorInputFixture;
 use Tests\Support\MonitorRequestFixture;
 
@@ -35,7 +34,6 @@ beforeEach(function (): void {
 
 it('uses the real create adapter for every configuration without persisting or returning sensitive values', function (array $payload): void {
     $team = $this->team;
-    Gate::define('create', fn (User $actor): bool => $actor->id === $team->owner_id);
     $before = DB::table('monitors')->get()->toJson();
     $this->actingAs($team->owner)->postJson("/teams/{$team->id}/monitors", $payload)->assertNoContent();
     expect($this->captured)->toBeInstanceOf(ValidatedMonitorInput::class)
@@ -46,7 +44,6 @@ it('uses the real create adapter for every configuration without persisting or r
 })->with(MonitorInputFixture::cases());
 
 it('preserves whitespace empty header values and empty bodies through the global middleware', function (): void {
-    Gate::define('create', fn (User $actor): bool => true);
     $payload = [...MonitorInputFixture::cases()['keyword'][0], 'body' => '', 'expected_keyword' => ' '];
     $this->actingAs($this->team->owner)->postJson("/teams/{$this->team->id}/monitors", $payload)->assertNoContent();
     $candidate = $this->captured->data->candidate();
@@ -57,7 +54,6 @@ it('preserves whitespace empty header values and empty bodies through the global
 });
 
 it('returns safe JSON field errors without echoing credentials or changing persistence', function (): void {
-    Gate::define('create', fn (User $actor): bool => true);
     $before = DB::table('monitors')->get()->toJson();
     $response = $this->actingAs($this->team->owner)->postJson("/teams/{$this->team->id}/monitors", [
         ...MonitorInputFixture::http(), 'headers' => ['Host' => 'synthetic-secret'],
@@ -67,7 +63,6 @@ it('returns safe JSON field errors without echoing credentials or changing persi
 });
 
 it('rejects blocked destinations with a generic JSON error and no persistence', function (): void {
-    Gate::define('create', fn (User $actor): bool => true);
     $before = DB::table('monitors')->get()->toJson();
     $response = $this->actingAs($this->team->owner)->postJson("/teams/{$this->team->id}/monitors", [
         ...MonitorInputFixture::http(), 'url' => 'http://169.254.169.254/latest/meta-data/?token=synthetic-secret',
@@ -78,14 +73,14 @@ it('rejects blocked destinations with a generic JSON error and no persistence', 
 });
 
 it('flashes errors but no original monitor input for web validation failures', function (): void {
-    Gate::define('create', fn (User $actor): bool => true);
     $this->actingAs($this->team->owner)->from('/account')
         ->post("/teams/{$this->team->id}/monitors", [...MonitorInputFixture::http(), 'unexpected' => 'synthetic-secret'])
         ->assertRedirect('/account')->assertSessionHasErrors('unexpected')->assertSessionHas('_old_input', []);
     expect(json_encode(session()->all(), JSON_THROW_ON_ERROR))->not->toContain('synthetic-secret');
 });
 
-it('fails closed without a monitor policy for both create and update', function (string $operation): void {
+it('denies viewers through the monitor policy for both create and update', function (string $operation): void {
+    $viewer = Membership::factory()->for($this->team)->viewer()->create()->user;
     $url = "/teams/{$this->team->id}/monitors";
     $method = 'postJson';
 
@@ -94,19 +89,18 @@ it('fails closed without a monitor policy for both create and update', function 
         $method = 'patchJson';
     }
 
-    $this->actingAs($this->team->owner)->{$method}($url, MonitorInputFixture::http())->assertForbidden();
+    $this->actingAs($viewer)->{$method}($url, MonitorInputFixture::http())->assertForbidden();
     expect($this->captured)->toBeNull();
 })->with(['create', 'update']);
 
 it('checks update authority before decrypting current secrets', function (): void {
     DB::table('monitors')->where('id', $this->monitor->id)->update(['url' => 'invalid-ciphertext']);
-    Gate::define('update', fn (User $actor, Monitor $monitor): bool => false);
-    $this->actingAs($this->team->owner)->patchJson("/teams/{$this->team->id}/monitors/{$this->monitor->id}", ['name' => 'Rename'])->assertForbidden();
+    $viewer = Membership::factory()->for($this->team)->viewer()->create()->user;
+    $this->actingAs($viewer)->patchJson("/teams/{$this->team->id}/monitors/{$this->monitor->id}", ['name' => 'Rename'])->assertForbidden();
     expect($this->captured)->toBeNull();
 });
 
 it('merges authorized partial updates without exposing omitted secrets or persisting a stale snapshot', function (string $method): void {
-    Gate::define('update', fn (User $actor, Monitor $monitor): bool => true);
     $before = DB::table('monitors')->get()->toJson();
     $this->actingAs($this->team->owner)->{$method}("/teams/{$this->team->id}/monitors/{$this->monitor->id}", ['name' => ' Renamed '])->assertNoContent();
     expect($this->patch)->toBe(['name' => 'Renamed'])
@@ -115,21 +109,18 @@ it('merges authorized partial updates without exposing omitted secrets or persis
 })->with(['patchJson', 'putJson']);
 
 it('preserves explicit null and replacement arrays on authorized updates', function (): void {
-    Gate::define('update', fn (User $actor, Monitor $monitor): bool => true);
     $this->actingAs($this->team->owner)->patchJson("/teams/{$this->team->id}/monitors/{$this->monitor->id}", ['body' => null, 'headers' => []])->assertNoContent();
     expect($this->patch)->toBe(['headers' => [], 'body' => null]);
 });
 
-it('rejects foreign bindings even if a fixture gate would grant update', function (): void {
+it('rejects foreign bindings even for a managing owner', function (): void {
     $other = Team::factory()->create();
     $foreign = app(TenantContext::class)->run($other->id, fn () => Monitor::factory()->create());
-    Gate::define('update', fn (User $actor, Monitor $monitor): bool => true);
     $this->actingAs($this->team->owner)->patchJson("/teams/{$this->team->id}/monitors/{$foreign->id}", ['name' => 'forged'])->assertNotFound();
     expect($this->captured)->toBeNull();
 });
 
 it('gates monitor request fixtures behind authentication verification and current membership', function (string $state): void {
-    Gate::define('create', fn (User $actor): bool => true);
 
     if ($state !== 'guest') {
         $actor = $this->team->owner;
@@ -163,7 +154,6 @@ it('leaves ordinary authentication normalization unchanged', function (): void {
 
 
 it('never echoes or flashes decrypted existing secrets when a different update field fails', function (string $transport): void {
-    Gate::define('update', fn (User $actor, Monitor $monitor): bool => true);
     $configuration = app(MonitorInputValidator::class)->validate(MonitorInputFixture::http())->data->configuration;
     app(TenantContext::class)->run($this->team->id, function () use ($configuration): void {
         $this->monitor->applyConfiguration($configuration);
@@ -184,7 +174,6 @@ it('never echoes or flashes decrypted existing secrets when a different update f
 })->with(['json', 'web']);
 
 it('preserves monitor bytes for alternate numeric route representations too', function (): void {
-    Gate::define('create', fn (User $actor): bool => true);
     $this->actingAs($this->team->owner)->postJson('/teams/00'.$this->team->id.'/monitors', [...MonitorInputFixture::cases()['keyword'][0], 'expected_keyword' => ' '])->assertNoContent();
     expect($this->captured->data->candidate()['expected_keyword'])->toBe(' ');
 });

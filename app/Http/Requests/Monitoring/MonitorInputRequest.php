@@ -18,7 +18,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
 use LogicException;
 
-/** Fail closed until future CRUD policies grant create/update; no endpoint is registered by this adapter. */
+/** Authorization comes from MonitorPolicy; an absent tenant context or policy grant denies before validation. */
 abstract class MonitorInputRequest extends FormRequest
 {
     /** @var ValidatedMonitorInput|null Private validation result, absent until successful validation. */

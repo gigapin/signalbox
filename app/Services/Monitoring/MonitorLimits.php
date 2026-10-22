@@ -1,0 +1,86 @@
+<?php
+
+declare(strict_types=1);
+
+/** Apply plan quotas and cadence minimums to monitor mutations from every entry point. */
+
+namespace App\Services\Monitoring;
+
+use App\Models\Monitor;
+use App\Models\Team;
+use App\Services\Billing\PlanLimits;
+use App\Services\Billing\TeamEntitlement;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Callers must hold the Team row lock and an active tenant context for that team, so the count
+ * and the following write are serialized against concurrent creations and plan changes.
+ * Queries add an explicit team predicate in addition to TeamScope.
+ */
+final readonly class MonitorLimits
+{
+    /**
+     * @param PlanLimits $limits Single plan definition.
+     * @param TeamEntitlement $entitlement Effective plan resolution.
+     */
+    public function __construct(private PlanLimits $limits, private TeamEntitlement $entitlement)
+    {
+    }
+
+    /**
+     * @param Team $team Locked team about to receive one more monitor.
+     * @throws ValidationException On key `monitor` when the team already holds its plan's maximum.
+     */
+    public function assertCanCreate(Team $team): void
+    {
+        $limit = $this->limits->monitors($this->entitlement->effectivePlan($team));
+
+        // Paused and plan-suspended monitors occupy quota too, so pausing never frees a creation slot.
+        if (Monitor::query()->where('team_id', $team->id)->count() >= $limit) {
+            throw ValidationException::withMessages([
+                'monitor' => "Your plan allows {$limit} monitors. Delete a monitor or upgrade to add another.",
+            ]);
+        }
+    }
+
+    /**
+     * @param Team $team Locked team owning the monitor.
+     * @param int $seconds Requested or current interval in seconds.
+     * @throws ValidationException On key `interval_seconds` when the cadence is faster than the plan allows.
+     */
+    public function assertInterval(Team $team, int $seconds): void
+    {
+        $minimum = $this->limits->minimumIntervalSeconds($this->entitlement->effectivePlan($team));
+
+        if ($seconds < $minimum) {
+            throw ValidationException::withMessages([
+                'interval_seconds' => "Your plan requires an interval of at least {$minimum} seconds.",
+            ]);
+        }
+    }
+
+    /**
+     * Deterministic ADR-010 position: oldest monitors by creation time, then ID, keep their places.
+     *
+     * @param Team $team Locked owning team.
+     * @param Monitor $monitor Persisted monitor of that team.
+     * @return bool Whether the monitor's position is inside the current plan quota.
+     */
+    public function isWithinQuota(Team $team, Monitor $monitor): bool
+    {
+        $limit = $this->limits->monitors($this->entitlement->effectivePlan($team));
+
+        $ahead = Monitor::query()
+            ->where('team_id', $team->id)
+            ->where(function (Builder $query) use ($monitor): void {
+                $query->where('created_at', '<', $monitor->created_at)
+                    ->orWhere(function (Builder $tied) use ($monitor): void {
+                        $tied->where('created_at', $monitor->created_at)->where('id', '<', $monitor->id);
+                    });
+            })
+            ->count();
+
+        return $ahead < $limit;
+    }
+}

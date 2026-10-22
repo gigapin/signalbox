@@ -162,3 +162,5 @@ This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI res
 [MONITOR-INPUT.md](MONITOR-INPUT.md) describes the new `config/monitor-input.php` operational bounds and the narrowly scoped global string-middleware exceptions. No environment variables, dependencies, migration, production routes or process changes are required. The Form Requests deny without future monitor policies; test routes and Gate grants exist only in the isolated test application. SSRF protection remains M2.03 before any outbound monitor I/O.
 
 M2.03 adds `config/outbound-security.php` and the optional `OUTBOUND_ALLOWED_CIDRS` variable (comma-separated CIDR exceptions, empty by default and documented in `.env.example`), and taps `App\Logging\RedactSecrets` into every concrete log channel. No dependency, migration, route or process change is required. See [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md).
+
+M2.04 adds `config/plans.php` (plan entitlements) and `routes/monitors.php`, included by `routes/web.php`. No environment variable, dependency, migration or process change is required. See [MONITOR-CRUD.md](MONITOR-CRUD.md).

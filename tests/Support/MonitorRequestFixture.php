@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-/** Register monitor write paths only inside test applications, without adding production CRUD. */
+/**
+ * Replace the production store/update handlers with observing closures inside one test application,
+ * so Form Request adapters can be inspected without running ManageMonitors or persisting input.
+ */
 
 namespace Tests\Support;
 

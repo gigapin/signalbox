@@ -9,7 +9,7 @@ namespace App\Http\Requests\Monitoring;
 use App\Models\Monitor;
 use Illuminate\Support\Facades\Gate;
 
-/** Monitor policies are introduced by M2.04; absent policy is a denial rather than an implicit grant. */
+/** MonitorPolicy grants owners, admins and members; ManageMonitors rechecks it and plan limits under lock. */
 final class StoreMonitorRequest extends MonitorInputRequest
 {
     /** @return bool Whether a verified contextual actor has the explicit monitor create ability. */

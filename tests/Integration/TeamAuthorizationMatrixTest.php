@@ -6,11 +6,13 @@ use App\Enums\Identity\TeamRole;
 use App\Exceptions\MissingTenantContext;
 use App\Http\Middleware\EstablishTeamContext;
 use App\Models\Membership;
+use App\Models\Monitor;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Notifications\TeamInvitationNotification;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
@@ -56,7 +58,7 @@ it('keeps the route catalogue complete and each private verb behind its declared
     foreach (TeamRouteMatrix::PRIVATE_ROUTES as $name => $contract) {
         $route = Route::getRoutes()->getByName($name);
         expect($route)->not->toBeNull()
-            ->and(array_values(array_diff($route->methods(), ['HEAD'])))->toBe([$contract['method']])
+            ->and(array_values(array_diff($route->methods(), ['HEAD'])))->toBe($contract['methods'] ?? [$contract['method']])
             ->and($route->gatherMiddleware())->toContain('auth', 'verified', EstablishTeamContext::class);
     }
 
@@ -74,6 +76,11 @@ it('enforces route role and membership boundaries without hidden cross-team effe
 
     if ($name === 'teams.select' && $access === 'member') {
         $fixture->actor->forceFill(['current_team_id' => null])->save();
+    }
+
+    // Resume is only observable on a paused monitor; both local and foreign targets start paused.
+    if ($name === 'teams.monitors.resume') {
+        DB::table('monitors')->update(['is_paused' => true]);
     }
 
     Notification::fake();
@@ -146,6 +153,22 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.invitations.destroy':
             expect($fixture->loadInvitation()->revoked_at)->not->toBeNull();
             break;
+        case 'teams.monitors.store':
+            $created = app(TenantContext::class)->run($fixture->team->id, fn () => Monitor::query()->where('name', 'Matrix created monitor')->sole());
+            expect($created->team_id)->toBe($fixture->team->id);
+            break;
+        case 'teams.monitors.update':
+            expect($fixture->loadMonitor()?->name)->toBe('Matrix renamed monitor');
+            break;
+        case 'teams.monitors.destroy':
+            expect($fixture->loadMonitor())->toBeNull();
+            break;
+        case 'teams.monitors.pause':
+            expect($fixture->loadMonitor()?->is_paused)->toBeTrue();
+            break;
+        case 'teams.monitors.resume':
+            expect($fixture->loadMonitor()?->is_paused)->toBeFalse();
+            break;
     }
 
     if (in_array($name, ['teams.invitations.store', 'teams.invitations.resend'], true)) {
@@ -182,7 +205,16 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
         ->assertNotFound();
     expect($fixture->snapshot())->toBe($before);
     Notification::assertNothingSent();
-})->with(['teams.members.update', 'teams.members.destroy', 'teams.invitations.resend', 'teams.invitations.destroy']);
+})->with([
+    'teams.members.update',
+    'teams.members.destroy',
+    'teams.invitations.resend',
+    'teams.invitations.destroy',
+    'teams.monitors.update',
+    'teams.monitors.destroy',
+    'teams.monitors.pause',
+    'teams.monitors.resume',
+]);
 
 it('rejects a foreign ownership successor despite a forged selected team and fresh password', function (): void {
     $fixture = TeamAuthorizationFixture::create();

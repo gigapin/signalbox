@@ -4,6 +4,7 @@
 
 namespace Tests\Support;
 
+use App\Models\Monitor;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -23,6 +24,8 @@ final readonly class TeamAuthorizationFixture
      * @param TeamInvitation $foreignInvitation Invitation inaccessible through the actor's team.
      * @param string $capabilityUrl Local capability URL retained only in memory.
      * @param string $foreignCapabilityUrl Foreign capability used to test ID/token mismatches.
+     * @param Monitor $monitor Local monitor targeted by monitor mutation routes.
+     * @param Monitor $foreignMonitor Monitor of the disjoint team, never reachable through the actor's team.
      */
     private function __construct(
         public Team $team,
@@ -34,6 +37,8 @@ final readonly class TeamAuthorizationFixture
         public TeamInvitation $foreignInvitation,
         public string $capabilityUrl,
         public string $foreignCapabilityUrl,
+        public Monitor $monitor,
+        public Monitor $foreignMonitor,
     ) {
     }
 
@@ -60,7 +65,22 @@ final readonly class TeamAuthorizationFixture
         $local = InvitationFixture::issue($team, 'local-matrix@example.test');
         $remote = InvitationFixture::issue($foreign, 'private-beta@example.test');
 
-        return new self($team, $foreign, $actor, $member, $successor, $local['invitation'], $remote['invitation'], $local['url'], $remote['url']);
+        $monitor = app(TenantContext::class)->run($team->id, fn (): Monitor => Monitor::factory()->create(['name' => 'Matrix monitor']));
+        $foreignMonitor = app(TenantContext::class)->run($foreign->id, fn (): Monitor => Monitor::factory()->create(['name' => 'Private Beta monitor']));
+
+        return new self(
+            $team,
+            $foreign,
+            $actor,
+            $member,
+            $successor,
+            $local['invitation'],
+            $remote['invitation'],
+            $local['url'],
+            $remote['url'],
+            $monitor,
+            $foreignMonitor,
+        );
     }
 
     /**
@@ -81,15 +101,32 @@ final readonly class TeamAuthorizationFixture
             $parameters['invitation'] = $foreignTeam || $foreignChild ? $this->foreignInvitation->id : $this->invitation->id;
         }
 
+        if (str_starts_with($route, 'teams.monitors.') && $route !== 'teams.monitors.store') {
+            $parameters['monitor'] = $foreignTeam || $foreignChild ? $this->foreignMonitor->id : $this->monitor->id;
+        }
+
         return route($route, $parameters, absolute: false);
     }
 
     /**
      * @param string $route Named private route receiving valid input for its intended transition.
-     * @return array<string, int|string> Valid fields plus forged ownership/actor fields that must never grant authority.
+     * @return array<string, mixed> Valid fields plus forged ownership/actor fields that must never grant authority;
+     *                              monitor input rejects unknown fields outright, so it receives only valid fields.
      */
     public function payload(string $route): array
     {
+        if ($route === 'teams.monitors.store') {
+            return [...MonitorInputFixture::http(), 'name' => 'Matrix created monitor'];
+        }
+
+        if ($route === 'teams.monitors.update') {
+            return ['name' => 'Matrix renamed monitor'];
+        }
+
+        if (str_starts_with($route, 'teams.monitors.')) {
+            return [];
+        }
+
         return [
             'role' => $route === 'teams.members.update' ? 'viewer' : 'member',
             'email' => 'new-matrix@example.test',
@@ -97,6 +134,12 @@ final readonly class TeamAuthorizationFixture
             'team_id' => $this->foreign->id,
             'actor_id' => $this->foreign->owner_id,
         ];
+    }
+
+    /** @return Monitor|null Current local monitor loaded inside its tenant context, null once deleted. */
+    public function loadMonitor(): ?Monitor
+    {
+        return app(TenantContext::class)->run($this->team->id, fn (): ?Monitor => Monitor::query()->find($this->monitor->id));
     }
 
     /** @return TeamInvitation Current local lifecycle loaded only inside its explicit tenant context. */
@@ -117,6 +160,7 @@ final readonly class TeamAuthorizationFixture
             'memberships' => self::rows('team_user', ['*'], ['team_id', 'user_id']),
             'users' => self::rows('users', ['id', 'current_team_id'], ['id']),
             'invitations' => self::rows('team_invitations', ['*'], ['id']),
+            'monitors' => self::rows('monitors', ['*'], ['id']),
         ];
     }
 
@@ -130,6 +174,7 @@ final readonly class TeamAuthorizationFixture
             'memberships' => array_values(array_filter($snapshot['memberships'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'users' => array_values(array_filter($snapshot['users'], fn (array $row): bool => $row['id'] === $this->foreign->owner_id)),
             'invitations' => array_values(array_filter($snapshot['invitations'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'monitors' => array_values(array_filter($snapshot['monitors'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
         ];
     }
 

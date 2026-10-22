@@ -17,6 +17,11 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 | teams.invitations.store | POST | 302 | 302 | 403 | 403 |
 | teams.invitations.resend | POST | 302 | 302 | 403 | 403 |
 | teams.invitations.destroy | DELETE | 302 | 302 | 403 | 403 |
+| teams.monitors.store | POST | 302 | 302 | 302 | 403 |
+| teams.monitors.update | PATCH (also PUT) | 302 | 302 | 302 | 403 |
+| teams.monitors.destroy | DELETE | 302 | 302 | 302 | 403 |
+| teams.monitors.pause | POST | 302 | 302 | 302 | 403 |
+| teams.monitors.resume | POST | 302 | 302 | 302 | 403 |
 
 Every route is tested with each actor role in three states: current membership, a disjoint target team and revoked membership with a stale selected team and preloaded membership collection. The last two states must return 404. Separate guest and unverified scenarios must redirect to login and email verification respectively. GET routes retain Laravel's HEAD alias; the inventory checks exact verbs excluding that implicit alias.
 
@@ -66,3 +71,7 @@ docker compose run --rm php-test composer test -- --filter=TeamAuthorizationMatr
 ```
 
 No migration, dependency change or application behavior change is required by this task. Tests use synthetic identities, fake email, frozen time and the guarded PostgreSQL/Redis services; they do not use development/customer data or real network delivery.
+
+## M2.04 monitor routes
+
+The five monitor mutation routes from [MONITOR-CRUD.md](MONITOR-CRUD.md) join the private matrix with the same role × membership-state cases, guest/unverified gates and raw snapshots, which now include every `monitors` row. Successful cases assert the persisted effect: creation of a local monitor, rename, deletion, pause, and resume of a monitor paused before the snapshot. A foreign monitor ID under an accessible team URL returns 404 for update, delete, pause and resume. Monitor input rejects unknown fields, so forged `team_id` or actor fields fail validation instead of being ignored; MonitorCrudTest covers that case and direct action calls by viewers or revoked members.

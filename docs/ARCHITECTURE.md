@@ -317,3 +317,9 @@ ADR-003/004 now have concrete request-scoped TenantContext, fail-closed TeamScop
 ## M1.05 verification follow-up
 
 M1.05 verifies ADR-003/004 with an independent route catalogue and actor/target role expectations, cross-team nested identifiers, stale membership/preferences, bounded capabilities and assertions of both allowed effects and unchanged persistence on denial. [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) describes discovery and extension rules. Existing scope, worker and PostgreSQL concurrency suites remain enabled. No domain permission, scope bypass or new transport is introduced; M1 completion covers implemented paths and subsequent milestones extend the matrix with their resources.
+
+## M2.01 monitor foundation
+
+[MONITORS.md](MONITORS.md) documents the tenant Monitor model, five readonly configuration variants, composition of HTTP settings for keyword monitors, dedicated-column mapper and typed canonical simulated regions. The specification's column layout is extended for TLS/DNS/heartbeat; URL/header/body use encrypted text columns, while DNS expectations and regions use JSONB. Configuration replacement clears irrelevant fields without implicit persistence.
+
+The shared tenant trait protects Monitor and the Team inverse relation. Initial status is unknown, scheduling/observation timestamps are null, and voluntary pause is separate from plan suspension. UTC instants are normalized before SQL formatting. Plan limits, regional incident state, scheduling transitions, network validation, SSRF and checker I/O remain in their owning tasks; no resource controller or policy is anticipated. PostgreSQL constraints and test-only factories verify this foundation without provisioning implicit teams or contacting targets.

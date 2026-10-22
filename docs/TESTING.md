@@ -148,3 +148,7 @@ DOM tests mount the real Inertia forms/provider and intercept only routing/fetch
 ## M1.05 authorization matrix
 
 [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) documents TeamAuthorizationMatrixTest, its route catalogue and the two synthetic-aggregate fixture. Every private route is crossed with actor role and current/foreign/revoked access; separate tests check guest/verification gates, the complete actor/target hierarchy, requested roles, nested foreign IDs, account projections, switching and invitation capabilities. Rejected writes compare raw guarded-test database snapshots and fake notifications; successful operations assert actual domain effects and unchanged foreign data. Route discovery fails when domain routes are not classified, making extension an explicit requirement of later milestones. Existing concurrency, scope and real-worker suites remain required.
+
+## M2.01 monitor foundation
+
+[MONITORS.md](MONITORS.md) describes MonitorConfigurationTest and MonitorModelTest: immutable variant structure, exact typed round trips, encrypted storage/hidden fields, canonical regions, irrelevant-field cleanup, SQL constraints, UTC/DST, cascade/rollback and tenant isolation on the real model. Monitor factories require explicit tenant context and never provision a team. The identity rollback test includes the dependent monitors migration before removing teams, then reapplies it after its prerequisites; no baseline user data is dropped. Existing M1 authorization and worker/concurrency coverage remains enabled.

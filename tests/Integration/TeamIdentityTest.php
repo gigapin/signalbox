@@ -221,22 +221,19 @@ it('refuses synthetic seeding in production before writing any account', /** Ver
     }
 });
 
-it('reverses only M1 migrations and reapplies them without changing baseline identities', /** Exercise incremental upgrade and rollback on the dedicated database inside its test transaction. */ function (): void {
-    /** @var User $user Existing identity created before reapplying the domain migrations. */
+it('reverses identity and dependent migrations without changing baseline identities', function (): void {
     $user = User::factory()->create();
-    /** @var list<string> $files Domain migration paths in dependency order. */
     $files = [
         'database/migrations/2026_10_20_000001_create_teams_table.php',
         'database/migrations/2026_10_20_000002_create_team_user_table.php',
         'database/migrations/2026_10_20_000003_add_current_team_to_users.php',
         'database/migrations/2026_10_21_000005_create_team_invitations_table.php',
+        'database/migrations/2026_10_22_000006_create_monitors_table.php',
     ];
-    /** @var string $file Domain migration being reversed, starting with the last dependency. */
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();
     }
     expect(User::query()->findOrFail($user->id)->email)->toBe($user->email);
-    /** @var string $file Domain migration being applied after its prerequisites. */
     foreach ($files as $file) {
         (require base_path($file))->up();
     }

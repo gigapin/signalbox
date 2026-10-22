@@ -12,7 +12,7 @@ The context carries identity only. The caller must establish authority before pr
 
 ## Private model boundary
 
-`BelongsToTeam` installs `TeamScope` on `TeamInvitation`. Other tenant-owned resources adopt it in their owning milestone. User, Team and the initial Membership lookup remain outside this scope to avoid circular membership resolution and to support multi-team listing.
+`BelongsToTeam` installs `TeamScope` on `TeamInvitation` and, from M2.01, `Monitor`. Other tenant-owned resources adopt it in their owning milestone. User, Team and the initial Membership lookup remain outside this scope to avoid circular membership resolution and to support multi-team listing.
 
 Ordinary Eloquent queries receive a qualified `table.team_id = active_team` predicate, including counts, aggregates and query update/delete operations. Missing context fails closed. Model saving assigns new ownership from context and rejects conflicting ownership or reassignment of an existing record. Updating also checks ownership because model increment/decrement bypass the saving event. Model deletion validates both original and current ownership.
 
@@ -66,3 +66,7 @@ No schema migration, dependency change or development database reset is needed f
 ## M1.05 authorization matrix
 
 [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) classifies the current private team, capability and account routes and explains the independent actor/target-role datasets, foreign IDs, stale memberships and side-effect snapshots. M1.04 scope/worker tests remain enabled alongside the matrix. New milestones must extend both HTTP coverage and their actual asynchronous/public boundaries.
+
+## M2.01 real monitor model
+
+[MONITORS.md](MONITORS.md) documents Monitor adopting the shared query/write/reload boundary and Team::monitors() for constrained inverse traversal. Tests cover foreign relation reads and writes, bulk predicates, ownership forgery, reloading and context absence on the actual resource. No monitor HTTP entrypoint exists yet; its route/policy matrix is extended when M2.04 introduces CRUD.

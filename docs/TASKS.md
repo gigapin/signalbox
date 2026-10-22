@@ -231,7 +231,7 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-22 | M2.04: eliminazione definitiva dei monitor | Scelta utente: hard delete che libera subito la quota; risultati/incidenti futuri useranno FK con cascade. |
 | 2026-10-22 | M2.04: piano effettivo provvisorio fino a M9 | Scelta utente: piano salvato pro/business vale come diritto pagato segnaposto; free riceve Pro durante il trial (fine esclusiva), altrimenti Free; il trial non abbassa un piano superiore. Da sostituire con lo stato Stripe in M9. |
 | 2026-10-22 | M2.04: mutazioni con redirect e flash, nessuna pagina | Scelta utente: pagine lista/dettaglio/form in M2.05. |
-| 2026-10-22 | M2.04: una sola action coesa ManageMonitors | Deviazione dal piano (cinque classi): come ManageTeamMembers, condivide lock Team→Monitor e riautorizzazione senza duplicazione. |
+| 2026-10-22 | M2.04: una sola action coesa ManageMonitors | Deviazione dal piano (cinque classi), confermata dall'utente il 2026-10-22: come ManageTeamMembers, condivide lock Team→Monitor e riautorizzazione senza duplicazione. |
 | 2026-10-22 | M2.04: intervallo invariato dopo downgrade non bloccato sulle modifiche | Il minimo di piano si verifica su creazione, cambio intervallo e ripresa; l'adeguamento degli intervalli esistenti resta alla riconciliazione M9 (ADR-010). |
 
 ## Registro sessioni

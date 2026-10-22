@@ -1,6 +1,6 @@
 # Monitor input contract
 
-M2.02 adds network-free validation above the [monitor persistence foundation](MONITORS.md). `MonitorInputValidator` is reusable outside HTTP; StoreMonitorRequest and UpdateMonitorRequest adapt authorization and validation errors without persisting anything. No production monitor route, controller, policy, plan limit or checker is introduced. See [TASKS.md](TASKS.md) for verification evidence.
+M2.02 adds network-free validation above the [monitor persistence foundation](MONITORS.md). `MonitorInputValidator` is reusable outside HTTP; StoreMonitorRequest and UpdateMonitorRequest adapt authorization and validation errors without persisting anything. M2.02 itself introduced no production route, controller, policy, plan limit or checker; those mutations now live in [MONITOR-CRUD.md](MONITOR-CRUD.md) (M2.04). See [TASKS.md](TASKS.md) for verification evidence.
 
 ## Candidate and explicit patch
 
@@ -41,7 +41,7 @@ Global TrimStrings and ConvertEmptyStringsToNull skip only POST/PUT/PATCH reques
 
 JSON failures use Laravel's 422 field-error response without submitted or decrypted values in messages. Web failures redirect with errors and flash no original input. Existing decrypted fields are never merged into HTTP input, and global `dontFlash` also excludes known private monitor configuration for future service validation exceptions. No validation result is returned by the test routes. Future edit screens must provide safe projections explicitly rather than automatically repopulating private values.
 
-Syntax validation does not authorize a network destination. Since M2.03 the validator also applies the network-free part of the [outbound policy](OUTBOUND-SECURITY.md): HTTP/keyword URL hosts, TLS hosts and DNS resolvers that are local names or blocked literal addresses fail with a generic field error. Hostnames are not resolved at save time; the access-time guard repeats the complete policy, pins resolved addresses and validates redirects before checker or webhook I/O. M2.04 owns CRUD/policies, state transitions and concurrent plan limits.
+Syntax validation does not authorize a network destination. Since M2.03 the validator also applies the network-free part of the [outbound policy](OUTBOUND-SECURITY.md): HTTP/keyword URL hosts, TLS hosts and DNS resolvers that are local names or blocked literal addresses fail with a generic field error. Hostnames are not resolved at save time; the access-time guard repeats the complete policy, pins resolved addresses and validates redirects before checker or webhook I/O. CRUD, policies, state transitions and concurrent plan limits are described in [MONITOR-CRUD.md](MONITOR-CRUD.md).
 
 ## Verification
 

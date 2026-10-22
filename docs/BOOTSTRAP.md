@@ -152,3 +152,7 @@ This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI res
 ## M1.03 invitations and membership management
 
 [TEAMS.md](TEAMS.md) documents the incremental invitation migration, explicit team routes, membership actions and Inertia pages. Apply the new migration deliberately to development storage; automated verification continues to target only isolated PostgreSQL. No dependencies or lockfiles change. Ordinary registration still creates a first team; invited registration creates only an unverified identity until explicit acceptance. TeamScope/context and general policies remain M1.04.
+
+## M2.01 monitor persistence
+
+[MONITORS.md](MONITORS.md) documents the new incremental monitors migration, DTOs and encrypted network fields. Apply the migration deliberately to the intended local database; automated verification uses isolated PostgreSQL only. There is no new route, checker, scheduled execution, seed data or dependency in this task. Existing application keys remain unchanged.

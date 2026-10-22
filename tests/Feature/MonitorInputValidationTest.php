@@ -132,8 +132,50 @@ it('accepts inclusive optional ranges and explicit clearing of nullable configur
     $tls = $validator->validate([...MonitorInputFixture::cases()['tls'][0], 'tls_expiry_warning_days' => 3650])->data;
     expect($tls->candidate()['tls_expiry_warning_days'])->toBe(3650)
         ->and($validator->validate(['tls_expiry_warning_days' => null], $tls)->data->candidate()['tls_expiry_warning_days'])->toBeNull();
-    $dns = $validator->validate([...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => '2001:0db8::53'])->data;
-    expect($dns->candidate()['dns_resolver'])->toBe('2001:db8::53')
+    $dns = $validator->validate([...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => '2620:00fe::fe'])->data;
+    expect($dns->candidate()['dns_resolver'])->toBe('2620:fe::fe')
         ->and($validator->validate(['dns_resolver' => null], $dns)->data->candidate()['dns_resolver'])->toBeNull();
     expect($validator->validate([...MonitorInputFixture::cases()['heartbeat'][0], 'heartbeat_grace_seconds' => 86400])->data->candidate()['heartbeat_grace_seconds'])->toBe(86400);
+});
+
+it('rejects blocked literal destinations, local names and private resolvers without resolving or echoing them', function (array $payload, string $field): void {
+    try {
+        app(MonitorInputValidator::class)->validate($payload);
+    } catch (ValidationException $exception) {
+        expect(array_keys($exception->errors()))->toBe([$field])
+            ->and(json_encode($exception->errors(), JSON_THROW_ON_ERROR))->not->toMatch('/169\\.254|127\\.0|10\\.0|localhost|fd00|::1/i');
+
+        return;
+    }
+
+    throw new LogicException('The blocked destination was accepted.');
+})->with([
+    'metadata URL' => [[...MonitorInputFixture::http(), 'url' => 'http://169.254.169.254/latest/meta-data/'], 'url'],
+    'loopback URL' => [[...MonitorInputFixture::http(), 'url' => 'http://127.0.0.1:6379/'], 'url'],
+    'IPv6 loopback URL' => [[...MonitorInputFixture::http(), 'url' => 'http://[::1]/'], 'url'],
+    'mapped private URL' => [[...MonitorInputFixture::http(), 'url' => 'http://[::ffff:10.0.0.1]/'], 'url'],
+    'localhost URL' => [[...MonitorInputFixture::http(), 'url' => 'http://LocalHost:8000/'], 'url'],
+    'localhost keyword URL' => [[...MonitorInputFixture::cases()['keyword'][0], 'url' => 'https://app.localhost/'], 'url'],
+    'private TLS host' => [[...MonitorInputFixture::cases()['tls'][0], 'tls_host' => '10.0.0.1'], 'tls_host'],
+    'localhost TLS host' => [[...MonitorInputFixture::cases()['tls'][0], 'tls_host' => 'localhost'], 'tls_host'],
+    'unique-local TLS host' => [[...MonitorInputFixture::cases()['tls'][0], 'tls_host' => 'fd00::1'], 'tls_host'],
+    'loopback resolver' => [[...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => '127.0.0.53'], 'dns_resolver'],
+    'link-local resolver' => [[...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => '169.254.169.253'], 'dns_resolver'],
+]);
+
+it('accepts public literal destinations and leaves hostname resolution to access time', function (): void {
+    $validator = app(MonitorInputValidator::class);
+
+    expect($validator->validate([...MonitorInputFixture::http(), 'url' => 'https://93.184.215.14/'])->data->candidate()['url'])->toBe('https://93.184.215.14/')
+        ->and($validator->validate([...MonitorInputFixture::cases()['tls'][0], 'tls_host' => '2606:4700:4700::1111'])->data->candidate()['tls_host'])->toBe('2606:4700:4700::1111')
+        ->and($validator->validate([...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => '9.9.9.9'])->data->candidate()['dns_resolver'])->toBe('9.9.9.9')
+        ->and($validator->validate([...MonitorInputFixture::http(), 'url' => 'https://internal.example.invalid/'])->data->candidate()['url'])->toBe('https://internal.example.invalid/');
+});
+
+it('honours configured CIDR exceptions during save-time validation', function (): void {
+    config(['outbound-security.allowed_cidrs' => ['127.0.0.1/32']]);
+    app()->forgetInstance(MonitorInputValidator::class);
+
+    expect(app(MonitorInputValidator::class)->validate([...MonitorInputFixture::http(), 'url' => 'http://127.0.0.1:8080/'])->data->candidate()['url'])
+        ->toBe('http://127.0.0.1:8080/');
 });

@@ -18,7 +18,7 @@ final readonly class HttpMonitorConfiguration implements MonitorConfiguration
     public array $headers;
 
     /**
-     * @param string $url Nonempty destination; URL and SSRF validation belong to M2.02/M2.03.
+     * @param string $url Nonempty destination; syntax is validated by M2.02, access by OutboundDestinationGuard.
      * @param HttpMethod $method Application request verb.
      * @param array<array-key, mixed> $headers Header names and string values; encrypted during persistence.
      * @param string|null $body Optional request body; null differs from an empty body.
@@ -27,9 +27,12 @@ final readonly class HttpMonitorConfiguration implements MonitorConfiguration
      * @throws InvalidArgumentException When the structural configuration is inconsistent.
      */
     public function __construct(
+        #[\SensitiveParameter]
         public string $url,
         public HttpMethod $method = HttpMethod::GET,
+        #[\SensitiveParameter]
         array $headers = [],
+        #[\SensitiveParameter]
         public ?string $body = null,
         public int $expectedStatus = 200,
         public bool $followRedirects = false,

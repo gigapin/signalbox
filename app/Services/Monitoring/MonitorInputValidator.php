@@ -19,6 +19,8 @@ use App\Enums\Monitoring\DnsRecordType;
 use App\Enums\Monitoring\HttpMethod;
 use App\Enums\Monitoring\KeywordMode;
 use App\Enums\Monitoring\MonitorType;
+use App\Exceptions\OutboundDestinationRejected;
+use App\Services\Security\OutboundDestinationGuard;
 use Closure;
 use Illuminate\Contracts\Validation\Factory;
 use Illuminate\Validation\ValidationException;
@@ -44,9 +46,14 @@ final readonly class MonitorInputValidator
      * @param Factory $factory Laravel validation factory, independent of HTTP requests.
      * @param MonitorInputSyntax $syntax Network-free syntax normalization.
      * @param MonitorInputLimits $limits Configured byte and operational limits.
+     * @param OutboundDestinationGuard $guard Outbound policy, used here only for its network-free checks.
      */
-    public function __construct(private Factory $factory, private MonitorInputSyntax $syntax, private MonitorInputLimits $limits)
-    {
+    public function __construct(
+        private Factory $factory,
+        private MonitorInputSyntax $syntax,
+        private MonitorInputLimits $limits,
+        private OutboundDestinationGuard $guard,
+    ) {
     }
 
     /**
@@ -255,6 +262,18 @@ final readonly class MonitorInputValidator
             }
         }
 
+        foreach ($this->destinationHosts($candidate, $type) as $field => $host) {
+            if (isset($errors[$field])) {
+                continue;
+            }
+
+            try {
+                $this->guard->assertLocallyAllowed($host);
+            } catch (OutboundDestinationRejected $exception) {
+                $errors[$field] = $exception->getMessage();
+            }
+        }
+
         $body = $candidate['body'] ?? null;
 
         if (
@@ -281,6 +300,36 @@ final readonly class MonitorInputValidator
         }
 
         return $candidate;
+    }
+
+    /**
+     * Select outbound hosts for the save-time check. Hostnames are not resolved here: the access-time guard
+     * repeats the complete policy, including DNS answers, immediately before every connection.
+     *
+     * @param array<string, mixed> $candidate Candidate after semantic normalization.
+     * @param string $type Validated variant.
+     * @return array<string, string> Field name mapped to its normalized host or literal address.
+     */
+    private function destinationHosts(array $candidate, string $type): array
+    {
+        $hosts = [];
+        $url = $candidate['url'] ?? null;
+
+        if (($type === 'http' || $type === 'keyword') && is_string($url)) {
+            $host = parse_url($url, PHP_URL_HOST);
+
+            if (is_string($host)) {
+                $hosts['url'] = trim($host, '[]');
+            }
+        }
+
+        foreach (['tls' => 'tls_host', 'dns' => 'dns_resolver'] as $variant => $field) {
+            if ($type === $variant && is_string($candidate[$field] ?? null)) {
+                $hosts[$field] = $candidate[$field];
+            }
+        }
+
+        return $hosts;
     }
 
     /**

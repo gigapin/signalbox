@@ -9,7 +9,7 @@ namespace App\Services\Monitoring;
 use App\Enums\Monitoring\DnsRecordType;
 use InvalidArgumentException;
 
-/** These parsers authorize no outbound destination; runtime SSRF protection remains M2.03. */
+/** These parsers authorize no outbound destination; OutboundDestinationGuard enforces SSRF policy at access time. */
 final readonly class MonitorInputSyntax
 {
     /** @param MonitorInputLimits $limits Explicit application input bounds. */

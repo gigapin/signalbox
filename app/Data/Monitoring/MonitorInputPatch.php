@@ -10,7 +10,7 @@ namespace App\Data\Monitoring;
 final readonly class MonitorInputPatch
 {
     /** @param array<string, mixed> $values Explicit normalized keys; omitted old secrets are never copied here. */
-    public function __construct(public array $values)
+    public function __construct(#[\SensitiveParameter] public array $values)
     {
     }
 }

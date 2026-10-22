@@ -66,6 +66,17 @@ it('returns safe JSON field errors without echoing credentials or changing persi
     expect(DB::table('monitors')->get()->toJson())->toBe($before)->and($this->captured)->toBeNull();
 });
 
+it('rejects blocked destinations with a generic JSON error and no persistence', function (): void {
+    Gate::define('create', fn (User $actor): bool => true);
+    $before = DB::table('monitors')->get()->toJson();
+    $response = $this->actingAs($this->team->owner)->postJson("/teams/{$this->team->id}/monitors", [
+        ...MonitorInputFixture::http(), 'url' => 'http://169.254.169.254/latest/meta-data/?token=synthetic-secret',
+    ]);
+    $response->assertUnprocessable()->assertJsonValidationErrors('url')
+        ->assertDontSee('169.254', false)->assertDontSee('synthetic-secret', false);
+    expect(DB::table('monitors')->get()->toJson())->toBe($before)->and($this->captured)->toBeNull();
+});
+
 it('flashes errors but no original monitor input for web validation failures', function (): void {
     Gate::define('create', fn (User $actor): bool => true);
     $this->actingAs($this->team->owner)->from('/account')

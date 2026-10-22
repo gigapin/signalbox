@@ -136,3 +136,7 @@ DOM tests mount the real Inertia forms/provider and intercept only routing/fetch
 ## HTTP child environment regression
 
 `ContainerWebEnvironmentTest` starts the actual Dockerfile server argument vector on an ephemeral loopback port, supplies only guarded test database coordinates, and performs a real CSRF-protected login lookup for a nonexistent `.invalid` account. HTTP 422 confirms the child reached PostgreSQL and rejected credentials normally; the old command returned HTTP 500 after losing its container environment overrides. The test uses only test storage, keeps cookies in memory and stops the child in `finally`. It requires integration opt-in and does not create development accounts.
+
+## M1.03 membership coverage
+
+[TEAMS.md](TEAMS.md) documents the TeamMembership integration suite, fake-mail fixture and Teams DOM cases, including two-session PostgreSQL contention. The existing identity migration reversal test now also removes/reapplies invitation storage before its referenced team tables. This preserves its original identity-retention assertion as the schema grows. No test runs against application data or a real notification provider.

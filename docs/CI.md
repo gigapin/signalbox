@@ -74,3 +74,4 @@ The implementation session used actionlint 1.7.12 from an official release archi
 For branch protection, PHP 8.4 and frontend are the checks available on PRs. Do not require successful execution of PHP 8.5 before merge: that job deliberately skips PR events. Repository rules remain user-managed.
 
 References: [GitHub service containers](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers), [YAML anchors](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#yaml-anchors-and-aliases), [PHP setup](https://github.com/shivammathur/setup-php), [Node setup](https://github.com/actions/setup-node), and [Composer platform checks](https://getcomposer.org/doc/03-cli.md#check-platform-reqs).
+

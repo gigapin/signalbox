@@ -4,12 +4,12 @@
 
 namespace App\Enums\Identity;
 
-/** Describe membership roles independently of future authorization policies. */
+/** Describe membership roles used by identity management and future resource policies. */
 enum TeamRole: string
 {
     /** Share ownership responsibilities, including the designated primary owner. */
     case Owner = 'owner';
-    /** Administer the team subject to the policies introduced in M1.04. */
+    /** Manage member/viewer invitations and memberships; general resource policies remain M1.04. */
     case Admin = 'admin';
     /** Participate in team work subject to its authorization policies. */
     case Member = 'member';

@@ -1,6 +1,6 @@
 # Signalbox
 
-SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; M0 completata, con bootstrap da checkout pulito e verifiche finali superate il 2026-10-19. M1.01 introduce utenti, team e membership; M1.02 aggiunge registrazione, accesso, recupero password, verifica email e 2FA facoltativa con UI. Dettagli in [docs/IDENTITY.md](docs/IDENTITY.md) e [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md). Inviti, cambio team e isolamento tenant completo restano nei task M1 successivi.
+SaaS multi-tenant di monitoraggio applicativo e status page. Stato attuale: bootstrap Laravel 13 con Inertia 2, React 19, TypeScript e Tailwind 4; M0 completata, con bootstrap da checkout pulito e verifiche finali superate il 2026-10-19. M1.01 introduce utenti, team e membership; M1.02 aggiunge registrazione, accesso, recupero password, verifica email e 2FA facoltativa con UI. Dettagli in [docs/IDENTITY.md](docs/IDENTITY.md) e [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md). M1.03 aggiunge inviti, gestione membri, trasferimento della titolarità e cambio team: [docs/TEAMS.md](docs/TEAMS.md). TeamScope, contesto e isolamento tenant completo restano M1.04–M1.05.
 
 Il piano completo è in [docs/TASKS.md](docs/TASKS.md), le regole in [AGENTS.md](AGENTS.md) e le versioni in [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). La configurazione iniziale è documentata in [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md); i pacchetti applicativi in [docs/SERVICES.md](docs/SERVICES.md).
 

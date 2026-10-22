@@ -32,6 +32,13 @@ final class HandleInertiaRequests extends Middleware
                 'email' => $request->user()->email,
             ]],
             'status' => match ($request->session()->get('status')) {
+                'team-switched' => 'Current team updated.',
+                'member-updated' => 'Member role updated.',
+                'member-removed' => 'Membership removed.',
+                'ownership-transferred' => 'Primary ownership transferred.',
+                'invitation-accepted' => 'You have joined the team.',
+                'invitation-sent' => 'Invitation sent. Previous links are invalid after a resend.',
+                'invitation-revoked' => 'Invitation revoked.',
                 'verification-link-sent' => 'A new verification link has been sent to your email.',
                 'two-factor-authentication-enabled' => 'Scan the setup code, then confirm your authenticator.',
                 'two-factor-authentication-confirmed' => 'Two-factor authentication is enabled.',

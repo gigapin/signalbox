@@ -13,6 +13,7 @@ use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Notifications\TeamInvitationNotification;
 use App\Services\Identity\InvitationLinks;
+use App\Services\Tenancy\TenantContext;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
@@ -43,7 +44,7 @@ it('sends a normalized hashed invitation with exact seven-day validity after com
         ->post("/teams/{$team->id}/invitations", ['email' => ' INVITEE@EXAMPLE.TEST ', 'role' => 'member', 'team_id' => 999])
         ->assertRedirect("/teams/{$team->id}");
 
-    $invitation = TeamInvitation::query()->sole();
+    $invitation = app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->sole());
     expect($invitation->email)->toBe('invitee@example.test')->and($invitation->team_id)->toBe($team->id)
         ->and($invitation->expires_at->getTimestamp() - now()->getTimestamp())->toBe(7 * 86400)
         ->and($invitation->toArray())->not->toHaveKey('token_hash');
@@ -64,7 +65,7 @@ it('rejects duplicate pending invites and rotates old links on resend', function
         ->post("/teams/{$team->id}/invitations", ['email' => 'INVITEE@example.test', 'role' => 'viewer'])
         ->assertSessionHasErrors('email');
     $this->post("/teams/{$team->id}/invitations/{$fixture['invitation']->id}/resend")->assertRedirect("/teams/{$team->id}");
-    expect(TeamInvitation::query()->count())->toBe(1)->and($fixture['invitation']->fresh()->token_hash)->not->toBe($oldHash)
+    expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe(1)->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->token_hash)->not->toBe($oldHash)
         ->and(app(InvitationLinks::class)->resolve($fixture['invitation']->id, $oldHash))->toBeNull();
     $this->get('/invitations/accept')->assertInertia(fn (AssertableInertia $page) => $page->where('invitation', null));
 });
@@ -80,7 +81,7 @@ it('accepts once with a verified matching identity and never upgrades an existin
     $this->actingAs($user)
         ->post('/invitations/accept', ['role' => 'owner', 'team_id' => 999])
         ->assertRedirect("/teams/{$team->id}");
-    expect($user->resolveCurrentTeam()?->id)->toBe($team->id)->and($fixture['invitation']->fresh()->accepted_at)->not->toBeNull();
+    expect($user->resolveCurrentTeam()?->id)->toBe($team->id)->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->accepted_at)->not->toBeNull();
     app(ManageTeamMembers::class)->changeRole($team->owner, $team->id, $user->id, TeamRole::Viewer);
     $this->post('/invitations/accept')->assertRedirect("/teams/{$team->id}");
     expect(Membership::query()->where('team_id', $team->id)->where('user_id', $user->id)->sole()->role)->toBe(TeamRole::Viewer)->and($team->users()->count())->toBe(2);
@@ -198,7 +199,7 @@ it('enforces the invitation hierarchy for every actor and target role', function
 
     $response = $this->actingAs($actor)->post("/teams/{$team->id}/invitations", ['email' => 'recipient@example.test', 'role' => $targetRole]);
     $allowed ? $response->assertRedirect("/teams/{$team->id}") : $response->assertForbidden();
-    expect(TeamInvitation::query()->count())->toBe($allowed ? 1 : 0);
+    expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe($allowed ? 1 : 0);
 })->with([
     ['owner', 'owner', true], ['owner', 'admin', true], ['owner', 'member', true], ['owner', 'viewer', true],
     ['admin', 'owner', false], ['admin', 'admin', false], ['admin', 'member', true], ['admin', 'viewer', true],
@@ -313,7 +314,7 @@ it('rolls back invitation writes without notifications and reports delivery fail
     DB::beginTransaction();
     app(IssueTeamInvitation::class)($team->owner, $team->id, 'rollback@example.test', TeamRole::Member);
     DB::rollBack();
-    expect(TeamInvitation::query()->count())->toBe(0);
+    expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe(0);
     Notification::assertNothingSent();
 });
 
@@ -323,7 +324,7 @@ it('reports post-commit mail failures without losing the saved invitation', func
     $this->actingAs($team->owner)
         ->post("/teams/{$team->id}/invitations", ['email' => 'retry@example.test', 'role' => 'member'])
         ->assertSessionHasErrors('email');
-    expect(TeamInvitation::query()->sole()->email)->toBe('retry@example.test');
+    expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->sole())->email)->toBe('retry@example.test');
 });
 
 it('reverses invitation schema without removing teams or identities', function (): void {
@@ -334,7 +335,7 @@ it('reverses invitation schema without removing teams or identities', function (
     $migration->down();
     expect(Schema::hasTable('team_invitations'))->toBeFalse()->and(Team::query()->count())->toBe(1)->and(User::query()->count())->toBe(1);
     $migration->up();
-    expect(TeamInvitation::query()->count())->toBe(0);
+    expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe(0);
 });
 
 it('serializes competing acceptance ownership and preference transitions across PostgreSQL sessions', function (string $scenario): void {
@@ -465,15 +466,15 @@ it('renews an expired invitation without duplicating its team-email lifecycle', 
     $this->actingAs($team->owner)
         ->post("/teams/{$team->id}/invitations", ['email' => 'invitee@example.test', 'role' => 'viewer'])
         ->assertRedirect("/teams/{$team->id}");
-    expect(TeamInvitation::query()->count())->toBe(1)->and($fixture['invitation']->fresh()->role)->toBe(TeamRole::Viewer)
-        ->and($fixture['invitation']->fresh()->token_hash)->not->toBe($fixture['invitation']->token_hash)
-        ->and($fixture['invitation']->fresh()->expires_at->getTimestamp() - now()->getTimestamp())->toBe(7 * 86400);
+    expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe(1)->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->role)->toBe(TeamRole::Viewer)
+        ->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->token_hash)->not->toBe($fixture['invitation']->token_hash)
+        ->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->expires_at->getTimestamp() - now()->getTimestamp())->toBe(7 * 86400);
 });
 
 it('rejects malformed invitation inputs without sending mail', function (array $input, string $field): void {
     $team = Team::factory()->create();
     $this->actingAs($team->owner)->post("/teams/{$team->id}/invitations", $input)->assertSessionHasErrors($field);
-    expect(TeamInvitation::query()->count())->toBe(0);
+    expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe(0);
     Notification::assertNothingSent();
 })->with([
     [['email' => 'invalid', 'role' => 'member'], 'email'],
@@ -490,7 +491,7 @@ it('rolls back accepted state membership and preference together when persistenc
 
     try {
         expect(fn () => app(AcceptTeamInvitation::class)($user, $fixture['invitation']->id, $fixture['invitation']->token_hash))->toThrow(QueryException::class);
-        expect($team->users()->count())->toBe(1)->and($fixture['invitation']->fresh()->accepted_at)->toBeNull()->and($user->fresh()->current_team_id)->toBeNull();
+        expect($team->users()->count())->toBe(1)->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->accepted_at)->toBeNull()->and($user->fresh()->current_team_id)->toBeNull();
     } finally {
         DB::statement('ALTER TABLE users DROP CONSTRAINT fixture_forbid_selection');
     }

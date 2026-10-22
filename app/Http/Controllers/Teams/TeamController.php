@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Identity\TeamAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -58,6 +59,7 @@ final class TeamController extends Controller
         $actor = $this->authenticatedUser($request);
         $role = $this->access->membership($actor, $team)->role;
         $identity = Team::query()->findOrFail($team);
+        Gate::authorize('view', $identity);
         $roles = $this->manageableRoles($role);
 
         $members = $identity->users()
@@ -96,6 +98,7 @@ final class TeamController extends Controller
      */
     public function select(Request $request, int $team, SwitchTeam $switch): RedirectResponse
     {
+        Gate::authorize('view', Team::query()->findOrFail($team));
         $switch($this->authenticatedUser($request), $team);
 
         return redirect()->route('account')->with('status', 'team-switched');
@@ -116,8 +119,14 @@ final class TeamController extends Controller
         int $member,
         ManageTeamMembers $members,
     ): RedirectResponse {
+        $actor = $this->authenticatedUser($request);
+        $identity = Team::query()->findOrFail($team);
+        $target = User::query()->findOrFail($member);
+        Gate::authorize('manageRole', [$identity, $this->access->membership($target, $team)->role]);
+        Gate::authorize('manageRole', [$identity, TeamRole::from($request->string('role')->toString())]);
+
         $members->changeRole(
-            $this->authenticatedUser($request),
+            $actor,
             $team,
             $member,
             TeamRole::from($request->string('role')->toString()),
@@ -142,6 +151,7 @@ final class TeamController extends Controller
         ManageTeamMembers $members,
     ): RedirectResponse {
         $actor = $this->authenticatedUser($request);
+        Gate::authorize('removeMember', [Team::query()->findOrFail($team), User::query()->findOrFail($member)]);
         $members->remove($actor, $team, $member);
 
         if ($actor->id === $member) {
@@ -164,7 +174,8 @@ final class TeamController extends Controller
         $this->access->membership($actor, $team);
 
         $identity = Team::query()->findOrFail($team);
-        abort_unless($identity->owner_id === $actor->id, 403);
+        Gate::authorize('view', $identity);
+        Gate::authorize('transferOwnership', $identity);
 
         $confirmedAt = (int) $request->session()->get('auth.password_confirmed_at', 0);
         $passwordTimeout = (int) config('auth.password_timeout');
@@ -203,6 +214,7 @@ final class TeamController extends Controller
         int $team,
         ManageTeamMembers $members,
     ): RedirectResponse {
+        Gate::authorize('transferOwnership', Team::query()->findOrFail($team));
         $members->transfer($this->authenticatedUser($request), $team, $request->integer('user_id'));
 
         return redirect()->route('teams.show', $team)->with('status', 'ownership-transferred');

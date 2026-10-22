@@ -140,3 +140,7 @@ DOM tests mount the real Inertia forms/provider and intercept only routing/fetch
 ## M1.03 membership coverage
 
 [TEAMS.md](TEAMS.md) documents the TeamMembership integration suite, fake-mail fixture and Teams DOM cases, including two-session PostgreSQL contention. The existing identity migration reversal test now also removes/reapplies invitation storage before its referenced team tables. This preserves its original identity-retention assertion as the schema grows. No test runs against application data or a real notification provider.
+
+## M1.04 tenant boundaries
+
+[TENANCY.md](TENANCY.md) describes the new unit and PostgreSQL integration tests. Tests cover fail-closed context, nesting and cleanup, tenant reads/writes/reloads, HTTP binding before private queries and policy roles. Redis serializes scalar fixture jobs consumed by one real worker across failure and a subsequent tenant; a test-only Artisan command verifies bounded CLI work. No application command or product job is added. Existing M1.03 concurrency and invitation regressions remain enabled; direct invitation assertions now establish explicit context.

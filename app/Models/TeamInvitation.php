@@ -5,6 +5,7 @@
 namespace App\Models;
 
 use App\Enums\Identity\TeamRole;
+use App\Models\Concerns\BelongsToTeam;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -21,6 +22,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class TeamInvitation extends Model
 {
+    /** Isolate private invitation queries and enforce ownership for model writes. */
+    use BelongsToTeam;
+
     /** @var list<string> $guarded All invitation fields require explicit trusted assignment. */
     protected $guarded = ['*'];
 

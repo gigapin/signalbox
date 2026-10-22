@@ -4,6 +4,7 @@
 
 namespace App\Services\Identity;
 
+use App\Models\Scopes\TeamScope;
 use App\Models\TeamInvitation;
 
 /** Treat expired, revoked and rotated capabilities identically. */
@@ -16,7 +17,8 @@ final class InvitationLinks
      */
     public function resolve(int $id, string $hash): ?TeamInvitation
     {
-        $invitation = TeamInvitation::query()->find($id);
+        // This capability-only entry point resolves one record before any membership exists.
+        $invitation = TeamInvitation::withoutGlobalScope(TeamScope::class)->find($id);
 
         if ($invitation === null) {
             return null;

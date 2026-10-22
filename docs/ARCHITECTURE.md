@@ -307,3 +307,9 @@ Le action di identità acquisiscono il lock Team, rivalutano membership/ruoli e 
 ### Chiarimento documentazione — 2026-10-21
 
 L'utente ha respinto la documentazione di ogni variabile locale applicata in M1.03 perché interrompeva la lettura. Questa decisione sostituisce quel requisito di AGENTS/ADR-005: documentazione prima delle dichiarazioni, soli commenti ordinari necessari nei corpi e nessuna annotazione locale per forzare i tipi. La revisione M1.03 mantiene firme esplicite, introduce un controllo reale dell'identità autenticata nel controller comune e separa le proiezioni complesse in metodi documentati. Contratti, permessi e ordine dei lock restano quelli approvati.
+
+## M1.04 implementation follow-up
+
+ADR-003/004 now have concrete request-scoped TenantContext, fail-closed TeamScope/BelongsToTeam on TeamInvitation, authorized HTTP middleware ordered before binding, and team/invitation policies sharing TeamAccess. User, Team and initial membership lookup remain outside the scope. The sole capability resolver performs a restricted scope-free lookup; acceptance derives context from the proved invitation and revalidates under lock. Existing transactional ownership and role rules remain unchanged.
+
+[TENANCY.md](TENANCY.md) documents explicit nested lifetimes, model reload/restoration safeguards, scalar-only tenant jobs and worker/CLI tests. M1.04 introduces no speculative product resource, schema change or generic bypass. Raw/bulk persistence remains an explicit trusted boundary. API, public status, search/cache and broadcast enforcement are added with their owning features; M1.05 supplies the complete parametrized matrix of available entrances.

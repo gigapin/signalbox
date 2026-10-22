@@ -9,7 +9,7 @@ use App\Models\Membership;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 
-/** Centralize M1.03 membership rules; general resource policies remain M1.04. */
+/** Share fresh membership rules across policies, UI projections and lock-aware identity actions. */
 final class TeamAccess
 {
     /**

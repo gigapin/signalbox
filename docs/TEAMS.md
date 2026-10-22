@@ -1,6 +1,6 @@
 # Invitations and team membership management
 
-M1.03 adds verified browser flows for invitations, membership management, primary ownership transfer and team switching. It builds on [IDENTITY.md](IDENTITY.md) and [AUTHENTICATION.md](AUTHENTICATION.md). General TeamScope, tenant context and resource policies remain M1.04; the new routes already enforce fresh team membership and the permissions below. See [TASKS.md](TASKS.md) for actual checks and limitations.
+M1.03 adds verified browser flows for invitations, membership management, primary ownership transfer and team switching. It builds on [IDENTITY.md](IDENTITY.md) and [AUTHENTICATION.md](AUTHENTICATION.md). M1.04 adds TeamScope, explicit tenant context and policies for this surface; see [TENANCY.md](TENANCY.md). The routes enforce fresh team membership and the permissions below. See [TASKS.md](TASKS.md) for actual checks and limitations.
 
 ## Permissions and ownership
 
@@ -16,7 +16,7 @@ Multiple owners remain supported. `teams.owner_id` identifies the primary owner,
 
 `TeamController` separates team, member and invitation projections into documented methods. The common HTTP controller resolves a real authenticated User with an explicit type check rather than local PHPDoc assertions. `TeamAccess` centralizes the membership hierarchy; `ManageTeamMembers`, `SwitchTeam`, `IssueTeamInvitation` and `AcceptTeamInvitation` recheck fresh state inside database transactions. All existing-team mutations lock the Team row first. Acceptance, switching and removal then lock the affected User row, so a concurrent revocation cannot leave a newly selected inaccessible team. Existing `CreateTeam` locks its user and creates a new aggregate rather than acquiring an existing-team lock. Direct pivot writes are trusted fixture/persistence operations; they must not be used as production alternatives to these actions.
 
-Composite membership keys are always explicit in standalone update/delete queries; a Pivot loaded outside a belongsToMany relation does not carry that relation's key metadata. No speculative repository or generic scope bypass is added. General authorization policies will reuse these rules in M1.04.
+Composite membership keys are always explicit in standalone update/delete queries; a Pivot loaded outside a belongsToMany relation does not carry that relation's key metadata. No speculative repository or generic scope bypass is added. TeamPolicy and TeamInvitationPolicy reuse these rules in M1.04; action checks remain authoritative under the existing locks.
 
 ## Invitation lifecycle and storage
 
@@ -60,3 +60,7 @@ The ownership GET establishes a server-selected return team before password conf
 `Teams.test.tsx` mounts actual Inertia forms and intercepts only transport: loading/errors, team switching, invitation submission/acceptance, invited registration, read-only controls, account switching, ownership and destructive confirmation. Full backend/frontend checks run through `./scripts/verify.sh` on isolated services.
 
 Apply the new migration explicitly to the intended development environment when ready, using the existing Docker migration command. Automated checks migrate only the guarded test database; the agent does not migrate development storage, send real invitations, change `.env` or operate Git. No dependency or lockfile changes are required.
+
+## M1.04 follow-up
+
+Private invitation reads and model writes now require explicit tenant context. HTTP establishes an authorized route team before tenant binding; issuance/revocation and capability acceptance also establish context for direct action calls. The capability-only resolver remains the restricted entry for anonymous invitation flows. [TENANCY.md](TENANCY.md) documents policy behavior, reload safeguards and queue/CLI contracts. Existing user-visible flows and ownership invariants remain unchanged.

@@ -10,6 +10,7 @@ use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Notifications\TeamInvitationNotification;
 use App\Services\Identity\TeamAccess;
+use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -19,8 +20,11 @@ use Throwable;
 /** Keep invitation persistence atomic while email delivery happens only after commit. */
 final class IssueTeamInvitation
 {
-    /** @param TeamAccess $access Shared role hierarchy, rechecked after taking the team lock. */
-    public function __construct(private readonly TeamAccess $access)
+    /**
+     * @param TeamAccess $access Shared role hierarchy, rechecked after taking the team lock.
+     * @param TenantContext $context Explicit context for direct action calls as well as HTTP.
+     */
+    public function __construct(private readonly TeamAccess $access, private readonly TenantContext $context)
     {
     }
 
@@ -41,7 +45,7 @@ final class IssueTeamInvitation
         TeamRole $role,
         ?int $resendId = null,
     ): TeamInvitation {
-        return DB::transaction(function () use ($actor, $teamId, $email, $role, $resendId): TeamInvitation {
+        return $this->context->run($teamId, fn (): TeamInvitation => DB::transaction(function () use ($actor, $teamId, $email, $role, $resendId): TeamInvitation {
             $team = Team::query()->lockForUpdate()->findOrFail($teamId);
             $this->access->authorizeManagement($actor, $teamId, $role);
 
@@ -102,7 +106,7 @@ final class IssueTeamInvitation
             });
 
             return $invitation;
-        });
+        }));
     }
 
     /**
@@ -112,7 +116,7 @@ final class IssueTeamInvitation
      */
     public function revoke(User $actor, int $teamId, int $invitationId): void
     {
-        DB::transaction(function () use ($actor, $teamId, $invitationId): void {
+        $this->context->run($teamId, fn () => DB::transaction(function () use ($actor, $teamId, $invitationId): void {
             Team::query()->lockForUpdate()->findOrFail($teamId);
             $this->access->membership($actor, $teamId);
 
@@ -127,6 +131,6 @@ final class IssueTeamInvitation
 
             $invitation->revoked_at = now()->toImmutable();
             $invitation->save();
-        });
+        }));
     }
 }

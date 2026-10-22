@@ -5,6 +5,7 @@
 use App\Http\Controllers\Auth\InvitedRegistrationController;
 use App\Http\Controllers\Teams\InvitationController;
 use App\Http\Controllers\Teams\TeamController;
+use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\NoStoreAuthentication;
 use Illuminate\Support\Facades\Route;
 
@@ -42,38 +43,47 @@ Route::middleware(NoStoreAuthentication::class)
                     ->name('teams.index');
 
                 Route::get('/teams/{team}', [TeamController::class, 'show'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber('team')
                     ->name('teams.show');
 
                 Route::post('/teams/{team}/select', [TeamController::class, 'select'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber('team')
                     ->name('teams.select');
 
                 Route::patch('/teams/{team}/members/{member}', [TeamController::class, 'update'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber(['team', 'member'])
                     ->name('teams.members.update');
 
                 Route::delete('/teams/{team}/members/{member}', [TeamController::class, 'remove'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber(['team', 'member'])
                     ->name('teams.members.destroy');
 
                 Route::get('/teams/{team}/ownership', [TeamController::class, 'ownership'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber('team')
                     ->name('teams.ownership');
 
                 Route::post('/teams/{team}/ownership', [TeamController::class, 'transfer'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber('team')
                     ->middleware('password.confirm')
                     ->name('teams.ownership.store');
                 Route::post('/teams/{team}/invitations', [InvitationController::class, 'store'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber('team')
                     ->middleware('throttle:10,1')
                     ->name('teams.invitations.store');
                 Route::post('/teams/{team}/invitations/{invitation}/resend', [InvitationController::class, 'resend'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber(['team', 'invitation'])
                     ->middleware('throttle:10,1')
                     ->name('teams.invitations.resend');
                 Route::delete('/teams/{team}/invitations/{invitation}', [InvitationController::class, 'revoke'])
+                    ->middleware(EstablishTeamContext::class)
                     ->whereNumber(['team', 'invitation'])
                     ->name('teams.invitations.destroy');
 

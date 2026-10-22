@@ -18,6 +18,7 @@ use App\Services\Identity\TeamAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -131,6 +132,7 @@ final class InvitationController extends Controller
     public function store(TeamInputRequest $request, int $team, IssueTeamInvitation $issue): RedirectResponse
     {
         $actor = $this->authenticatedUser($request);
+        Gate::authorize('manageRole', [Team::query()->findOrFail($team), TeamRole::from($request->string('role')->toString())]);
         $issue(
             $actor,
             $team,
@@ -160,6 +162,7 @@ final class InvitationController extends Controller
         $access->membership($actor, $team);
 
         $existing = TeamInvitation::query()->where('team_id', $team)->findOrFail($invitation);
+        Gate::authorize('manage', $existing);
         $issue($actor, $team, $existing->email, $existing->role, $existing->id);
 
         return redirect()->route('teams.show', $team)->with('status', 'invitation-sent');
@@ -175,6 +178,7 @@ final class InvitationController extends Controller
     public function revoke(Request $request, int $team, int $invitation, IssueTeamInvitation $issue): RedirectResponse
     {
         $actor = $this->authenticatedUser($request);
+        Gate::authorize('manage', TeamInvitation::query()->findOrFail($invitation));
         $issue->revoke($actor, $team, $invitation);
 
         return redirect()->route('teams.show', $team)->with('status', 'invitation-revoked');

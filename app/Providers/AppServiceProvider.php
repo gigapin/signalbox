@@ -1,12 +1,13 @@
 <?php
 
 /**
- * Disable premature billing endpoints and enforce the Stripe test-only bootstrap boundary.
+ * Register scoped tenant identity and enforce the Stripe test-only bootstrap boundary.
  */
 
 namespace App\Providers;
 
 use App\Actions\EnsureStripeTestCredentials;
+use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
 
@@ -14,11 +15,12 @@ use Laravel\Cashier\Cashier;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Disable package billing entry points until team billing and webhook idempotency exist.
+     * Register request/job-scoped tenant identity and disable billing entry points until M9.
      */
     public function register(): void
     {
         Cashier::ignoreRoutes();
+        $this->app->scoped(TenantContext::class, fn (): TenantContext => new TenantContext());
     }
 
     /**

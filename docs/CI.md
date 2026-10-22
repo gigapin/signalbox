@@ -34,7 +34,9 @@ Each job provisions fresh PostgreSQL 16 and Redis 7 service containers using the
 
 `RUN_DOCKER_TESTS=1` opts into real integrations even though PHP runs directly on the runner. `phpunit.xml` supplies forced test identities, connection settings and fake package credentials. The existing pre-migration guard verifies the server identity before `RefreshDatabase` migrates the dedicated database. Tests run sequentially; separate jobs do not share their database or Redis. Services disappear with the job and never use local development data.
 
-Both backend jobs prepare an empty `.env.testing` before Composer installation to prevent missing-file phpdotenv warnings. Runtime values remain supplied by the job and PHPUnit; the workflow does not copy a developer `.env`, generate private keys or cache Laravel configuration. A public fixture APP_KEY and testing environment allow package discovery without application secrets. Tests continue to force their own isolated settings. YAML anchors reuse backend services and steps between the two jobs; their PHP versions remain explicit per-job environment values.
+Before Composer installation, both backend jobs create an empty `.env.testing`. Runtime values still come from the job environment and PHPUnit's isolated settings; no developer `.env` is copied, private key generated or Laravel configuration cached. The empty file prevents phpdotenv's missing-file reads from becoming PHPUnit warnings on fresh runners. A public fixture APP_KEY and testing environment allow package discovery without application secrets. YAML anchors reuse backend services and steps between the two jobs; their PHP versions remain explicit per-job environment values.
+
+Backend jobs do not build frontend assets or receive the independent frontend job's build output. `ContainerWebEnvironmentTest` therefore requests the login page through the Inertia JSON protocol, with the current asset version (empty when no build exists), before exercising the real CSRF-protected login POST against PostgreSQL. It does not render the Vite-dependent HTML shell. The isolated HTTP process reports errors through stderr, included in failure diagnostics without printing response bodies or cookies; it is stopped in `finally`.
 
 ## Frontend gates
 
@@ -73,6 +75,3 @@ For branch protection, PHP 8.4 and frontend are the checks available on PRs. Do 
 
 References: [GitHub service containers](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers), [YAML anchors](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#yaml-anchors-and-aliases), [PHP setup](https://github.com/shivammathur/setup-php), [Node setup](https://github.com/actions/setup-node), and [Composer platform checks](https://getcomposer.org/doc/03-cli.md#check-platform-reqs).
 
-## Backend HTTP probe without frontend assets
-
-Backend and frontend jobs do not share build output. ContainerWebEnvironmentTest requests Auth/Login using the Inertia JSON protocol and matching asset version, then posts a real CSRF-protected login to isolated PostgreSQL. It works with or without a Vite manifest and reports only the synthetic server console diagnostics on failure. This preserves the earlier CI regression correction in checkouts predating that change.

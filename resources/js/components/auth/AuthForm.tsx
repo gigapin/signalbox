@@ -48,17 +48,15 @@ export default function AuthForm({
     remember = false,
     links = [],
 }: FormProps) {
-    /** Controlled values and server validation errors, deliberately never remembered in history. */
     const form = useForm<Record<string, string>>({
         ...Object.fromEntries(fields.map((field) => [field.name, ''])),
         ...initial,
     });
-    /** Submit once, then clear all credential inputs after either success or failure. */
+
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         form.post(action, {
             onFinish: () => {
-                /** Credential fields that must not survive an attempted transition. */
                 const sensitive = fields
                     .filter(
                         (field) =>
@@ -68,16 +66,24 @@ export default function AuthForm({
                     )
                     .map((field) => field.name);
                 form.reset(...sensitive);
-                /** First invalid input, if any, receives focus after Inertia updates errors. */
+
                 window.requestAnimationFrame(() =>
                     document.querySelector<HTMLInputElement>('[aria-invalid="true"]')?.focus(),
                 );
             },
         });
     }
+
     return (
         <AuthLayout title={title} {...(description ? { description } : {})}>
             <form onSubmit={handleSubmit} className="space-y-5">
+                {Object.entries(form.errors)
+                    .filter(([name]) => !fields.some((field) => field.name === name))
+                    .map(([name, message]) => (
+                        <p key={name} role="alert" className="text-red-300">
+                            {message}
+                        </p>
+                    ))}
                 {fields.map((field, index) => (
                     <div key={field.name}>
                         <label htmlFor={field.name} className="mb-2 block text-sm font-medium">

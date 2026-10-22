@@ -17,6 +17,8 @@ return (new Config())
     ->setRules([
         '@PSR12' => true,
         'array_syntax' => ['syntax' => 'short'],
+        'array_indentation' => true,
+        'method_chaining_indentation' => true,
         'no_unused_imports' => true,
         'ordered_imports' => ['sort_algorithm' => 'alpha'],
         'single_quote' => true,

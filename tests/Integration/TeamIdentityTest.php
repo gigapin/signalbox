@@ -229,6 +229,7 @@ it('reverses only M1 migrations and reapplies them without changing baseline ide
         'database/migrations/2026_10_20_000001_create_teams_table.php',
         'database/migrations/2026_10_20_000002_create_team_user_table.php',
         'database/migrations/2026_10_20_000003_add_current_team_to_users.php',
+        'database/migrations/2026_10_21_000005_create_team_invitations_table.php',
     ];
     /** @var string $file Domain migration being reversed, starting with the last dependency. */
     foreach (array_reverse($files) as $file) {

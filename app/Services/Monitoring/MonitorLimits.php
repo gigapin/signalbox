@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace App\Services\Monitoring;
 
+use App\Data\Monitoring\MonitorUsage;
 use App\Models\Monitor;
 use App\Models\Team;
 use App\Services\Billing\PlanLimits;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Callers must hold the Team row lock and an active tenant context for that team, so the count
+ * Mutating callers must hold the Team row lock and an active tenant context for that team, so the count
  * and the following write are serialized against concurrent creations and plan changes.
  * Queries add an explicit team predicate in addition to TeamScope.
  */
@@ -61,9 +62,27 @@ final readonly class MonitorLimits
     }
 
     /**
+     * Read-only quota snapshot for pages; it needs tenant context but no lock, so it may be stale by the
+     * time a mutation runs, which then re-checks under the lock.
+     *
+     * @param Team $team Team whose effective plan and monitor count are summarized.
+     * @return MonitorUsage Current count, plan maximum and plan minimum interval.
+     */
+    public function usage(Team $team): MonitorUsage
+    {
+        $plan = $this->entitlement->effectivePlan($team);
+
+        return new MonitorUsage(
+            used: Monitor::query()->where('team_id', $team->id)->count(),
+            limit: $this->limits->monitors($plan),
+            minimumIntervalSeconds: $this->limits->minimumIntervalSeconds($plan),
+        );
+    }
+
+    /**
      * Deterministic ADR-010 position: oldest monitors by creation time, then ID, keep their places.
      *
-     * @param Team $team Locked owning team.
+     * @param Team $team Owning team; mutations pass the locked row, pages an unlocked read.
      * @param Monitor $monitor Persisted monitor of that team.
      * @return bool Whether the monitor's position is inside the current plan quota.
      */

@@ -153,6 +153,33 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.invitations.destroy':
             expect($fixture->loadInvitation()->revoked_at)->not->toBeNull();
             break;
+        case 'teams.monitors.index':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Monitors/Index')
+                ->where('team.id', $fixture->team->id)
+                ->has('monitors.data', 1)
+                ->where('monitors.data.0.id', $fixture->monitor->id)
+                ->where('can.create', $role !== 'viewer')
+                ->missing('monitors.data.0.configuration'));
+            break;
+        case 'teams.monitors.create':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Monitors/Create')
+                ->where('team.id', $fixture->team->id)
+                ->where('usage.used', 1));
+            break;
+        case 'teams.monitors.show':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Monitors/Show')
+                ->where('monitor.id', $fixture->monitor->id)
+                ->where('can.update', $role !== 'viewer')
+                ->where('can.delete', $role !== 'viewer'));
+            break;
+        case 'teams.monitors.edit':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Monitors/Edit')
+                ->where('monitor.id', $fixture->monitor->id));
+            break;
         case 'teams.monitors.store':
             $created = app(TenantContext::class)->run($fixture->team->id, fn () => Monitor::query()->where('name', 'Matrix created monitor')->sole());
             expect($created->team_id)->toBe($fixture->team->id);
@@ -210,6 +237,8 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
     'teams.members.destroy',
     'teams.invitations.resend',
     'teams.invitations.destroy',
+    'teams.monitors.show',
+    'teams.monitors.edit',
     'teams.monitors.update',
     'teams.monitors.destroy',
     'teams.monitors.pause',

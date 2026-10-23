@@ -164,3 +164,5 @@ This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI res
 M2.03 adds `config/outbound-security.php` and the optional `OUTBOUND_ALLOWED_CIDRS` variable (comma-separated CIDR exceptions, empty by default and documented in `.env.example`), and taps `App\Logging\RedactSecrets` into every concrete log channel. No dependency, migration, route or process change is required. See [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md).
 
 M2.04 adds `config/plans.php` (plan entitlements) and `routes/monitors.php`, included by `routes/web.php`. No environment variable, dependency, migration or process change is required. See [MONITOR-CRUD.md](MONITOR-CRUD.md).
+
+M2.05 adds monitor page routes to `routes/monitors.php` and makes `App\Models\Monitor` Scout-searchable with the existing database driver. No environment variable, dependency, migration, index rebuild or process change is required. See [MONITOR-UI.md](MONITOR-UI.md).

@@ -70,3 +70,7 @@ No schema migration, dependency change or development database reset is needed f
 ## M2.01 real monitor model
 
 [MONITORS.md](MONITORS.md) documents Monitor adopting the shared query/write/reload boundary and Team::monitors() for constrained inverse traversal. Tests cover foreign relation reads and writes, bulk predicates, ownership forgery, reloading and context absence on the actual resource. M2.04 adds the monitor mutation routes; actions lock the Team row and enter the explicit tenant context themselves, and the [authorization matrix](AUTHORIZATION-MATRIX.md) covers the routes ([MONITOR-CRUD.md](MONITOR-CRUD.md)).
+
+## M2.05 search isolation
+
+Scout's database engine builds its query from `Monitor::newQuery()`, so TeamScope applies to search. As ADR-003 requires for search, `MonitorListing` also adds an explicit `team_id` predicate. MonitorPagesTest covers same-name foreign monitors and a listing run in one team's context for another team, which returns nothing. Only plaintext columns are searchable; see [MONITOR-UI.md](MONITOR-UI.md).

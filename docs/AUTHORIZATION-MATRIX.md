@@ -17,6 +17,10 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 | teams.invitations.store | POST | 302 | 302 | 403 | 403 |
 | teams.invitations.resend | POST | 302 | 302 | 403 | 403 |
 | teams.invitations.destroy | DELETE | 302 | 302 | 403 | 403 |
+| teams.monitors.index | GET | 200 | 200 | 200 | 200 |
+| teams.monitors.create | GET | 200 | 200 | 200 | 403 |
+| teams.monitors.show | GET | 200 | 200 | 200 | 200 |
+| teams.monitors.edit | GET | 200 | 200 | 200 | 403 |
 | teams.monitors.store | POST | 302 | 302 | 302 | 403 |
 | teams.monitors.update | PATCH (also PUT) | 302 | 302 | 302 | 403 |
 | teams.monitors.destroy | DELETE | 302 | 302 | 302 | 403 |
@@ -75,3 +79,7 @@ No migration, dependency change or application behavior change is required by th
 ## M2.04 monitor routes
 
 The five monitor mutation routes from [MONITOR-CRUD.md](MONITOR-CRUD.md) join the private matrix with the same role × membership-state cases, guest/unverified gates and raw snapshots, which now include every `monitors` row. Successful cases assert the persisted effect: creation of a local monitor, rename, deletion, pause, and resume of a monitor paused before the snapshot. A foreign monitor ID under an accessible team URL returns 404 for update, delete, pause and resume. Monitor input rejects unknown fields, so forged `team_id` or actor fields fail validation instead of being ignored; MonitorCrudTest covers that case and direct action calls by viewers or revoked members.
+
+## M2.05 monitor pages and search
+
+The four monitor pages from [MONITOR-UI.md](MONITOR-UI.md) join the private matrix with the same role × membership-state cases and guest/unverified gates; rejected requests keep the raw snapshots unchanged. Successful cases assert the Inertia projection: the list contains only the local monitor, with no configuration on rows and `can.create` false for viewers; the creation form reports local usage; detail and edit pages project the local monitor with role-dependent permissions. Foreign monitor IDs under an accessible team return 404 for show and edit. Search isolation has its own integration assertions in MonitorPagesTest: a same-name foreign monitor is never listed, and the explicit team predicate is checked independently of TeamScope. The store and destroy cases still assert their persisted effects after the redirect change.

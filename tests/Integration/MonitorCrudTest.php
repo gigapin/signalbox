@@ -94,13 +94,14 @@ it('creates every monitor type through the web route for managing roles', functi
     $team = Team::factory()->create();
     $actor = $role === 'owner' ? $team->owner : Membership::factory()->for($team)->{$role}()->create()->user;
 
-    $this->actingAs($actor)->from('/teams/'.$team->id)
+    $response = $this->actingAs($actor)->from('/teams/'.$team->id)
         ->post("/teams/{$team->id}/monitors", $payload)
-        ->assertRedirect('/teams/'.$team->id)
         ->assertSessionHasNoErrors()
         ->assertSessionHas('status', 'monitor-created');
 
     $monitor = app(TenantContext::class)->run($team->id, fn (): Monitor => Monitor::query()->sole());
+    // Creation lands on the new monitor's page rather than back on the form.
+    $response->assertRedirect("/teams/{$team->id}/monitors/{$monitor->id}");
 
     expect($monitor->type->value)->toBe($payload['type'])
         ->and($monitor->team_id)->toBe($team->id)
@@ -325,12 +326,13 @@ it('resumes only monitors whose deterministic quota position and cadence fit the
     expect(validationKeys(fn () => $this->actions->resume($team->owner, $team->id, $fast->id)))->toBe(['interval_seconds']);
 });
 
-it('deletes a monitor through the web route', function (): void {
+it('deletes a monitor through the web route and returns to the list', function (): void {
     $team = Team::factory()->create();
     [$monitor] = seedMonitors($team, 1);
 
     $this->actingAs($team->owner)->from('/teams/'.$team->id)
         ->delete("/teams/{$team->id}/monitors/{$monitor->id}")
+        ->assertRedirect("/teams/{$team->id}/monitors")
         ->assertSessionHas('status', 'monitor-deleted');
 
     expect(monitorCount($team))->toBe(0);

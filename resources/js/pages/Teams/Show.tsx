@@ -262,6 +262,7 @@ export default function Team() {
                 aria-label="Team navigation"
             >
                 <Link href="/teams">Your teams</Link>
+                <Link href={`/teams/${team.id}/monitors`}>Monitors</Link>
                 {team.ownerId === actorId ? (
                     <Link href={`/teams/${team.id}/ownership`}>Transfer primary ownership</Link>
                 ) : (

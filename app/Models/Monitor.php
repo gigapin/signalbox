@@ -20,6 +20,7 @@ use Database\Factories\MonitorFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Laravel\Scout\Searchable;
 
 /**
  * Keep scheduling and observation state separate from type-specific immutable configuration values.
@@ -66,6 +67,9 @@ final class Monitor extends Model
 
     /** @use HasFactory<MonitorFactory> Explicit synthetic configurations without implicit teams. */
     use HasFactory;
+
+    /** Scout database-engine search; the engine keeps no separate index, so writes cost no extra I/O. */
+    use Searchable;
 
     /** @var list<string> Only presentation labels accept ordinary mass assignment. */
     protected $fillable = ['name'];
@@ -156,6 +160,22 @@ final class Monitor extends Model
     public function configuration(): MonitorConfiguration
     {
         return MonitorConfigurationMapper::configuration($this);
+    }
+
+    /**
+     * The database engine turns each key into an `ilike` predicate on the column of the same name, so only
+     * plaintext columns may appear: encrypted URL, header and body ciphertext can never match and must not be
+     * decrypted for search. Values are irrelevant to that engine; keys alone select the columns.
+     *
+     * @return array{name: string, tls_host: string|null, dns_name: string|null} Searchable plaintext columns.
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'tls_host' => $this->tls_host,
+            'dns_name' => $this->dns_name,
+        ];
     }
 
     /** @return BelongsTo<Team, $this> Owner identity without modifying or authorizing tenant context. */

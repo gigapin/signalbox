@@ -101,7 +101,8 @@ final readonly class TeamAuthorizationFixture
             $parameters['invitation'] = $foreignTeam || $foreignChild ? $this->foreignInvitation->id : $this->invitation->id;
         }
 
-        if (str_starts_with($route, 'teams.monitors.') && $route !== 'teams.monitors.store') {
+        // Collection routes (list, creation form and store) carry no monitor identifier.
+        if (str_starts_with($route, 'teams.monitors.') && !in_array($route, ['teams.monitors.index', 'teams.monitors.create', 'teams.monitors.store'], true)) {
             $parameters['monitor'] = $foreignTeam || $foreignChild ? $this->foreignMonitor->id : $this->monitor->id;
         }
 

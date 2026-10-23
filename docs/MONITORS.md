@@ -74,4 +74,4 @@ docker compose run --rm php-test composer test -- --filter='MonitorConfiguration
 ./scripts/verify.sh
 ```
 
-M2.02 provides [Form Request/input validation](MONITOR-INPUT.md), complete typed candidates and explicit patches. M2.03 adds [outbound security](OUTBOUND-SECURITY.md); M2.04 adds [authorized CRUD, transitions and centralized concurrent plan limits](MONITOR-CRUD.md); M2.05 adds UI/search and M2.06 completes their integration coverage. The model and input foundation do not declare these later acceptance criteria complete.
+M2.02 provides [Form Request/input validation](MONITOR-INPUT.md), complete typed candidates and explicit patches. M2.03 adds [outbound security](OUTBOUND-SECURITY.md); M2.04 adds [authorized CRUD, transitions and centralized concurrent plan limits](MONITOR-CRUD.md); M2.05 adds [pages, Scout search on plaintext columns and filters](MONITOR-UI.md); M2.06 completes their integration coverage. The model and input foundation do not declare these later acceptance criteria complete.

@@ -26,4 +26,12 @@ return [
         'status_pages' => 10,
         'rollup_retention_days' => 730,
     ],
+    // Operator testing profile from an unlimited override (PLATFORM-ADMIN.md): high but finite, and the
+    // 30-second interval equals the input validator's floor, so no cadence below it can be reached.
+    'internal' => [
+        'monitors' => 1000,
+        'min_interval_seconds' => 30,
+        'status_pages' => 100,
+        'rollup_retention_days' => 730,
+    ],
 ];

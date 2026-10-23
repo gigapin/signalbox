@@ -193,7 +193,7 @@ it('shows only an accessible team and explicit safe account props', /** Direct o
     $foreign = Team::factory()->create();
     $user->current_team_id = $foreign->id;
     $user->save();
-    $this->actingAs($user)->get('/account')->assertOk()->assertInertia(/** @param AssertableInertia $page Safe account response projection. */ fn (AssertableInertia $page): AssertableInertia => $page->component('Account/Overview')->where('currentTeam', null)->where('auth.user', ['name' => $user->name, 'email' => $user->email])->missing('auth.user.password')->missing('auth.user.two_factor_secret'));
+    $this->actingAs($user)->get('/account')->assertOk()->assertInertia(/** @param AssertableInertia $page Safe account response projection. */ fn (AssertableInertia $page): AssertableInertia => $page->component('Account/Overview')->where('currentTeam', null)->where('auth.user', ['name' => $user->name, 'email' => $user->email, 'isPlatformAdmin' => false])->missing('auth.user.password')->missing('auth.user.two_factor_secret'));
 });
 
 it('enforces CSRF outside the testing bypass', /** Exercise the real middleware with a missing anti-forgery credential. */ function (): void {

@@ -154,6 +154,27 @@ services:
       timeout: 5s
       retries: 10
 
+  # Optional web UI for the development database only, published on host loopback; see docs/DOCKER.md.
+  pgadmin:
+    image: dpage/pgadmin4:9.18.0@sha256:c332c5f6dfba995d9ebc4af261d93506d6876085d712eaaa3defc8dd1a3f26de
+    profiles: [dbadmin]
+    environment:
+      # No default login is committed: pgAdmin refuses to start until both are set in .env.
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-}
+      # Server mode keeps the pgAdmin login page; the upgrade check is off to avoid outbound calls.
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: 'False'
+    ports:
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      # Pre-registers the development server on first start; the database password is never stored here.
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # Keep Redis queue data across container restarts; no host port is published.
   redis:
     image: redis:7-bookworm@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
@@ -171,3 +192,4 @@ volumes:
   postgres-data:
   redis-data:
   node-modules:
+  pgadmin-data:

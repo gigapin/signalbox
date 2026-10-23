@@ -229,6 +229,8 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_10_20_000003_add_current_team_to_users.php',
         'database/migrations/2026_10_21_000005_create_team_invitations_table.php',
         'database/migrations/2026_10_22_000006_create_monitors_table.php',
+        // Plan overrides reference teams, so they are removed before teams and restored after them.
+        'database/migrations/2026_10_23_000009_create_team_plan_overrides_table.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

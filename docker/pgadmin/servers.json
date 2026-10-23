@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Signalbox development",
+      "Group": "Signalbox",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "signalbox",
+      "Username": "signalbox",
+      "SSLMode": "prefer"
+    }
+  }
+}

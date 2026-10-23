@@ -87,3 +87,7 @@ The four monitor pages from [MONITOR-UI.md](MONITOR-UI.md) join the private matr
 ## M2.06 per-type permissions and search isolation
 
 The matrix stays the reference for every monitor route × role × membership state. MonitorLifecycleTest adds what the matrix does not vary: viewer denial for each of the five types on the create/edit pages and on every mutation, with the stored rows unchanged, and search isolation when another team's monitors share the searchable TLS host or DNS name. See [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206).
+
+## MA platform admin routes
+
+Admin routes are not tenant routes. TeamAuthorizationMatrixTest's discovery excludes `App\Http\Controllers\Admin`, and PlatformAdminAccessTest keeps its own complete catalogue of `/admin` routes. Every team role (owner, admin, member, viewer) receives 404 on every admin route, with nothing written; guests and unverified users are redirected. See [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).

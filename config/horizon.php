@@ -25,8 +25,6 @@ return [
     'use' => 'default',
     'prefix' => env('HORIZON_PREFIX', Str::slug((string) env('APP_NAME', 'Signalbox'), '_').'_horizon:'),
     'middleware' => ['web'],
-    // Platform operators are distinct from tenant roles; an empty list denies all users.
-    'allowed_emails' => array_values(array_filter(array_map('trim', explode(',', (string) env('HORIZON_ADMIN_EMAILS', ''))))),
     // Alert thresholds are queue waiting durations in seconds.
     'waits' => ['redis:default' => 60, 'redis:checks:eu' => 60, 'redis:checks:us' => 60],
     // Retain successful job metadata for one hour and failures for one week, in minutes.

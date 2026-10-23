@@ -39,7 +39,9 @@ it('keeps the route catalogue complete and each private verb behind its declared
         $domainController = is_string($controller)
             && str_starts_with($controller, 'App\\Http\\Controllers\\')
             && !str_starts_with($controller, 'App\\Http\\Controllers\\Auth\\')
-            && !str_starts_with($controller, 'App\\Http\\Controllers\\HomeController');
+            && !str_starts_with($controller, 'App\\Http\\Controllers\\HomeController')
+            // Platform admin routes have their own catalogue in PlatformAdminAccessTest.
+            && !str_starts_with($controller, 'App\\Http\\Controllers\\Admin\\');
 
         $tenantUri = str_starts_with($route->uri(), 'teams') || str_starts_with($route->uri(), 'invitations');
         $accountUri = in_array($route->uri(), ['account', 'account/security'], true);

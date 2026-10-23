@@ -1,6 +1,6 @@
 # Monitor pages, search and filters
 
-M2.05 adds the browser interface on top of the [model](MONITORS.md), the [input contract](MONITOR-INPUT.md), the [outbound boundary](OUTBOUND-SECURITY.md) and the [mutations and plan limits](MONITOR-CRUD.md). Integrated UI coverage, including concurrent attempts to add a sixth monitor through the UI, is M2.06. Evidence is in [TASKS.md](TASKS.md).
+M2.05 adds the browser interface on top of the [model](MONITORS.md), the [input contract](MONITOR-INPUT.md), the [outbound boundary](OUTBOUND-SECURITY.md) and the [mutations and plan limits](MONITOR-CRUD.md). M2.06 adds the [integrated coverage](#integrated-coverage-m206), including concurrent attempts to add a sixth monitor through the UI. Evidence is in [TASKS.md](TASKS.md).
 
 ## Pages and routes
 
@@ -92,12 +92,29 @@ Server errors appear inline (`aria-invalid`, `aria-describedby`, `role="alert"`)
 | tests/Integration/MonitorPagesTest.php (PostgreSQL) | Case-insensitive search on the three columns and none on the encrypted URL; literal `%`, `_` and `\`; same-name foreign monitors never listed; explicit predicate beyond TeamScope; every filter and their combinations, with suspension precedence; deterministic pagination with ties and a page beyond the last; invalid filters reported without redirect; empty team versus empty result; no secret, header value, body or ciphertext in index/show/edit props, with no-store headers; usage from the effective plan and trial; quota position; `can.*` for four roles; create redirect with its readable flash |
 | tests/Feature/MonitorListingTest.php | State precedence, filter invariants, LIKE escaping and the full-quota boundary, without a database |
 | tests/Integration/TeamAuthorizationMatrixTest.php | The four GET routes in the role × membership-state matrix, guest/unverified gates, Inertia projections and foreign monitor IDs under an accessible team |
-| tests/frontend/Monitors.test.tsx | Empty and no-match states, rejected filters, filter submission with a loading state, keyboard pagination preserving filters, creation unavailable to viewers or at full quota, a DNS creation sending only relevant fields, edits without resent secrets, secrets required on type change, inline errors with focus, safe detail with confirmed deletion, plan suspension |
+| tests/frontend/Monitors.test.tsx | Input kept after a quota refusal with retry, empty and no-match states, rejected filters, filter submission with a loading state, keyboard pagination preserving filters, creation unavailable to viewers or at full quota, a DNS creation sending only relevant fields, edits without resent secrets, secrets required on type change, inline errors with focus, safe detail with confirmed deletion, plan suspension |
+
+## Integrated coverage (M2.06)
+
+| Criterion | Evidence |
+|---|---|
+| All types | `MonitorLifecycleTest` runs each type through create, show, edit page, search with type filter, PATCH, pause, resume, delete and 404, on production routes only. `MonitorCrudTest` creates each type for each managing role. |
+| Form ↔ server contract | `tests/Fixtures/monitor-form-payloads.json` is pinned to `buildPayload()` by `tests/frontend/MonitorPayloadContract.test.ts`. The same payloads are accepted by the production routes in `MonitorLifecycleTest`, and the contract `defaults` must equal `MonitorPresenter::defaults()` and the create page props. |
+| Wrong input | `MonitorLifecycleTest` covers 23 creation cases across all types and common fields (missing or unknown values, bounds, other types' fields, loopback/private destinations and resolvers, oversized body) and 5 edit cases (type change without the new configuration, private URL, another type's field, bounds, empty patch). Each expects the field error, a redirect back, no persistence or unchanged row, and no echoed input or secret. Validator boundaries remain in `MonitorInputValidationTest`/`MonitorInputSyntaxTest`. |
+| Permissions | `TeamAuthorizationMatrixTest` crosses every monitor route with role × membership state. `MonitorLifecycleTest` adds viewer denial on create/edit pages and every mutation for each type, with the stored rows unchanged. |
+| Isolation | `MonitorLifecycleTest` keeps another team's monitors out of results even when they share the searchable TLS host or DNS name, and makes them 404 under the actor's team. Foreign IDs on every route are covered by the matrix, and same-name results by `MonitorPagesTest`. |
+| Sixth Free monitor via UI, concurrent | `MonitorQuotaConcurrencyTest` uses the real HTTP server with Inertia submissions. A sixth creation is observed waiting on the Team lock held by an uncommitted fifth creation, and is then refused with the quota message shown as `props.errors.monitor` on the next page. In a burst of four parallel submissions for the last slot, exactly one succeeds. The form keeps its input after the refusal (DOM). |
+
+The JSON fixture has a `defaults` object, which must equal `MonitorPresenter::defaults(300)`, and a `cases` object keyed by monitor type. Each case holds:
+- `form`: the fields a user changes from the blank creation state;
+- `create`: the exact creation payload;
+- for `http` and `keyword` only, `edit`: the same-type patch with no secret replaced.
+
+Form numbers stay strings, as the browser sends them. Destinations are reserved `.invalid` names, and the token values are synthetic.
 
 ## Limits
 
-- No browser end-to-end test runs against a live server.
-- Concurrent sixth-monitor attempts through the UI belong to M2.06.
+- No real browser (Playwright or similar) drives the pages. By user choice, UI coverage combines DOM tests of the React components, the shared payload contract and Inertia-protocol requests to the real server.
 - Monitors have no target column in the list, because an HTTP target would require decryption.
 - Dates are formatted in the viewer's browser locale. Team-timezone display arrives with dashboards (M6).
 - Real-time status updates are M6, and scheduling is M3.

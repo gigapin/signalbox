@@ -83,3 +83,7 @@ The five monitor mutation routes from [MONITOR-CRUD.md](MONITOR-CRUD.md) join th
 ## M2.05 monitor pages and search
 
 The four monitor pages from [MONITOR-UI.md](MONITOR-UI.md) join the private matrix with the same role × membership-state cases and guest/unverified gates; rejected requests keep the raw snapshots unchanged. Successful cases assert the Inertia projection: the list contains only the local monitor, with no configuration on rows and `can.create` false for viewers; the creation form reports local usage; detail and edit pages project the local monitor with role-dependent permissions. Foreign monitor IDs under an accessible team return 404 for show and edit. Search isolation has its own integration assertions in MonitorPagesTest: a same-name foreign monitor is never listed, and the explicit team predicate is checked independently of TeamScope. The store and destroy cases still assert their persisted effects after the redirect change.
+
+## M2.06 per-type permissions and search isolation
+
+The matrix stays the reference for every monitor route × role × membership state. MonitorLifecycleTest adds what the matrix does not vary: viewer denial for each of the five types on the create/edit pages and on every mutation, with the stored rows unchanged, and search isolation when another team's monitors share the searchable TLS host or DNS name. See [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206).

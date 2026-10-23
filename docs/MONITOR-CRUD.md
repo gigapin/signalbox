@@ -1,6 +1,6 @@
 # Monitor CRUD, pause and plan limits
 
-M2.04 adds the production monitor mutations on top of the [model](MONITORS.md), the [input contract](MONITOR-INPUT.md) and the [outbound boundary](OUTBOUND-SECURITY.md). List, detail and form pages, search and filters are documented in [MONITOR-UI.md](MONITOR-UI.md) (M2.05); integrated UI coverage, including concurrent sixth-monitor attempts through the UI, is M2.06. Evidence is in [TASKS.md](TASKS.md).
+M2.04 adds the production monitor mutations on top of the [model](MONITORS.md), the [input contract](MONITOR-INPUT.md) and the [outbound boundary](OUTBOUND-SECURITY.md). List, detail and form pages, search and filters are documented in [MONITOR-UI.md](MONITOR-UI.md) (M2.05); integrated UI coverage, including concurrent sixth-monitor attempts through the real HTTP server, is documented in [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206) (M2.06). Evidence is in [TASKS.md](TASKS.md).
 
 ## Routes and permissions
 

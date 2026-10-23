@@ -341,3 +341,7 @@ Authorization runs before configuration decryption; absent tenant context or Mon
 ## M2.05 monitor pages
 
 [MONITOR-UI.md](MONITOR-UI.md) separates read pages (`MonitorPageController`) from mutations (`MonitorController`). Projections live in one presenter that reads configuration only through `MonitorConfigurationProjection`. Tenant-filtered search is a small service over Scout with an explicit team predicate and literal LIKE escaping (ADR-003). Quota and permission props are ADR-004 hints only; the lock-aware action remains the authority. Invalid list filters are reported rather than redirected, to avoid a GET redirect loop.
+
+## M2.06 integrated monitor coverage
+
+M2.06 adds tests and test support only; no production code changes. It verifies ADR-004 on the real transport: a real `artisan serve` process with several workers receives the Inertia submissions, and the sixth Free creation is shown to wait on the same Team row lock and then be refused. A shared JSON contract keeps the React form payloads and server validation in step. Details are in [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206) and [TESTING.md](TESTING.md).

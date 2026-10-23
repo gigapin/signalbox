@@ -14,9 +14,10 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 - M0 completata il 2026-10-19: decisioni fondanti e prova finale da checkout pulito concluse. Gli esiti dettagliati e i limiti restano nel registro; le note precedenti descrivono lo stato storico delle rispettive sessioni.
 - M1.01 completato il 2026-10-20: utenti, team, membership, ruoli owner/admin/member/viewer, timezone e team corrente; migration, factory, seeder e test PostgreSQL. Dettagli e limiti in [IDENTITY.md](IDENTITY.md) e nel registro di sessione.
-- M1.02 completato il 2026-10-20: registrazione con primo team, login/logout, recupero password, verifica email obbligatoria e 2FA facoltativa con UI inglese. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md). M1.03 completato il 2026-10-21: inviti email, accettazione, gestione membri/cambio team e proprietà; dettagli in [TEAMS.md](TEAMS.md). M1.04 completato il 2026-10-22: contesto tenant, TeamScope sugli inviti privati e policy team/inviti; dettagli in [TENANCY.md](TENANCY.md). M1.05 completato il 2026-10-22: matrice parametrica degli ingressi disponibili, documentata in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md). M1 completata. M2.01 completato il 2026-10-22: modello Monitor e configurazioni tipizzate, documentati in [MONITORS.md](MONITORS.md). M2.02 completato il 2026-10-22: Form Request e validazione per tipo, documentati in [MONITOR-INPUT.md](MONITOR-INPUT.md). M2.03 completato il 2026-10-22: confine SSRF condiviso, pinning DNS, redirect e redazione segreti, documentati in [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md). M2.04 completato il 2026-10-22: CRUD, pausa/ripresa, MonitorPolicy e limiti di piano centralizzati sotto lock, documentati in [MONITOR-CRUD.md](MONITOR-CRUD.md). M2.05 completato il 2026-10-23: pagine lista/dettaglio/form, ricerca Scout sulle colonne in chiaro, filtri e paginazione accessibili, documentati in [MONITOR-UI.md](MONITOR-UI.md). Prossimo task pronto: **M2.06**, test integrati di tutti i tipi, input errati, permessi, isolamento e sesto monitor Free rifiutato via UI anche con richieste concorrenti. Leggere AGENTS, specifica, questo registro, MONITORS/MONITOR-INPUT/OUTBOUND-SECURITY/MONITOR-CRUD/MONITOR-UI e ADR pertinenti.
+- M1.02 completato il 2026-10-20: registrazione con primo team, login/logout, recupero password, verifica email obbligatoria e 2FA facoltativa con UI inglese. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md). M1.03 completato il 2026-10-21: inviti email, accettazione, gestione membri/cambio team e proprietà; dettagli in [TEAMS.md](TEAMS.md). M1.04 completato il 2026-10-22: contesto tenant, TeamScope sugli inviti privati e policy team/inviti; dettagli in [TENANCY.md](TENANCY.md). M1.05 completato il 2026-10-22: matrice parametrica degli ingressi disponibili, documentata in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md). M1 completata. M2.01 completato il 2026-10-22: modello Monitor e configurazioni tipizzate, documentati in [MONITORS.md](MONITORS.md). M2.02 completato il 2026-10-22: Form Request e validazione per tipo, documentati in [MONITOR-INPUT.md](MONITOR-INPUT.md). M2.03 completato il 2026-10-22: confine SSRF condiviso, pinning DNS, redirect e redazione segreti, documentati in [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md). M2.04 completato il 2026-10-22: CRUD, pausa/ripresa, MonitorPolicy e limiti di piano centralizzati sotto lock, documentati in [MONITOR-CRUD.md](MONITOR-CRUD.md). M2.05 completato il 2026-10-23: pagine lista/dettaglio/form, ricerca Scout sulle colonne in chiaro, filtri e paginazione accessibili, documentati in [MONITOR-UI.md](MONITOR-UI.md). M2.06 completato il 2026-10-23: copertura integrata di tutti i tipi, input errati, permessi, isolamento e sesto monitor Free rifiutato con richieste concorrenti al server HTTP reale; M2 completata. Prossimo task pronto: **M3.01**, `monitors:dispatch` con jitter deterministico, selezione chunkById e avanzamento senza deriva. Leggere AGENTS, specifica, questo registro, MONITORS/MONITOR-CRUD/MONITOR-UI, ARCHITECTURE (scheduling, ADR pertinenti) e TESTING.
 - Lavorare nel progetto principale `/Users/pino/Projects/signalbox`, non nel checkout temporaneo della prova. Nessuna operazione Git/gh dell'agente; branch e commit restano all'utente.
-- Ultima verifica completa M2.05: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 198 file, Larastan livello 8, 1014 test Pest/6220 asserzioni, lint/formato/TypeScript, 5 test qualità, 31 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
+- Ultima verifica completa M2.06: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 202 file, Larastan livello 8, 1056 test Pest/6924 asserzioni, lint/formato/TypeScript, 5 test qualità, 40 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
+- Baseline storica M2.05: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 198 file, Larastan livello 8, 1014 test Pest/6220 asserzioni, lint/formato/TypeScript, 5 test qualità, 31 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
 - Baseline storica M2.04: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 189 file, Larastan livello 8, 922 test Pest/4974 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
 - Baseline storica M2.03: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 179 file, Larastan livello 8, 806 test Pest/4018 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
 - Baseline storica M2.02: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 159 file, Larastan livello 8, 680 test Pest/3796 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
@@ -28,7 +29,7 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 ## Criterio comune di completamento
 
-Correzione CI backend del 2026-10-21 verificata localmente e conservata nell’implementazione e nella revisione M1.03 completate successivamente. Conferma GitHub dopo push dell’utente ancora pendente; prossimo task funzionale M2.06 dopo il completamento locale M2.05. Vedere il registro delle sessioni.
+Correzione CI backend del 2026-10-21 verificata localmente e conservata nell’implementazione e nella revisione M1.03 completate successivamente. Conferma GitHub dopo push dell’utente ancora pendente; prossimo task funzionale M3.01 dopo il completamento locale di M2. Vedere il registro delle sessioni.
 
 Per ogni task: comportamento verificato, autorizzazioni e isolamento rispettati, documentazione in inglese per tutti gli elementi del codice come da AGENTS, test automatici pertinenti superati, PHP-CS-Fixer e controlli statici applicabili superati, piano aggiornato. Non completare una milestone prima dei suoi criteri di uscita. Annotare comandi e risultati effettivi nel registro di sessione.
 
@@ -46,7 +47,7 @@ Dipendenze: nessuna. Sblocca tutte le milestone.
 - [x] M0.08 Registrare decisioni architetturali su confini di dominio, checker Strategy, tenant context, policy limiti e convenzioni di documentazione.
 - [x] M0.09 Definire semantica scheduler sotto-minuto, prenotazione/invio affidabile, retention/partizioni, SLA e p50/p95; definire matrice dei piani. Decisioni adottate in ADR-006–ADR-010, implementazione nelle milestone proprietarie.
 
-Uscita soddisfatta il 2026-10-19: bootstrap e smoke test da checkout pulito con PHP 8.4 superati; esiti CI PHP 8.4/8.5 già confermati dall’utente in M0.07. Dettagli e limiti nel registro della verifica finale. Alla chiusura M0 il primo task pronto era M1.01, completato il 2026-10-20; anche M1.02–M1.05 e M2.01–M2.05 sono ora completati: procedere con M2.06.
+Uscita soddisfatta il 2026-10-19: bootstrap e smoke test da checkout pulito con PHP 8.4 superati; esiti CI PHP 8.4/8.5 già confermati dall’utente in M0.07. Dettagli e limiti nel registro della verifica finale. Alla chiusura M0 il primo task pronto era M1.01, completato il 2026-10-20; anche M1.02–M1.05 e M2.01–M2.06 sono ora completati: procedere con M3.01.
 
 ## M1 — Autenticazione e tenancy (14 h della specifica, completata)
 
@@ -69,9 +70,11 @@ Dipendenze: M1; matrice piani e contratti checker di M0.
 - [x] M2.03 Implementare protezioni SSRF per destinazioni, redirect, resolver e indirizzi risolti; definire gestione dei segreti e redazione degli output.
 - [x] M2.04 Implementare CRUD, pause/ripresa, policy e policy centralizzata dei limiti iniziali.
 - [x] M2.05 Creare UI lista/dettaglio/form, ricerca Scout, filtri, paginazione e stati vuoti/errore con accessibilità.
-- [ ] M2.06 Testare tutti i tipi, input errati, permessi e isolamento; verificare che il sesto monitor Free sia rifiutato via UI anche con richieste concorrenti.
+- [x] M2.06 Testare tutti i tipi, input errati, permessi e isolamento; verificare che il sesto monitor Free sia rifiutato via UI anche con richieste concorrenti.
 
 Uscita: tutti i tipi sono configurabili e persistiti correttamente; limiti applicati dal backend.
+
+Uscita soddisfatta il 2026-10-23: i cinque tipi sono creati, proiettati, modificati, sospesi, ripresi ed eliminati tramite le rotte di produzione con i payload del form React (contratto condiviso); input errati, permessi per tipo e isolamento sono verificati; il sesto monitor Free è rifiutato dal backend anche con richieste concorrenti al server HTTP reale. Dettagli in [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206). M2 completata.
 
 ## M3 — Motore di check (18 h, nucleo obbligatorio)
 
@@ -208,7 +211,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. Il prossimo task applicativo pronto è M2.06, dopo M2.05 completato il 2026-10-23. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. Il prossimo task applicativo pronto è M3.01, dopo M2 completata il 2026-10-23. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -237,6 +240,8 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-23 | M2.05: ricerca Scout su `name`, `tls_host`, `dns_name` | Scelta utente: solo colonne in chiaro; URL/header/body cifrati non ricercabili né decifrati, nessuna migration. HTTP/keyword trovabili per nome; un'eventuale colonna host derivata richiede una nuova decisione. |
 | 2026-10-23 | M2.05: create → dettaglio, delete → lista | Scelta utente; modifica mirata dei redirect M2.04 (update/pausa/ripresa restano `back()`), test CRUD e matrice aggiornati. |
 | 2026-10-23 | M2.05: filtri tipo, stato osservato, stato operativo | Scelta utente; nessun filtro regione. La sospensione di piano prevale sulla pausa nello stato operativo. |
+| 2026-10-23 | M2.06: concorrenza via UI su server HTTP reale | Scelta utente: `artisan serve` multi-worker (CMD del Dockerfile) sul database di test isolato con POST Inertia paralleli via Guzzle; nessun Playwright né nuova dipendenza. Prova deterministica tramite attesa del lock osservata in `pg_stat_activity` più raffica parallela come rete di sicurezza. |
+| 2026-10-23 | M2.06: contratto payload form↔server | Scelta utente: fixture JSON condivisa (`tests/Fixtures/monitor-form-payloads.json`) verificata da Vitest su `buildPayload()` e inviata da Pest alle rotte di produzione; i default devono coincidere con `MonitorPresenter::defaults()`. |
 | 2026-10-23 | M2.05: filtri invalidi ignorati e segnalati, non errore di validazione | Deviazione dal piano: una validazione GET fallita reindirizza alla URL precedente, che per una lista aperta direttamente è la stessa URL invalida (loop). La pagina mostra `rejectedFilters` come stato di errore. |
 
 ## Registro sessioni
@@ -591,3 +596,45 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Documentazione: nuovo [MONITOR-UI.md](MONITOR-UI.md); aggiornati MONITOR-CRUD, MONITORS, AUTHORIZATION-MATRIX, TENANCY, ARCHITECTURE, TESTING, BOOTSTRAP, README e TASKS. Nessuna migration, dipendenza o variabile d'ambiente.
 - Limiti: nessun test browser end-to-end né prova manuale su `http://127.0.0.1:8000` (richiederebbe la migration monitors sul database di sviluppo, non eseguita); sesto monitor concorrente via UI resta M2.06; date nel locale del browser (timezone del team con M6); nessuna colonna destinazione in lista per non decifrare gli URL. Nessuna nuova CI remota/PHP 8.5, nessuna modifica .env/chiavi, migration o riavvio dei processi; nessuna operazione Git/gh.
 - M2.05 completato; M2 resta aperta. Prossimo task **M2.06**: copertura integrata di tutti i tipi, input errati, permessi e isolamento, con il sesto monitor Free rifiutato via UI anche con richieste concorrenti.
+
+### 2026-10-23 — M2.06: copertura integrata e sesto monitor concorrente via UI (completato)
+
+- Piano approvato dall'utente sul nuovo branch creato dall'utente; dipendenze M2.01–M2.05 soddisfatte. Nessuna operazione Git/gh.
+- Scelte utente: concorrenza verificata con server HTTP reale (`artisan serve` multi-worker sul database di test isolato) e POST Inertia paralleli via Guzzle, senza Playwright né nuove dipendenze; contratto frontend↔backend con fixture JSON condivisa verificata da Vitest e inviata da Pest alla rotta di produzione.
+- Implementati (solo test e supporto di test, nessuna modifica al codice di produzione):
+  - `Tests\Support\IsolatedHttpServer`: avvio del CMD del Dockerfile con N worker sui servizi di test isolati, login reale e header Inertia; ContainerWebEnvironmentTest ora usa questo helper.
+  - `Tests\Support\CommittedTeamFixture`: team Free con trial scaduto, owner con password sintetica e monitor seed creati con l'action, scritti su una seconda connessione committata e con `cleanup()` esplicito.
+  - Nuovi MonitorQuotaConcurrencyTest (2), MonitorLifecycleTest (40 casi: ciclo di vita dei cinque tipi, 23 input errati in creazione e 5 in modifica, viewer per tipo, isolamento della ricerca su host TLS e nome DNS condivisi, default del contratto), MonitorPayloadContract.test.ts (8) e un test DOM sull'input conservato dopo il rifiuto di quota.
+- Correzioni durante lo sviluppo, tutte nei test:
+  - `pg_stat_activity` è fotografato per transazione, quindi serve `pg_stat_clear_snapshot()` a ogni sondaggio;
+  - il conteggio va fatto dalla connessione di test, che non vede la quinta creazione non committata;
+  - un datasource Vitest saltato è stato sostituito da casi espliciti, per mantenere zero skip;
+  - le sessioni in-process non sopravvivono tra due richieste di test, quindi gli errori nelle props della pagina successiva si verificano sul server reale;
+  - i dati del team estraneo restituiscono 404, come nella matrice.
+- Verifiche:
+  - MonitorQuotaConcurrencyTest ripetuto 3 volte, sempre 2/2 verdi;
+  - MonitorLifecycleTest 40 passati;
+  - PHP-CS-Fixer 0 modifiche su 202 file; Larastan livello 8 senza errori.
+  - `./scripts/verify.sh` **exit 0**: PHP 8.4.26, formatter dry-run su **202 file**, Larastan senza errori, **1056 test Pest/6924 asserzioni** (+42/+704 rispetto a M2.05), ESLint/Prettier/TypeScript, **5 test qualità**, **40 test DOM** (+9), build Vite; zero skip.
+  - Dopo la suite, nessuna riga `quota-%` residua in teams o users del database di test.
+  - Log nella scratchpad di sessione (m2.06-verify.log).
+- Documentazione: MONITOR-UI (sezione «Integrated coverage (M2.06)», con la mappa criterio → test e la forma del JSON), TESTING, MONITOR-CRUD, MONITORS, AUTHORIZATION-MATRIX, ARCHITECTURE, BOOTSTRAP, README e TASKS. Nessuna migration, dipendenza o variabile d'ambiente.
+- Limiti:
+  - nessun browser reale (Playwright), per scelta dell'utente;
+  - la raffica parallela non dimostra la serializzazione da sola, che è provata dal caso deterministico;
+  - la suite PHP resta sequenziale, e il server isolato usa sessioni cookie, cache array e queue sync;
+  - nessuna prova manuale su `http://127.0.0.1:8000` e nessuna operazione sul database di sviluppo;
+  - nessuna nuova CI remota/PHP 8.5;
+  - nessuna operazione Git/gh.
+- M2.06 e M2 completati. Prossimo task **M3.01**: `monitors:dispatch`, jitter deterministico, selezione chunkById e avanzamento temporale senza deriva.
+
+### 2026-10-23 — M2.06: correzione CI backend-php8.4
+
+- Segnalazione dell'utente: il job `backend-php8.4` è fallito con 12 test di MonitorLifecycleTest in errore («Not a valid Inertia response» e `assertOk` fallito sulle pagine).
+- Causa verificata riproducendo il job in locale (cartella vuota montata su `public/build`): il job backend non esegue la build Vite, quindi le pagine HTML falliscono con `ViteManifestNotFoundException`. MonitorPagesTest e la matrice usano già `withoutVite()`, MonitorLifecycleTest no; in locale la build esistente nascondeva l'errore. Correzione: `withoutVite()` nel `beforeEach`.
+- Secondo difetto emerso durante la riproduzione: `IsolatedHttpServer::stop()` terminava `artisan serve` ma non il master `php -S` né i suoi worker. I processi orfani tenevano la porta e lo stdout della pipe, e un'esecuzione con output in pipe restava bloccata dopo la fine di Pest. Correzione: `stop()` raccoglie i discendenti da `/proc` prima dell'arresto e li termina dopo.
+- Verifiche:
+  - suite Pest completa senza build Vite, come in CI: **1056 passati/6924 asserzioni**, exit 0;
+  - test dei server isolati: 3 passati e **0 processi `php -S` residui**, contro i 9 osservati prima della correzione.
+  - La conferma della CI remota resta a carico dell'utente dopo il push.
+

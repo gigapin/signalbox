@@ -166,3 +166,14 @@ Run `docker compose run --rm php-test composer test -- --filter=MonitorInput --f
 ## M2.05 monitor pages
 
 [MONITOR-UI.md](MONITOR-UI.md) lists the suites. MonitorPagesTest runs on isolated PostgreSQL with frozen time and covers search, literal escaping, tenant isolation, filters, pagination, rejected filters, secret-free props, quota hints and permissions. MonitorListingTest is in the Feature suite because Eloquent models need the application container, although it uses no database. TeamAuthorizationMatrixTest includes the four GET routes. tests/frontend/Monitors.test.tsx adds eleven DOM tests through the real Inertia provider, intercepting only `router` calls and animation frames.
+
+## M2.06 integrated monitor coverage
+
+[MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206) maps every M2.06 criterion to its suite.
+- **Lifecycle.** MonitorLifecycleTest drives all five types through the production pages and routes with Inertia-style JSON submissions. It covers wrong creation and edit input, viewer denial per type and search isolation on shared TLS hosts and DNS names.
+- **Form contract.** `tests/Fixtures/monitor-form-payloads.json` is shared with `tests/frontend/MonitorPayloadContract.test.ts`: Vitest pins `buildPayload()` to it, and Pest posts the same payloads, so drift between the React form and server validation fails one of the two suites.
+- **Concurrency.** MonitorQuotaConcurrencyTest starts the Dockerfile's real `artisan serve` command through `Tests\Support\IsolatedHttpServer`, with several built-in server workers, on the guarded test database only (array cache and mail, sync queue, cookie sessions). It reuses the same environment as ContainerWebEnvironmentTest, which now goes through that helper too. `stop()` also terminates the `php -S` master and its workers, which `artisan serve` would otherwise orphan. Page suites call `withoutVite()`, because the backend CI job runs without a frontend build.
+- **Committed fixtures.** Data comes from `Tests\Support\CommittedTeamFixture`, which writes through a second connection because the server process cannot see the RefreshDatabase transaction. Its `cleanup()` runs in `finally`.
+- **Lock probe.** The deterministic case keeps the fifth creation's Team lock in an uncommitted transaction. It ticks the pending Guzzle request while polling `pg_stat_activity` (after `pg_stat_clear_snapshot()`, because statistics views are snapshotted per transaction) until a backend waits on a lock. The poll has a 5-second limit. The case then commits and reads the quota error from the next Inertia page.
+- **Burst.** The burst case sends four parallel submissions over one curl multi handle. It checks exactly one creation and three refusals. Its outcome does not depend on scheduling, so it cannot be flaky, but it is only a safety net: the lock probe is what proves serialization.
+

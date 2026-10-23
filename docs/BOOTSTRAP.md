@@ -166,3 +166,5 @@ M2.03 adds `config/outbound-security.php` and the optional `OUTBOUND_ALLOWED_CID
 M2.04 adds `config/plans.php` (plan entitlements) and `routes/monitors.php`, included by `routes/web.php`. No environment variable, dependency, migration or process change is required. See [MONITOR-CRUD.md](MONITOR-CRUD.md).
 
 M2.05 adds monitor page routes to `routes/monitors.php` and makes `App\Models\Monitor` Scout-searchable with the existing database driver. No environment variable, dependency, migration, index rebuild or process change is required. See [MONITOR-UI.md](MONITOR-UI.md).
+
+M2.06 adds tests only. The concurrency suite starts its own short-lived `artisan serve` inside `php-test` against the isolated test database; it does not use the development server on port 8000. No environment variable, dependency, migration or process change is required. See [TESTING.md](TESTING.md).

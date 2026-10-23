@@ -361,6 +361,34 @@ async function showsValidationErrors(): Promise<void> {
     );
 }
 
+/** A quota refusal after submission keeps everything typed, so the user can retry after freeing a slot. */
+async function keepsInputAfterQuotaRefusal(): Promise<void> {
+    const user = userEvent.setup();
+    let visit: VisitOptions | undefined;
+    const post = vi.spyOn(router, 'post').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
+
+    renderInertia('Signalbox', Create, { team, defaults, options, usage });
+    await user.type(screen.getByLabelText('Name'), 'Checkout');
+    await user.type(screen.getByLabelText('URL'), 'https://shop.example.test/health');
+    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    act(() => {
+        visit?.onError?.({
+            monitor: 'Your plan allows 5 monitors. Delete a monitor or upgrade to add another.',
+        });
+        visit?.onFinish?.({} as never);
+    });
+
+    expect(screen.getAllByRole('alert')[0]).toHaveTextContent('Your plan allows 5 monitors');
+    expect(screen.getByLabelText('Name')).toHaveValue('Checkout');
+    expect(screen.getByLabelText('URL')).toHaveValue('https://shop.example.test/health');
+    expect(screen.getByRole('button', { name: 'Create monitor' })).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    expect(post).toHaveBeenCalledTimes(2);
+}
+
 /** Details show only safe values; viewers get no controls and deletion requires confirmation. */
 async function showsDetailAndConfirmsDeletion(): Promise<void> {
     const user = userEvent.setup();
@@ -421,5 +449,6 @@ test('creates a DNS monitor submitting only relevant fields', createsDnsMonitorW
 test('edits without resending stored secrets unless replaced', editsWithoutResendingSecrets);
 test('requires the complete new configuration when the type changes', requiresSecretsOnTypeChange);
 test('shows validation errors inline and focuses the first problem', showsValidationErrors);
+test('keeps typed input after a quota refusal and allows a retry', keepsInputAfterQuotaRefusal);
 test('shows safe details and confirms deletion', showsDetailAndConfirmsDeletion);
 test('explains plan suspension without pause or resume controls', explainsSuspension);

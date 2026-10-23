@@ -30,6 +30,8 @@ final class HandleInertiaRequests extends Middleware
             'auth' => ['user' => $request->user() === null ? null : [
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
+                // Only the viewer's own flag, to show the admin link; the panel re-checks on every request.
+                'isPlatformAdmin' => $request->user()->is_platform_admin === true,
             ]],
             'status' => match ($request->session()->get('status')) {
                 'team-switched' => 'Current team updated.',
@@ -44,6 +46,9 @@ final class HandleInertiaRequests extends Middleware
                 'monitor-deleted' => 'Monitor deleted.',
                 'monitor-paused' => 'Monitor paused.',
                 'monitor-resumed' => 'Monitor resumed.',
+                'plan-override-saved' => 'Plan override saved.',
+                'plan-override-cleared' => 'Plan override removed.',
+                'platform-admin-two-factor-required' => 'Enable two-factor authentication to use the admin panel.',
                 'verification-link-sent' => 'A new verification link has been sent to your email.',
                 'two-factor-authentication-enabled' => 'Scan the setup code, then confirm your authenticator.',
                 'two-factor-authentication-confirmed' => 'Two-factor authentication is enabled.',

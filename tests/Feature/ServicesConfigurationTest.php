@@ -3,8 +3,6 @@
 /** Verify package boundaries without external services, persisted accounts or network requests. */
 
 use App\Actions\EnsureStripeTestCredentials;
-use App\Models\User;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Laravel\Horizon\ProvisioningPlan;
 use Laravel\Scout\EngineManager;
@@ -19,24 +17,6 @@ it(
         $this->getJson('/horizon/api/stats')->assertForbidden();
     },
 )->with(['local', 'staging', 'production']);
-
-it(
-    'only grants the Horizon gate to verified explicitly listed operators',
-    /** Exercise the allowlist, empty-list default and email verification requirement without a database. */
-    function (): void {
-        /** @var User $operator Synthetic authenticated identity; no persisted account or tenant role is implied. */
-        $operator = new User(['email' => 'operator@signalbox.example']);
-        $operator->forceFill(['id' => 1, 'email_verified_at' => now()]);
-        config(['horizon.allowed_emails' => []]);
-        expect(Gate::forUser($operator)->allows('viewHorizon'))->toBeFalse();
-        config(['horizon.allowed_emails' => ['operator@signalbox.example']]);
-        expect(Gate::forUser($operator)->allows('viewHorizon'))->toBeTrue();
-        $this->actingAs($operator)->get('/horizon')->assertOk()->assertSee('Horizon');
-        $operator->email_verified_at = null;
-        expect(Gate::forUser($operator)->allows('viewHorizon'))->toBeFalse();
-        $this->actingAs($operator)->get('/horizon')->assertForbidden();
-    },
-);
 
 it(
     'keeps check workers regionally isolated with a single attempt and safe timeout',

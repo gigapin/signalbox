@@ -44,4 +44,12 @@ class UserFactory extends Factory
     {
         return $this->state(['email_verified_at' => null]);
     }
+
+    /**
+     * Produce a platform operator; production code changes this flag only through signalbox:platform-admin.
+     */
+    public function platformAdmin(): static
+    {
+        return $this->state(['is_platform_admin' => true]);
+    }
 }

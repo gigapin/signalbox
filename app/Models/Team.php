@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Store team configuration without resolving paid subscription rights or tenant context.
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Carbon\CarbonImmutable|null $updated_at Last team modification in UTC.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Monitor> $monitors Monitors visible only within the active tenant context.
  * @property-read User $owner Primary owner identity.
+ * @property-read TeamPlanOverride|null $planOverride Operator-granted override, active or expired.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users Users with explicit membership.
  */
 class Team extends Model
@@ -67,4 +69,9 @@ class Team extends Model
         return $this->hasMany(Monitor::class);
     }
 
+    /** @return HasOne<TeamPlanOverride, $this> Operator-granted entitlement override; read through TeamEntitlement. */
+    public function planOverride(): HasOne
+    {
+        return $this->hasOne(TeamPlanOverride::class);
+    }
 }

@@ -18,6 +18,7 @@ Questi record stabiliscono come implementare le milestone successive. Stato di t
 | ADR-008 | Retention, rollup e percentili esatti | M3, M7–M9 |
 | ADR-009 | SLA temporale e copertura | M4, M6–M8 |
 | ADR-010 | Piani, trial e riconciliazione | M1–M2, M7–M10 |
+| ADR-011 | Operatore di piattaforma e override di entitlement | MA, rispettato da M9 |
 
 ## ADR-001 — Monolite modulare e responsabilità del dominio
 
@@ -273,6 +274,28 @@ UI, API, CLI e job condividono la definizione centralizzata. Un job vecchio riva
 - Escluse risorse illimitate implicite, cancellazione automatica delle eccedenze e riattivazione automatica dopo upgrade. La scelta deterministica privilegia stabilità e rende spiegabile la riconciliazione.
 - M1 prepara gli attributi Team necessari quando introduce il modello; M2 applica monitor/frequenze e quota concorrente; M7 retention; M8 pagine; M9 trial, Stripe e riconciliazione completa; M10 equivalenza API. Nessuna tabella billing anticipata in M0.09.
 - Testare 5/6 monitor Free, due creazioni concorrenti, trial al confine di 14 giorni, fine periodo pagato, webhook duplicati/fuori ordine, downgrade concorrente a creazione/dispatch, date di creazione uguali, risorse in pausa, eccedenza pagine e cache, upgrade senza ripresa implicita e protezione cross-tenant.
+
+## ADR-011 — Operatore di piattaforma e override di entitlement
+
+Data/task: 2026-10-23, MA. Stato: adottato; implementazione MA.01–MA.04. Fuori dalla specifica, per scelta di scope dell'utente.
+
+### Contesto e decisione
+
+Servono prove senza vincoli di piano e piani concessi senza sottoscrizione.
+- **Ruolo.** L'operatore di piattaforma è un flag su `users`, separato dai ruoli dei team e modificabile solo da CLI. Il gate rilegge il flag a ogni richiesta e in produzione richiede la 2FA.
+- **Horizon.** Usa lo stesso gate.
+- **Override.** Un override per team (illimitato o piano omaggio) entra nella precedenza di `TeamEntitlement` prima del piano salvato e del trial; un omaggio non abbassa mai un piano pagato.
+- **Profilo illimitato.** Il caso illimitato usa il profilo finito `internal` di `config/plans.php`, così l'invariante di ADR-010 («nessun valore illimitato») resta valida.
+- **Concorrenza e audit.** Le modifiche prendono il lock Team di ADR-004 e scrivono un evento di audit append-only nella stessa transazione.
+
+### Conseguenze
+
+- `MonitorLimits` e tutti i futuri consumatori del piano effettivo rispettano gli override senza logica propria.
+- M9 deve preservare la precedenza e riconciliare la scadenza o la revoca di un override.
+- Il pannello legge dati di tutti i team: è l'unica eccezione a TeamScope, limitata ai conteggi e protetta dal gate. La risposta 404 nasconde il pannello ai non operatori.
+- Escluse l'email dell'operatore in variabile d'ambiente (attributo mutabile, nessuna traccia, redeploy per revocare) e la promozione via HTTP.
+
+Dettagli in [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
 
 ## Stato dopo M0.09
 

@@ -31,7 +31,7 @@ Snapshots run every five minutes, with overlap locks expiring after five minutes
 
 Horizon metadata uses the default Redis connection and its own `HORIZON_PREFIX`, not the reserved internal connection name `horizon`. Successful metadata is retained for 60 minutes and failed metadata for seven days; those limits concern queue diagnostics, not check-result retention.
 
-The dashboard at `/horizon` and its JSON API use the same authorization callback. Access requires an authenticated user with a verified email that exactly matches an entry in comma-separated `HORIZON_ADMIN_EMAILS`. An empty allowlist denies everyone, including local development. There is no local-environment bypass. Team owner/admin roles do not grant access to this global operator dashboard.
+The dashboard at `/horizon` and its JSON API use the same authorization callback. Access requires a platform operator as defined in [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md): a verified user whose `is_platform_admin` flag is set with `signalbox:platform-admin`, with a confirmed second factor in production. Without an operator, nobody has access, including in local development. There is no local-environment bypass. `HORIZON_ADMIN_EMAILS` was removed in MA. Team owner/admin roles do not grant access to this global operator dashboard.
 
 Until M1 provides login and verified identities, a `403` in the browser is expected; process status is available through the console commands above. No operator account, password or login bypass is seeded. Access tests use synthetic, unpersisted identities. M11 can extend operator authorization and observability without weakening this boundary.
 

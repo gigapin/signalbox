@@ -5,12 +5,13 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Services\Admin\PlatformAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Horizon\Horizon;
 use Laravel\Horizon\HorizonApplicationServiceProvider;
 
-/** Require an authenticated, verified platform operator even in local development. */
+/** Require a platform operator (PLATFORM-ADMIN.md) even in local development. */
 class HorizonServiceProvider extends HorizonApplicationServiceProvider
 {
     /** Override the package's local-environment bypass for both dashboard and JSON endpoints. */
@@ -24,15 +25,13 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
         );
     }
 
-    /** Define a default-deny operator gate; team ownership grants no global visibility. */
+    /** Delegate to the platform operator gate; team ownership grants no global visibility. */
     protected function gate(): void
     {
         Gate::define(
             'viewHorizon',
             /** @param User|null $user Authenticated operator, or null for unauthenticated requests. */
-            fn (?User $user): bool => $user !== null
-                && $user->email_verified_at !== null
-                && in_array($user->email, config('horizon.allowed_emails', []), true),
+            fn (?User $user): bool => Gate::forUser($user)->allows(PlatformAccess::GATE),
         );
     }
 }

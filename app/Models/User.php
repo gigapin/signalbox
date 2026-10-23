@@ -26,6 +26,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $two_factor_recovery_codes Fortify-encrypted JSON recovery codes, never serialized.
  * @property \Illuminate\Support\Carbon|null $two_factor_confirmed_at Setup confirmation time, null while disabled or pending.
  * @property int|null $current_team_id Optional preference; membership must still be verified.
+ * @property bool $is_platform_admin Platform operator flag, changed only by the signalbox:platform-admin command.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Team> $teams Teams reached through explicit membership.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Team> $ownedTeams Teams for which this user is the primary owner.
  * @property int $id Unique user identifier.
@@ -38,7 +39,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property \Illuminate\Support\Carbon|null $updated_at Last modification timestamp in UTC.
  */
 #[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'is_platform_admin'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> Generate synthetic users through the dedicated factory. */
@@ -96,6 +97,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'current_team_id' => 'integer',
             'two_factor_confirmed_at' => 'datetime',
+            'is_platform_admin' => 'boolean',
         ];
     }
 }

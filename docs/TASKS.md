@@ -14,9 +14,10 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 - M0 completata il 2026-10-19: decisioni fondanti e prova finale da checkout pulito concluse. Gli esiti dettagliati e i limiti restano nel registro; le note precedenti descrivono lo stato storico delle rispettive sessioni.
 - M1.01 completato il 2026-10-20: utenti, team, membership, ruoli owner/admin/member/viewer, timezone e team corrente; migration, factory, seeder e test PostgreSQL. Dettagli e limiti in [IDENTITY.md](IDENTITY.md) e nel registro di sessione.
-- M1.02 completato il 2026-10-20: registrazione con primo team, login/logout, recupero password, verifica email obbligatoria e 2FA facoltativa con UI inglese. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md). M1.03 completato il 2026-10-21: inviti email, accettazione, gestione membri/cambio team e proprietà; dettagli in [TEAMS.md](TEAMS.md). M1.04 completato il 2026-10-22: contesto tenant, TeamScope sugli inviti privati e policy team/inviti; dettagli in [TENANCY.md](TENANCY.md). M1.05 completato il 2026-10-22: matrice parametrica degli ingressi disponibili, documentata in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md). M1 completata. M2.01 completato il 2026-10-22: modello Monitor e configurazioni tipizzate, documentati in [MONITORS.md](MONITORS.md). M2.02 completato il 2026-10-22: Form Request e validazione per tipo, documentati in [MONITOR-INPUT.md](MONITOR-INPUT.md). M2.03 completato il 2026-10-22: confine SSRF condiviso, pinning DNS, redirect e redazione segreti, documentati in [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md). M2.04 completato il 2026-10-22: CRUD, pausa/ripresa, MonitorPolicy e limiti di piano centralizzati sotto lock, documentati in [MONITOR-CRUD.md](MONITOR-CRUD.md). M2.05 completato il 2026-10-23: pagine lista/dettaglio/form, ricerca Scout sulle colonne in chiaro, filtri e paginazione accessibili, documentati in [MONITOR-UI.md](MONITOR-UI.md). M2.06 completato il 2026-10-23: copertura integrata di tutti i tipi, input errati, permessi, isolamento e sesto monitor Free rifiutato con richieste concorrenti al server HTTP reale; M2 completata. Prossimo task pronto: **M3.01**, `monitors:dispatch` con jitter deterministico, selezione chunkById e avanzamento senza deriva. Leggere AGENTS, specifica, questo registro, MONITORS/MONITOR-CRUD/MONITOR-UI, ARCHITECTURE (scheduling, ADR pertinenti) e TESTING.
+- M1.02 completato il 2026-10-20: registrazione con primo team, login/logout, recupero password, verifica email obbligatoria e 2FA facoltativa con UI inglese. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md). M1.03 completato il 2026-10-21: inviti email, accettazione, gestione membri/cambio team e proprietà; dettagli in [TEAMS.md](TEAMS.md). M1.04 completato il 2026-10-22: contesto tenant, TeamScope sugli inviti privati e policy team/inviti; dettagli in [TENANCY.md](TENANCY.md). M1.05 completato il 2026-10-22: matrice parametrica degli ingressi disponibili, documentata in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md). M1 completata. M2.01 completato il 2026-10-22: modello Monitor e configurazioni tipizzate, documentati in [MONITORS.md](MONITORS.md). M2.02 completato il 2026-10-22: Form Request e validazione per tipo, documentati in [MONITOR-INPUT.md](MONITOR-INPUT.md). M2.03 completato il 2026-10-22: confine SSRF condiviso, pinning DNS, redirect e redazione segreti, documentati in [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md). M2.04 completato il 2026-10-22: CRUD, pausa/ripresa, MonitorPolicy e limiti di piano centralizzati sotto lock, documentati in [MONITOR-CRUD.md](MONITOR-CRUD.md). M2.05 completato il 2026-10-23: pagine lista/dettaglio/form, ricerca Scout sulle colonne in chiaro, filtri e paginazione accessibili, documentati in [MONITOR-UI.md](MONITOR-UI.md). MA.01–MA.04 completati il 2026-10-23 (operatori di piattaforma da CLI e pannello `/admin` per override illimitato o piano omaggio, fuori specifica: [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md)). M2.06 completato il 2026-10-23: copertura integrata di tutti i tipi, input errati, permessi, isolamento e sesto monitor Free rifiutato con richieste concorrenti al server HTTP reale; M2 completata. Prossimo task pronto: **M3.01**, `monitors:dispatch` con jitter deterministico, selezione chunkById e avanzamento senza deriva. Leggere AGENTS, specifica, questo registro, MONITORS/MONITOR-CRUD/MONITOR-UI, ARCHITECTURE (scheduling, ADR pertinenti) e TESTING.
 - Lavorare nel progetto principale `/Users/pino/Projects/signalbox`, non nel checkout temporaneo della prova. Nessuna operazione Git/gh dell'agente; branch e commit restano all'utente.
-- Ultima verifica completa M2.06: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 202 file, Larastan livello 8, 1056 test Pest/6924 asserzioni, lint/formato/TypeScript, 5 test qualità, 40 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
+- Ultima verifica completa MA: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 226 file, Larastan livello 8, 1111 test Pest/7228 asserzioni (anche senza build Vite, come in CI), lint/formato/TypeScript, 5 test qualità, 46 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
+- Baseline storica M2.06: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 202 file, Larastan livello 8, 1056 test Pest/6924 asserzioni, lint/formato/TypeScript, 5 test qualità, 40 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
 - Baseline storica M2.05: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 198 file, Larastan livello 8, 1014 test Pest/6220 asserzioni, lint/formato/TypeScript, 5 test qualità, 31 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
 - Baseline storica M2.04: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 189 file, Larastan livello 8, 922 test Pest/4974 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
 - Baseline storica M2.03: `./scripts/verify.sh` exit 0, PHP 8.4.26, formatter su 179 file, Larastan livello 8, 806 test Pest/4018 asserzioni, lint/formato/TypeScript, 5 test qualità, 20 test DOM e build. Nessuna nuova CI remota/PHP 8.5 integrata dichiarata.
@@ -75,6 +76,21 @@ Dipendenze: M1; matrice piani e contratti checker di M0.
 Uscita: tutti i tipi sono configurabili e persistiti correttamente; limiti applicati dal backend.
 
 Uscita soddisfatta il 2026-10-23: i cinque tipi sono creati, proiettati, modificati, sospesi, ripresi ed eliminati tramite le rotte di produzione con i payload del form React (contratto condiviso); input errati, permessi per tipo e isolamento sono verificati; il sesto monitor Free è rifiutato dal backend anche con richieste concorrenti al server HTTP reale. Dettagli in [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206). M2 completata.
+
+## MA — Amministrazione piattaforma (fuori specifica, decisione di scope del 2026-10-23)
+
+Dipendenze: M1, M2. Aggiunta su richiesta dell'utente per consentire prove senza vincoli di piano e piani concessi senza sottoscrizione; non riduce né sostituisce M3–M12. Dettagli in [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
+
+- [x] MA.01 Ruolo super admin su database concesso solo da CLI, gate di piattaforma (anche Horizon), 404 ai non admin, 2FA obbligatoria in produzione, audit.
+- [x] MA.02 Override di entitlement per team: test illimitato (profilo interno con tetti finiti) e piano omaggio Pro/Business con scadenza opzionale, sotto lock Team.
+- [x] MA.03 Pannello team: elenco con ricerca, dettaglio con entitlement effettivo, form override e storico di audit.
+- [x] MA.04 Testare gate, CLI, precedenza, effetti sui limiti, concorrenza, matrice delle rotte e UI.
+- [ ] MA.05 (futuro, da pianificare) Gestione utenti dal pannello.
+- [ ] MA.06 (futuro, da pianificare) Impersonificazione con audit, durata limitata e mai su altri admin.
+
+Uscita: un team di test può operare senza limiti di piano e un cliente può ricevere un piano senza sottoscrizione, con ogni modifica autorizzata e tracciata.
+
+Uscita soddisfatta il 2026-10-23 per MA.01–MA.04; MA.05/MA.06 restano da pianificare.
 
 ## M3 — Motore di check (18 h, nucleo obbligatorio)
 
@@ -163,8 +179,8 @@ Dipendenze: M1–M2, M7; matrice piani definita in M0.
 - [ ] M9.01 Configurare Cashier/Stripe test, piani Free/Pro/Business, trial, subscription e subscription_items.
 - [ ] M9.02 Implementare checkout, cambio piano, cancellazione e portale clienti con UI degli stati di abbonamento.
 - [ ] M9.03 Verificare firma dei webhook Stripe e gestire eventi duplicati/fuori ordine, rinnovi e decadenza.
-- [ ] M9.04 Completare policy centrale per monitor, frequenza minima, status page e retention; applicarla a tutte le mutazioni e ai job.
-- [ ] M9.05 Implementare sospensione deterministica dei monitor eccedenti al downgrade/scadenza e comportamento di successivo upgrade.
+- [ ] M9.04 Completare policy centrale per monitor, frequenza minima, status page e retention; applicarla a tutte le mutazioni e ai job. Nota MA: gli override amministrativi attivi prevalgono sullo stato Stripe secondo la precedenza di [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
+- [ ] M9.05 Implementare sospensione deterministica dei monitor eccedenti al downgrade/scadenza e comportamento di successivo upgrade. Nota MA: includere la scadenza o revoca di un override.
 - [ ] M9.06 Testare trial, limiti, downgrade, webhook replay e concorrenza; verificare che nessun percorso aggiri le policy.
 
 Uscita: stato abbonamento coerente con i limiti effettivi, anche dopo eventi asincroni.
@@ -242,6 +258,12 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-23 | M2.05: filtri tipo, stato osservato, stato operativo | Scelta utente; nessun filtro regione. La sospensione di piano prevale sulla pausa nello stato operativo. |
 | 2026-10-23 | M2.06: concorrenza via UI su server HTTP reale | Scelta utente: `artisan serve` multi-worker (CMD del Dockerfile) sul database di test isolato con POST Inertia paralleli via Guzzle; nessun Playwright né nuova dipendenza. Prova deterministica tramite attesa del lock osservata in `pg_stat_activity` più raffica parallela come rete di sicurezza. |
 | 2026-10-23 | M2.06: contratto payload form↔server | Scelta utente: fixture JSON condivisa (`tests/Fixtures/monitor-form-payloads.json`) verificata da Vitest su `buildPayload()` e inviata da Pest alle rotte di produzione; i default devono coincidere con `MonitorPresenter::defaults()`. |
+| 2026-10-23 | MA: pannello di amministrazione fuori specifica | Scelta utente: nuova milestone MA tra M2 e M3 per prove senza vincoli di piano e piani concessi senza sottoscrizione; gestione utenti e impersonificazione pianificate (MA.05/MA.06), non implementate. |
+| 2026-10-23 | MA: super admin come flag su database concesso solo da CLI | Scelta utente: `users.is_platform_admin` legato all'ID e non all'email mutabile, revocabile senza redeploy, tracciato in audit; nessun endpoint HTTP promuove un utente. Scartata l'email in variabile d'ambiente. |
+| 2026-10-23 | MA: password recente sulle modifiche, 2FA obbligatoria solo in produzione | Scelta utente: requisito ricavato da `app()->isProduction()` senza variabile che lo disattivi; vale anche per Horizon. |
+| 2026-10-23 | MA: override test illimitato e piano omaggio | Scelta utente: profilo `internal` con tetti alti ma finiti (nessun valore illimitato, ADR-010) e omaggio Pro/Business con scadenza opzionale; un omaggio non abbassa mai un piano pagato. |
+| 2026-10-23 | MA: Horizon unificato al ruolo di piattaforma | Scelta utente: `viewHorizon` delega al gate di piattaforma; `HORIZON_ADMIN_EMAILS` rimossa. |
+| 2026-10-23 | pgAdmin opzionale solo su localhost | Richiesta utente: servizio `pgadmin` nel profilo `dbadmin`, porta pubblicata solo su `127.0.0.1`, login da `.env` senza valori predefiniti, solo database di sviluppo, immagine fissata per digest. Strumento di ispezione: le scritture da pgAdmin non passano da scope, policy e audit. |
 | 2026-10-23 | M2.05: filtri invalidi ignorati e segnalati, non errore di validazione | Deviazione dal piano: una validazione GET fallita reindirizza alla URL precedente, che per una lista aperta direttamente è la stessa URL invalida (loop). La pagina mostra `rejectedFilters` come stato di errore. |
 
 ## Registro sessioni
@@ -637,4 +659,49 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
   - suite Pest completa senza build Vite, come in CI: **1056 passati/6924 asserzioni**, exit 0;
   - test dei server isolati: 3 passati e **0 processi `php -S` residui**, contro i 9 osservati prima della correzione.
   - La conferma della CI remota resta a carico dell'utente dopo il push.
+
+### 2026-10-23 — MA: pannello di amministrazione piattaforma (completato)
+
+- Piano approvato dall'utente; decisione di scope registrata (milestone MA fuori specifica). Dipendenze M1/M2 soddisfatte. Nessuna operazione Git/gh; nessuna migration sul database di sviluppo senza consenso.
+- Scelte utente: super admin come flag su database concesso solo da CLI (scartata l'email in env); password recente sulle modifiche e 2FA obbligatoria solo in produzione; override test illimitato e piano omaggio Pro/Business con scadenza opzionale; Horizon unificato al ruolo di piattaforma.
+- Implementati:
+  - Database: migration `users.is_platform_admin`, `platform_audit_events` (append-only) e `team_plan_overrides` (vincoli tipo/piano e motivo).
+  - Accesso: comando `signalbox:platform-admin` (grant/revoke/list), `PlatformAccess` e gate `accessPlatformAdmin` con flag riletto e 2FA in produzione; `viewHorizon` delegato al gate, `HORIZON_ADMIN_EMAILS` rimossa da config, `.env.example` e `phpunit.xml`.
+  - Entitlement: `Plan::Internal` con profilo finito in `config/plans.php`, `TeamEntitlement::resolve()` con DTO `Entitlement` ed enum `EntitlementSource`.
+  - Override e pannello: action `ManagePlanOverrides` sotto lock Team, `EnsurePlatformAdmin` (404 ai non operatori), servizio `PlatformTeamDirectory`, presenter, request, controller e `routes/admin.php`; pagine React `Admin/Teams/Index|Show`, link «Admin» e prop `auth.user.isPlatformAdmin`.
+- Test: nuovi PlatformAdminAccessTest (31), PlatformAdminCommandTest (7), PlanOverrideTest (17), Admin.test.tsx (6); PlanLimitsTest con il profilo internal.
+  - Adeguamenti di test esistenti: discovery della matrice tenant che esclude i controller Admin; inversione delle migration in TeamIdentityTest che include `team_plan_overrides`; proiezione `auth.user` in AuthenticationTest con `isPlatformAdmin`; test Horizon spostato dal Feature senza database all'Integration, perché il gate legge il flag.
+  - Correzioni durante lo sviluppo, tutte nei test:
+    - precisione al secondo dei timestamp;
+    - conferma password calcolata con `now()` sotto `travelTo`;
+    - fixture committata per il test di contesa;
+    - confronto delle chiavi jsonb indipendente dall'ordine.
+- Verifiche:
+  - test mirati superati; PHP-CS-Fixer 0 modifiche su 226 file; Larastan livello 8 senza errori;
+  - suite Pest completa senza build Vite: **1111 passati/7228 asserzioni**, 0 processi `php -S` residui;
+  - `./scripts/verify.sh` **exit 0**: formatter dry-run su **226 file**, Larastan senza errori, **1111 test Pest/7228 asserzioni** (+55/+304 rispetto a M2.06), ESLint/Prettier/TypeScript, **5 test qualità**, **46 test DOM** (+6), build Vite; zero skip.
+  - Log nella scratchpad di sessione (ma-verify.log).
+- Documentazione: nuovo [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md) e ADR-011 in ARCHITECTURE; aggiornati SERVICES, BOOTSTRAP, MONITOR-CRUD, AUTHORIZATION-MATRIX, TESTING, README e TASKS (note di compatibilità in M9.04/M9.05).
+- Limiti:
+  - gestione utenti e impersonificazione non implementate (MA.05/MA.06);
+  - alla scadenza di un override i monitor eccedenti non vengono sospesi (M9.05);
+  - nessuna prova nel browser, perché le migration non sono applicate al database di sviluppo senza consenso;
+  - `HORIZON_ADMIN_EMAILS` non è presente nel `.env` locale;
+  - nessuna nuova CI remota/PHP 8.5;
+  - nessuna operazione Git/gh.
+- Prossimo task funzionale: **M3.01**.
+
+### 2026-10-23 — Strumento locale: pgAdmin opzionale
+
+- Richiesta utente: aggiungere pgAdmin come servizio accessibile solo da localhost. Nessuna operazione Git/gh; `.env` locale non modificato.
+- Implementati:
+  - servizio `pgadmin` in `compose.yaml`: profilo `dbadmin`, `127.0.0.1:${PGADMIN_PORT:-5050}`, volume `pgadmin-data`, upgrade check disattivato, dipendenza dal solo `postgres` di sviluppo;
+  - `docker/pgadmin/servers.json` con il server preregistrato, senza password;
+  - variabili `PGADMIN_EMAIL`/`PGADMIN_PASSWORD`/`PGADMIN_PORT` in `.env.example`, vuote.
+- Verifiche:
+  - `docker compose config --quiet` superato, con e senza profilo;
+  - avvio di prova con credenziali temporanee passate solo nell'ambiente della shell: `/misc/ping` e `/login` HTTP 200, porta pubblicata soltanto su `127.0.0.1:5050`, server importato («Added 1 Server Group(s) and 1 Server(s)»), release 9.18, `postgres:5432` raggiungibile dal container;
+  - container e volume di prova rimossi dopo la verifica.
+- Non verificati: login e connessione dall'interfaccia con la password reale del database (servono le credenziali dell'utente nel `.env`).
+- Documentazione: DOCKER (sezione «Optional pgAdmin», con i campi del JSON) e DEPENDENCIES.
 

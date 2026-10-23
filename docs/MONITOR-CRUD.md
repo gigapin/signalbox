@@ -40,7 +40,7 @@ Because the quota count happens after the Team lock, two simultaneous creations 
 
 Status page and retention values are declared there too, for M7/M8.
 
-`TeamEntitlement::effectivePlan()` resolves the plan until Stripe subscriptions exist (M9): a stored Pro or Business plan stands for a paid entitlement; a Free team receives Pro while `now < trial_ends_at` (exclusive end); otherwise Free. The trial never lowers a higher plan.
+`TeamEntitlement::effectivePlan()` resolves the plan until Stripe subscriptions exist (M9): a stored Pro or Business plan stands for a paid entitlement; a Free team receives Pro while `now < trial_ends_at` (exclusive end); otherwise Free. The trial never lowers a higher plan. Since MA, an active operator override takes precedence over both; see [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md#precedence).
 
 `MonitorLimits` applies:
 

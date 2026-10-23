@@ -41,6 +41,7 @@ Open <http://127.0.0.1:8000>. `APP_PORT` changes the published web port; also up
 | `php-test` | One-off isolated backend verification, with dedicated test service dependencies; see [TESTING.md](TESTING.md). |
 | `postgres-test` / `redis-test` | Unpublished ephemeral services for integration tests; no application volumes or credentials are reused. |
 | `postgres` | PostgreSQL 16 with a named data volume and `pg_isready` health check. |
+| `pgadmin` | Optional `dbadmin` profile: pgAdmin 4 web UI for the development database only, published on `127.0.0.1:${PGADMIN_PORT:-5050}`; see [Optional pgAdmin](#optional-pgadmin). |
 | `redis` | Redis 7 with append-only persistence and a named data volume; `PING` health check. |
 | `docker/php/Dockerfile` | Official PHP image, required extensions, official Composer binary and configurable non-root user. |
 | `docker/node/Dockerfile` | Non-root Node runtime with a writable dependency volume separate from host `node_modules`. |
@@ -49,11 +50,11 @@ Open <http://127.0.0.1:8000>. `APP_PORT` changes the published web port; also up
 
 Compose supplies `DB_HOST=postgres`, `REDIS_HOST=redis`, internal standard ports, Redis sessions/cache and Redis queues. These process environment values override the host-oriented `.env` settings without rewriting them. Do not use cached host configuration inside containers: run `php artisan config:clear` via Compose after switching environments. Host `.env` session/cache/queue defaults remain suitable for infrastructure-free bootstrap.
 
-Only web and optional Reverb publish ports, bound to host loopback. PostgreSQL and Redis are available inside the project network only. Local Redis is unauthenticated and must not be exposed publicly. Database credentials are interpolated from the ignored `.env`; avoid sharing the expanded output of `docker compose config` (use `--quiet`). Existing PostgreSQL volumes retain the original account/password: changing `.env` alone does not update database credentials.
+Only web, optional Reverb and optional pgAdmin publish ports, bound to host loopback. PostgreSQL and Redis are available inside the project network only. Local Redis is unauthenticated and must not be exposed publicly. Database credentials are interpolated from the ignored `.env`; avoid sharing the expanded output of `docker compose config` (use `--quiet`). Existing PostgreSQL volumes retain the original account/password: changing `.env` alone does not update database credentials.
 
 `depends_on: service_healthy` gates application startup on PostgreSQL/Redis health. It does not recover application connections after every runtime infrastructure failure. `/up` is Laravel liveness, not proof of database/worker readiness. See [Docker startup order](https://docs.docker.com/compose/how-tos/startup-order/), [official PHP extension installation](https://hub.docker.com/_/php), and [Laravel Reverb](https://laravel.com/docs/13.x/reverb).
 
-All five external images are pinned to multi-platform registry index digests in Compose/Dockerfiles. This preserves architecture selection on Apple Silicon and amd64. Review and update digest pins explicitly for security updates. Debian package installation is not snapshot-pinned; this does not claim byte-for-byte reproducible image builds. Package versions remain fixed by the committed application lockfiles.
+All six external images are pinned to multi-platform registry index digests in Compose/Dockerfiles. This preserves architecture selection on Apple Silicon and amd64. Review and update digest pins explicitly for security updates. Debian package installation is not snapshot-pinned; this does not claim byte-for-byte reproducible image builds. Package versions remain fixed by the committed application lockfiles.
 
 ## Verification
 
@@ -80,6 +81,37 @@ docker compose logs --tail=50 reverb
 ```
 
 `REVERB_APP_ID` identifies the local application and `REVERB_FORWARD_PORT` selects the host port. Broadcasting defaults to the log driver until explicitly selected; [SERVICES.md](SERVICES.md) documents how to enable signed backend publishing. Starting the listener does not create private channels or domain events.
+
+## Optional pgAdmin
+
+pgAdmin was added on 2026-10-23 at the user's request as a development-only service.
+- **Startup:** it belongs to the `dbadmin` profile, so `docker compose up` never starts it.
+- **Network:** its only published port is bound to `127.0.0.1`, unreachable from the network.
+- **Database:** it reaches only the development `postgres` service, never `postgres-test`.
+- **Image:** `dpage/pgadmin4:9.18.0`, pinned to its multi-platform index digest. On 2026-10-23 the `9.17.0`, `9.18.0` and `latest` tags resolved to the same digest; the running image reports release 9.18.
+
+1. In your `.env`, set `PGADMIN_EMAIL` and `PGADMIN_PASSWORD`. They are the pgAdmin login, not database credentials.
+   - Nothing is committed, so the container refuses to start until both are set.
+   - pgAdmin validates the address format; reserved domains such as `.test` may be rejected, while `you@example.com` works.
+   - `PGADMIN_PORT` changes the host port (default 5050).
+2. Start it and open <http://127.0.0.1:5050>:
+
+   ```sh
+   docker compose --profile dbadmin up -d pgadmin
+   ```
+3. Expand **Signalbox → Signalbox development**. When asked, enter the database password, which is `DB_PASSWORD` from `.env`; pgAdmin can remember it in its own volume.
+4. Stop it with `docker compose --profile dbadmin stop pgadmin`.
+
+[`docker/pgadmin/servers.json`](../docker/pgadmin/servers.json) pre-registers the server. JSON cannot hold comments, so its fields are listed here:
+
+| Field | Value | Meaning |
+|---|---|---|
+| `Servers.1.Name` / `Group` | Signalbox development / Signalbox | Labels in the pgAdmin tree |
+| `Host` / `Port` | `postgres` / `5432` | Development database through the Compose network |
+| `MaintenanceDB` / `Username` | `signalbox` / `signalbox` | Defaults of `DB_DATABASE` / `DB_USERNAME`; edit the server in pgAdmin if you changed them |
+| `SSLMode` | `prefer` | The local server has no TLS; pgAdmin falls back to plain TCP inside the private network |
+
+The definition is imported only when the `pgadmin-data` volume is created. pgAdmin settings and any saved password live in that volume; `docker volume rm signalbox_pgadmin-data` resets them, and a full `down --volumes` with the `dbadmin` profile deletes them. The upgrade check is disabled, so the service makes no outbound calls of its own. Writes made in pgAdmin bypass the application's tenant scopes, policies and audit; use it to inspect data, not to change it.
 
 ## Daily use and reset
 

@@ -17,6 +17,8 @@ it('reads the ADR-010 monitor quotas and minimum intervals', function (Plan $pla
     'free' => [Plan::Free, 5, 300],
     'pro' => [Plan::Pro, 50, 60],
     'business' => [Plan::Business, 200, 30],
+    // Operator testing profile: high but finite, with the validator's 30-second floor.
+    'internal' => [Plan::Internal, 1000, 30],
 ]);
 
 it('declares every adopted entitlement for every plan', function (): void {

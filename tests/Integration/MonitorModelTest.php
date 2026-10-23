@@ -260,9 +260,13 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $team = Team::factory()->create();
     app(TenantContext::class)->run($team->id, fn () => Monitor::factory()->create());
     $migration = require base_path('database/migrations/2026_10_22_000006_create_monitors_table.php');
+    $scheduling = require base_path('database/migrations/2026_10_23_000010_create_check_executions_table.php');
+    // Roll back dependent executions first, following the real migration order.
+    $scheduling->down();
     $migration->down();
     expect(Schema::hasTable('monitors'))->toBeFalse()->and(Team::query()->count())->toBe(1)->and(User::query()->count())->toBe(1);
     $migration->up();
+    $scheduling->up();
     app(TenantContext::class)->run($team->id, function () use ($team): void {
         expect(Monitor::query()->count())->toBe(0);
         Monitor::factory()->create();

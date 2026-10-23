@@ -10,6 +10,14 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione — M3.01–M3.02, 2026-10-23
+
+- Completati insieme M3.01 e M3.02: slot UTC/jitter e intervalli di 30 secondi, prenotazione transazionale, outbox regionale, publisher recuperabile, acquisizione unica e fencing. Dettagli in [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) e nel registro finale.
+- `./scripts/verify.sh` exit 0: PHP 8.4.27, 248 file PHP verificati, Larastan livello 8, 1158 test Pest/7444 asserzioni, controlli frontend, 5 test qualità, 46 test DOM e build.
+- Flusso disabilitato per default fino al runner reale. Migration nuova presente ma non applicata al database di sviluppo; va applicata prima dell’uso del CRUD aggiornato. `.env`, chiavi e processi applicativi non modificati.
+- Prossimo task funzionale: **M3.03**. MA.05/MA.06 rinviati su richiesta dell’utente. Nessuna operazione Git/gh e nessuna nuova verifica CI remota/PHP 8.5.
+- Le consegne seguenti conservano lo stato storico delle sessioni precedenti.
+
 ## Consegna di sessione e ripartenza — 2026-10-23
 
 - Sessione chiusa su richiesta dell'utente. Completati: M2.05, M2.06 (con correzione CI), milestone MA.01–MA.04 (operatori di piattaforma e override di piano, fuori specifica), pgAdmin opzionale su loopback e aggiornamento di sicurezza a PHP 8.4.27.
@@ -105,8 +113,8 @@ Uscita soddisfatta il 2026-10-23 per MA.01–MA.04; MA.05/MA.06 restano da piani
 
 Dipendenze: M2.
 
-- [ ] M3.01 Implementare `monitors:dispatch`, jitter deterministico, selezione chunkById e avanzamento temporale senza deriva; rendere effettivi gli intervalli sotto il minuto se ammessi dai piani.
-- [ ] M3.02 Garantire dispatch concorrente sicuro con prenotazione transazionale, lock distribuiti e strategia di recupero dal crash tra commit e invio; testare perdita e duplicazione dei job.
+- [x] M3.01 Implementare `monitors:dispatch`, jitter deterministico, selezione chunkById e avanzamento temporale senza deriva; rendere effettivi gli intervalli sotto il minuto se ammessi dai piani.
+- [x] M3.02 Garantire dispatch concorrente sicuro con prenotazione transazionale, lock distribuiti e strategia di recupero dal crash tra commit e invio; testare perdita e duplicazione dei job.
 - [ ] M3.03 Implementare contratto e strategie HTTP e keyword con `Http::pool()`, redirect controllati, timeout e classificazione degli errori.
 - [ ] M3.04 Implementare strategie TLS (scadenza, catena, hostname) e DNS (A/AAAA/CNAME/MX/TXT e resolver) con adapter sostituibili nei test.
 - [ ] M3.05 Implementare heartbeat: endpoint con credenziale dedicata, scadenza, tolleranza e rilevamento delle chiamate mancanti.
@@ -189,7 +197,7 @@ Dipendenze: M1–M2, M7; matrice piani definita in M0.
 - [ ] M9.02 Implementare checkout, cambio piano, cancellazione e portale clienti con UI degli stati di abbonamento.
 - [ ] M9.03 Verificare firma dei webhook Stripe e gestire eventi duplicati/fuori ordine, rinnovi e decadenza.
 - [ ] M9.04 Completare policy centrale per monitor, frequenza minima, status page e retention; applicarla a tutte le mutazioni e ai job. Nota MA: gli override amministrativi attivi prevalgono sullo stato Stripe secondo la precedenza di [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
-- [ ] M9.05 Implementare sospensione deterministica dei monitor eccedenti al downgrade/scadenza e comportamento di successivo upgrade. Nota MA: includere la scadenza o revoca di un override.
+- [ ] M9.05 Implementare sospensione deterministica dei monitor eccedenti al downgrade/scadenza e comportamento di successivo upgrade. Nota MA: includere la scadenza o revoca di un override. Nota M3: mantenere `execution_revision` per le mutazioni operative, così i lavori già prenotati vengono rivalutati.
 - [ ] M9.06 Testare trial, limiti, downgrade, webhook replay e concorrenza; verificare che nessun percorso aggiri le policy.
 
 Uscita: stato abbonamento coerente con i limiti effettivi, anche dopo eventi asincroni.
@@ -734,3 +742,18 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Attivazione della CI chiarita: `pull_request` scatta solo per PR aperte e `push` solo per staging/main, quindi un branch con PR già mergiata non avvia workflow. L'utente ha usato un nuovo branch con nuova PR verso staging: CI verde secondo l'utente. Workflow invariato; scelta e alternative scartate documentate in [CI.md](CI.md).
 - Documentazione aggiornata: CI (evento e procedura), TASKS (consegna di sessione e ripartenza). Nessuna modifica al codice in questo passaggio; nessuna operazione Git/gh dell'agente.
 
+
+
+### 2026-10-23 — M3.01–M3.02: scheduling e consegna recuperabile (completati)
+
+- Piano approvato: intervento congiunto M3.01/M3.02, dipendenza M2 soddisfatta. MA.05/MA.06 rinviati.
+- Registro transazionale, slot UTC, publisher e acquisizione con fencing; consumer di test fino al runner applicativo. Flusso disabilitato per default, attivazione differita ai task del runner/checker.
+- Decisione implementativa: revisione semantica positiva dei monitor per invalidare i lavori vecchi, mantenuta dal CRUD sotto lock; evita hash dei ciphertext che cambiano anche per un cambio nome. Pausa/ripresa invalida il lavoro precedente; downgrade persistito e cleanup del registro restano nei task proprietari.
+- Primo passaggio completo: 1156 test Pest passati e 2 falliti nei test storici di rollback (MonitorModel/TeamIdentity), perché la nuova FK richiede di invertire prima la migration delle esecuzioni. Corretti entrambi seguendo l’ordine reale; suite pertinenti: 87 passati/418 asserzioni. La successiva verifica completa è passata, come riportato sotto.
+- File applicativi: nuovi servizi `app/Services/Monitoring/Scheduling/`, contratti `CheckWorkPublisher`/`CheckWorkConsumer`, modello `CheckExecution`, job `DeliverCheckExecution`, comandi `DispatchMonitors`/`PublishMonitorChecks`/`RecoverMonitorChecks`, `config/monitor-scheduling.php` e migration `2026_10_23_000010_create_check_executions_table.php`; aggiornati `Monitor`, `ManageMonitors`, `MonitorLimits`, `AppServiceProvider`, `routes/console.php` e `.env.example`.
+- Test: nuovi `MonitorSlotsTest`, `MonitorSchedulingConfigurationTest`, `MonitorSchedulingTest`, `MonitorSchedulingConcurrencyTest`, `RecordingCheckPublisher` e probe `RunSchedulingProbe`; adattati i rollback in `MonitorModelTest` e `TeamIdentityTest` alle nuove dipendenze. Le gare usano due processi PHP reali con barriera PostgreSQL; consumer di test sulle code Redis regionali, mai traffico ai target.
+- Verifiche finali: `./scripts/verify.sh` **exit 0**, PHP **8.4.27**, PHP-CS-Fixer dry-run su **248 file** (0 modifiche), Larastan livello 8 senza errori, **1158 test Pest/7444 asserzioni** (+47/+216 rispetto alla baseline), ESLint/Prettier/TypeScript, **5 test qualità**, **46 test DOM** e build Vite. Log: `/tmp/signalbox-m3-verify-final.log`. Test mirati scheduling+CRUD: 80 passati/447 asserzioni; rollback/model/identity: 87 passati/418 asserzioni.
+- Documentazione: nuovo [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md); aggiornati ARCHITECTURE, MONITORS, MONITOR-CRUD, TENANCY, TESTING, BOOTSTRAP, README e TASKS. Nessuna nuova dipendenza o modifica ai lockfile.
+- Limiti espliciti: gate `MONITOR_SCHEDULING_ENABLED=false` di default, consumer applicativo non ancora associato; nessuna esecuzione reale dei checker, CheckResult, persistenza incidenti, benchmark o prova nel browser. Lease 10 s, ripubblicazione dopo 5 s, timeout del job 30 s e deadline persistita 35 s rispetto a Redis retry_after 90 s. Fencing e recupero verificati con consumer di test; integrazione del runner, budget dei trasporti, `WithoutOverlapping` e `failed()` restano M3.03–M3.08. La cancellazione dello storico del registro resta lavoro di lifecycle futuro. Nessuna nuova CI remota o verifica PHP 8.5 dichiarata.
+- Nessuna operazione Git/gh, nessuna modifica al `.env`, nessuna migration o riavvio dei processi di sviluppo. La nuova migration va applicata deliberatamente prima di usare il CRUD aggiornato sul database di sviluppo; mantenere disabilitato il motore fino al runner reale.
+- **M3.01 e M3.02 completati** nel perimetro concordato, con attivazione differita. M3 resta aperta. Prossimo task pronto: **M3.03**, contratto e strategie HTTP/keyword; MA.05/MA.06 rinviati.

@@ -368,3 +368,10 @@ Authorization runs before configuration decryption; absent tenant context or Mon
 ## M2.06 integrated monitor coverage
 
 M2.06 adds tests and test support only; no production code changes. It verifies ADR-004 on the real transport: a real `artisan serve` process with several workers receives the Inertia submissions, and the sixth Free creation is shown to wait on the same Team row lock and then be refused. A shared JSON contract keeps the React form payloads and server validation in step. Details are in [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206) and [TESTING.md](TESTING.md).
+
+
+## Attuazione M3.01–M3.02 — Scheduler e consegna recuperabile
+
+[MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) attua ADR-006: slot UTC con fase CRC32, selezione chunkById, prenotazione transazionale Team → Monitor, outbox regionale, publisher con lease, ripubblicazione prima dell'acquisizione, fencing e recupero degli abbandoni. Il gate unico è disabilitato fino all'integrazione del runner reale; i consumer applicativi e i CheckResult restano nei task successivi.
+
+La revisione positiva `execution_revision` invalida lavori non iniziati quando cambiano impostazioni operative o viene applicata una pausa effettiva. I soli cambi di nome la conservano. Scelta: una generazione semantica al posto di un hash dei ciphertext, che cambiano anche per modifiche senza cambiamento dei segreti. Il CRUD mantiene la generazione sotto i lock esistenti; M9 dovrà rispettarla durante la riconciliazione. Nessuna modifica alla specifica di prodotto né promessa exactly-once.

@@ -170,3 +170,8 @@ M2.05 adds monitor page routes to `routes/monitors.php` and makes `App\Models\Mo
 M2.06 adds tests only. The concurrency suite starts its own short-lived `artisan serve` inside `php-test` against the isolated test database; it does not use the development server on port 8000. No environment variable, dependency, migration or process change is required. See [TESTING.md](TESTING.md).
 
 MA adds three migrations: `users.is_platform_admin`, `platform_audit_events` and `team_plan_overrides`. It also adds the `signalbox:platform-admin` command and `routes/admin.php`. `HORIZON_ADMIN_EMAILS` is removed: Horizon now requires a platform operator. After applying the migrations, grant the first operator with `php artisan signalbox:platform-admin <email>`. No new variable or dependency is required. See [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
+
+
+## Recoverable scheduling foundation (M3.01–M3.02)
+
+[MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) documents the execution outbox migration, monitor execution generation, three scheduling commands and `config/monitor-scheduling.php`. `MONITOR_SCHEDULING_ENABLED` defaults to false; keep it disabled until the real consumer/runner is integrated and the migration is deliberately applied to the intended database. Automated checks apply it only to the isolated test database. No dependency, lockfile, development key or process change is required.

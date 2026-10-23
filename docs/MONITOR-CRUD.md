@@ -70,3 +70,8 @@ No events or broadcasts are published yet (M6).
 docker compose run --rm php-test composer test -- --filter='MonitorCrud|PlanLimits|TeamAuthorizationMatrix|MonitorInput' --fail-on-skipped --fail-on-warning
 ./scripts/verify.sh
 ```
+
+
+## Execution generation (M3.01–M3.02)
+
+Mutations now maintain `execution_revision` under the existing Team → Monitor locks: any validated change except the label increments it, and an actual pause increments it once. Name-only edits and repeated pauses preserve it. Acquisition rejects previously reserved generations, including after pause/resume. This does not change observation resets or slot reset rules described above. See [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md).

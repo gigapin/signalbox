@@ -10,6 +10,14 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione e ripartenza — 2026-10-23
+
+- Sessione chiusa su richiesta dell'utente. Completati: M2.05, M2.06 (con correzione CI), milestone MA.01–MA.04 (operatori di piattaforma e override di piano, fuori specifica), pgAdmin opzionale su loopback e aggiornamento di sicurezza a PHP 8.4.27.
+- CI remota: dopo il push dell'utente su un nuovo branch con nuova PR verso staging, l'utente conferma la CI verde. La patch PHP usata dal runner della CI non è stata letta dall'agente; i log del job la riportano.
+- Database di sviluppo: l'utente ha applicato le migration fino a MA e ha impostato `is_platform_admin = true` sul proprio account direttamente nel database, senza il comando, quindi senza evento di audit. Verificati in sola lettura un operatore verificato e 0 eventi di audit. In produzione usare solo `signalbox:platform-admin`.
+- Container di sviluppo `web`, `queue` e `scheduler` in esecuzione su PHP 8.4.27; pgAdmin non avviato (si attiva con il profilo `dbadmin` e le credenziali nel `.env`).
+- Prossimo task funzionale: **M3.01** (`monitors:dispatch`, jitter deterministico, selezione chunkById e avanzamento senza deriva). MA.05/MA.06 restano da pianificare quando l'utente lo chiederà.
+
 ## Consegna di sessione e ripartenza — 2026-10-22
 
 - M0 completata il 2026-10-19: decisioni fondanti e prova finale da checkout pulito concluse. Gli esiti dettagliati e i limiti restano nel registro; le note precedenti descrivono lo stato storico delle rispettive sessioni.
@@ -720,4 +728,9 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
   - il PHP 8.5.9 dell'host non è stato toccato;
   - nessuna operazione Git/gh.
 - Documentazione: DEPENDENCIES e DOCKER.
+
+### 2026-10-23 — Chiusura sessione
+
+- Attivazione della CI chiarita: `pull_request` scatta solo per PR aperte e `push` solo per staging/main, quindi un branch con PR già mergiata non avvia workflow. L'utente ha usato un nuovo branch con nuova PR verso staging: CI verde secondo l'utente. Workflow invariato; scelta e alternative scartate documentate in [CI.md](CI.md).
+- Documentazione aggiornata: CI (evento e procedura), TASKS (consegna di sessione e ripartenza). Nessuna modifica al codice in questo passaggio; nessuna operazione Git/gh dell'agente.
 

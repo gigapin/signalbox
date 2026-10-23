@@ -58,3 +58,8 @@ Crash before commit leaves no reservation. Crash after commit but before send le
 - `MonitorSchedulingConcurrencyTest`: two actual PHP processes wait at a PostgreSQL lock barrier, then compete to reserve, lease or acquire. A concurrent downgrade is respected. Another process cannot lease uncommitted work, and rollback restores the prior slot. Fixtures commit only to the guarded test database and are explicitly cleaned up.
 
 The publisher contract isolates broker submission; `CheckWorkConsumer` is the genuine runner boundary. `DeliverCheckExecution` supplies tenant middleware and acquisition infrastructure without implementing `RunCheck` or target strategies. Integrate the real consumer, result persistence, bounded transports and failure hooks in the remaining M3 tasks before enabling the pipeline.
+
+
+## HTTP-family checker foundation (M3.03)
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) provides typed input/context/outcomes and the shared HTTP/keyword pool. It deliberately leaves `CheckWorkConsumer` unbound: checker availability alone does not provide acquired-work orchestration, atomic result persistence or all monitor types. Keep the scheduling gate disabled until the runner integration is complete.

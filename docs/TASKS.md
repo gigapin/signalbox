@@ -10,6 +10,14 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione — M3.03, 2026-10-23
+
+- Completato M3.03: strategie HTTP/keyword, esiti normalizzati, acquisizione con `Http::pool()`, protezioni SSRF/redirect, budget di rete cumulativi e cap di 1 MiB decompressi. Dettagli in [HTTP-CHECKERS.md](HTTP-CHECKERS.md) e nel registro finale.
+- `./scripts/verify.sh` exit 0: PHP 8.4.27, 272 file PHP verificati, Larastan livello 8, 1220 test Pest/7728 asserzioni, controlli frontend, 5 test qualità, 46 test DOM e build.
+- Motore ancora disabilitato e consumer applicativo non associato. Nessuna nuova migration, modifica `.env`, dipendenza o operazione Git/gh. La migration M3.01–M3.02 resta non applicata dall’agente al database di sviluppo, come documentato nella consegna precedente.
+- Decisione utente: misurazione della latenza senza aggiungere ora la soglia della specifica. DNS conserva il limite noto senza timeout applicativo.
+- Prossimo task funzionale: **M3.04**, TLS/DNS e adapter. MA.05/MA.06 rinviati. Nessuna nuova verifica CI remota/PHP 8.5.
+
 ## Consegna di sessione — M3.01–M3.02, 2026-10-23
 
 - Completati insieme M3.01 e M3.02: slot UTC/jitter e intervalli di 30 secondi, prenotazione transazionale, outbox regionale, publisher recuperabile, acquisizione unica e fencing. Dettagli in [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) e nel registro finale.
@@ -115,7 +123,7 @@ Dipendenze: M2.
 
 - [x] M3.01 Implementare `monitors:dispatch`, jitter deterministico, selezione chunkById e avanzamento temporale senza deriva; rendere effettivi gli intervalli sotto il minuto se ammessi dai piani.
 - [x] M3.02 Garantire dispatch concorrente sicuro con prenotazione transazionale, lock distribuiti e strategia di recupero dal crash tra commit e invio; testare perdita e duplicazione dei job.
-- [ ] M3.03 Implementare contratto e strategie HTTP e keyword con `Http::pool()`, redirect controllati, timeout e classificazione degli errori.
+- [x] M3.03 Implementare contratto e strategie HTTP e keyword con `Http::pool()`, redirect controllati, timeout e classificazione degli errori.
 - [ ] M3.04 Implementare strategie TLS (scadenza, catena, hostname) e DNS (A/AAAA/CNAME/MX/TXT e resolver) con adapter sostituibili nei test.
 - [ ] M3.05 Implementare heartbeat: endpoint con credenziale dedicata, scadenza, tolleranza e rilevamento delle chiamate mancanti.
 - [ ] M3.06 Configurare job e code `checks:eu`/`checks:us`, WithoutOverlapping, timeout, `tries = 1`, `failed()` e idempotenza della persistenza; documentare eventuali retry di dominio con backoff.
@@ -757,3 +765,19 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Limiti espliciti: gate `MONITOR_SCHEDULING_ENABLED=false` di default, consumer applicativo non ancora associato; nessuna esecuzione reale dei checker, CheckResult, persistenza incidenti, benchmark o prova nel browser. Lease 10 s, ripubblicazione dopo 5 s, timeout del job 30 s e deadline persistita 35 s rispetto a Redis retry_after 90 s. Fencing e recupero verificati con consumer di test; integrazione del runner, budget dei trasporti, `WithoutOverlapping` e `failed()` restano M3.03–M3.08. La cancellazione dello storico del registro resta lavoro di lifecycle futuro. Nessuna nuova CI remota o verifica PHP 8.5 dichiarata.
 - Nessuna operazione Git/gh, nessuna modifica al `.env`, nessuna migration o riavvio dei processi di sviluppo. La nuova migration va applicata deliberatamente prima di usare il CRUD aggiornato sul database di sviluppo; mantenere disabilitato il motore fino al runner reale.
 - **M3.01 e M3.02 completati** nel perimetro concordato, con attivazione differita. M3 resta aperta. Prossimo task pronto: **M3.03**, contratto e strategie HTTP/keyword; MA.05/MA.06 rinviati.
+
+
+### 2026-10-23 — M3.03: checker HTTP e keyword (completato)
+
+- Piano approvato: DTO/contesto/esiti normalizzati, evaluator Strategy HTTP e keyword, trasporto condiviso `Http::pool()`, budget di rete comune ai redirect e cap di 1 MiB decompressi per osservazione. Batch massimi di 10 ingressi.
+- Decisione di scope esplicita dell'utente: misurare la latenza senza aggiungere ora la soglia citata nella specifica; soglia rinviata, non rimossa dalla specifica.
+- Nessuna attivazione dello scheduler o associazione del consumer applicativo; runner, CheckResult e incidenti restano nei task proprietari. DNS conserva il limite noto del resolver attuale, da affrontare con l'adapter M3.04.
+- File applicativi: nuovi DTO in `app/Data/Monitoring/Checks/`, `CheckError`, contratti `CheckClock`/`HttpResponseStrategy`, servizi `app/Services/Monitoring/Checks/` e `config/monitor-checks.php`; aggiornati `AppServiceProvider` e `GuardedHttpOptions` (connessioni nuove senza riuso per rispettare il pin corrente).
+- Scelte implementative: evaluator puri separati dall'acquisizione concorrente; risoluzione esplicita dei tipi; filtro PHP di scrittura sul sink per contare byte già decompressi e interrompere davvero l'overflow, anche nei fake. I timeout riusano `MonitorInputLimits`; il tempo monotono misura solo le fasi di rete, escludendo DNS e attesa di altri risultati del pool.
+- Test nuovi: `HttpCheckStrategyTest`, `HttpCheckCoordinatorTest`, `HttpCheckTransportTest`, fixture `CheckInputFixture`/`FakeCheckClock` e server non bloccante `CheckLoopbackServer`. Test mirati: **62 passati/284 asserzioni**, inclusa barriera su due socket reali, overflow gzip decompresso e un target in timeout accanto a uno sano. Nessuna rete esterna.
+- Documentazione: nuovo [HTTP-CHECKERS.md](HTTP-CHECKERS.md), aggiornati ARCHITECTURE, BOOTSTRAP, TESTING, MONITORS, MONITOR-SCHEDULING, OUTBOUND-SECURITY, README e TASKS. Nessuna nuova dipendenza, modifica ai lockfile o nuova variabile d'ambiente.
+- Verifica completa: `./scripts/verify.sh` **exit 0** con PHP **8.4.27**; PHP-CS-Fixer dry-run su **272 file**, 0 modifiche; Larastan livello 8 senza errori; **1220 test Pest/7728 asserzioni** (+62/+284 rispetto alla baseline M3.01–M3.02); ESLint/Prettier/TypeScript, **5 test qualità**, **46 test DOM** e build Vite. Log: `/tmp/signalbox-m3-03-verify.log`.
+- Limiti espliciti: acquisizione a round concorrenti, senza promessa di ritorno anticipato degli esiti o benchmark; il cap riguarda i body decompressi, non gli header. DNS resta sincrono e senza timeout applicativo: nessuna garanzia di deadline wall-clock dell'intera osservazione. Soglia di latenza rinviata per decisione dell'utente. Nessun checker TLS/DNS/heartbeat, risultato persistito, incidente, binding del consumer o attivazione del motore; nessuna nuova CI remota/PHP 8.5, prova nel browser o rete esterna.
+- Nessuna operazione Git/gh, migration, modifica `.env` o riavvio dei processi di sviluppo.
+- **M3.03 completato**. M3 resta aperta. Prossimo task pronto: **M3.04**, strategie TLS/DNS e adapter sostituibili; affrontare anche il limite di risoluzione DNS del guard HTTP. MA.05/MA.06 restano rinviati.
+- Messaggio di commit suggerito: `feat(monitoring): add HTTP and keyword checkers`.

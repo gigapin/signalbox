@@ -23,6 +23,9 @@ final readonly class GuardedHttpOptions
         $curl = [
             CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            // A reused connection might point at an address outside this hop's freshly authorized pin.
+            CURLOPT_FRESH_CONNECT => true,
+            CURLOPT_FORBID_REUSE => true,
             // Environment proxy variables would move the connection, and its DNS lookup, outside the pin.
             CURLOPT_PROXY => '',
             CURLOPT_NOPROXY => '*',

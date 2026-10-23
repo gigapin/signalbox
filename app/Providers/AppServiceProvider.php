@@ -7,8 +7,10 @@
 namespace App\Providers;
 
 use App\Actions\EnsureStripeTestCredentials;
+use App\Contracts\Monitoring\CheckClock;
 use App\Contracts\Monitoring\CheckWorkPublisher;
 use App\Contracts\Security\HostResolver;
+use App\Services\Monitoring\Checks\MonotonicCheckClock;
 use App\Services\Monitoring\Scheduling\RedisCheckWorkPublisher;
 use App\Services\Security\SystemHostResolver;
 use App\Services\Tenancy\TenantContext;
@@ -19,7 +21,7 @@ use Laravel\Cashier\Cashier;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register request/job-scoped tenant identity, the execution publisher and the outbound DNS resolver,
+     * Register tenant identity, the execution publisher, monotonic check clock and outbound DNS resolver,
      * and disable billing entry points until M9.
      */
     public function register(): void
@@ -28,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(TenantContext::class, fn (): TenantContext => new TenantContext());
         $this->app->bind(HostResolver::class, SystemHostResolver::class);
         $this->app->bind(CheckWorkPublisher::class, RedisCheckWorkPublisher::class);
+        $this->app->bind(CheckClock::class, MonotonicCheckClock::class);
     }
 
     /**

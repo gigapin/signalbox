@@ -185,3 +185,8 @@ Run `docker compose run --rm php-test composer test -- --filter=MonitorInput --f
 ## Recoverable scheduling (M3.01–M3.02)
 
 [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) describes the slot, configuration, outbox, fencing and recovery suites. The concurrency suite starts two bounded PHP subprocesses against the guarded test PostgreSQL database and observes their actual lock waits before releasing a barrier. PostgreSQL statistics snapshots are cleared on each poll so the observer sees new waiters. Committed fixtures use `CommittedTeamFixture` and explicit cleanup. The test-only probe verifies database/service identity before domain operations and does not run migrations. Regional delivery tests use only isolated Redis, consume/delete their envelopes and clean up those test queues. No target network requests or development worker queues are used.
+
+
+## HTTP and keyword checker coverage (M3.03)
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) documents three new suites: pure strategy/stream tests, HTTP/DNS/clock-faked coordinator tests and bounded loopback transport probes. The nonblocking test server only releases its two barrier responses after both requests have arrived, proving concurrency without timing-ratio assertions. It also serves a compressed oversized body and isolates a hanging request from a healthy response. These are explicit synthetic local transport probes; ordinary semantic tests remain network-free. All sockets, resources, child processes and hit logs are cleaned up; no external DNS or target network is used.

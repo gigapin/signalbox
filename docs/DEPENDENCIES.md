@@ -202,3 +202,7 @@ The require surfaced a real advisory on **pre-existing** `symfony/http-foundatio
 
 User request: the optional local `pgadmin` service uses `dpage/pgadmin4:9.18.0` pinned to `sha256:c332c5f6dfba995d9ebc4af261d93506d6876085d712eaaa3defc8dd1a3f26de`, resolved with `docker buildx imagetools inspect` (linux/amd64 and linux/arm64). It is a development tool behind the `dbadmin` profile and changes no application dependency, lockfile or CI job. Configuration and limits are in [DOCKER.md](DOCKER.md#optional-pgadmin).
 
+## PHP 8.4.27 security update (2026-10-23)
+
+User request for a security update: `docker/php/Dockerfile` moves from `php:8.4-cli-bookworm@sha256:836ac6c6…`, which ran PHP 8.4.26, to `php:8.4.27-cli-bookworm@sha256:496b5e02fe9fe44fcfb715023b931048111dc4e0bc719789d83c906be9f04b05`, resolved with `docker buildx imagetools inspect`. The php.net 8.4.27 changelog lists core fixes for GHSA-w8hw-w9fx-j79w and GHSA-6wmf-4rv5-p3rp (state corruption via bailout) plus several use-after-free fixes. The tag now names the patch explicitly. Composer constraints (`~8.4.0 || ~8.5.0`, platform 8.4.0), lockfiles and extensions are unchanged. CI installs `PHP_VERSION: '8.4'` through setup-php, which selects the latest patch it ships; the patch actually used by CI must be read from its job log.
+

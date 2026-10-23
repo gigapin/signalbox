@@ -54,7 +54,7 @@ Only web, optional Reverb and optional pgAdmin publish ports, bound to host loop
 
 `depends_on: service_healthy` gates application startup on PostgreSQL/Redis health. It does not recover application connections after every runtime infrastructure failure. `/up` is Laravel liveness, not proof of database/worker readiness. See [Docker startup order](https://docs.docker.com/compose/how-tos/startup-order/), [official PHP extension installation](https://hub.docker.com/_/php), and [Laravel Reverb](https://laravel.com/docs/13.x/reverb).
 
-All six external images are pinned to multi-platform registry index digests in Compose/Dockerfiles. This preserves architecture selection on Apple Silicon and amd64. Review and update digest pins explicitly for security updates. Debian package installation is not snapshot-pinned; this does not claim byte-for-byte reproducible image builds. Package versions remain fixed by the committed application lockfiles.
+All six external images are pinned to multi-platform registry index digests in Compose/Dockerfiles. This preserves architecture selection on Apple Silicon and amd64. Review and update digest pins explicitly for security updates. The PHP base image names its patch in the tag (`php:8.4.27-cli-bookworm`, since 2026-10-23), so the running patch is visible without resolving the digest. Debian package installation is not snapshot-pinned; this does not claim byte-for-byte reproducible image builds. Package versions remain fixed by the committed application lockfiles.
 
 ## Verification
 

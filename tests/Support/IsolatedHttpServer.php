@@ -159,10 +159,54 @@ final class IsolatedHttpServer
         return $this->process->getOutput().$this->process->getErrorOutput();
     }
 
-    /** Stop the server and its workers, waiting at most two seconds. */
+    /**
+     * `artisan serve` runs `php -S` as a child, and that master forks the workers; stopping only the artisan
+     * process would orphan them, keep the port bound and hold the test runner's stdout open. The descendants
+     * are therefore collected first and terminated after the artisan process.
+     */
     public function stop(): void
     {
+        $pid = $this->process->getPid();
+        $descendants = $pid === null ? [] : self::descendants($pid);
+
         $this->process->stop(2);
+
+        foreach ($descendants as $descendant) {
+            posix_kill($descendant, SIGTERM);
+        }
+    }
+
+    /**
+     * @param int $parent Process whose subtree is collected.
+     * @return list<int> Every live descendant PID, read from Linux /proc; empty where /proc is unavailable.
+     */
+    private static function descendants(int $parent): array
+    {
+        $children = [];
+
+        foreach (glob('/proc/[0-9]*/stat') ?: [] as $stat) {
+            // A process may exit while the directory is scanned, so an unreadable entry is simply skipped.
+            $line = @file_get_contents($stat);
+
+            if ($line === false) {
+                continue;
+            }
+
+            // The command name may contain spaces, so the state and parent PID are read after its closing parenthesis.
+            $fields = explode(' ', substr($line, (int) strrpos($line, ')') + 2));
+
+            if (($fields[1] ?? null) === (string) $parent) {
+                $children[] = (int) basename(dirname($stat));
+            }
+        }
+
+        $all = $children;
+
+        foreach ($children as $child) {
+            $all = [...$all, ...self::descendants($child)];
+        }
+
+        return $all;
     }
 
     /** @return string Loopback host and an unused port, released immediately for the server to bind. */

@@ -627,3 +627,14 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
   - nessuna nuova CI remota/PHP 8.5;
   - nessuna operazione Git/gh.
 - M2.06 e M2 completati. Prossimo task **M3.01**: `monitors:dispatch`, jitter deterministico, selezione chunkById e avanzamento temporale senza deriva.
+
+### 2026-10-23 — M2.06: correzione CI backend-php8.4
+
+- Segnalazione dell'utente: il job `backend-php8.4` è fallito con 12 test di MonitorLifecycleTest in errore («Not a valid Inertia response» e `assertOk` fallito sulle pagine).
+- Causa verificata riproducendo il job in locale (cartella vuota montata su `public/build`): il job backend non esegue la build Vite, quindi le pagine HTML falliscono con `ViteManifestNotFoundException`. MonitorPagesTest e la matrice usano già `withoutVite()`, MonitorLifecycleTest no; in locale la build esistente nascondeva l'errore. Correzione: `withoutVite()` nel `beforeEach`.
+- Secondo difetto emerso durante la riproduzione: `IsolatedHttpServer::stop()` terminava `artisan serve` ma non il master `php -S` né i suoi worker. I processi orfani tenevano la porta e lo stdout della pipe, e un'esecuzione con output in pipe restava bloccata dopo la fine di Pest. Correzione: `stop()` raccoglie i discendenti da `/proc` prima dell'arresto e li termina dopo.
+- Verifiche:
+  - suite Pest completa senza build Vite, come in CI: **1056 passati/6924 asserzioni**, exit 0;
+  - test dei server isolati: 3 passati e **0 processi `php -S` residui**, contro i 9 osservati prima della correzione.
+  - La conferma della CI remota resta a carico dell'utente dopo il push.
+

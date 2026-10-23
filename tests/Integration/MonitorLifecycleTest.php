@@ -23,6 +23,9 @@ beforeEach(function (): void {
     if (getenv('RUN_DOCKER_TESTS') !== '1') {
         $this->markTestSkipped('Requires isolated php-test PostgreSQL.');
     }
+
+    // The backend CI job runs without a frontend build, so pages must not need the Vite manifest.
+    $this->withoutVite();
 });
 
 /** @var list<string> LIFECYCLE_SECRET_FIELDS HTTP-family fields that never return to the browser. */

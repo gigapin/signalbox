@@ -12,6 +12,9 @@ M0.07 adds `.github/workflows/ci.yml`. It runs the existing local verification c
 | Manual dispatch on main | Run | Run | Run |
 | Manual dispatch on another branch | Run | Skip | Run |
 | Push to a working branch without a PR | No workflow | No workflow | No workflow |
+| Push to a branch whose PR is already merged or closed | No workflow | No workflow | No workflow |
+
+`pull_request` events fire only for open PRs, so commits pushed after a merge trigger nothing and are not part of the target branch. Push them on a new branch and open a new PR to staging, which is the workflow adopted per task; this was used on 2026-10-23 for the PHP 8.4.27 update. A manual dispatch on that branch would check the code but would not deliver it. Widening `push` to every branch was considered and rejected: with an open PR it would run the workflow twice per commit.
 
 Decision explicitly requested by the user: check PHP 8.5 only on main to limit PR runner usage. Compatibility failures can therefore be discovered after merging to main. PHP 8.5 has no `continue-on-error`; its failures are real CI failures. Jobs are independent, with no dependency that cancels one runtime when another fails. A failed step stops the remaining steps in that job.
 

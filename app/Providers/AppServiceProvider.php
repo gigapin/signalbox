@@ -7,7 +7,9 @@
 namespace App\Providers;
 
 use App\Actions\EnsureStripeTestCredentials;
+use App\Contracts\Monitoring\CheckWorkPublisher;
 use App\Contracts\Security\HostResolver;
+use App\Services\Monitoring\Scheduling\RedisCheckWorkPublisher;
 use App\Services\Security\SystemHostResolver;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
@@ -17,7 +19,7 @@ use Laravel\Cashier\Cashier;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register request/job-scoped tenant identity, the system DNS resolver used by the outbound guard,
+     * Register request/job-scoped tenant identity, the execution publisher and the outbound DNS resolver,
      * and disable billing entry points until M9.
      */
     public function register(): void
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         Cashier::ignoreRoutes();
         $this->app->scoped(TenantContext::class, fn (): TenantContext => new TenantContext());
         $this->app->bind(HostResolver::class, SystemHostResolver::class);
+        $this->app->bind(CheckWorkPublisher::class, RedisCheckWorkPublisher::class);
     }
 
     /**

@@ -46,6 +46,7 @@ use Laravel\Scout\Searchable;
  * @property string|null $dns_resolver Optional resolver destination.
  * @property int|null $heartbeat_grace_seconds Nonnegative tolerance after the shared cadence.
  * @property MonitorRegions $regions_json Nonempty canonical simulated execution region selection.
+ * @property int $execution_revision Positive generation invalidating unstarted work after execution edits or pause.
  * @property int $interval_seconds Configured cadence in seconds; required explicitly.
  * @property int $timeout_ms Configured execution timeout in milliseconds; required explicitly.
  * @property int $confirmation_threshold Positive regional failure threshold, initially three.
@@ -79,6 +80,7 @@ final class Monitor extends Model
 
     /** @var array<string, mixed> Safe initial state; cadence and timeout must still be supplied explicitly. */
     protected $attributes = [
+        'execution_revision' => 1,
         'regions_json' => '["eu"]',
         'confirmation_threshold' => 3,
         'is_paused' => false,
@@ -113,6 +115,7 @@ final class Monitor extends Model
             'dns_expected_values' => 'array',
             'heartbeat_grace_seconds' => 'integer',
             'regions_json' => MonitorRegionsCast::class,
+            'execution_revision' => 'integer',
             'interval_seconds' => 'integer',
             'timeout_ms' => 'integer',
             'confirmation_threshold' => 'integer',

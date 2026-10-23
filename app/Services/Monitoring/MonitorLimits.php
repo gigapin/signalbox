@@ -11,6 +11,7 @@ use App\Models\Monitor;
 use App\Models\Team;
 use App\Services\Billing\PlanLimits;
 use App\Services\Billing\TeamEntitlement;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
@@ -84,11 +85,12 @@ final readonly class MonitorLimits
      *
      * @param Team $team Owning team; mutations pass the locked row, pages an unlocked read.
      * @param Monitor $monitor Persisted monitor of that team.
+     * @param CarbonImmutable|null $at Admission instant, shared with scheduling cadence checks when supplied.
      * @return bool Whether the monitor's position is inside the current plan quota.
      */
-    public function isWithinQuota(Team $team, Monitor $monitor): bool
+    public function isWithinQuota(Team $team, Monitor $monitor, ?CarbonImmutable $at = null): bool
     {
-        $limit = $this->limits->monitors($this->entitlement->effectivePlan($team));
+        $limit = $this->limits->monitors($this->entitlement->effectivePlan($team, $at));
 
         $ahead = Monitor::query()
             ->where('team_id', $team->id)

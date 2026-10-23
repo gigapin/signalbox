@@ -91,6 +91,10 @@ final readonly class ManageMonitors
                 $this->limits->assertInterval($team, $after->intervalSeconds);
             }
 
+            if ($this->executionChanged($before, $after)) {
+                $monitor->execution_revision++;
+            }
+
             $this->apply($monitor, $after);
 
             if (MonitorConfigurationMapper::attributes($after->configuration) != MonitorConfigurationMapper::attributes($before->configuration)) {
@@ -147,7 +151,11 @@ final readonly class ManageMonitors
             Gate::forUser($actor)->authorize('pause', $monitor);
 
             if (!$monitor->is_paused) {
-                $monitor->forceFill(['is_paused' => true, 'next_check_at' => null])->save();
+                $monitor->forceFill([
+                    'is_paused' => true,
+                    'next_check_at' => null,
+                    'execution_revision' => $monitor->execution_revision + 1,
+                ])->save();
             }
 
             return $monitor;
@@ -210,6 +218,20 @@ final readonly class ManageMonitors
     private function lockMonitor(Team $team, int $monitorId): Monitor
     {
         return Monitor::query()->where('team_id', $team->id)->lockForUpdate()->findOrFail($monitorId);
+    }
+
+    /**
+     * @param MonitorInput $before Locked definition before the validated patch.
+     * @param MonitorInput $after Validated replacement definition.
+     * @return bool Whether execution settings changed; presentation labels never invalidate reserved work.
+     */
+    private function executionChanged(MonitorInput $before, MonitorInput $after): bool
+    {
+        $previous = $before->candidate();
+        $replacement = $after->candidate();
+        unset($previous['name'], $replacement['name']);
+
+        return $previous !== $replacement;
     }
 
     /**

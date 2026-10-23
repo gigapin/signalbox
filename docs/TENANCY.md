@@ -74,3 +74,8 @@ No schema migration, dependency change or development database reset is needed f
 ## M2.05 search isolation
 
 Scout's database engine builds its query from `Monitor::newQuery()`, so TeamScope applies to search. As ADR-003 requires for search, `MonitorListing` also adds an explicit `team_id` predicate. MonitorPagesTest covers same-name foreign monitors and a listing run in one team's context for another team, which returns nothing. Only plaintext columns are searchable; see [MONITOR-UI.md](MONITOR-UI.md).
+
+
+## Scheduling and execution outbox (M3.01–M3.02)
+
+`CheckExecution` uses the same fail-closed TeamScope and write guard as Monitor. The scheduling services alone discover cross-team work by selecting identifiers, then re-enter the owning context for private reads/transitions. Composite PostgreSQL ownership prevents an execution from referring to another team's monitor. Delivery envelopes serialize only team/execution IDs; worker middleware restores context and acquisition rechecks identity and eligibility. See [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md).

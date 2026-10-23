@@ -231,6 +231,8 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_10_22_000006_create_monitors_table.php',
         // Plan overrides reference teams, so they are removed before teams and restored after them.
         'database/migrations/2026_10_23_000009_create_team_plan_overrides_table.php',
+        // Execution ownership references monitors and teams and must be reversed first.
+        'database/migrations/2026_10_23_000010_create_check_executions_table.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

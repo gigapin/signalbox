@@ -180,3 +180,8 @@ Run `docker compose run --rm php-test composer test -- --filter=MonitorInput --f
 ## MA platform administration
 
 [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md#tests) lists the suites. PlatformAdminAccessTest switches `app['env']` to `production` to check the second-factor rule, then restores it. Its Horizon checks replaced the database-free allowlist test, because the gate now reads the operator flag from PostgreSQL. In PlanOverrideTest, the lock contention case commits its team and operator through `CommittedTeamFixture` and holds the Team row lock in a savepoint; rolling back to the savepoint releases the lock before cleanup. TeamIdentityTest's migration reversal now includes `team_plan_overrides`, which depends on `teams`.
+
+
+## Recoverable scheduling (M3.01–M3.02)
+
+[MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) describes the slot, configuration, outbox, fencing and recovery suites. The concurrency suite starts two bounded PHP subprocesses against the guarded test PostgreSQL database and observes their actual lock waits before releasing a barrier. PostgreSQL statistics snapshots are cleared on each poll so the observer sees new waiters. Committed fixtures use `CommittedTeamFixture` and explicit cleanup. The test-only probe verifies database/service identity before domain operations and does not run migrations. Regional delivery tests use only isolated Redis, consume/delete their envelopes and clean up those test queues. No target network requests or development worker queues are used.

@@ -22,17 +22,19 @@ interface LayoutProps {
     description?: string;
     /** Form, account details or second-factor management controls. */
     children: ReactNode;
+    /** Widen the content column for tables and multi-column forms; defaults to the narrow form width. */
+    wide?: boolean;
 }
 
 /** Render a keyboard-accessible shell using the existing dark and emerald palette. */
-export default function AuthLayout({ title, description, children }: LayoutProps) {
+export default function AuthLayout({ title, description, children, wide = false }: LayoutProps) {
     /** Safe status message supplied by the server for this response. */
     const { status } = usePage<AuthProps>().props;
     return (
         <>
             <Head title={title} />
             <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
-                <div className="mx-auto max-w-lg">
+                <div className={wide ? 'mx-auto max-w-5xl' : 'mx-auto max-w-lg'}>
                     <Link href="/" className="font-semibold tracking-widest text-emerald-400">
                         SIGNALBOX
                     </Link>

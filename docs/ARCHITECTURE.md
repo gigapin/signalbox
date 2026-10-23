@@ -337,3 +337,7 @@ Authorization runs before configuration decryption; absent tenant context or Mon
 ## M2.04 monitor mutations and plan limits
 
 [MONITOR-CRUD.md](MONITOR-CRUD.md) applies ADR-004/ADR-010 to monitors. `config/plans.php` is the single plan matrix read by `PlanLimits`; `TeamEntitlement` resolves the effective plan (stored Pro/Business as paid placeholder until M9, otherwise Pro during the exclusive 14-day trial, else Free); `MonitorLimits` checks quota, cadence and deterministic quota position. One cohesive action, `ManageMonitors`, locks Team then Monitor, re-runs `MonitorPolicy` and re-validates the explicit patch under lock, as the identity actions do. Viewers are read-only; deletion is permanent; voluntary pause and plan suspension stay independent. Scheduling slots are left null for the M3 dispatcher; no events are published before M6.
+
+## M2.05 monitor pages
+
+[MONITOR-UI.md](MONITOR-UI.md) separates read pages (`MonitorPageController`) from mutations (`MonitorController`). Projections live in one presenter that reads configuration only through `MonitorConfigurationProjection`. Tenant-filtered search is a small service over Scout with an explicit team predicate and literal LIKE escaping (ADR-003). Quota and permission props are ADR-004 hints only; the lock-aware action remains the authority. Invalid list filters are reported rather than redirected, to avoid a GET redirect loop.

@@ -15,7 +15,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Responses redirect back with a status flash; list, detail and form pages arrive in M2.05.
+ * Creation lands on the new monitor's page and deletion on the list, since the previous page would be the
+ * form or a now-missing detail; other transitions redirect back. Pages live in MonitorPageController.
  * Validation and limit refusals surface as session errors without echoing submitted input.
  */
 final class MonitorController extends Controller
@@ -28,13 +29,15 @@ final class MonitorController extends Controller
     /**
      * @param StoreMonitorRequest $request Authorized and validated creation input.
      * @param int $team Route team, already established as tenant context.
-     * @return RedirectResponse Previous page with `monitor-created` status.
+     * @return RedirectResponse New monitor's detail page with `monitor-created` status.
      */
     public function store(StoreMonitorRequest $request, int $team): RedirectResponse
     {
-        $this->monitors->create($this->authenticatedUser($request), $team, $request->monitorInput()->patch->values);
+        $monitor = $this->monitors->create($this->authenticatedUser($request), $team, $request->monitorInput()->patch->values);
 
-        return back()->with('status', 'monitor-created');
+        return redirect()
+            ->route('teams.monitors.show', ['team' => $team, 'monitor' => $monitor->id])
+            ->with('status', 'monitor-created');
     }
 
     /**
@@ -54,13 +57,15 @@ final class MonitorController extends Controller
      * @param Request $request Verified browser identity.
      * @param int $team Route team.
      * @param Monitor $monitor Monitor bound inside the route team.
-     * @return RedirectResponse Previous page with `monitor-deleted` status.
+     * @return RedirectResponse Team monitor list with `monitor-deleted` status.
      */
     public function destroy(Request $request, int $team, Monitor $monitor): RedirectResponse
     {
         $this->monitors->delete($this->authenticatedUser($request), $team, $monitor->id);
 
-        return back()->with('status', 'monitor-deleted');
+        return redirect()
+            ->route('teams.monitors.index', ['team' => $team])
+            ->with('status', 'monitor-deleted');
     }
 
     /**

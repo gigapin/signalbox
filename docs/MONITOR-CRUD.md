@@ -1,6 +1,6 @@
 # Monitor CRUD, pause and plan limits
 
-M2.04 adds the production monitor mutations on top of the [model](MONITORS.md), the [input contract](MONITOR-INPUT.md) and the [outbound boundary](OUTBOUND-SECURITY.md). List, detail and form pages, search and filters are M2.05; integrated UI coverage, including concurrent sixth-monitor attempts through the UI, is M2.06. Evidence is in [TASKS.md](TASKS.md).
+M2.04 adds the production monitor mutations on top of the [model](MONITORS.md), the [input contract](MONITOR-INPUT.md) and the [outbound boundary](OUTBOUND-SECURITY.md). List, detail and form pages, search and filters are documented in [MONITOR-UI.md](MONITOR-UI.md) (M2.05); integrated UI coverage, including concurrent sixth-monitor attempts through the UI, is M2.06. Evidence is in [TASKS.md](TASKS.md).
 
 ## Routes and permissions
 
@@ -12,7 +12,7 @@ M2.04 adds the production monitor mutations on top of the [model](MONITORS.md), 
 | `teams.monitors.pause` | POST `/teams/{team}/monitors/{monitor}/pause` | Voluntary pause | `monitor-paused` |
 | `teams.monitors.resume` | POST `/teams/{team}/monitors/{monitor}/resume` | Remove voluntary pause | `monitor-resumed` |
 
-All routes use `auth`, `verified` and `EstablishTeamContext`; monitor binding runs inside the route team, so another team's monitor is a 404. Responses redirect back. Input validation failures in the Form Requests flash no input. Refusals raised later by the action (quota, plan interval) use Laravel's default handler, which may flash non-private fields such as the name, while the global `dontFlash` list excludes every monitor configuration column and `headers`. JSON requests receive Laravel's 422 field errors.
+All routes use `auth`, `verified` and `EstablishTeamContext`; monitor binding runs inside the route team, so another team's monitor is a 404. Since M2.05, creation redirects to the new monitor's detail page and deletion to the team's monitor list; update, pause and resume redirect back. Input validation failures in the Form Requests flash no input. Refusals raised later by the action (quota, plan interval) use Laravel's default handler, which may flash non-private fields such as the name, while the global `dontFlash` list excludes every monitor configuration column and `headers`. JSON requests receive Laravel's 422 field errors.
 
 `MonitorPolicy` grants `viewAny`/`view` to every current member and `create`, `update`, `delete`, `pause` and `resume` to owners, admins and members. Viewers are read-only. Roles are read fresh from the membership on every check. The routes are part of the [authorization matrix](AUTHORIZATION-MATRIX.md).
 

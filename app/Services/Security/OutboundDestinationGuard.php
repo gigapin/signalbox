@@ -128,9 +128,45 @@ final readonly class OutboundDestinationGuard
             return [$host];
         }
 
+        return $this->validateAddresses($this->resolver->resolve($host));
+    }
+
+    /**
+     * Authorize fresh asynchronous DNS answers through the same policy before a pinned connection.
+     *
+     * @param string $host Original peer identity retained for SNI and verification.
+     * @param int $port Explicit TCP port.
+     * @param list<string> $answers Fresh complete address answers, or the literal host itself.
+     * @return AuthorizedDestination Canonical endpoint with policy-approved pins.
+     * @throws OutboundDestinationRejected When syntax, local naming or any address is refused.
+     */
+    public function authorizeResolvedEndpoint(string $host, int $port, array $answers): AuthorizedDestination
+    {
+        try {
+            $host = $this->syntax->host($host);
+        } catch (InvalidArgumentException) {
+            throw new OutboundDestinationRejected(OutboundRejection::InvalidDestination);
+        }
+
+        if ($port < 1 || $port > 65535) {
+            throw new OutboundDestinationRejected(OutboundRejection::InvalidDestination);
+        }
+
+        $this->assertLocallyAllowed($host);
+
+        return new AuthorizedDestination(null, $host, $port, $this->validateAddresses($answers));
+    }
+
+    /**
+     * @param list<string> $answers Fresh literal addresses from either resolver path.
+     * @return list<string> Canonical distinct addresses, all permitted.
+     * @throws OutboundDestinationRejected When any address is blocked, malformed or the answer set is empty.
+     */
+    private function validateAddresses(array $answers): array
+    {
         $addresses = [];
 
-        foreach ($this->resolver->resolve($host) as $answer) {
+        foreach ($answers as $answer) {
             $packed = @inet_pton($answer);
             $canonical = $packed === false ? false : inet_ntop($packed);
 

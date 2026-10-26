@@ -180,3 +180,8 @@ MA adds three migrations: `users.is_platform_admin`, `platform_audit_events` and
 ## HTTP and keyword acquisition (M3.03)
 
 [HTTP-CHECKERS.md](HTTP-CHECKERS.md) documents the typed checker boundary and `config/monitor-checks.php` (10 observations per batch, 1 MiB decoded response bytes per observation across redirects). The provider binds the monotonic check clock; the application consumer remains unbound and scheduling disabled. Guarded HTTP connections now forbid reuse so each hop honours its freshly authorized pin. No new environment variable, migration, dependency or process change is required.
+
+
+## TLS/DNS acquisition and bounded resolution (M3.04)
+
+[TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) documents the shared concurrent TLS/DNS coordinator, replaceable transports, verified certificate expiry and exact DNS comparison. `monitor-checks.resolution_timeout_ms` defaults to 1000 ms and bounds the complete A/AAAA resolution used by the HTTP guard. OpenSSL and the existing locked ReactPHP components become explicit direct requirements; no package version changes. Scheduling remains disabled and the consumer unbound. No migration, environment variable, development-key or process change is required.

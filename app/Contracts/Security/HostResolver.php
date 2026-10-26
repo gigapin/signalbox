@@ -11,7 +11,9 @@ interface HostResolver
 {
     /**
      * @param string $host Normalized ASCII hostname without a terminal dot; never an IP literal.
+     * @param int|null $timeoutMs Optional cumulative lookup budget; null uses the operational default.
      * @return list<string> IPv4 and IPv6 address texts, or an empty list when the lookup fails.
+     * @throws \App\Exceptions\CheckTransportFailed When the cumulative resolution deadline expires.
      */
-    public function resolve(string $host): array;
+    public function resolve(string $host, ?int $timeoutMs = null): array;
 }

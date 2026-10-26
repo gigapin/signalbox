@@ -85,3 +85,8 @@ M2.02 provides [Form Request/input validation](MONITOR-INPUT.md), complete typed
 ## HTTP/keyword acquisition (M3.03)
 
 [HTTP-CHECKERS.md](HTTP-CHECKERS.md) adds pure response strategies and shared protected concurrent acquisition using the existing configurations. It does not load or persist Monitor/CheckResult records or activate scheduled work. Latency is measured; the specification's latency threshold remains explicitly deferred by user decision.
+
+
+## TLS/DNS acquisition (M3.04)
+
+[TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) implements these configuration variants without schema changes. TLS warning days produce a down observation at the inclusive pre-expiry boundary; null checks current validity only. DNS uses exact normalized set equality and defaults to the trusted system nameserver. Verified leaf expiry is returned as nullable outcome metadata; updating the monitor summary remains the runner's responsibility.

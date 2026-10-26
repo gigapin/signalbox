@@ -37,6 +37,16 @@ enum CheckError: string
     case UnexpectedStatus = 'unexpected_status';
     /** The exact keyword presence or absence expectation was not satisfied. */
     case KeywordMismatch = 'keyword_mismatch';
+    /** A valid certificate has entered the configured expiry warning window. */
+    case TlsExpiring = 'tls_expiring';
+    /** The queried name or requested record does not exist. */
+    case DnsMissing = 'dns_missing';
+    /** The complete observed record set differs from the expected set. */
+    case DnsMismatch = 'dns_mismatch';
+    /** The DNS server returned an error or an unusable wire response. */
+    case DnsResponse = 'dns_response_failed';
+    /** A DNS response contains invalid data or an invalid alias chain. */
+    case DnsMalformed = 'dns_malformed';
 
     /** @return string Safe English diagnostic with no destination, credentials or server-provided text. */
     public function message(): string
@@ -56,6 +66,11 @@ enum CheckError: string
             self::ResponseTooLarge => 'The response exceeded the permitted size.',
             self::UnexpectedStatus => 'The response status did not match the expectation.',
             self::KeywordMismatch => 'The response text did not match the expectation.',
+            self::TlsExpiring => 'The certificate is within the expiry warning window.',
+            self::DnsMissing => 'The requested DNS records do not exist.',
+            self::DnsMismatch => 'The DNS records did not match the expected set.',
+            self::DnsResponse => 'The DNS server did not return a usable response.',
+            self::DnsMalformed => 'The DNS response or alias chain is invalid.',
         };
     }
 }

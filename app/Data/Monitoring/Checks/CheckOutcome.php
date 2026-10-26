@@ -21,6 +21,7 @@ final readonly class CheckOutcome
      * @param float|null $latencyMs Measured cumulative network milliseconds; null before any measurable transport.
      * @param int|null $statusCode Last received HTTP status, absent when no response was received on the current hop.
      * @param CheckError|null $error Stable safe classification, required only for failures.
+     * @param CarbonImmutable|null $tlsExpiresAt Verified leaf certificate expiry in UTC, absent for other protocols or failed handshakes.
      * @throws InvalidArgumentException When outcome fields contradict their invariants.
      */
     public function __construct(
@@ -30,6 +31,7 @@ final readonly class CheckOutcome
         public ?float $latencyMs,
         public ?int $statusCode,
         public ?CheckError $error = null,
+        public ?CarbonImmutable $tlsExpiresAt = null,
     ) {
         if (($status === MonitorStatus::Up && $error !== null)
             || ($status === MonitorStatus::Down && $error === null)

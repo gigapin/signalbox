@@ -9,8 +9,12 @@ namespace App\Providers;
 use App\Actions\EnsureStripeTestCredentials;
 use App\Contracts\Monitoring\CheckClock;
 use App\Contracts\Monitoring\CheckWorkPublisher;
+use App\Contracts\Monitoring\DnsTransport;
+use App\Contracts\Monitoring\TlsTransport;
 use App\Contracts\Security\HostResolver;
 use App\Services\Monitoring\Checks\MonotonicCheckClock;
+use App\Services\Monitoring\Checks\ReactDnsTransport;
+use App\Services\Monitoring\Checks\ReactTlsTransport;
 use App\Services\Monitoring\Scheduling\RedisCheckWorkPublisher;
 use App\Services\Security\SystemHostResolver;
 use App\Services\Tenancy\TenantContext;
@@ -31,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(HostResolver::class, SystemHostResolver::class);
         $this->app->bind(CheckWorkPublisher::class, RedisCheckWorkPublisher::class);
         $this->app->bind(CheckClock::class, MonotonicCheckClock::class);
+        $this->app->bind(DnsTransport::class, ReactDnsTransport::class);
+        $this->app->bind(TlsTransport::class, ReactTlsTransport::class);
     }
 
     /**

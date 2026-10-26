@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property CarbonImmutable|null $started_at Acquisition instant, not proof of network traffic.
  * @property CarbonImmutable|null $deadline_at Exclusive maximum execution deadline.
  * @property CarbonImmutable|null $finished_at Terminal transition instant.
+ * @property string|null $queue_uuid Redis message UUID owning the acquisition, absent for legacy direct calls.
+ * @property int|null $queue_attempt Queue attempt number owning that acquisition.
  */
 final class CheckExecution extends Model
 {
@@ -43,6 +45,7 @@ final class CheckExecution extends Model
             'team_id' => 'integer',
             'monitor_id' => 'integer',
             'monitor_revision' => 'integer',
+            'queue_attempt' => 'integer',
             'slot_at' => 'immutable_datetime',
             'expires_at' => 'immutable_datetime',
             'publication_lease_until' => 'immutable_datetime',

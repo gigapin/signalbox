@@ -1,5 +1,7 @@
 # HTTP and keyword checkers (M3.03)
 
+**Runner integration update (M3.06–M3.07):** [MONITOR-RUNNER.md](MONITOR-RUNNER.md) now binds the application consumer and supplies transactional admission, worker failure hooks, partitioned results and monitor summaries. References below to these items being deferred describe the original checker foundation stage. Scheduling remains disabled by default; incidents remain M4.
+
 M3.03 implements protected concurrent acquisition and pure response evaluation for HTTP and keyword monitors. It does not bind `CheckWorkConsumer`, enable scheduling, load monitors, persist CheckResult, update summaries, open incidents or send notifications. [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) remains the delivery contract; the runner/result tasks must integrate these checkers deliberately.
 
 ## Interfaces and boundaries

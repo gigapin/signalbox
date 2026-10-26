@@ -2,25 +2,34 @@
 
 declare(strict_types=1);
 
-/** Deliver a persisted execution identity; application check strategies remain separate runner work. */
+/** Preserve scalar single-execution messages while delegating application work to transactional runner admission. */
 
 namespace App\Jobs;
 
+use App\Contracts\Monitoring\BatchCheckWorkConsumer;
 use App\Contracts\Monitoring\CheckWorkConsumer;
 use App\Contracts\Tenancy\TenantJob;
 use App\Jobs\Middleware\UseTenantContext;
+use App\Models\CheckExecution;
 use App\Services\Monitoring\Scheduling\ExecutionLedger;
+use App\Services\Tenancy\TenantContext;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
 use Throwable;
 
 /** Duplicate deliveries cannot acquire twice; killed workers are terminalized by persistent recovery. */
 final class DeliverCheckExecution implements ShouldQueue, TenantJob
 {
+    use InteractsWithQueue;
+
+    /** @var bool Run the restored failed hook after a worker timeout. */
+    public bool $failOnTimeout = true;
+
     /** @var int One delivery attempt; outbox redelivery only applies before acquisition. */
     public int $tries = 1;
 
-    /** @var int Worker timeout in seconds, below the 35-second ledger deadline and Redis retry_after. */
-    public int $timeout = 30;
+    /** @var int Worker timeout in seconds, below the 50-second ledger deadline and Redis retry_after. */
+    public int $timeout = 45;
 
     /**
      * @param int $teamId Scalar tenant boundary, never a serialized Eloquent model.
@@ -36,14 +45,16 @@ final class DeliverCheckExecution implements ShouldQueue, TenantJob
         return $this->teamId;
     }
 
-    /** @return list<UseTenantContext> Restore the worker's previous context after every delivery. */
+    /** @return list<UseTenantContext|\Illuminate\Queue\Middleware\WithoutOverlapping> Restore the worker's previous context after every delivery. */
     public function middleware(): array
     {
-        return [new UseTenantContext()];
+        $identity = app(TenantContext::class)->run($this->teamId, fn (): ?CheckExecution => CheckExecution::query()->find($this->executionId));
+
+        return $identity === null ? [new UseTenantContext()] : (new DeliverCheckBatch($this->teamId, [$identity->id => $identity->monitor_id], $identity->region))->middleware();
     }
 
     /**
-     * The consumer is deliberately unbound until a real runner exists; enabling requires that integration.
+     * Preserve legacy envelopes while real consumers use transactional snapshot admission.
      *
      * @param ExecutionLedger $ledger Atomic admission and fenced infrastructure-failure transitions.
      * @param CheckWorkConsumer $consumer Runner responsible for atomic result persistence and ledger completion.
@@ -51,6 +62,17 @@ final class DeliverCheckExecution implements ShouldQueue, TenantJob
      */
     public function handle(ExecutionLedger $ledger, CheckWorkConsumer $consumer): void
     {
+        if ($consumer instanceof BatchCheckWorkConsumer) {
+            $identity = app(TenantContext::class)->run($this->teamId, fn (): ?CheckExecution => CheckExecution::query()->find($this->executionId));
+
+            if ($identity !== null) {
+                $uuid = $this->job?->payload()['uuid'] ?? null;
+                $consumer->consumeBatch($this->teamId, [$identity->id => $identity->monitor_id], $identity->region, is_string($uuid) ? $uuid : null, is_string($uuid) ? $this->job->attempts() : null);
+            }
+
+            return;
+        }
+
         $work = $ledger->acquire($this->teamId, $this->executionId);
 
         if ($work === null) {
@@ -63,6 +85,15 @@ final class DeliverCheckExecution implements ShouldQueue, TenantJob
             $ledger->finish($work, true);
 
             throw $exception;
+        }
+    }
+    /** @param Throwable|null $exception Raw worker failure is never a target diagnostic. */
+    public function failed(?Throwable $exception): void
+    {
+        $uuid = $this->job?->payload()['uuid'] ?? null;
+
+        if (is_string($uuid) && $this->job !== null) {
+            app(ExecutionLedger::class)->failDelivery($this->teamId, [$this->executionId], $uuid, $this->job->attempts());
         }
     }
 }

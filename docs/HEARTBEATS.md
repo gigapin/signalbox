@@ -1,5 +1,7 @@
 # Heartbeat reception and evaluation (M3.05)
 
+**Runner integration update (M3.06–M3.07):** [MONITOR-RUNNER.md](MONITOR-RUNNER.md) now binds the application consumer and supplies transactional admission, worker failure hooks, partitioned results and monitor summaries. References below to these items being deferred describe the original checker foundation stage. Scheduling remains disabled by default; incidents remain M4.
+
 Heartbeat monitors receive calls from an external job instead of contacting that job. M3.05 implements the dedicated ingress, credential management, tenant-owned receipt history and pure missed-call evaluation. It does not bind the application consumer, enable scheduling, persist CheckResult, update monitor observation summaries or open incidents. Those integrations remain M3.06–M3.07 and M4.
 
 ## HTTP interfaces and credentials

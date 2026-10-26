@@ -17,3 +17,6 @@ foreach (['monitors:dispatch', 'monitors:publish', 'monitors:recover'] as $comma
         ->withoutOverlapping(1)
         ->when(static fn (): bool => config('monitor-scheduling.enabled') === true);
 }
+
+// Partition maintenance performs no target checks and preserves all retained result months.
+Schedule::command('monitors:partitions')->daily()->onOneServer()->withoutOverlapping(5);

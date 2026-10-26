@@ -40,6 +40,9 @@ $teamId = (int) ($argv[2] ?? 0);
 $workId = (int) ($argv[3] ?? 0);
 $result = match ($mode) {
     'dispatch' => Artisan::call('monitors:dispatch'),
+    'partition' => app(App\Services\Monitoring\Results\ResultPartitions::class)->ensure(CarbonImmutable::parse('2031-01-01T00:00:00Z')),
+    'recover' => app(ExecutionLedger::class)->recover($teamId, $workId),
+    'fail' => app(ExecutionLedger::class)->failDelivery($teamId, [$workId], '00000000-0000-4000-8000-000000000001', 1),
     'acquire' => app(ExecutionLedger::class)->acquire($teamId, $workId) !== null,
     'publish' => app(ExecutionLedger::class)->leasePublication($teamId, $workId) !== null,
     default => throw new InvalidArgumentException('Unknown scheduling probe mode.'),

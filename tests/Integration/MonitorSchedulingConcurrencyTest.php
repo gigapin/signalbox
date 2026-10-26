@@ -191,3 +191,69 @@ it('keeps uncommitted reservations invisible to another publisher and removes th
         $fixture->cleanup();
     }
 });
+
+it('serializes concurrent creation of a missing result partition with a PostgreSQL advisory barrier', function (): void {
+    $fixture = CommittedTeamFixture::freeTeam(0);
+    $processes = [];
+    try {
+        $fixture->connection->beginTransaction();
+        $fixture->connection->select("SELECT pg_advisory_xact_lock(1936287589, hashtext('check_results_2031_01'))");
+        foreach (range(1, 2) as $ignored) {
+            $process = schedulingProbe('partition', $fixture->teamId, 0);
+            $process->start();
+            $processes[] = $process;
+        }
+        awaitSchedulingWaiters($fixture, $processes);
+        $fixture->connection->commit();
+        foreach ($processes as $process) {
+            expect($process->wait())->toBe(0)
+                ->and(json_decode($process->getOutput(), true, flags: JSON_THROW_ON_ERROR)['result'])->toBe('check_results_2031_01');
+        }
+        expect((int) $fixture->connection->scalar("SELECT count(*) FROM pg_inherits WHERE inhrelid = 'check_results_2031_01'::regclass AND inhparent = 'check_results'::regclass"))->toBe(1);
+    } finally {
+        foreach ($processes as $process) {
+            $process->stop();
+        }
+        if ($fixture->connection->transactionLevel() > 0) {
+            $fixture->connection->rollBack();
+        }
+        $fixture->connection->statement('DROP TABLE IF EXISTS check_results_2031_01');
+        $fixture->cleanup();
+    }
+});
+
+it('races abandoned-work recovery against the fresh failed hook without duplicating results', function (): void {
+    $fixture = CommittedTeamFixture::freeTeam(1);
+    $processes = [];
+    try {
+        $work = $fixture->committed(function () use ($fixture): App\Models\CheckExecution {
+            Illuminate\Support\Facades\DB::table('monitors')->where('team_id', $fixture->teamId)->update(['next_check_at' => CarbonImmutable::now()->subSecond()]);
+            app(ReserveMonitorChecks::class)->run();
+            $work = app(App\Services\Tenancy\TenantContext::class)->run($fixture->teamId, fn () => App\Models\CheckExecution::query()->sole());
+            return app(App\Services\Monitoring\Scheduling\ExecutionLedger::class)->acquire($fixture->teamId, $work->id, '00000000-0000-4000-8000-000000000001', 1);
+        });
+        CarbonImmutable::setTestNow($work->deadline_at);
+        $fixture->connection->beginTransaction();
+        $fixture->connection->table('teams')->where('id', $fixture->teamId)->lockForUpdate()->first();
+        foreach (['recover', 'fail'] as $mode) {
+            $process = schedulingProbe($mode, $fixture->teamId, $work->id);
+            $process->start();
+            $processes[] = $process;
+        }
+        awaitSchedulingWaiters($fixture, $processes);
+        $fixture->connection->commit();
+        foreach ($processes as $process) {
+            expect($process->wait())->toBe(0);
+        }
+        expect($fixture->connection->table('check_results')->where('execution_id', $work->id)->count())->toBe(1)
+            ->and($fixture->connection->table('check_results')->where('execution_id', $work->id)->value('kind'))->toBe('infrastructure_failed');
+    } finally {
+        foreach ($processes as $process) {
+            $process->stop();
+        }
+        if ($fixture->connection->transactionLevel() > 0) {
+            $fixture->connection->rollBack();
+        }
+        $fixture->cleanup();
+    }
+});

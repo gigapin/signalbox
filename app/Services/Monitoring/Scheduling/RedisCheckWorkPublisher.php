@@ -33,4 +33,18 @@ final readonly class RedisCheckWorkPublisher implements CheckWorkPublisher
 
         $this->queues->connection('redis')->push(new DeliverCheckExecution($teamId, $executionId), '', 'checks:'.$region);
     }
+    /**
+     * @param int $teamId Committed tenant boundary.
+     * @param array<int, int> $executions Bounded execution-to-monitor map.
+     * @param string $region Supported simulated region.
+     */
+    public function publishBatch(int $teamId, array $executions, string $region): void
+    {
+        if (!in_array($region, ['eu', 'us'], true) || $executions === []
+            || count($executions) > app(\App\Services\Monitoring\Checks\CheckRuntimeLimits::class)->batchSize()
+            || count(array_unique($executions)) !== count($executions)) {
+            throw new InvalidArgumentException('Invalid regional batch.');
+        }
+        $this->queues->connection('redis')->push(new \App\Jobs\DeliverCheckBatch($teamId, $executions, $region), '', 'checks:'.$region);
+    }
 }

@@ -1,6 +1,6 @@
-# Recoverable monitor scheduling (M3.01–M3.02)
+# Recoverable monitor scheduling (M3.01–M3.07)
 
-This implements ADR-006's scheduling and delivery foundation. It does **not** run application checks: the real `CheckWorkConsumer` remains unbound until the checker/runner tasks. There is no synthetic success, target failure, CheckResult or incident transition. See [TASKS.md](TASKS.md) for verification evidence and subsequent tasks.
+This implements ADR-006's scheduling and delivery foundation. [MONITOR-RUNNER.md](MONITOR-RUNNER.md) documents the M3.06–M3.07 application consumer, regional batching, failure ownership and atomic partitioned results. The engine remains disabled by default; incident transitions remain M4. See [TASKS.md](TASKS.md) for verification evidence and subsequent tasks.
 
 ## Activation and entry points
 
@@ -12,9 +12,9 @@ This implements ADR-006's scheduling and delivery foundation. It does **not** ru
 | `monitors:publish` | Publish committed pending executions whose delivery lease or redelivery delay permits submission. |
 | `monitors:recover` | Terminalize expired unstarted work and abandoned running work. |
 
-All commands are registered every second, using the Redis scheduler cache with `onOneServer` and a one-minute `withoutOverlapping` lock. The existing `schedule:work` process supports sub-minute operation. Commands run in the foreground; slow scans or brokers can delay subsequent ticks, so this is no punctuality or throughput guarantee. PostgreSQL locks and uniqueness, rather than Redis mutex expiry, enforce correctness.
+The three pipeline commands are registered every second, using the Redis scheduler cache with `onOneServer` and a one-minute `withoutOverlapping` lock. The existing `schedule:work` process supports sub-minute operation. Commands run in the foreground; slow scans or brokers can delay subsequent ticks, so this is no punctuality or throughput guarantee. PostgreSQL locks and uniqueness, rather than Redis mutex expiry, enforce correctness.
 
-Keep the gate false until the incremental migration has been deliberately applied to the intended environment and a real consumer has been integrated and tested. With the gate enabled but no consumer binding, the delivery job cannot resolve its runner; that is an integration error, not a working checker. Existing development processes and databases are not restarted or migrated by verification.
+Keep the gate false until the incremental migrations have been deliberately applied to the intended environment. The real consumer is now bound and tested in the isolated environment; existing development processes and databases are not restarted or migrated by verification.
 
 ## Slot and reservation rules
 
@@ -31,13 +31,13 @@ The reservation transaction both advances `next_check_at` and inserts one `check
 ## Delivery and acquisition protocol
 
 1. Lease a pending execution under its tenant-scoped row lock, using a random publication token and a ten-second lease. Set its next availability to the lease end, then commit.
-2. Submit `DeliverCheckExecution(teamId, executionId)` to the explicit Redis connection and `checks:eu` or `checks:us`. Payloads contain only scalar identities. No PostgreSQL lock is held over broker I/O.
+2. Submit `DeliverCheckBatch(teamId, executions, region)` in bounded groups of two distinct monitors sharing tenant and region to the explicit Redis connection and `checks:eu` or `checks:us`. Payloads contain only scalar identities. No PostgreSQL lock is held over broker I/O.
 3. Acknowledge only if the same publication fence remains valid and the work is still pending. Schedule redelivery after five seconds if acquisition never occurs. An uncertain send logs only execution/team identities; broker exception text is omitted because it can include credentials.
 4. Before acquisition, lock Team → Monitor → execution; revalidate tenant ownership, expiry, pause/suspension, effective plan, quota and configuration generation. An expired pending execution becomes `missed`; invalidated work becomes `cancelled`.
-5. Atomically transition pending → running with a random acquisition fence and a 35-second persistent deadline. Every later delivery is a no-op. No started work is ever republished or reacquired.
-6. The consumer owns ordinary result persistence. It must wrap `ExecutionLedger::finish($acquired)` and future CheckResult writes in **one transaction**, write a result only when `finish` returns true, and roll back both on persistence failure. Completed ledger state means consumer processing finished, not that the target was up.
+5. Atomically transition pending → running with a random acquisition fence and a 50-second persistent deadline. Every later delivery is a no-op. No started work is ever republished or reacquired.
+6. `ExecutionLedger::finish($acquired, false, $outcome)` atomically terminalizes the owned execution, inserts its genuine result and updates the current-revision monitor summary. Any persistence failure rolls back all three. Completed ledger state alone does not imply an up observation.
 
-The delivery envelope has `tries = 1` and a 30-second worker timeout, matching Horizon; the deadline adds five seconds of abandonment margin and remains below Redis's 90-second `retry_after`. Checker transport budgets must fit that worker timeout in the runner tasks. Infrastructure exceptions after acquisition use fenced failure recording; a killed worker is handled by periodic recovery. There is no target retry here. `WithoutOverlapping` for actual checker execution and its `failed()` integration remain M3.06; the persisted acquisition already prevents duplicate envelopes from starting twice.
+Regional envelopes use `tries = 1`, a 45-second worker/Horizon timeout and a 50-second persisted deadline, below the 55-second monitor lock and Redis's 90-second `retry_after`. Shared sorted monitor locks discard overlapping deliveries without acquiring outbox work. Broker UUID/attempt ownership lets a fresh `failed()` hook settle only its own running rows; periodic recovery handles a hard kill. See [MONITOR-RUNNER.md](MONITOR-RUNNER.md) for timing validation and snapshot admission. There is no target retry.
 
 | State | Meaning |
 | --- | --- |
@@ -53,23 +53,13 @@ Crash before commit leaves no reservation. Crash after commit but before send le
 ## Tests and extension points
 
 - `MonitorSlotsTest`: deterministic phases, 30/60/300/non-divisor intervals, fractional and exact boundaries, timezone independence, delay without drift and invalid input.
-- `MonitorSchedulingConfigurationTest`: disabled no-op entry points, gated every-second events and broker binding without a fake application checker.
+- `MonitorSchedulingConfigurationTest`: disabled no-op entry points, gated every-second events and broker and real runner bindings.
 - `MonitorSchedulingTest`: multi-chunk tenants, no decryption, regional reservations, pause/quota/cadence, trial/override boundaries, atomic rollback, crash-boundary simulations, lost/duplicate deliveries, fencing, expiry, configuration invalidation and real regional Redis envelopes with a test consumer.
 - `MonitorSchedulingConcurrencyTest`: two actual PHP processes wait at a PostgreSQL lock barrier, then compete to reserve, lease or acquire. A concurrent downgrade is respected. Another process cannot lease uncommitted work, and rollback restores the prior slot. Fixtures commit only to the guarded test database and are explicitly cleaned up.
 
-The publisher contract isolates broker submission; `CheckWorkConsumer` is the genuine runner boundary. `DeliverCheckExecution` supplies tenant middleware and acquisition infrastructure without implementing `RunCheck` or target strategies. Integrate the real consumer, result persistence, bounded transports and failure hooks in the remaining M3 tasks before enabling the pipeline.
+The publisher contract isolates broker submission; `RunMonitorChecks` implements the real consumer boundary. The legacy single envelope remains supported. [MONITOR-RUNNER.md](MONITOR-RUNNER.md) specifies admission, middleware, persistence and failure semantics.
 
 
-## HTTP-family checker foundation (M3.03)
+## Checker strategies and runner integration
 
-[HTTP-CHECKERS.md](HTTP-CHECKERS.md) provides typed input/context/outcomes and the shared HTTP/keyword pool. It deliberately leaves `CheckWorkConsumer` unbound: checker availability alone does not provide acquired-work orchestration, atomic result persistence or all monitor types. Keep the scheduling gate disabled until the runner integration is complete.
-
-
-## TLS/DNS checker foundation (M3.04)
-
-[TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) adds concurrent TLS/DNS observations with a complete per-monitor acquisition deadline. The HTTP guard now has a separate bounded DNS lookup. Check outcomes may contain verified certificate expiry, but no summary or result is persisted here. Consumer binding, heartbeat, worker failure hooks and fenced persistence remain subsequent tasks; keep the scheduling gate disabled.
-
-
-## Heartbeat evaluation boundary (M3.05)
-
-[HEARTBEATS.md](HEARTBEATS.md) provides receipt ingress and a pure strategy using the scheduled reference instant. The snapshot reader selects current-generation receipts at or before that slot, so delayed execution cannot use a later ping to hide a missed window. The future consumer must retain revision/eligibility admission and ledger fencing before selecting the snapshot; stale pre-generation slots are rejected rather than reported as target outages. No application consumer is bound and scheduling stays disabled.
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md), [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) and [HEARTBEATS.md](HEARTBEATS.md) document protocol acquisition and pure evaluation. [MONITOR-RUNNER.md](MONITOR-RUNNER.md) integrates them under transactional admission, historical heartbeat snapshots and fenced persistence. Scheduling stays disabled by default.

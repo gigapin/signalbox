@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Define the future runner boundary without installing a fake application checker. */
+/** Define the admitted single-execution runner boundary retained for legacy consumers. */
 
 namespace App\Contracts\Monitoring;
 

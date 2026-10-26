@@ -32,7 +32,7 @@ it('keeps all entry points inert while scheduling is disabled', function (): voi
 it('registers gated second-level commands with shared cache coordination', function (): void {
     $this->artisan('schedule:list')->assertSuccessful();
     $events = collect(app(Schedule::class)->events())
-        ->filter(fn ($event): bool => str_contains((string) $event->command, 'monitors:'));
+        ->filter(fn ($event): bool => str_contains((string) $event->command, 'monitors:') && !str_contains((string) $event->command, 'monitors:partitions'));
 
     expect($events)->toHaveCount(3);
     config(['monitor-scheduling.enabled' => false]);
@@ -52,9 +52,9 @@ it('registers gated second-level commands with shared cache coordination', funct
     }
 });
 
-it('binds the real broker adapter without installing a fake checker', function (): void {
+it('binds the real broker adapter and the real transactional checker', function (): void {
     expect(app(CheckWorkPublisher::class))->toBeInstanceOf(RedisCheckWorkPublisher::class)
-        ->and(app()->bound(CheckWorkConsumer::class))->toBeFalse()
+        ->and(app(CheckWorkConsumer::class))->toBeInstanceOf(App\Services\Monitoring\Checks\RunMonitorChecks::class)
         ->and(config('monitor-scheduling.chunk_size'))->toBeGreaterThan(0)
         ->and(config('monitor-scheduling.publication_lease_seconds'))->toBe(10)
         ->and(config('monitor-scheduling.redelivery_seconds'))->toBe(5);

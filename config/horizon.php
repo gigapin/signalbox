@@ -38,8 +38,8 @@ return [
     // Each simulated region has its own worker and cannot starve the other region.
     'defaults' => [
         'default' => [...$worker, 'queue' => ['default']],
-        'checks-eu' => [...$worker, 'queue' => ['checks:eu']],
-        'checks-us' => [...$worker, 'queue' => ['checks:us']],
+        'checks-eu' => [...$worker, 'queue' => ['checks:eu'], 'timeout' => 45],
+        'checks-us' => [...$worker, 'queue' => ['checks:us'], 'timeout' => 45],
     ],
     // Reuse the explicit limits in every runtime; production scaling remains an M12 decision.
     'environments' => ['*' => ['default' => [], 'checks-eu' => [], 'checks-us' => []]],

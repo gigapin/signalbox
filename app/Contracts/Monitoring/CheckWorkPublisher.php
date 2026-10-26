@@ -16,4 +16,10 @@ interface CheckWorkPublisher
      * @throws \Throwable When broker submission cannot be confirmed.
      */
     public function publish(int $teamId, int $executionId, string $region): void;
+    /**
+     * @param int $teamId Committed tenant boundary.
+     * @param array<int, int> $executions Execution IDs mapped to distinct monitor IDs.
+     * @param string $region Validated simulated regional queue.
+     */
+    public function publishBatch(int $teamId, array $executions, string $region): void;
 }

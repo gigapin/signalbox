@@ -44,3 +44,27 @@ it('rejects invalid persisted identities and intervals', function (int $id, int 
     expect(fn () => (new MonitorSlots())->latest($id, $interval, CarbonImmutable::now()))
         ->toThrow(InvalidArgumentException::class);
 })->with([[0, 30], [-1, 30], [1, 0], [1, -30]]);
+
+it('spreads a fixed synthetic monitor cohort over every second of the interval and preserves phases across timezones', function (int $interval): void {
+    $slots = new MonitorSlots();
+    $reference = CarbonImmutable::parse('2026-10-25T00:59:59.999999Z');
+    $phases = [];
+    $initialSlots = [];
+    $shiftedSlots = [];
+    $timezoneSlots = [];
+
+    foreach (range(1, 6000) as $monitorId) {
+        $initial = $slots->next($monitorId, $interval, $reference);
+        $phase = $initial->getTimestamp() % $interval;
+        $phases[$phase] = true;
+        $later = $slots->next($monitorId, $interval, $reference->addSeconds($interval * 1000)->setTimezone('Europe/Rome'));
+        $initialSlots[$monitorId] = $initial->getTimestamp();
+        $shiftedSlots[$monitorId] = $later->getTimestamp() - $interval * 1000;
+        $timezoneSlots[$monitorId] = $slots->next($monitorId, $interval, $reference->setTimezone('America/New_York'))->getTimestamp();
+    }
+
+    // This fixed-cohort regression checks deterministic phase coverage, not production throughput or a statistical SLA.
+    expect(count($phases))->toBe($interval)
+        ->and($shiftedSlots)->toBe($initialSlots)
+        ->and($timezoneSlots)->toBe($initialSlots);
+})->with([30, 60, 300, 47]);

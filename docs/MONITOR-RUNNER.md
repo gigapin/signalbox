@@ -59,3 +59,7 @@ No partition is dropped here. Because an observation in the following month can 
 ## Verification boundaries
 
 `MonitorRunnerTest` covers all five variants, duplicate delivery, foreign identity/region refusal, regional agreement, revision changes, atomic rollback, immutable updates, month boundaries, stale-slot summaries, broker ownership, shared-lock skips, scalar batch publication and a genuine two-request socket barrier. Its committed fixtures run real Redis worker processes for exceptions, timeout alarms and SIGKILL, then check recovery without target retries. `MonitorSchedulingConcurrencyTest` adds concurrent partition creation and recovery/failed-hook races at observed PostgreSQL lock barriers. Tests use only guarded synthetic PostgreSQL/Redis data and loopback sockets; committed fixtures are cleaned explicitly.
+
+### Integrated acceptance (M3.08)
+
+The [engine acceptance matrix](TESTING.md#integrated-engine-acceptance-m308) connects scheduled checker sequences and historical heartbeat semantics to the real publisher, Redis envelopes and persisted results. Persistent worker tests cover tenant restoration after exceptions, independent regional progress under a gated target and interprocess Redis monitor-lock exclusion followed by outbox redelivery. These tests preserve the existing runtime semantics and disabled development gate; no new public API or migration is introduced.

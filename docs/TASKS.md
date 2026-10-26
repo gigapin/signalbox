@@ -10,6 +10,13 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione — M3.08, 2026-10-26
+
+- **M3.08 completato, M3 completata**: matrice integrata con **21 nuovi casi**: sequenze reali fino alla persistenza, errori e ripristini, heartbeat ai confini temporali, pause/modifiche, worker persistenti tra tenant, regioni indipendenti e lock Redis fra processi. Matrice completa in [TESTING.md](TESTING.md#integrated-engine-acceptance-m308).
+- `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter su **328 file**, Larastan livello 8, **1411 test Pest/8991 asserzioni**, lint/formato/TypeScript, **5 test qualità**, **53 test DOM** e build Vite. Log: `/tmp/signalbox-m308-verify.log`. Suite backend finale senza asset Vite, con `--fail-on-skipped`, **exit 0**: **1411 test/8991 asserzioni**, nessun test saltato. Log: `/tmp/signalbox-m308-no-assets.log`.
+- Modificati soltanto test, fixture e documentazione. Nessuna nuova API, migration, dipendenza o modifica ai lockfile; nessuna modifica a `.env`, chiavi, database o processi di sviluppo. Motore ancora disabilitato per default e Git/gh non eseguiti. Nessuna CI remota, PHP 8.5 integrata, browser E2E o benchmark dichiarati.
+- Prossimo task pronto: **M4.01**, modello incidenti e transizioni. M4/M5 e retention M7 restano nei rispettivi task; soglia di latenza e MA.05/MA.06 restano rinviati.
+
 ## Consegna di sessione — M3.06–M3.07, 2026-10-26
 
 - **M3.06–M3.07 completati**: runner reale per tutti i checker, lotti regionali di due monitor, lock condivisi e fence del broker implementati; risultati immutabili e riepiloghi atomici su partizioni mensili UTC. Dettagli in [MONITOR-RUNNER.md](MONITOR-RUNNER.md).
@@ -168,9 +175,11 @@ Dipendenze: M2.
 - [x] M3.05 Implementare heartbeat: endpoint con credenziale dedicata, scadenza, tolleranza e rilevamento delle chiamate mancanti.
 - [x] M3.06 Configurare job e code `checks:eu`/`checks:us`, WithoutOverlapping, timeout, `tries = 1`, `failed()` e idempotenza della persistenza; documentare eventuali retry di dominio con backoff.
 - [x] M3.07 Creare CheckResult con partizionamento mensile PostgreSQL, indici e gestione anticipata delle nuove partizioni.
-- [ ] M3.08 Testare sequenze `Http::fake()`, endpoint lenti, errori TLS/DNS, heartbeat scaduti, pause, concorrenza, jitter e isolamento dei worker.
+- [x] M3.08 Testare sequenze `Http::fake()`, endpoint lenti, errori TLS/DNS, heartbeat scaduti, pause, concorrenza, jitter e isolamento dei worker.
 
 Uscita: controlli funzionanti per tutti i tipi, errori registrati, carico distribuito e nessun fallimento nascosto da retry infrastrutturali.
+
+Uscita soddisfatta il 2026-10-26 con M3.08: tutti i tipi attraversano il motore fino ai risultati, errori osservati distinti dall’infrastruttura, tentativi contati, jitter deterministico e isolamento tenant/regionale verificati. Suite completa e backend senza asset: 1411 test/8991 asserzioni; nessun benchmark di throughput dichiarato. Motore di sviluppo ancora disabilitato. Prossimo task M4.01.
 
 ## M4 — Incidenti e manutenzioni (14 h, nucleo obbligatorio)
 
@@ -292,7 +301,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3.01–M3.07 sono completati; il prossimo task pronto è M3.08 (matrice estesa del motore). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; il prossimo task pronto è M4.01 (modello incidenti e transizioni). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -893,3 +902,17 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 
 - Verifiche concluse: `./scripts/verify.sh` exit 0 (1388 test/8542 asserzioni prima degli ultimi due casi); esecuzione finale backend `composer verify` senza asset Vite exit 0 con **1390 test/8550 asserzioni**, formatter su 325 file e Larastan livello 8. Frontend: lint/formato/TypeScript, 5 test qualità, 53 test DOM e build superati nella verifica completa. Le ultime modifiche riguardano PHP/test/documentazione; nessuna modifica frontend successiva. Nessuna verifica saltata nei due run.
 - **M3.06 e M3.07 completati**; prossimo passo **M3.08**, estendere le sequenze e la matrice del motore senza anticipare incidenti o retention. Applicare deliberatamente la nuova migration all’ambiente scelto prima dell’uso; l’agente non ha migrato né attivato lo sviluppo e non ha eseguito Git/gh.
+
+### 2026-10-26 — M3.08: matrice integrata del motore completata
+
+- Piano approvato; dipendenze M3.01–M3.07 soddisfatte. Estendere sequenze complete, errori TLS/DNS, heartbeat e pause, riuso worker tra tenant, isolamento regionale e lock Redis, jitter deterministico. Nessuna nuova funzione prodotto o attivazione dello sviluppo prevista.
+- Verifiche completate su servizi isolati, suite completa e backend senza asset Vite; evidenze nella consegna e nel registro. Git/gh riservati all’utente.
+
+- Aggiunti `MonitorEngineTest` (sequenze complete per HTTP/keyword, errori e recupero TLS/DNS, sei confini heartbeat via ingresso Bearer, pause/ripresa e modifica autorizzata durante il check) e `MonitorWorkerIsolationTest` (stesso worker tra tenant con eccezione e envelope estraneo, progresso US mentre EU attende, lock Redis fra slot distinti e ripubblicazione reale).
+- Estese le fixture `RunCheckWorkerProbe` e `CheckLoopbackServer`, aggiunto il supporto `EngineWorkerProbe`; i modi precedenti restano compatibili. Il server usa gate espliciti e marker di acquisizione; il worker restituisce UUID/PID, pulizia contesto e conteggio tentativi senza configurazione privata. `MonitorSlotsTest` verifica una coorte fissa di 6000 ID su intervalli 30/60/300/47, fusi e salti di 1000 periodi, senza attribuirle misure di throughput.
+- Decisioni: riutilizzati i test di trasporto/terminazione/concorrenza precedenti dove coprono già il criterio; matrice requisito→test in `docs/TESTING.md` e collegamento nel documento runner. Nessuna modifica al codice applicativo, schema, dipendenze, lockfile o flussi prodotto.
+- Prima regressione mirata: 63 test/631 asserzioni superati con `--fail-on-skipped`, Larastan senza errori. Ultima revisione solo di leggibilità/cleanup e verifica esplicita dell’evento di skip; suite completa in esecuzione.
+
+- Verifiche finali: `./scripts/verify.sh` **exit 0** su PHP **8.4.27**, PHP-CS-Fixer dry-run su **328 file**, Larastan livello 8, **1411 test Pest/8991 asserzioni**, lint/formato/TypeScript, **5 test qualità**, **53 test DOM** e build. Log `/tmp/signalbox-m308-verify.log`.
+- Ripetuta l’intera suite backend con directory vuota read-only montata su `public/build`: `docker compose run --rm -v /tmp/signalbox-heartbeat-no-assets-m8y9j5v1:/var/www/html/public/build:ro php-test composer test -- --fail-on-skipped --compact` **exit 0**, **1411 test/8991 asserzioni** senza salti. Log `/tmp/signalbox-m308-no-assets.log`. Nessun codice sorgente modificato dopo queste verifiche; completati soltanto i resoconti Markdown.
+- **M3.08 completato e M3 completata.** Nessuna modifica applicativa necessaria: cambiati soltanto test, fixture e documentazione. Nessuna nuova migration o dipendenza, nessuna attivazione/modifica dello sviluppo, nessun Git/gh. CI remota, PHP 8.5 integrata, browser E2E e benchmark non eseguiti; non necessari alla verifica locale di questo task e non dichiarati come risultati. Prossimo task pronto: **M4.01**.

@@ -207,3 +207,32 @@ HeartbeatStrategyTest exercises pure rolling-window rules without infrastructure
 ### Heartbeat Inertia asset-version regression
 
 The one-time credential privacy test runs both with the current asset version and with an explicitly empty temporary public directory. It uses the real final middleware and asserts that a missing manifest produces null before normalizing the request header to an empty string, matching Inertia's server version. The temporary directory is removed when that application instance is destroyed; developer build output is never renamed or deleted. To reproduce the original CI condition, mount an empty temporary directory over `/var/www/html/public/build` only in a disposable php-test container and run HeartbeatTest.
+
+
+## Integrated engine acceptance (M3.08)
+
+`MonitorEngineTest` exercises the production initializer/reservation, outbox publisher and real scalar Redis delivery before checking committed result semantics in PostgreSQL. No production gate or application code changes are needed. The following matrix includes existing suites where their criteria were already established; M3.08 adds integrated coverage rather than duplicating protocol unit tests.
+
+| Criterion | Integrated evidence and existing regression coverage |
+| --- | --- |
+| HTTP/keyword sequences, errors and recovery | `MonitorEngineTest`: four scheduled slots, `Http::fakeSequence()`, success → HTTP 503 → cURL timeout → success; stable cadence, one result per execution, broker owner/attempt, current summary, safe errors and no target retry. Laravel records only response pairs, so fake resolver calls independently count attempts including rejected connections. |
+| TLS/DNS failures and recovery | `MonitorEngineTest`: TLS verification/timeout and DNS missing-record/timeout followed by a healthy next slot, with counted transport attempts and restored TLS expiry. `NetworkCheckTransportTest` retains real trust/hostname/expiry, DNS UDP/TCP and silent-resolver probes. |
+| Heartbeat expiry and tolerance | `MonitorEngineTest`: grace 0/7 seconds and deadline offsets −1/0/+1 microsecond through bearer ingress, actual reservation slots and delayed delivery. A ping received after the scheduled reference does not repair that slot; the following slot sees it and recovers. |
+| Pause/resume and concurrent mutation | `MonitorEngineTest`: a published job cancelled after pause without target traffic, resume initializes future work, and an authorized configuration update inside target acquisition leaves an old-revision historical result without replacing the current summary. The next observation uses the new configuration. |
+| Slow target and regional independence | `MonitorWorkerIsolationTest`: EU waits on the first request to a gated loopback endpoint while a separate US worker completes the same monitor's healthy second request. US alone leaves the regional summary unknown; explicit gate release lets EU complete and yields agreement. `HttpCheckTransportTest` retains real target-timeout isolation and a two-request HTTP/keyword barrier. |
+| Persistent worker tenancy | `MonitorWorkerIsolationTest`: one real Redis worker processes tenant A success, tenant B infrastructure exception, a forged B envelope pointing at A, then another A success. Fake transport checks the active tenant while acquiring; terminal worker events verify a clean context after each delivery, one process ID, exact target attempts, broker ownership, private result reads and tenant-local summaries. |
+| Shared Redis monitor lock and outbox recovery | `MonitorWorkerIsolationTest`: a Business fixture uses two legitimate adjacent 30-second slots. One subprocess holds the first slot in network acquisition; another discards the later delivery under the shared Redis cache lock, leaving its row pending with no broker owner or second request. After gate release, the real publisher redelivers it and exactly one later observation is persisted. |
+| Jitter and scheduling safety | `MonitorSlotsTest`: a fixed cohort of 6000 IDs covers every phase of 30/60/300/47-second intervals; all computed slots retain phase after 1000 periods and timezone conversion across the DST boundary. Existing scheduling tests cover chunking, latest-slot-only dispatch, transactional reservation, lost/duplicate messages and acquisition/recovery races. |
+| Infrastructure termination and result identity | `MonitorRunnerTest` and `MonitorSchedulingConcurrencyTest`: real exception, timeout and SIGKILL handling, fresh failed-hook ownership, late-result fencing, atomic rollback, concurrent recovery, immutable results and monthly partition creation/identity. |
+
+The worker probe adds `pipeline` and `loopback` modes plus an optional maximum delivery count, preserving its original failure/timeout modes. `EngineWorkerProbe` passes only guarded test PostgreSQL/Redis coordinates, a shared test Redis cache prefix and an explicitly allowed synthetic loopback origin. Loopback mode forbids other HTTP destinations. Worker events expose scalar UUID/PID/context/attempt-count diagnostics, never monitor configuration. Queue names are unique to each probe, except the deliberate `checks:eu` outbox redelivery, which is cleaned explicitly.
+
+The nonblocking HTTP fixture supports an explicit release file: `/gate` holds requests until release; `/gate-first` holds the first request while subsequent requests complete normally. Readiness and request markers synchronize parent tests with real acquisition. Concurrency assertions use observed state and gate release, not elapsed-time ratios. Existing short deadlines remain safety bounds, not throughput guarantees. All workers, servers, files, queues and committed database fixtures have cleanup paths.
+
+Run the integrated suites with:
+
+```sh
+docker compose run --rm php-test composer test -- --filter='MonitorEngine|MonitorWorkerIsolation|MonitorSlots' --fail-on-skipped
+```
+
+The acceptance gate remains `./scripts/verify.sh`, followed by the complete backend suite with an empty read-only directory mounted over `/var/www/html/public/build` in a disposable php-test container. Use `--fail-on-skipped` for that final Pest run. Keep the development engine disabled; no migration, dependency update or development-process restart belongs to M3.08. This matrix verifies deterministic behavior on synthetic services; it does not constitute a production benchmark, remote CI result or integrated PHP 8.5 verification.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Serve synthetic HTTP responses through a nonblocking event loop with an explicit two-request barrier. */
+/** Serve nonblocking synthetic HTTP responses with a two-request barrier and explicitly released worker gates. */
 
 $listener = stream_socket_server('tcp://127.0.0.1:0', $errorNumber, $errorMessage);
 
@@ -16,6 +16,8 @@ fflush(STDOUT);
 $clients = [];
 $buffers = [];
 $barrier = [];
+$gated = [];
+$gateSeen = false;
 $until = microtime(true) + 15;
 
 /**
@@ -49,6 +51,14 @@ function sendCheckProbeResponse($client, string $body, array $headers = []): voi
 }
 
 while (microtime(true) < $until) {
+    if ($gated !== [] && isset($argv[2]) && is_file($argv[2])) {
+        foreach ($gated as $waiting) {
+            sendCheckProbeResponse($waiting, 'healthy');
+        }
+
+        $gated = [];
+    }
+
     $read = [$listener, ...array_values($clients)];
     $write = null;
     $except = null;
@@ -89,6 +99,8 @@ while (microtime(true) < $until) {
         preg_match('#^[A-Z]+ ([^ ]+) HTTP/#', $buffers[$id], $matches);
         $path = $matches[1] ?? '/';
         file_put_contents($argv[1], $path."\n", FILE_APPEND | LOCK_EX);
+        fwrite(STDOUT, 'HIT '.$path."\n");
+        fflush(STDOUT);
         unset($clients[$id], $buffers[$id]);
 
         if (str_starts_with($path, '/barrier-')) {
@@ -101,6 +113,9 @@ while (microtime(true) < $until) {
 
                 $barrier = [];
             }
+        } elseif ($path === '/gate' || ($path === '/gate-first' && !$gateSeen)) {
+            $gateSeen = true;
+            $gated[$id] = $socket;
         } elseif ($path === '/gzip') {
             $body = gzencode(str_repeat('x', 1048577));
             sendCheckProbeResponse($socket, $body === false ? '' : $body, ['Content-Encoding' => 'gzip']);
@@ -113,7 +128,7 @@ while (microtime(true) < $until) {
     }
 }
 
-foreach ([...array_values($clients), ...array_values($barrier)] as $client) {
+foreach ([...array_values($clients), ...array_values($barrier), ...array_values($gated)] as $client) {
     if (is_resource($client)) {
         fclose($client);
     }

@@ -42,7 +42,7 @@ Across an origin change, remove **all** configured headers and never restore the
 
 `beforeSending` captures the monotonic start of each network hop; `on_stats` captures completion, including real transport failures. Latency is the cumulative measured network milliseconds across hops. A refused initial destination has no measurable network latency and returns null, never a manufactured zero. A measured very fast transfer can legitimately be close to zero. `observedAt` is UTC; the scheduled reference remains separately in the context.
 
-Each following connection receives only the unused network timeout, with millisecond cURL granularity. Exhausting the configured budget is a timeout even when a response arrived at the exact boundary. DNS authorization and waits for unrelated pool responses are excluded from measured network latency/budget. **The existing `dns_get_record()` resolver has no application timeout; this task does not claim an end-to-end wall-clock deadline.** Bounding DNS lookup belongs to the M3.04 adapter work and the runner must retain a bounded worker lifetime.
+Each following connection receives only the unused network timeout, with millisecond cURL granularity. Exhausting the configured budget is a timeout even when a response arrived at the exact boundary. DNS authorization and waits for unrelated pool responses are excluded from measured network latency/budget. **Since M3.04, each guard lookup has a separate cumulative 1000 ms DNS deadline**, using the shared TLS/DNS adapter instead of `dns_get_record()`. DNS remains excluded from HTTP network latency and the hop budget; sequential guard authorization and pool-round waits mean this is not an end-to-end HTTP wall-clock deadline. See [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md); the runner must retain a bounded worker lifetime.
 
 `BoundedResponseBuffer` attaches a PHP write filter sharing `ResponseByteBudget` across all response hops. It rejects the first decoded write bucket that would exceed the cap and aborts the transport rather than silently truncating. This applies to actual decompressed cURL output and Laravel fake sink writes alike, without replacing Guzzle's cURL write callbacks. Temporary resources close on success and exception paths. An incomplete response can never satisfy keyword absence. The cap counts response **body** bytes, including bodies of followed redirects; it is not a header-size or throughput guarantee.
 
@@ -51,7 +51,7 @@ Each following connection receives only the unused network timeout, with millise
 ## Explicit scope decisions and remaining integration
 
 - The user chose **latency measurement only** for M3.03. The latency-failure threshold mentioned in the product specification remains deferred; no model/form field or implicit threshold is added and the specification is not silently changed.
-- TLS transport adapters, DNS check strategies and bounded DNS resolution remain M3.04; heartbeat remains M3.05.
+- TLS transport adapters, DNS strategies and bounded DNS resolution are implemented in [M3.04](TLS-DNS-CHECKERS.md); heartbeat remains M3.05.
 - Application consumer binding, worker middleware/failure hooks, result persistence and partitioning remain M3.06–M3.07. The runner must use the ledger acquisition fence and atomically persist results with completion.
 - Scheduler activation remains deferred. This task adds no route, environment variable, migration, dependency or lockfile change and does not apply prior migrations to development.
 

@@ -63,3 +63,8 @@ The publisher contract isolates broker submission; `CheckWorkConsumer` is the ge
 ## HTTP-family checker foundation (M3.03)
 
 [HTTP-CHECKERS.md](HTTP-CHECKERS.md) provides typed input/context/outcomes and the shared HTTP/keyword pool. It deliberately leaves `CheckWorkConsumer` unbound: checker availability alone does not provide acquired-work orchestration, atomic result persistence or all monitor types. Keep the scheduling gate disabled until the runner integration is complete.
+
+
+## TLS/DNS checker foundation (M3.04)
+
+[TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) adds concurrent TLS/DNS observations with a complete per-monitor acquisition deadline. The HTTP guard now has a separate bounded DNS lookup. Check outcomes may contain verified certificate expiry, but no summary or result is persisted here. Consumer binding, heartbeat, worker failure hooks and fenced persistence remain subsequent tasks; keep the scheduling gate disabled.

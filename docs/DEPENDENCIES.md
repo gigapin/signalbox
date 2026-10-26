@@ -206,3 +206,10 @@ User request: the optional local `pgadmin` service uses `dpage/pgadmin4:9.18.0` 
 
 User request for a security update: `docker/php/Dockerfile` moves from `php:8.4-cli-bookworm@sha256:836ac6c6…`, which ran PHP 8.4.26, to `php:8.4.27-cli-bookworm@sha256:496b5e02fe9fe44fcfb715023b931048111dc4e0bc719789d83c906be9f04b05`, resolved with `docker buildx imagetools inspect`. The php.net 8.4.27 changelog lists core fixes for GHSA-w8hw-w9fx-j79w and GHSA-6wmf-4rv5-p3rp (state corruption via bailout) plus several use-after-free fixes. The tag now names the patch explicitly. Composer constraints (`~8.4.0 || ~8.5.0`, platform 8.4.0), lockfiles and extensions are unchanged. CI installs `PHP_VERSION: '8.4'` through setup-php, which selects the latest patch it ships; the patch actually used by CI must be read from its job log.
 
+
+
+## M3.04 direct transport dependencies
+
+TLS/DNS acquisition directly uses existing ReactPHP dependencies previously installed transitively through Reverb. They are now declared explicitly in `composer.json`: `react/dns` ^1.14 (locked v1.14.0), `react/event-loop` ^1.6 (v1.6.0), `react/promise` ^3.3 (v3.3.0), `react/promise-timer` ^1.11 (v1.11.0), and `react/socket` ^1.17 (v1.17.0). `ext-openssl` * makes the existing runtime capability an explicit platform requirement for certificate verification and test certificate generation. These additional `require` keys describe application-owned transport use; no package version was updated. Composer synchronized the lock metadata with `composer update --lock --no-install --no-scripts --no-audit --no-interaction`, reporting nothing to modify in the locked package graph.
+
+The adapters compose cancellable operations on private loops; DNS uses explicit UDP/TCP executors with one timeout, avoiding the factory's default retries, hosts-file handling and cache. See [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md), [official DNS documentation](https://reactphp.org/dns/), [Socket documentation](https://reactphp.org/socket/), and [PHP TLS options](https://www.php.net/manual/en/context.ssl.php). No Docker image, framework major, npm manifest or npm lockfile changes.

@@ -15,7 +15,7 @@ final readonly class CheckInput
     /**
      * @param CheckContext $context Admitted scalar execution identity.
      * @param MonitorConfiguration $configuration Validated private configuration, checked again by the resolver.
-     * @param int $timeoutMs Network budget in milliseconds, shared by all HTTP hops.
+     * @param int $timeoutMs Network budget in milliseconds: shared HTTP hops, or complete TLS/DNS acquisition.
      * @throws InvalidArgumentException When the budget is not positive; the coordinator applies the central operational bounds.
      */
     public function __construct(

@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace App\Services\Monitoring\Checks;
 
 use App\Enums\Monitoring\CheckError;
+use App\Exceptions\CheckTransportFailed;
 use App\Exceptions\OutboundDestinationRejected;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
@@ -24,6 +25,10 @@ final class HttpTransportErrors
      */
     public function classify(#[\SensitiveParameter] Throwable $error): CheckError
     {
+        if ($error instanceof CheckTransportFailed) {
+            return $error->reason;
+        }
+
         if ($error instanceof OutboundDestinationRejected) {
             return CheckError::from($error->reason->value);
         }

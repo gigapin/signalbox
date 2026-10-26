@@ -190,3 +190,10 @@ Run `docker compose run --rm php-test composer test -- --filter=MonitorInput --f
 ## HTTP and keyword checker coverage (M3.03)
 
 [HTTP-CHECKERS.md](HTTP-CHECKERS.md) documents three new suites: pure strategy/stream tests, HTTP/DNS/clock-faked coordinator tests and bounded loopback transport probes. The nonblocking test server only releases its two barrier responses after both requests have arrived, proving concurrency without timing-ratio assertions. It also serves a compressed oversized body and isolates a hanging request from a healthy response. These are explicit synthetic local transport probes; ordinary semantic tests remain network-free. All sockets, resources, child processes and hit logs are cleaned up; no external DNS or target network is used.
+
+
+## TLS/DNS checker verification (M3.04)
+
+`NetworkCheckStrategyTest` and `NetworkCheckCoordinatorTest` cover pure expiry/set rules, tenant admission, safe failures, aliases, deadline boundaries, cancellation and the HTTP guard's new bounded resolver. `NetworkCheckTransportTest` starts bounded synthetic loopback TLS/DNS child servers. Temporary CA/leaf certificates and keys are generated with PHP OpenSSL, injected only into the adapter under test and removed after server shutdown. Real probes cover certificate trust/hostname/expiry, stalled TLS, TCP refusal, UDP-to-TCP continuation, timeout isolation and two-client/two-query barriers that prove concurrency without elapsed-time assertions. No external DNS or monitored endpoint is contacted.
+
+Run these files with `docker compose run --rm php-test php vendor/bin/pest tests/Feature/NetworkCheckStrategyTest.php tests/Feature/NetworkCheckCoordinatorTest.php tests/Feature/NetworkCheckTransportTest.php`; the acceptance gate remains `./scripts/verify.sh`. See [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md).

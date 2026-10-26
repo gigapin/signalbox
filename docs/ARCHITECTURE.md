@@ -382,3 +382,10 @@ La revisione positiva `execution_revision` invalida lavori non iniziati quando c
 [HTTP-CHECKERS.md](HTTP-CHECKERS.md) attua ADR-002 con contesto/ingresso/esito normalizzati, evaluator Strategy puri e resolver esplicito, separati dal coordinatore `Http::pool()`. HTTP e keyword condividono lo stesso trasporto protetto; batch di 10, budget di rete cumulativo e cap di 1 MiB decompressi fra redirect. Il sink usa un filtro PHP per interrompere realmente i trasferimenti troppo grandi; le connessioni sono sempre nuove per rispettare il pin corrente.
 
 Decisione utente: la latenza viene misurata, ma la soglia di latenza citata nella specifica resta rinviata. Nessuna soglia implicita o modifica silenziosa della specifica. Il resolver DNS conserva il limite noto senza timeout applicativo, da affrontare in M3.04. Nessuna associazione del consumer, persistenza CheckResult o attivazione dello scheduler in questo task.
+
+
+## Attuazione M3.04 — TLS/DNS e risoluzione limitata
+
+[TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) completa i trasporti TLS/DNS di ADR-002: due strategie pure e due contratti di acquisizione sostituibili, con un coordinatore condiviso per ammissione tenant, concorrenza, deadline e classificazione sicura. Il coordinatore unico sostituisce i due coordinatori del piano per evitare duplicazione degli stessi vincoli. TLS collega IP autorizzati conservando identità originale/SNI e verifica catena, hostname e validità; DNS confronta insiemi esatti normalizzati e segue alias limitati.
+
+Decisioni utente: finestra TLS inclusiva con esito down, resolver di sistema fidato per default e resolver custom soggetto al guard. ReactPHP già nel lockfile viene dichiarato dipendenza diretta senza aggiornamenti. Il guard HTTP sostituisce `dns_get_record()` con A/AAAA concorrenti entro 1000 ms complessivi; la latenza HTTP resta quella di rete, distinta dal DNS. Queste note superano il limite storico senza timeout riportato in M2.03/M3.03. Nessun retry automatico, binding del consumer, aggiornamento dei riepiloghi, persistenza risultati o attivazione del motore.

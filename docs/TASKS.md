@@ -10,6 +10,14 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione — M3.04, 2026-10-26
+
+- **M3.04 completato**: checker TLS/DNS concorrenti con adapter sostituibili, pinning/verifica TLS, confronto DNS esatto e risoluzione del guard HTTP con timeout. Dettagli in [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md).
+- `./scripts/verify.sh` **exit 0**: PHP **8.4.27**, PHP-CS-Fixer su **293 file**, Larastan livello 8, **1289 test Pest/7926 asserzioni**, lint/formato/TypeScript, **5 test qualità**, **46 test DOM** e build Vite. Log: `/tmp/signalbox-m3-04-verify.log`.
+- Confermate le scelte utente: insieme DNS esatto, resolver di sistema come default fidato, down nella finestra di preavviso TLS. Dipendenze ReactPHP già installate dichiarate dirette, nessuna versione aggiornata; OpenSSL esplicito.
+- Scheduler disabilitato e consumer non associato. Nessuna migration, modifica `.env`/chiavi o gestione dei processi di sviluppo. Nessuna nuova CI remota/PHP 8.5 integrata, prova nel browser o benchmark.
+- Prossimo task pronto: **M3.05**, heartbeat con endpoint, credenziale dedicata, scadenza e tolleranza. MA.05/MA.06 e soglia di latenza restano rinviati; nessuna riduzione di M3/M4/M5. Git/gh restano riservati all’utente.
+
 ## Chiusura di sessione e ripartenza — 2026-10-23
 
 - Sessione chiusa su richiesta dell’utente. Completati M3.01–M3.03; M3 resta aperta. Le consegne successive descrivono lo stato storico dei singoli interventi.
@@ -135,7 +143,7 @@ Dipendenze: M2.
 - [x] M3.01 Implementare `monitors:dispatch`, jitter deterministico, selezione chunkById e avanzamento temporale senza deriva; rendere effettivi gli intervalli sotto il minuto se ammessi dai piani.
 - [x] M3.02 Garantire dispatch concorrente sicuro con prenotazione transazionale, lock distribuiti e strategia di recupero dal crash tra commit e invio; testare perdita e duplicazione dei job.
 - [x] M3.03 Implementare contratto e strategie HTTP e keyword con `Http::pool()`, redirect controllati, timeout e classificazione degli errori.
-- [ ] M3.04 Implementare strategie TLS (scadenza, catena, hostname) e DNS (A/AAAA/CNAME/MX/TXT e resolver) con adapter sostituibili nei test.
+- [x] M3.04 Implementare strategie TLS (scadenza, catena, hostname) e DNS (A/AAAA/CNAME/MX/TXT e resolver) con adapter sostituibili nei test.
 - [ ] M3.05 Implementare heartbeat: endpoint con credenziale dedicata, scadenza, tolleranza e rilevamento delle chiamate mancanti.
 - [ ] M3.06 Configurare job e code `checks:eu`/`checks:us`, WithoutOverlapping, timeout, `tries = 1`, `failed()` e idempotenza della persistenza; documentare eventuali retry di dominio con backoff.
 - [ ] M3.07 Creare CheckResult con partizionamento mensile PostgreSQL, indici e gestione anticipata delle nuove partizioni.
@@ -263,7 +271,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. Il prossimo task applicativo pronto è M3.01, dopo M2 completata il 2026-10-23. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3.01–M3.04 sono completati; il prossimo task pronto è M3.05 (heartbeat). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -799,3 +807,22 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - L’utente conferma risolta la segnalazione sul push/banner GitHub e chiede di chiudere la sessione.
 - Aggiornato soltanto `docs/TASKS.md` con consegna di ripartenza, limiti, verifiche già eseguite e preferenza per messaggi di commit brevi. Nessun controllo remoto o nuova verifica del codice dichiarato.
 - Prossimo task **M3.04**; MA.05/MA.06 rinviati. Nessuna operazione Git/gh, migration o modifica dell’ambiente.
+
+
+### 2026-10-26 — M3.04: checker TLS/DNS e risoluzione limitata (completato)
+
+- Piano approvato e implementato con dipendenze M2/M3.01–M3.03 soddisfatte. Perimetro limitato ad acquisizione TLS/DNS, valutazione e risoluzione del guard HTTP; heartbeat, runner, risultati e attivazione restano nei task successivi.
+- Decisioni utente: confronto DNS per insieme esatto ignorando ordine/duplicati/TTL; resolver di sistema fidato quando non specificato; esito down alla soglia inclusiva del preavviso TLS. Null verifica la sola validità corrente; zero non anticipa la scadenza.
+- File applicativi nuovi: contratti `DnsTransport`/`TlsTransport`, eccezione `CheckTransportFailed`, DTO `AsyncCheckCompletion`, servizi `AsyncCheckRuntime`, `DnsNameserver`, `DnsLookup`, `ReactDnsTransport`, `PinnedTcpConnector`, `ReactTlsTransport`, `DnsStrategy`, `TlsStrategy` e `NetworkCheckCoordinator`. Aggiornati `HostResolver`, `SystemHostResolver`, `OutboundDestinationGuard`, `HttpTransportErrors`, `CheckInput`/`CheckOutcome`, `CheckError`, `AppServiceProvider`, `config/monitor-checks.php`, manifest e lock Composer.
+- TLS: A/AAAA concorrenti, rifiuto se qualsiasi IP è bloccato, prima destinazione autorizzata senza retry, nome originale per SNI/verifica, catena/hostname/validità obbligatori. Timeout completo DNS/TCP/handshake; metadato nullable UTC `tlsExpiresAt` nell’esito, senza aggiornamento del monitor.
+- DNS: cinque famiglie, nomi assoluti e dati normalizzati con TXT esatto; controllo identità della domanda, sole risposte pertinenti, CNAME diretto per quel tipo e alias fino a otto passaggi per gli altri. UDP con continuazione TCP solo per troncamento, stesso timeout, niente retry/cache/hosts/search domain o fallback pubblico. Resolver custom autorizzato su porta 53; i valori DNS sono dati, non destinazioni da contattare.
+- Risoluzione HTTP: sostituito `dns_get_record()` con A/AAAA concorrenti e deadline complessiva configurabile, default 1000 ms per lookup inclusi gli alias. Nessuna autorizzazione di risultati parziali se una famiglia fallisce. Latenza e budget HTTP restano di rete, distinti dal DNS; nessuna promessa di deadline complessiva HTTP.
+- Deviazione motivata dal piano: un coordinatore condiviso per TLS/DNS evita duplicazione di ammissione tenant, concorrenza, deadline e failure mapping; strategie e trasporti restano separati. Runtime su loop privato con completamento tipizzato e cancellazione dei lavori pendenti, senza annotazioni locali o soppressioni Larastan.
+- Composer: `ext-openssl` e cinque componenti ReactPHP già presenti nel lock diventano dipendenze dirette. `composer update --lock --no-install --no-scripts --no-audit --no-interaction` riporta nessuna versione da modificare; `composer validate --strict --no-check-publish` passa. Nessuna modifica npm, Docker o stack.
+- Test nuovi: `NetworkCheckStrategyTest`, `NetworkCheckCoordinatorTest`, `NetworkCheckTransportTest`; fake DNS/TLS e fixture `TlsCertificateFixture`, `TlsLoopbackServer`, `DnsLoopbackServer`. **69 test mirati/198 asserzioni** passati: regole pure, tenant, batch prima dell’I/O, alias/cicli, NXDOMAIN/SERVFAIL, payload malformati, timeout, cancellazione e regressione HTTP; TLS reale con CA sintetica, hostname/catena/scadenza errati, TCP rifiutato e handshake bloccato, DNS UDP/TCP e barriere di concorrenza. Nessuna rete esterna. Certificati e chiavi sintetici temporanei rimossi con i server figli.
+- Nei primi passaggi Larastan ha rilevato inferenze generiche e forme MX non correttamente espresse; risolte con un completamento tipizzato e normalizzazione al confine mixed, senza abbassare il livello di analisi. Formatter applicato e successivo dry-run superato.
+- Verifica finale: `./scripts/verify.sh` **exit 0**, PHP **8.4.27**, PHP-CS-Fixer dry-run su **293 file**, 0 modifiche; Larastan livello 8 senza errori; **1289 test Pest/7926 asserzioni** (+69/+198 rispetto a M3.03); ESLint/Prettier/TypeScript, **5 test qualità**, **46 test DOM** e build Vite. Log: `/tmp/signalbox-m3-04-verify.log`.
+- Documentazione: nuovo [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md); aggiornati ARCHITECTURE, BOOTSTRAP, DEPENDENCIES, TESTING, MONITORS, MONITOR-SCHEDULING, HTTP-CHECKERS, OUTBOUND-SECURITY, README e TASKS, compreso il riferimento obsoleto a M3.01 nell’ordine operativo.
+- Limiti: nessun risultato persistito, riepilogo monitor o incidente; consumer applicativo non associato e scheduling disabilitato. Nessuna migration o modifica a `.env`/chiavi/processi/database di sviluppo; test sui servizi isolati. Nessuna nuova CI remota/PHP 8.5 integrata, browser o benchmark dichiarati; nessuna operazione Git/gh dell’agente.
+- **M3.04 completato**, M3 resta aperta. Prossimo task pronto: **M3.05**, heartbeat. MA.05/MA.06 e soglia di latenza rinviati come concordato.
+- Messaggio di commit suggerito: `feat(monitoring): add TLS and DNS checkers`.

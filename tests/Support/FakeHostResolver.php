@@ -21,9 +21,10 @@ final class FakeHostResolver implements HostResolver
 
     /**
      * @param string $host Normalized hostname.
+     * @param int|null $timeoutMs Optional lookup budget, unused by immediate deterministic answers.
      * @return list<string> Configured answers, or none.
      */
-    public function resolve(string $host): array
+    public function resolve(string $host, ?int $timeoutMs = null): array
     {
         $this->queries[] = $host;
 

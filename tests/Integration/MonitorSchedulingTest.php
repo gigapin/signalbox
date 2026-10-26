@@ -322,7 +322,7 @@ it('records infrastructure exceptions from an acquired delivery without retrying
 
     expect(schedulingWork($team)->sole()->state)->toBe('infrastructure_failed')
         ->and($job->tries)->toBe(1)
-        ->and($job->timeout)->toBe(30);
+        ->and($job->timeout)->toBe(45);
 });
 
 it('routes scalar envelopes through real Redis and runs an idempotent test consumer', function (string $region): void {

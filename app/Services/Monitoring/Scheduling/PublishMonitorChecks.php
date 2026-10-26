@@ -39,6 +39,9 @@ final readonly class PublishMonitorChecks
             ->where('available_at', '<=', $now)
             ->where('expires_at', '>', $now)
             ->chunkById((int) config('monitor-scheduling.chunk_size'), function ($rows) use (&$count): void {
+                $groups = [];
+                $capacity = app(\App\Services\Monitoring\Checks\CheckRuntimeLimits::class)->batchSize();
+
                 foreach ($rows as $row) {
                     $work = $this->ledger->leasePublication($row->team_id, $row->id);
 
@@ -46,16 +49,56 @@ final readonly class PublishMonitorChecks
                         continue;
                     }
 
-                    try {
-                        $this->publisher->publish($work->team_id, $work->id, $work->region);
-                        $count += (int) $this->ledger->acknowledge($work);
-                    } catch (Throwable) {
-                        // Broker exceptions can contain credentials; record only the safe work identity.
-                        Log::warning('Monitor execution publication unconfirmed.', ['execution_id' => $work->id, 'team_id' => $work->team_id]);
+                    $key = $work->team_id.':'.$work->region;
+                    $batch = $groups[$key] ?? [];
+
+                    if (count($batch) >= $capacity || collect($batch)->contains('monitor_id', $work->monitor_id)) {
+                        $count += $this->send($batch);
+                        $batch = [];
                     }
+
+                    $batch[] = $work;
+                    $groups[$key] = $batch;
+                }
+
+                foreach ($groups as $batch) {
+                    $count += $this->send($batch);
                 }
             });
 
         return $count;
+    }
+    /**
+     * @param list<CheckExecution> $batch Leased rows sharing team and region with distinct monitors.
+     * @return int Confirmed row acknowledgements.
+     */
+    private function send(array $batch): int
+    {
+        if ($batch === []) {
+            return 0;
+        }
+
+        $first = $batch[0];
+        $ids = [];
+
+        foreach ($batch as $work) {
+            $ids[$work->id] = $work->monitor_id;
+        }
+
+        try {
+            $this->publisher->publishBatch($first->team_id, $ids, $first->region);
+            $count = 0;
+
+            foreach ($batch as $work) {
+                $count += (int) $this->ledger->acknowledge($work);
+            }
+
+            return $count;
+        } catch (Throwable) {
+            // Broker exceptions can contain credentials; retain leases and log only safe identifiers.
+            Log::warning('Monitor execution batch publication unconfirmed.', ['execution_ids' => array_keys($ids), 'team_id' => $first->team_id]);
+
+            return 0;
+        }
     }
 }

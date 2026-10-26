@@ -10,6 +10,13 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione — M3.06–M3.07, 2026-10-26
+
+- **M3.06–M3.07 completati**: runner reale per tutti i checker, lotti regionali di due monitor, lock condivisi e fence del broker implementati; risultati immutabili e riepiloghi atomici su partizioni mensili UTC. Dettagli in [MONITOR-RUNNER.md](MONITOR-RUNNER.md).
+- Prima verifica completa `./scripts/verify.sh` **exit 0**: PHP 8.4.27, formatter su 325 file, Larastan livello 8, 1388 test Pest/8542 asserzioni, lint/formato/TypeScript, 5 test qualità, 53 test DOM e build Vite. Verifica finale `docker compose run --rm -v /tmp/signalbox-heartbeat-no-assets-m8y9j5v1:/var/www/html/public/build:ro php-test composer verify` **exit 0**, con le ultime modifiche: formatter su 325 file, Larastan e **1390 test Pest/8550 asserzioni** superati senza asset Vite. Log: `/tmp/signalbox-runner-verify.log` e `/tmp/signalbox-runner-no-assets.log`.
+- Migration `2026_10_26_000012_create_partitioned_check_results.php` applicata soltanto al database di test. Nessuna modifica a `.env`, chiavi, dipendenze, lockfile, database o processi di sviluppo; nessuna operazione Git/gh. Consumer associato, motore ancora disabilitato per default. Nessuna nuova CI remota/PHP 8.5 integrata, browser E2E o benchmark dichiarati.
+- Prossimo task pronto: **M3.08**; incidenti M4 e retention M7 restano successivi. MA.05/MA.06 e soglia di latenza restano rinviati.
+
 ## Correzione HeartbeatTest — 2026-10-26
 
 - Riprodotto e corretto un 409 sul primo test in assenza di manifest Vite, condizione del backend CI. L’header versione ora usa una stringa vuota quando il middleware restituisce null.
@@ -159,8 +166,8 @@ Dipendenze: M2.
 - [x] M3.03 Implementare contratto e strategie HTTP e keyword con `Http::pool()`, redirect controllati, timeout e classificazione degli errori.
 - [x] M3.04 Implementare strategie TLS (scadenza, catena, hostname) e DNS (A/AAAA/CNAME/MX/TXT e resolver) con adapter sostituibili nei test.
 - [x] M3.05 Implementare heartbeat: endpoint con credenziale dedicata, scadenza, tolleranza e rilevamento delle chiamate mancanti.
-- [ ] M3.06 Configurare job e code `checks:eu`/`checks:us`, WithoutOverlapping, timeout, `tries = 1`, `failed()` e idempotenza della persistenza; documentare eventuali retry di dominio con backoff.
-- [ ] M3.07 Creare CheckResult con partizionamento mensile PostgreSQL, indici e gestione anticipata delle nuove partizioni.
+- [x] M3.06 Configurare job e code `checks:eu`/`checks:us`, WithoutOverlapping, timeout, `tries = 1`, `failed()` e idempotenza della persistenza; documentare eventuali retry di dominio con backoff.
+- [x] M3.07 Creare CheckResult con partizionamento mensile PostgreSQL, indici e gestione anticipata delle nuove partizioni.
 - [ ] M3.08 Testare sequenze `Http::fake()`, endpoint lenti, errori TLS/DNS, heartbeat scaduti, pause, concorrenza, jitter e isolamento dei worker.
 
 Uscita: controlli funzionanti per tutti i tipi, errori registrati, carico distribuito e nessun fallimento nascosto da retry infrastrutturali.
@@ -285,7 +292,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3.01–M3.05 sono completati; il prossimo task pronto è M3.06 (runner, job e code). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3.01–M3.07 sono completati; il prossimo task pronto è M3.08 (matrice estesa del motore). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -871,3 +878,18 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - File modificati: `tests/Integration/HeartbeatTest.php`, `docs/TESTING.md`, `docs/TASKS.md`. Nessun cambiamento applicativo, CI, dipendenze, migration o ambiente di sviluppo. Suite globale, frontend e Larastan non ripetuti: la correzione riguarda soltanto il test e la documentazione, e i test non rientrano nei percorsi Larastan. I risultati completi della consegna M3.05 restano storici, non sono una nuova esecuzione.
 - Log remoto non ancora fornito; la causa verificata localmente corrisponde a un 409 sulla prima verifica di pagina HeartbeatTest. Nessuna dichiarazione di CI remota verde o verifica PHP 8.5. Git/gh non eseguiti; prossimo passo: commit/push dell’utente e verifica del nuovo job.
 - Messaggio di commit suggerito: `test: fix heartbeat Inertia version without built assets`.
+
+
+### 2026-10-26 — M3.06–M3.07: runner e risultati completati
+
+- Piano congiunto approvato; dipendenze M3.01–M3.05 soddisfatte. Lotti regionali di due esecuzioni, timeout 45 s, deadline 50 s, lock 55 s, Redis retry_after 90 s. Risultati mensili UTC sullo slot, istante osservato separato e transizioni atomiche con fence.
+- Consumer reale, fallimenti riconciliabili e riepiloghi con watermark; nessuna attivazione del motore, migration o modifica dei processi/database di sviluppo. M3.08, incidenti e retention restano successivi. Verifiche completate, con evidenze qui e nella consegna in testa al documento; Git/gh riservati all’utente.
+
+- Implementazione: `RunMonitorChecks`/`PreparedCheck` catturano configurazione e heartbeat nella transazione di acquisizione; pool HTTP/keyword e coordinatore TLS/DNS lavorano dopo il commit. `DeliverCheckBatch`, envelope singolo compatibile, publisher e binding del provider integrano code regionali, lock ordinati e hook `failed()` ricreato da Laravel con UUID/tentativo persistiti.
+- `ExecutionLedger` e `ExecutionResults` salvano transizione, CheckResult e riepilogo nella stessa transazione. FK composita inclusiva della revisione, unicità sullo slot, trigger di immutabilità e watermark impediscono scritture duplicate, reidentificazione tra mesi, contaminazione tenant e regressione dei riepiloghi. Solo osservazioni reali hanno up/down e checked_at; esiti mancati/cancellati/infrastrutturali restano unknown.
+- `ResultPartitions`, migration, comando `monitors:partitions` giornaliero e preparazione on demand creano il mese UTC corrente e i due successivi con advisory lock e verifica dei bounds. Nessuna pulizia o backfill dei vecchi terminali; M7 deve conciliare retention misurata sull’osservazione con partizioni dello slot, anche quando il check termina nel mese successivo.
+- Decisioni: compatibilità del vecchio messaggio singolo mantenuta; un vecchio `finish()` diretto senza outcome conserva lo stato del registro ma produce infrastruttura/unknown, senza inventare successi. Nessun retry di dominio; la ripubblicazione riguarda solo lavoro mai acquisito. Risultati di revisioni superate restano storici senza aggiornare il riepilogo. Nessuna transizione incidente o contatore di failure aggiunta.
+- Test aggiunti in `MonitorRunnerTest` e `MonitorSchedulingConcurrencyTest`, fixture worker Redis con eccezione/timeout/SIGKILL, barriera HTTP reale per il lotto, contesa PostgreSQL per partizioni e recupero/hook, isolamento e identità, atomicità, ordine degli slot e confine mensile. Adeguati i test di configurazione, compatibilità e rollback delle migration. Documenti aggiornati: runner, scheduling, bootstrap e collegamenti dalle tre fondazioni checker.
+
+- Verifiche concluse: `./scripts/verify.sh` exit 0 (1388 test/8542 asserzioni prima degli ultimi due casi); esecuzione finale backend `composer verify` senza asset Vite exit 0 con **1390 test/8550 asserzioni**, formatter su 325 file e Larastan livello 8. Frontend: lint/formato/TypeScript, 5 test qualità, 53 test DOM e build superati nella verifica completa. Le ultime modifiche riguardano PHP/test/documentazione; nessuna modifica frontend successiva. Nessuna verifica saltata nei due run.
+- **M3.06 e M3.07 completati**; prossimo passo **M3.08**, estendere le sequenze e la matrice del motore senza anticipare incidenti o retention. Applicare deliberatamente la nuova migration all’ambiente scelto prima dell’uso; l’agente non ha migrato né attivato lo sviluppo e non ha eseguito Git/gh.

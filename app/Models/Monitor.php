@@ -57,6 +57,7 @@ use Laravel\Scout\Searchable;
  * @property \Carbon\CarbonImmutable|null $last_checked_at Last observation instant in UTC, initially absent.
  * @property \Carbon\CarbonImmutable|null $next_check_at Next scheduled UTC slot; null means not initialized.
  * @property \Carbon\CarbonImmutable|null $ssl_expires_at Last observed certificate expiry in UTC.
+ * @property \Carbon\CarbonImmutable|null $last_result_slot_at Latest slot admitted to the observation summary.
  * @property \Carbon\CarbonImmutable|null $created_at UTC creation timestamp.
  * @property \Carbon\CarbonImmutable|null $updated_at UTC modification timestamp.
  * @property-read Team $team Owning team; relation traversal never grants another tenant's data.
@@ -76,7 +77,7 @@ final class Monitor extends Model
     protected $fillable = ['name'];
 
     /** @var list<string> Configuration requires an explicit authorized projection rather than Eloquent serialization. */
-    protected $hidden = MonitorConfigurationMapper::COLUMNS;
+    protected $hidden = [...MonitorConfigurationMapper::COLUMNS, 'last_result_slot_at'];
 
     /** @var array<string, mixed> Safe initial state; cadence and timeout must still be supplied explicitly. */
     protected $attributes = [
@@ -126,6 +127,7 @@ final class Monitor extends Model
             'last_checked_at' => 'immutable_datetime',
             'next_check_at' => 'immutable_datetime',
             'ssl_expires_at' => 'immutable_datetime',
+            'last_result_slot_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

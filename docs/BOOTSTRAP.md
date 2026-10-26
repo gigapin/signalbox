@@ -190,3 +190,8 @@ MA adds three migrations: `users.is_platform_admin`, `platform_audit_events` and
 ## Heartbeat ingress and lifecycle (M3.05)
 
 [HEARTBEATS.md](HEARTBEATS.md) documents the incremental `2026_10_26_000011_create_monitor_heartbeats.php` migration, bearer-only `POST /heartbeats`, authenticated credential mutations, receipt history and pure slot evaluation. Apply the migration deliberately before using the updated monitor lifecycle; automated checks apply it only to isolated PostgreSQL. Existing heartbeat monitors arm at migration time without a credential. `config/heartbeat.php` contains mandatory IP/credential traffic limits. No dependency, environment variable, key or application-process change is required. The consumer remains unbound and scheduling disabled.
+
+
+## Regional runner and results (M3.06–M3.07)
+
+[MONITOR-RUNNER.md](MONITOR-RUNNER.md) supersedes the earlier unbound-consumer notes: both consumer contracts now resolve to the real runner. Apply `2026_10_26_000012_create_partitioned_check_results.php` deliberately to the intended database after the heartbeat migration. Automated checks migrate only isolated PostgreSQL. It adds the immutable monthly result parent, current/next-two partitions, broker attempt fence and monitor watermark. `monitors:partitions` prepares months daily and on demand; it never drops retained data. Regional job/Horizon timeout is 45 s, deadline 50 s, cache locks 55 s and Redis retry_after remains 90 s. The regional batch limit is two. No dependency/lockfile, environment variable, development key or process change is required. Keep `MONITOR_SCHEDULING_ENABLED=false` until operational activation is deliberately chosen.

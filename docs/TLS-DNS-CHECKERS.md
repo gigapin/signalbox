@@ -1,5 +1,7 @@
 # TLS and DNS checkers (M3.04)
 
+**Runner integration update (M3.06–M3.07):** [MONITOR-RUNNER.md](MONITOR-RUNNER.md) now binds the application consumer and supplies transactional admission, worker failure hooks, partitioned results and monitor summaries. References below to these items being deferred describe the original checker foundation stage. Scheduling remains disabled by default; incidents remain M4.
+
 M3.04 adds verified TLS acquisition, DNS record checks and a bounded replacement for the outbound guard's former `dns_get_record()` implementation. It leaves `CheckWorkConsumer` unbound and scheduling disabled. Heartbeat is implemented separately in [M3.05](HEARTBEATS.md); result persistence, monitor summaries, incidents and notifications remain subsequent tasks.
 
 ## Boundaries and admission

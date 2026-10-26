@@ -31,4 +31,15 @@ final class RecordingCheckPublisher implements CheckWorkPublisher
             ($this->afterSend)();
         }
     }
+    /**
+     * @param int $teamId Owner.
+     * @param array<int, int> $executions Execution-to-monitor map.
+     * @param string $region Regional queue.
+     */
+    public function publishBatch(int $teamId, array $executions, string $region): void
+    {
+        foreach ($executions as $id => $monitorId) {
+            $this->publish($teamId, $id, $region);
+        }
+    }
 }

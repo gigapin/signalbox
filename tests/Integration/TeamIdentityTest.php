@@ -234,6 +234,7 @@ it('reverses identity and dependent migrations without changing baseline identit
         // Execution ownership references monitors and teams and must be reversed first.
         'database/migrations/2026_10_23_000010_create_check_executions_table.php',
         'database/migrations/2026_10_26_000011_create_monitor_heartbeats.php',
+        'database/migrations/2026_10_26_000012_create_partitioned_check_results.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

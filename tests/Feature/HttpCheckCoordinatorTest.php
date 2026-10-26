@@ -296,7 +296,7 @@ it('propagates programming failures rather than manufacturing a target outage', 
     expect(fn () => runHttpChecks([CheckInputFixture::make()]))->toThrow(LogicException::class);
 });
 
-it('leaves scheduling disabled and the application consumer unbound', function (): void {
+it('leaves scheduling disabled with the application consumer available', function (): void {
     expect(config('monitor-scheduling.enabled'))->toBeFalse()
-        ->and(app()->bound(CheckWorkConsumer::class))->toBeFalse();
+        ->and(app()->bound(CheckWorkConsumer::class))->toBeTrue();
 });

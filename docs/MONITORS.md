@@ -80,3 +80,8 @@ M2.02 provides [Form Request/input validation](MONITOR-INPUT.md), complete typed
 ## Scheduling foundation (M3.01–M3.02)
 
 [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) introduces `execution_revision` (positive generation, initially one) and the private regional execution outbox. Authorized execution-setting edits and actual pauses increment the generation; name-only edits preserve it. The dispatcher initializes/advances slots and reserves work atomically without decrypting configuration. This extends the initial M2 persistence description; application checks/results remain future M3 tasks and scheduling is disabled by default.
+
+
+## HTTP/keyword acquisition (M3.03)
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) adds pure response strategies and shared protected concurrent acquisition using the existing configurations. It does not load or persist Monitor/CheckResult records or activate scheduled work. Latency is measured; the specification's latency threshold remains explicitly deferred by user decision.

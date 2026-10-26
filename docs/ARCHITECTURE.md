@@ -375,3 +375,10 @@ M2.06 adds tests and test support only; no production code changes. It verifies 
 [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) attua ADR-006: slot UTC con fase CRC32, selezione chunkById, prenotazione transazionale Team → Monitor, outbox regionale, publisher con lease, ripubblicazione prima dell'acquisizione, fencing e recupero degli abbandoni. Il gate unico è disabilitato fino all'integrazione del runner reale; i consumer applicativi e i CheckResult restano nei task successivi.
 
 La revisione positiva `execution_revision` invalida lavori non iniziati quando cambiano impostazioni operative o viene applicata una pausa effettiva. I soli cambi di nome la conservano. Scelta: una generazione semantica al posto di un hash dei ciphertext, che cambiano anche per modifiche senza cambiamento dei segreti. Il CRUD mantiene la generazione sotto i lock esistenti; M9 dovrà rispettarla durante la riconciliazione. Nessuna modifica alla specifica di prodotto né promessa exactly-once.
+
+
+## Attuazione M3.03 — HTTP e keyword
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) attua ADR-002 con contesto/ingresso/esito normalizzati, evaluator Strategy puri e resolver esplicito, separati dal coordinatore `Http::pool()`. HTTP e keyword condividono lo stesso trasporto protetto; batch di 10, budget di rete cumulativo e cap di 1 MiB decompressi fra redirect. Il sink usa un filtro PHP per interrompere realmente i trasferimenti troppo grandi; le connessioni sono sempre nuove per rispettare il pin corrente.
+
+Decisione utente: la latenza viene misurata, ma la soglia di latenza citata nella specifica resta rinviata. Nessuna soglia implicita o modifica silenziosa della specifica. Il resolver DNS conserva il limite noto senza timeout applicativo, da affrontare in M3.04. Nessuna associazione del consumer, persistenza CheckResult o attivazione dello scheduler in questo task.

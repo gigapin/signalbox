@@ -175,3 +175,8 @@ MA adds three migrations: `users.is_platform_admin`, `platform_audit_events` and
 ## Recoverable scheduling foundation (M3.01–M3.02)
 
 [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) documents the execution outbox migration, monitor execution generation, three scheduling commands and `config/monitor-scheduling.php`. `MONITOR_SCHEDULING_ENABLED` defaults to false; keep it disabled until the real consumer/runner is integrated and the migration is deliberately applied to the intended database. Automated checks apply it only to the isolated test database. No dependency, lockfile, development key or process change is required.
+
+
+## HTTP and keyword acquisition (M3.03)
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) documents the typed checker boundary and `config/monitor-checks.php` (10 observations per batch, 1 MiB decoded response bytes per observation across redirects). The provider binds the monotonic check clock; the application consumer remains unbound and scheduling disabled. Guarded HTTP connections now forbid reuse so each hop honours its freshly authorized pin. No new environment variable, migration, dependency or process change is required.

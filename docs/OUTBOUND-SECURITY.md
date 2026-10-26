@@ -81,3 +81,8 @@ Every concrete writing channel in `config/logging.php` taps `RedactSecrets`. A n
 docker compose run --rm php-test composer test -- --filter='Outbound|SecretRedactor|GuardedHttp|MonitorInput' --fail-on-skipped --fail-on-warning
 ./scripts/verify.sh
 ```
+
+
+## HTTP transport integration (M3.03)
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) applies the guard and redirect policy to every initial/followed HTTP-family connection. `GuardedHttpOptions` now also sets `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`: a prior connection cannot bypass the current hop's validated address pin. The shared transport preserves TLS verification, prohibits implicit cookies, implements method/body rewriting and refuses cross-origin nonempty body forwarding. Decoded response writes and network time are cumulatively bounded; the existing synchronous DNS lookup still has no application timeout. The historical M2.03 transport exclusions above describe that milestone's original scope.

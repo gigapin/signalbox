@@ -10,6 +10,17 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Chiusura di sessione e ripartenza — 2026-10-23
+
+- Sessione chiusa su richiesta dell’utente. Completati M3.01–M3.03; M3 resta aperta. Le consegne successive descrivono lo stato storico dei singoli interventi.
+- Push/GitHub: dopo la segnalazione del banner assente, l’utente conferma «tutto a posto». Nessuna verifica Git/gh o remota eseguita dall’agente; non sono stati forniti log, branch, SHA o risultati specifici dei job CI, quindi non si aggiunge una dichiarazione di CI verde/PHP 8.5.
+- Ultima verifica locale completa: `./scripts/verify.sh` exit 0, PHP 8.4.27, formatter su 272 file, Larastan livello 8, 1220 test Pest/7728 asserzioni, lint/formato/TypeScript, 5 test qualità, 46 test DOM e build. Questa chiusura modifica solo TASKS; nessuna nuova esecuzione dei controlli, perché il codice non cambia.
+- Prossimo task pronto: **M3.04**, strategie TLS (scadenza, catena, hostname) e DNS (A/AAAA/CNAME/MX/TXT e resolver), con adapter sostituibili. Affrontare il limite noto della risoluzione DNS usata dal guard HTTP, oggi senza timeout applicativo.
+- Per ripartire leggere AGENTS, specifica, TASKS, DEPENDENCIES, BOOTSTRAP, ARCHITECTURE (ADR-002/006/007), OUTBOUND-SECURITY, HTTP-CHECKERS, MONITOR-SCHEDULING e TESTING; lavorare nel progetto principale `/Users/pino/Projects/signalbox`.
+- Motore disabilitato e consumer applicativo non associato fino al runner reale. Nessuna migration, modifica `.env`/chiavi o gestione dei processi di sviluppo in questa sessione. La migration M3.01–M3.02 non è stata applicata dall’agente al database di sviluppo; stato di eventuali interventi dell’utente non verificato.
+- Decisioni da conservare: soglia di latenza rinviata per scelta esplicita dell’utente; MA.05/MA.06 rinviati; nessuna riduzione di M3/M4/M5. Git e GitHub CLI restano riservati all’utente.
+- Preferenza di consegna dell’utente: al termine di ogni task proporre un messaggio di commit composto da **una breve frase**, senza corpo descrittivo.
+
 ## Consegna di sessione — M3.03, 2026-10-23
 
 - Completato M3.03: strategie HTTP/keyword, esiti normalizzati, acquisizione con `Http::pool()`, protezioni SSRF/redirect, budget di rete cumulativi e cap di 1 MiB decompressi. Dettagli in [HTTP-CHECKERS.md](HTTP-CHECKERS.md) e nel registro finale.
@@ -781,3 +792,10 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Nessuna operazione Git/gh, migration, modifica `.env` o riavvio dei processi di sviluppo.
 - **M3.03 completato**. M3 resta aperta. Prossimo task pronto: **M3.04**, strategie TLS/DNS e adapter sostituibili; affrontare anche il limite di risoluzione DNS del guard HTTP. MA.05/MA.06 restano rinviati.
 - Messaggio di commit suggerito: `feat(monitoring): add HTTP and keyword checkers`.
+
+
+### 2026-10-23 — Chiusura della sessione dopo M3.03
+
+- L’utente conferma risolta la segnalazione sul push/banner GitHub e chiede di chiudere la sessione.
+- Aggiornato soltanto `docs/TASKS.md` con consegna di ripartenza, limiti, verifiche già eseguite e preferenza per messaggi di commit brevi. Nessun controllo remoto o nuova verifica del codice dichiarato.
+- Prossimo task **M3.04**; MA.05/MA.06 rinviati. Nessuna operazione Git/gh, migration o modifica dell’ambiente.

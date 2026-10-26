@@ -185,3 +185,8 @@ MA adds three migrations: `users.is_platform_admin`, `platform_audit_events` and
 ## TLS/DNS acquisition and bounded resolution (M3.04)
 
 [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) documents the shared concurrent TLS/DNS coordinator, replaceable transports, verified certificate expiry and exact DNS comparison. `monitor-checks.resolution_timeout_ms` defaults to 1000 ms and bounds the complete A/AAAA resolution used by the HTTP guard. OpenSSL and the existing locked ReactPHP components become explicit direct requirements; no package version changes. Scheduling remains disabled and the consumer unbound. No migration, environment variable, development-key or process change is required.
+
+
+## Heartbeat ingress and lifecycle (M3.05)
+
+[HEARTBEATS.md](HEARTBEATS.md) documents the incremental `2026_10_26_000011_create_monitor_heartbeats.php` migration, bearer-only `POST /heartbeats`, authenticated credential mutations, receipt history and pure slot evaluation. Apply the migration deliberately before using the updated monitor lifecycle; automated checks apply it only to isolated PostgreSQL. Existing heartbeat monitors arm at migration time without a credential. `config/heartbeat.php` contains mandatory IP/credential traffic limits. No dependency, environment variable, key or application-process change is required. The consumer remains unbound and scheduling disabled.

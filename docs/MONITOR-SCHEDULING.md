@@ -68,3 +68,8 @@ The publisher contract isolates broker submission; `CheckWorkConsumer` is the ge
 ## TLS/DNS checker foundation (M3.04)
 
 [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) adds concurrent TLS/DNS observations with a complete per-monitor acquisition deadline. The HTTP guard now has a separate bounded DNS lookup. Check outcomes may contain verified certificate expiry, but no summary or result is persisted here. Consumer binding, heartbeat, worker failure hooks and fenced persistence remain subsequent tasks; keep the scheduling gate disabled.
+
+
+## Heartbeat evaluation boundary (M3.05)
+
+[HEARTBEATS.md](HEARTBEATS.md) provides receipt ingress and a pure strategy using the scheduled reference instant. The snapshot reader selects current-generation receipts at or before that slot, so delayed execution cannot use a later ping to hide a missed window. The future consumer must retain revision/eligibility admission and ledger fencing before selecting the snapshot; stale pre-generation slots are rejected rather than reported as target outages. No application consumer is bound and scheduling stays disabled.

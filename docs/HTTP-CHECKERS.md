@@ -51,7 +51,7 @@ Each following connection receives only the unused network timeout, with millise
 ## Explicit scope decisions and remaining integration
 
 - The user chose **latency measurement only** for M3.03. The latency-failure threshold mentioned in the product specification remains deferred; no model/form field or implicit threshold is added and the specification is not silently changed.
-- TLS transport adapters, DNS strategies and bounded DNS resolution are implemented in [M3.04](TLS-DNS-CHECKERS.md); heartbeat remains M3.05.
+- TLS transport adapters, DNS strategies and bounded DNS resolution are implemented in [M3.04](TLS-DNS-CHECKERS.md); heartbeat ingress and pure evaluation are implemented in [M3.05](HEARTBEATS.md).
 - Application consumer binding, worker middleware/failure hooks, result persistence and partitioning remain M3.06–M3.07. The runner must use the ledger acquisition fence and atomically persist results with completion.
 - Scheduler activation remains deferred. This task adds no route, environment variable, migration, dependency or lockfile change and does not apply prior migrations to development.
 

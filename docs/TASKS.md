@@ -10,6 +10,20 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Correzione HeartbeatTest — 2026-10-26
+
+- Riprodotto e corretto un 409 sul primo test in assenza di manifest Vite, condizione del backend CI. L’header versione ora usa una stringa vuota quando il middleware restituisce null.
+- HeartbeatTest: **24 test/121 asserzioni** superati sia con build disponibile sia senza build; formatter dry-run su 312 file passato. Aggiunto un caso permanente senza manifest tramite directory pubblica temporanea.
+- Modificati soltanto test e documentazione. CI remota da confermare dopo il nuovo push; il log remoto non è stato fornito. Le verifiche complete M3.05 riportate sotto restano quelle della consegna precedente.
+
+## Consegna di sessione — M3.05, 2026-10-26
+
+- **M3.05 completato**: ingresso `POST /heartbeats` con Bearer dedicato, scadenza mobile e tolleranza, snapshot storici allo slot programmato e UI di generazione/rotazione/revoca con segreto una sola volta. Dettagli in [HEARTBEATS.md](HEARTBEATS.md).
+- `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: PHP-CS-Fixer su **312 file**, Larastan livello 8, **1359 test Pest/8387 asserzioni**, lint/formato/TypeScript, **5 test qualità**, **53 test DOM** e build Vite. Log: `/tmp/signalbox-m3-05-verify.log`.
+- Nuova migration `2026_10_26_000011_create_monitor_heartbeats.php`, applicata soltanto al database di test. **Applicarla deliberatamente al database di sviluppo prima di usare il CRUD aggiornato o gli heartbeat**; gli heartbeat preesistenti vengono inizializzati senza credenziale all’istante della migration.
+- Nessuna modifica a `.env`, chiavi, dipendenze o processi di sviluppo. Scheduler disabilitato e consumer applicativo non associato. Nessuna nuova CI remota/PHP 8.5 integrata, browser E2E o benchmark.
+- Prossimo task pronto: **M3.06**, runner, middleware job, timeout/failure hook e integrazione delle code regionali; persistenza partizionata in M3.07. MA.05/MA.06 e soglia di latenza restano rinviati. Git/gh riservati all’utente.
+
 ## Consegna di sessione — M3.04, 2026-10-26
 
 - **M3.04 completato**: checker TLS/DNS concorrenti con adapter sostituibili, pinning/verifica TLS, confronto DNS esatto e risoluzione del guard HTTP con timeout. Dettagli in [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md).
@@ -144,7 +158,7 @@ Dipendenze: M2.
 - [x] M3.02 Garantire dispatch concorrente sicuro con prenotazione transazionale, lock distribuiti e strategia di recupero dal crash tra commit e invio; testare perdita e duplicazione dei job.
 - [x] M3.03 Implementare contratto e strategie HTTP e keyword con `Http::pool()`, redirect controllati, timeout e classificazione degli errori.
 - [x] M3.04 Implementare strategie TLS (scadenza, catena, hostname) e DNS (A/AAAA/CNAME/MX/TXT e resolver) con adapter sostituibili nei test.
-- [ ] M3.05 Implementare heartbeat: endpoint con credenziale dedicata, scadenza, tolleranza e rilevamento delle chiamate mancanti.
+- [x] M3.05 Implementare heartbeat: endpoint con credenziale dedicata, scadenza, tolleranza e rilevamento delle chiamate mancanti.
 - [ ] M3.06 Configurare job e code `checks:eu`/`checks:us`, WithoutOverlapping, timeout, `tries = 1`, `failed()` e idempotenza della persistenza; documentare eventuali retry di dominio con backoff.
 - [ ] M3.07 Creare CheckResult con partizionamento mensile PostgreSQL, indici e gestione anticipata delle nuove partizioni.
 - [ ] M3.08 Testare sequenze `Http::fake()`, endpoint lenti, errori TLS/DNS, heartbeat scaduti, pause, concorrenza, jitter e isolamento dei worker.
@@ -196,7 +210,7 @@ Dipendenze: M3–M4; completa le metriche di M6.
 - [ ] M7.01 Implementare rollup orari/giornalieri idempotenti con uptime, conteggi, media, p50 e p95; estendere lo schema esemplificativo dove necessario.
 - [ ] M7.02 Definire percentili esatti o approssimati e dati aggregabili da conservare: non mediare i percentili orari per ottenere quelli giornalieri.
 - [ ] M7.03 Implementare servizio SLA pesato sul tempo con esclusione di manutenzioni/pause, intersezioni e intervalli parziali; definire assenza dati e denominatore nullo.
-- [ ] M7.04 Implementare job notturno, creazione/drop partizioni, retention per piano e verifica dei rollup prima della rimozione; rispettare la politica concordata sui 30 giorni.
+- [ ] M7.04 Implementare job notturno, creazione/drop partizioni, retention per piano e verifica dei rollup prima della rimozione; rispettare la politica concordata sui 30 giorni. Integrare la pulizia delle ricezioni heartbeat introdotte in M3.05 preservando quelle necessarie agli slot ancora validi.
 - [ ] M7.05 Implementare report mensile PDF con autorizzazione tenant e timezone corretta.
 - [ ] M7.06 Testare confini mese/anno, timezone/DST, finestre sovrapposte, pause storiche, periodi senza check, percentili e riesecuzione dei job su PostgreSQL.
 
@@ -224,7 +238,7 @@ Dipendenze: M1–M2, M7; matrice piani definita in M0.
 - [ ] M9.02 Implementare checkout, cambio piano, cancellazione e portale clienti con UI degli stati di abbonamento.
 - [ ] M9.03 Verificare firma dei webhook Stripe e gestire eventi duplicati/fuori ordine, rinnovi e decadenza.
 - [ ] M9.04 Completare policy centrale per monitor, frequenza minima, status page e retention; applicarla a tutte le mutazioni e ai job. Nota MA: gli override amministrativi attivi prevalgono sullo stato Stripe secondo la precedenza di [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
-- [ ] M9.05 Implementare sospensione deterministica dei monitor eccedenti al downgrade/scadenza e comportamento di successivo upgrade. Nota MA: includere la scadenza o revoca di un override. Nota M3: mantenere `execution_revision` per le mutazioni operative, così i lavori già prenotati vengono rivalutati.
+- [ ] M9.05 Implementare sospensione deterministica dei monitor eccedenti al downgrade/scadenza e comportamento di successivo upgrade. Nota MA: includere la scadenza o revoca di un override. Nota M3: mantenere `execution_revision` per le mutazioni operative, così i lavori già prenotati vengono rivalutati; riusare HeartbeatLifecycle per iniziare una nuova generazione nelle future riprese heartbeat.
 - [ ] M9.06 Testare trial, limiti, downgrade, webhook replay e concorrenza; verificare che nessun percorso aggiri le policy.
 
 Uscita: stato abbonamento coerente con i limiti effettivi, anche dopo eventi asincroni.
@@ -271,7 +285,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3.01–M3.04 sono completati; il prossimo task pronto è M3.05 (heartbeat). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3.01–M3.05 sono completati; il prossimo task pronto è M3.06 (runner, job e code). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -826,3 +840,34 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Limiti: nessun risultato persistito, riepilogo monitor o incidente; consumer applicativo non associato e scheduling disabilitato. Nessuna migration o modifica a `.env`/chiavi/processi/database di sviluppo; test sui servizi isolati. Nessuna nuova CI remota/PHP 8.5 integrata, browser o benchmark dichiarati; nessuna operazione Git/gh dell’agente.
 - **M3.04 completato**, M3 resta aperta. Prossimo task pronto: **M3.05**, heartbeat. MA.05/MA.06 e soglia di latenza rinviati come concordato.
 - Messaggio di commit suggerito: `feat(monitoring): add TLS and DNS checkers`.
+
+
+### 2026-10-26 — M3.05: heartbeat (completato)
+
+- Piano approvato: POST Bearer, finestra mobile, arming immediato e UI minima con token una sola volta. Pausa o inammissibilità del piano restituiscono 204 senza registrazione. Dipendenze M2 e M3.01–M3.04 soddisfatte.
+- Persistenza tenant di stato/ricezioni e strategia allo slot di riferimento implementate; runner, CheckResult, incidenti e attivazione restano successivi.
+- Git/gh riservati all’utente; nessuna migration o modifica all’ambiente di sviluppo.
+
+- Persistenza e confini: nuova migration con `monitor_heartbeats` e `heartbeat_receipts`, FK composite tenant, generazione positiva, digest SHA-256 univoco e timestamp UTC a microsecondi; stato corrente con TeamScope e storico indicizzato/deduplicato per generazione/istante. Backfill dei monitor heartbeat esistenti alla migration, senza segreti o guasti retroattivi. Cleanup storico registrato in M7.04; riarmo nelle future riprese di piano richiamato in M9.05.
+- File applicativi: nuovi `MonitorHeartbeat`, `HeartbeatLifecycle`, `HeartbeatLimits`, action `ReceiveHeartbeat`/`ManageHeartbeatCredentials`, `HeartbeatRateLimited`, DTO `HeartbeatSnapshot`, servizi `HeartbeatStrategy`/`HeartbeatSnapshotReader`, request/controller/middleware dedicati, `routes/heartbeats.php` e `config/heartbeat.php`. Aggiornati `ManageMonitors`, factory monitor, `CheckError`, presenter, bootstrap e rotte monitor. Nessun nuovo pacchetto o modifica ai lockfile.
+- Sicurezza e concorrenza: discovery dal digest limitata alle identità, tenant derivato dal record e rivalidazione sotto lock Team → Monitor → stato; eligibility centralizzata per pausa/piano/quota/cadenza. Token 256 bit mai memorizzati in chiaro, 404 uniforme per invalidi/revocati, 204 senza registrazione per inattivi, limiti 600/IP/minuto e 120/credenziale/minuto con 429 e Retry-After. Ingresso esterno fuori da sessione/CSRF; mutazioni web ancora protette da CSRF reale e policy update.
+- Semantica temporale: finestra mobile da attivazione o ultima ricezione visibile allo slot, down da uguaglianza alla scadenza inclusa la tolleranza. Ricezioni tardive non riparano slot precedenti; resume effettivo e modifiche intervallo/grace avviano una nuova generazione. Cambio nome, resume ripetuto e rotazione token non riarmano; uscita dal tipo e delete invalidano credenziali e rimuovono lo storico associato. Nessun aggiornamento diretto a risultati, riepiloghi monitor o incidenti.
+- UI: nuovo `HeartbeatPanel.tsx`, tipi e dettaglio aggiornati. Metadati non segreti per viewer, gestione per owner/admin/member, conferme, stati caricamento/errore, curl copiabile e token effimero via fetch JSON no-store/CSRF. Nessun token in props/history/session flash/storage/URL; hide, cambio monitor/permessi e unmount cancellano la visualizzazione e annullano le richieste pendenti.
+- Test: nuovi `HeartbeatStrategyTest`, `HeartbeatTest`, `HeartbeatConcurrencyTest` e `HeartbeatPanel.test.tsx`; estesi TeamRouteMatrix, TeamAuthorizationFixture e matrice parametrica a tutte le nuove rotte e ai relativi effetti. Adattati i rollback MonitorModel/TeamIdentity alla nuova dipendenza. Prove con HTTP reale e barriera PostgreSQL per ricezioni, rotazione, pausa/nuova generazione e CSRF; server e fixture sintetici ripuliti, nessuna rete esterna.
+- Correzioni durante le verifiche: adeguate fixture trial non-null e reset della chiave IP test; la barriera per due ricezioni ora usa due listener distinti per garantire processi separati, mantenendo l’osservazione dei lock reali. Risolti controlli Larastan sui docblock di eccezioni dei callback e lint/formato frontend. La suite completa ha intercettato il catalogo centralizzato delle nuove rotte: esteso esplicitamente, senza esclusioni o riduzione dei gate; **31 casi mirati/383 asserzioni** passati prima del nuovo passaggio completo.
+- Verifica finale: `./scripts/verify.sh` **exit 0**, PHP **8.4.27**, formatter dry-run su **312 file** con 0 modifiche, Larastan livello 8 senza errori, **1359 test Pest/8387 asserzioni** (+70/+461 rispetto a M3.04), ESLint/Prettier/TypeScript, **5 test qualità**, **53 test DOM** e build Vite. Log: `/tmp/signalbox-m3-05-verify.log`.
+- Documentazione: nuovo [HEARTBEATS.md](HEARTBEATS.md); aggiornati ARCHITECTURE, BOOTSTRAP, DEPENDENCIES, MONITORS, MONITOR-CRUD, MONITOR-UI, MONITOR-SCHEDULING, HTTP-CHECKERS, TLS-DNS-CHECKERS, TENANCY, OUTBOUND-SECURITY, AUTHORIZATION-MATRIX, TESTING, README e TASKS.
+- Limiti: migration non applicata al database di sviluppo dall’agente; va applicata deliberatamente prima dell’uso del CRUD aggiornato. Nessuna modifica `.env`/chiavi/processi di sviluppo; nessuna nuova CI remota, integrazione PHP 8.5, browser E2E o benchmark dichiarati. Motore disabilitato e consumer non associato fino ai task runner/risultati. Git/gh non eseguiti dall’agente.
+- **M3.05 completato**, M3 resta aperta. Prossimo task pronto: **M3.06**; M3.07 per CheckResult/partizioni. Nessuna riduzione di M3/M4/M5; MA.05/MA.06 e soglia di latenza restano rinviati.
+- Messaggio di commit suggerito: `feat(monitoring): add dedicated heartbeat monitoring`.
+
+
+### 2026-10-26 — Regressione CI HeartbeatTest (corretta e verificata localmente)
+
+- Segnalazione utente dopo il push; log remoto richiesto, nessun accesso Git/gh dell’agente. Riprodotto localmente il primo test senza asset Vite: atteso 200, ricevuto 409 a HeartbeatTest:68.
+- Causa verificata: middleware.version restituisce null senza manifest, mentre Inertia normalizza la versione server a stringa vuota. Il test invia invece un header esplicitamente null, che non coincide con la versione server.
+- Corretto l’header del test con `version(...) ?? ''`, coerente con la normalizzazione server di Inertia. Aggiunto dataset con versione corrente e public path temporaneo vuoto, verificando davvero il ritorno null del middleware senza mock di classi final. La directory viene rimossa alla distruzione dell’istanza applicativa; asset di sviluppo non rinominati o cancellati.
+- Verifiche finali su PHP 8.4.27: HeartbeatTest **24 passati/121 asserzioni** con build disponibile e **24 passati/121 asserzioni** con build coperta nel solo container da una directory vuota. PHP-CS-Fixer dry-run su **312 file**, 0 modifiche. Prima della correzione il caso senza build falliva riproducibilmente con 409.
+- File modificati: `tests/Integration/HeartbeatTest.php`, `docs/TESTING.md`, `docs/TASKS.md`. Nessun cambiamento applicativo, CI, dipendenze, migration o ambiente di sviluppo. Suite globale, frontend e Larastan non ripetuti: la correzione riguarda soltanto il test e la documentazione, e i test non rientrano nei percorsi Larastan. I risultati completi della consegna M3.05 restano storici, non sono una nuova esecuzione.
+- Log remoto non ancora fornito; la causa verificata localmente corrisponde a un 409 sulla prima verifica di pagina HeartbeatTest. Nessuna dichiarazione di CI remota verde o verifica PHP 8.5. Git/gh non eseguiti; prossimo passo: commit/push dell’utente e verifica del nuovo job.
+- Messaggio di commit suggerito: `test: fix heartbeat Inertia version without built assets`.

@@ -3,6 +3,7 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
+import HeartbeatPanel from '../../components/monitors/HeartbeatPanel';
 import { intervalLabel, regionLabel, typeLabel } from '../../components/monitors/labels';
 import type {
     MonitorConfigurationView,
@@ -188,6 +189,15 @@ export default function Show() {
                 <Detail term="Created">{instant(monitor.createdAt, 'Unknown')}</Detail>
                 <Configuration configuration={monitor.configuration} />
             </dl>
+
+            {monitor.heartbeat && (
+                <HeartbeatPanel
+                    key={path}
+                    path={path}
+                    heartbeat={monitor.heartbeat}
+                    canManage={can.update}
+                />
+            )}
 
             <div className="mt-8 flex flex-wrap gap-3">
                 {monitor.state === 'active' && can.pause && (

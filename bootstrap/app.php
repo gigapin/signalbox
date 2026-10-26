@@ -49,7 +49,7 @@ $configureMiddleware = function (Middleware $middleware) use ($preserveMonitorIn
  */
 $configureExceptions = function (Exceptions $exceptions): void {
     $exceptions->dontFlash([
-        'code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes',
+        'code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes', 'credential', 'token', 'token_hash',
         ...MonitorConfigurationMapper::COLUMNS, 'headers',
     ]);
 };
@@ -59,6 +59,10 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: static function (): void {
+            // Dedicated Bearer ingress deliberately runs outside web sessions, Inertia and CSRF.
+            require __DIR__.'/../routes/heartbeats.php';
+        },
     )
     ->withMiddleware($configureMiddleware)
     ->withExceptions($configureExceptions)

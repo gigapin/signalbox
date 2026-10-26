@@ -79,3 +79,8 @@ Scout's database engine builds its query from `Monitor::newQuery()`, so TeamScop
 ## Scheduling and execution outbox (M3.01–M3.02)
 
 `CheckExecution` uses the same fail-closed TeamScope and write guard as Monitor. The scheduling services alone discover cross-team work by selecting identifiers, then re-enter the owning context for private reads/transitions. Composite PostgreSQL ownership prevents an execution from referring to another team's monitor. Delivery envelopes serialize only team/execution IDs; worker middleware restores context and acquisition rechecks identity and eligibility. See [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md).
+
+
+## Heartbeat ingress (M3.05)
+
+The dedicated public Bearer route resolves only state/team/monitor identities by a one-way digest before establishing TenantContext. It then locks Team → Monitor → state and revalidates ownership, credential, type and central eligibility. MonitorHeartbeat uses TeamScope; receipt queries always include explicit owner, state and generation predicates, with composite PostgreSQL foreign keys enforcing ownership. Credential management uses existing route-team binding and MonitorPolicy update, including a fresh check under lock. No public caller-supplied tenant identity is trusted. See [HEARTBEATS.md](HEARTBEATS.md).

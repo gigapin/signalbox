@@ -197,3 +197,13 @@ Run `docker compose run --rm php-test composer test -- --filter=MonitorInput --f
 `NetworkCheckStrategyTest` and `NetworkCheckCoordinatorTest` cover pure expiry/set rules, tenant admission, safe failures, aliases, deadline boundaries, cancellation and the HTTP guard's new bounded resolver. `NetworkCheckTransportTest` starts bounded synthetic loopback TLS/DNS child servers. Temporary CA/leaf certificates and keys are generated with PHP OpenSSL, injected only into the adapter under test and removed after server shutdown. Real probes cover certificate trust/hostname/expiry, stalled TLS, TCP refusal, UDP-to-TCP continuation, timeout isolation and two-client/two-query barriers that prove concurrency without elapsed-time assertions. No external DNS or monitored endpoint is contacted.
 
 Run these files with `docker compose run --rm php-test php vendor/bin/pest tests/Feature/NetworkCheckStrategyTest.php tests/Feature/NetworkCheckCoordinatorTest.php tests/Feature/NetworkCheckTransportTest.php`; the acceptance gate remains `./scripts/verify.sh`. See [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md).
+
+
+## Heartbeat verification (M3.05)
+
+HeartbeatStrategyTest exercises pure rolling-window rules without infrastructure. HeartbeatTest uses isolated PostgreSQL for ingress, credentials, tenancy/policies, plan/pause behavior, receipt history, migration backfill, deduplication, rollback and traffic limits. HeartbeatConcurrencyTest uses committed synthetic fixtures and real local HTTP servers behind a PostgreSQL lock barrier to check concurrent receipts, token changes and lifecycle state revalidation. No external job or real customer is contacted; child servers and committed fixtures are cleaned up. HeartbeatPanel.test.tsx verifies one-time credential handling, CSRF mutations, permissions, confirmation, copy/hide, abort and errors. See [HEARTBEATS.md](HEARTBEATS.md); the full acceptance command remains `./scripts/verify.sh`.
+
+
+### Heartbeat Inertia asset-version regression
+
+The one-time credential privacy test runs both with the current asset version and with an explicitly empty temporary public directory. It uses the real final middleware and asserts that a missing manifest produces null before normalizing the request header to an empty string, matching Inertia's server version. The temporary directory is removed when that application instance is destroyed; developer build output is never renamed or deleted. To reproduce the original CI condition, mount an empty temporary directory over `/var/www/html/public/build` only in a disposable php-test container and run HeartbeatTest.

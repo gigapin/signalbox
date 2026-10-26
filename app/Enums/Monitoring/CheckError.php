@@ -47,6 +47,8 @@ enum CheckError: string
     case DnsResponse = 'dns_response_failed';
     /** A DNS response contains invalid data or an invalid alias chain. */
     case DnsMalformed = 'dns_malformed';
+    /** No heartbeat was received before the scheduled rolling deadline. */
+    case HeartbeatMissed = 'heartbeat_missed';
 
     /** @return string Safe English diagnostic with no destination, credentials or server-provided text. */
     public function message(): string
@@ -71,6 +73,7 @@ enum CheckError: string
             self::DnsMismatch => 'The DNS records did not match the expected set.',
             self::DnsResponse => 'The DNS server did not return a usable response.',
             self::DnsMalformed => 'The DNS response or alias chain is invalid.',
+            self::HeartbeatMissed => 'The expected heartbeat was not received before its deadline.',
         };
     }
 }

@@ -70,7 +70,7 @@ it('keeps the route catalogue complete and each private verb behind its declared
 });
 
 it('enforces route role and membership boundaries without hidden cross-team effects', function (string $name, string $role, string $access): void {
-    $fixture = TeamAuthorizationFixture::create($role);
+    $fixture = TeamAuthorizationFixture::create($role, heartbeat: str_contains($name, 'heartbeat-credential'));
 
     if ($access === 'revoked') {
         $fixture->team->users()->detach($fixture->actor->id);
@@ -198,6 +198,13 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.monitors.resume':
             expect($fixture->loadMonitor()?->is_paused)->toBeFalse();
             break;
+        case 'teams.monitors.heartbeat-credential.store':
+            $digest = DB::table('monitor_heartbeats')->where('monitor_id', $fixture->monitor->id)->value('token_hash');
+            expect($digest)->toBe(hash('sha256', $response->json('token')));
+            break;
+        case 'teams.monitors.heartbeat-credential.destroy':
+            expect(DB::table('monitor_heartbeats')->where('monitor_id', $fixture->monitor->id)->value('token_hash'))->toBeNull();
+            break;
     }
 
     if (in_array($name, ['teams.invitations.store', 'teams.invitations.resend'], true)) {
@@ -245,6 +252,8 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
     'teams.monitors.destroy',
     'teams.monitors.pause',
     'teams.monitors.resume',
+    'teams.monitors.heartbeat-credential.store',
+    'teams.monitors.heartbeat-credential.destroy',
 ]);
 
 it('rejects a foreign ownership successor despite a forged selected team and fresh password', function (): void {

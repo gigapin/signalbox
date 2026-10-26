@@ -118,3 +118,8 @@ Form numbers stay strings, as the browser sends them. Destinations are reserved 
 - Monitors have no target column in the list, because an HTTP target would require decryption.
 - Dates are formatted in the viewer's browser locale. Team-timezone display arrives with dashboards (M6).
 - Real-time status updates are M6, and scheduling is M3.
+
+
+## Heartbeat panel (M3.05)
+
+[HEARTBEATS.md](HEARTBEATS.md) adds safe configured/receipt/deadline metadata to heartbeat detail projections and a cohesive HeartbeatPanel. Managers issue/rotate/revoke through CSRF-protected JSON outside the Inertia router; the returned secret is displayed once, copyable and forgettable. Viewers have no credential controls. Pending mutations are disabled and aborted on unmount, and generic accessible errors avoid echoing response bodies. Observation summaries remain owned by the future runner.

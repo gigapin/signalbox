@@ -2,6 +2,7 @@
 
 /** Declare monitor pages and mutations inside an authorized route team. */
 
+use App\Http\Controllers\Monitoring\HeartbeatCredentialController;
 use App\Http\Controllers\Monitoring\MonitorController;
 use App\Http\Controllers\Monitoring\MonitorPageController;
 use App\Http\Middleware\EstablishTeamContext;
@@ -14,6 +15,14 @@ Route::middleware(['auth', 'verified', EstablishTeamContext::class])
         // Pages carry private configuration projections, so browsers and proxies must not store them.
         Route::middleware(NoStoreAuthentication::class)
             ->group(function (): void {
+                Route::post('/teams/{team}/monitors/{monitor}/heartbeat-credential', [HeartbeatCredentialController::class, 'store'])
+                    ->whereNumber(['team', 'monitor'])
+                    ->name('teams.monitors.heartbeat-credential.store');
+
+                Route::delete('/teams/{team}/monitors/{monitor}/heartbeat-credential', [HeartbeatCredentialController::class, 'destroy'])
+                    ->whereNumber(['team', 'monitor'])
+                    ->name('teams.monitors.heartbeat-credential.destroy');
+
                 Route::get('/teams/{team}/monitors', [MonitorPageController::class, 'index'])
                     ->whereNumber('team')
                     ->name('teams.monitors.index');

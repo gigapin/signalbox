@@ -91,3 +91,16 @@ The matrix stays the reference for every monitor route × role × membership sta
 ## MA platform admin routes
 
 Admin routes are not tenant routes. TeamAuthorizationMatrixTest's discovery excludes `App\Http\Controllers\Admin`, and PlatformAdminAccessTest keeps its own complete catalogue of `/admin` routes. Every team role (owner, admin, member, viewer) receives 404 on every admin route, with nothing written; guests and unverified users are redirected. See [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
+
+
+## Heartbeat entries (M3.05)
+
+| Entry | Authority | Isolation |
+| --- | --- | --- |
+| POST /heartbeats | Dedicated Bearer only; browser/Sanctum identity grants nothing | Digest discovery selects owner IDs only, then TenantContext and locked token/type/eligibility revalidation |
+| POST/DELETE /teams/{team}/monitors/{monitor}/heartbeat-credential | Verified owner/admin/member through MonitorPolicy update and web CSRF; viewer denied | Existing route-team binding plus fresh locked policy |
+| HeartbeatSnapshotReader | Explicit admitted tenant and execution identity | TeamScope plus explicit receipt owner/state/generation/time predicates |
+
+Valid paused/ineligible credentials receive 204 without recording; invalid/revoked credentials receive the same generic 404. New cases are covered by HeartbeatTest and the real HTTP barrier suite. Credentials never enter shared props or the ordinary detail projection. See [HEARTBEATS.md](HEARTBEATS.md).
+
+The central TeamRouteMatrix also explicitly includes both credential mutations and the public ingress catalogue entry. Its parameterized cases cover all managing/viewer roles, foreign or revoked memberships, guest/unverified gates and foreign-child identifiers; aggregate snapshots include heartbeat state and receipts so unauthorized side effects cannot hide outside the original monitor table.

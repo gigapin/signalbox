@@ -1,6 +1,6 @@
 # TLS and DNS checkers (M3.04)
 
-M3.04 adds verified TLS acquisition, DNS record checks and a bounded replacement for the outbound guard's former `dns_get_record()` implementation. It leaves `CheckWorkConsumer` unbound and scheduling disabled. Heartbeat, result persistence, monitor summaries, incidents and notifications remain subsequent tasks.
+M3.04 adds verified TLS acquisition, DNS record checks and a bounded replacement for the outbound guard's former `dns_get_record()` implementation. It leaves `CheckWorkConsumer` unbound and scheduling disabled. Heartbeat is implemented separately in [M3.05](HEARTBEATS.md); result persistence, monitor summaries, incidents and notifications remain subsequent tasks.
 
 ## Boundaries and admission
 

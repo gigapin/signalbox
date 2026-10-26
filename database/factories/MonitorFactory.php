@@ -14,6 +14,7 @@ use App\Data\Monitoring\KeywordMonitorConfiguration;
 use App\Data\Monitoring\TlsMonitorConfiguration;
 use App\Enums\Monitoring\DnsRecordType;
 use App\Models\Monitor;
+use App\Services\Monitoring\HeartbeatLifecycle;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -34,7 +35,10 @@ final class MonitorFactory extends Factory
     /** @return static Default to a complete HTTP variant before Laravel factory persistence. */
     public function configure(): static
     {
-        return $this->http();
+        return $this->http()->afterCreating(static function (Monitor $monitor): void {
+            // Persist the same arming state that the authorized production creation action supplies.
+            app(HeartbeatLifecycle::class)->synchronize($monitor);
+        });
     }
 
     /** @return static Explicit HTTP fixture using a reserved synthetic destination. */

@@ -4,6 +4,7 @@
 
 namespace Tests\Support;
 
+use App\Actions\Monitoring\ManageHeartbeatCredentials;
 use App\Models\Monitor;
 use App\Models\Team;
 use App\Models\TeamInvitation;
@@ -44,9 +45,10 @@ final readonly class TeamAuthorizationFixture
 
     /**
      * @param string $role One of the four persisted fixture roles; owner denotes the designated owner.
+     * @param bool $heartbeat Whether both monitors need initialized dedicated heartbeat credentials.
      * @return self Independent aggregates, with a selected team and deliberately preloaded memberships.
      */
-    public static function create(string $role = 'owner'): self
+    public static function create(string $role = 'owner', bool $heartbeat = false): self
     {
         $team = Team::factory()->create(['name' => 'Matrix Alpha']);
         $foreign = Team::factory()->create(['name' => 'Private Beta']);
@@ -65,8 +67,13 @@ final readonly class TeamAuthorizationFixture
         $local = InvitationFixture::issue($team, 'local-matrix@example.test');
         $remote = InvitationFixture::issue($foreign, 'private-beta@example.test');
 
-        $monitor = app(TenantContext::class)->run($team->id, fn (): Monitor => Monitor::factory()->create(['name' => 'Matrix monitor']));
-        $foreignMonitor = app(TenantContext::class)->run($foreign->id, fn (): Monitor => Monitor::factory()->create(['name' => 'Private Beta monitor']));
+        $monitor = app(TenantContext::class)->run($team->id, fn (): Monitor => ($heartbeat ? Monitor::factory()->heartbeat() : Monitor::factory())->create(['name' => 'Matrix monitor']));
+        $foreignMonitor = app(TenantContext::class)->run($foreign->id, fn (): Monitor => ($heartbeat ? Monitor::factory()->heartbeat() : Monitor::factory())->create(['name' => 'Private Beta monitor']));
+
+        if ($heartbeat) {
+            app(ManageHeartbeatCredentials::class)->rotate($team->owner, $team->id, $monitor->id);
+            app(ManageHeartbeatCredentials::class)->rotate($foreign->owner, $foreign->id, $foreignMonitor->id);
+        }
 
         return new self(
             $team,
@@ -162,6 +169,8 @@ final readonly class TeamAuthorizationFixture
             'users' => self::rows('users', ['id', 'current_team_id'], ['id']),
             'invitations' => self::rows('team_invitations', ['*'], ['id']),
             'monitors' => self::rows('monitors', ['*'], ['id']),
+            'heartbeats' => self::rows('monitor_heartbeats', ['*'], ['id']),
+            'receipts' => self::rows('heartbeat_receipts', ['*'], ['id']),
         ];
     }
 
@@ -176,6 +185,8 @@ final readonly class TeamAuthorizationFixture
             'users' => array_values(array_filter($snapshot['users'], fn (array $row): bool => $row['id'] === $this->foreign->owner_id)),
             'invitations' => array_values(array_filter($snapshot['invitations'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'monitors' => array_values(array_filter($snapshot['monitors'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'heartbeats' => array_values(array_filter($snapshot['heartbeats'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'receipts' => array_values(array_filter($snapshot['receipts'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
         ];
     }
 

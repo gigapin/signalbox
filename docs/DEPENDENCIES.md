@@ -213,3 +213,8 @@ User request for a security update: `docker/php/Dockerfile` moves from `php:8.4-
 TLS/DNS acquisition directly uses existing ReactPHP dependencies previously installed transitively through Reverb. They are now declared explicitly in `composer.json`: `react/dns` ^1.14 (locked v1.14.0), `react/event-loop` ^1.6 (v1.6.0), `react/promise` ^3.3 (v3.3.0), `react/promise-timer` ^1.11 (v1.11.0), and `react/socket` ^1.17 (v1.17.0). `ext-openssl` * makes the existing runtime capability an explicit platform requirement for certificate verification and test certificate generation. These additional `require` keys describe application-owned transport use; no package version was updated. Composer synchronized the lock metadata with `composer update --lock --no-install --no-scripts --no-audit --no-interaction`, reporting nothing to modify in the locked package graph.
 
 The adapters compose cancellable operations on private loops; DNS uses explicit UDP/TCP executors with one timeout, avoiding the factory's default retries, hosts-file handling and cache. See [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md), [official DNS documentation](https://reactphp.org/dns/), [Socket documentation](https://reactphp.org/socket/), and [PHP TLS options](https://www.php.net/manual/en/context.ssl.php). No Docker image, framework major, npm manifest or npm lockfile changes.
+
+
+## M3.05 heartbeat compatibility
+
+Heartbeat uses the existing Laravel/PostgreSQL/React stack and PHP random_bytes/hash primitives. No manifest, lockfile, package version or runtime extension changes. `config/heartbeat.php` is PHP configuration, with mandatory positive IP/credential requests-per-minute limits documented in [HEARTBEATS.md](HEARTBEATS.md).

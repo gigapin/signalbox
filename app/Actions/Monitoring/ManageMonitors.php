@@ -11,6 +11,7 @@ use App\Enums\Monitoring\MonitorStatus;
 use App\Models\Monitor;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Monitoring\HeartbeatLifecycle;
 use App\Services\Monitoring\MonitorConfigurationMapper;
 use App\Services\Monitoring\MonitorInputValidator;
 use App\Services\Monitoring\MonitorLimits;
@@ -31,11 +32,13 @@ final readonly class ManageMonitors
      * @param MonitorInputValidator $validator Shared network-free input validation, including save-time SSRF checks.
      * @param MonitorLimits $limits Central plan quota and cadence rules.
      * @param TenantContext $context Tenant unit of work for the explicit team.
+     * @param HeartbeatLifecycle $heartbeats Heartbeat arming and type transitions under the same locks.
      */
     public function __construct(
         private MonitorInputValidator $validator,
         private MonitorLimits $limits,
         private TenantContext $context,
+        private HeartbeatLifecycle $heartbeats,
     ) {
     }
 
@@ -60,6 +63,7 @@ final readonly class ManageMonitors
             $monitor = new Monitor();
             $this->apply($monitor, $input);
             $monitor->save();
+            $this->heartbeats->synchronize($monitor);
 
             return $monitor;
         });
@@ -114,6 +118,9 @@ final readonly class ManageMonitors
             }
 
             $monitor->save();
+            $restartHeartbeat = $before->intervalSeconds !== $after->intervalSeconds
+                || $monitor->heartbeat_grace_seconds !== ($before->candidate()['heartbeat_grace_seconds'] ?? null);
+            $this->heartbeats->synchronize($monitor, $restartHeartbeat);
 
             return $monitor;
         });
@@ -192,6 +199,7 @@ final readonly class ManageMonitors
             $this->limits->assertInterval($team, $monitor->interval_seconds);
 
             $monitor->forceFill(['is_paused' => false, 'next_check_at' => null])->save();
+            $this->heartbeats->synchronize($monitor, true);
 
             return $monitor;
         });

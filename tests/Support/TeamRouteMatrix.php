@@ -27,6 +27,8 @@ final class TeamRouteMatrix
         'teams.monitors.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.pause' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.resume' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.heartbeat-credential.store' => ['method' => 'POST', 'status' => 200, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.heartbeat-credential.destroy' => ['method' => 'DELETE', 'status' => 204, 'roles' => ['owner', 'admin', 'member']],
     ];
 
     /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */
@@ -40,6 +42,7 @@ final class TeamRouteMatrix
         'invitations.accept' => 'POST',
         'account' => 'GET',
         'account.security' => 'GET',
+        'heartbeats.receive' => 'POST',
     ];
 
     /** @return array<string, array{string, string, string}> Route/role/access scenarios with readable Pest dataset names. */

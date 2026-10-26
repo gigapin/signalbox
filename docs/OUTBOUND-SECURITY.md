@@ -86,3 +86,8 @@ docker compose run --rm php-test composer test -- --filter='Outbound|SecretRedac
 ## HTTP transport integration (M3.03)
 
 [HTTP-CHECKERS.md](HTTP-CHECKERS.md) applies the guard and redirect policy to every initial/followed HTTP-family connection. `GuardedHttpOptions` now also sets `CURLOPT_FRESH_CONNECT` and `CURLOPT_FORBID_REUSE`: a prior connection cannot bypass the current hop's validated address pin. The shared transport preserves TLS verification, prohibits implicit cookies, implements method/body rewriting and refuses cross-origin nonempty body forwarding. Decoded response writes and network time are cumulatively bounded; M3.04 subsequently bounds synchronous guard resolution with a separate cumulative DNS deadline. The historical M2.03 transport exclusions above describe that milestone's original scope.
+
+
+## Heartbeat credential boundary (M3.05)
+
+[HEARTBEATS.md](HEARTBEATS.md) adds a push-only ingress with no outbound destination. Its token exists only in Authorization and a one-time management JSON response; persisted state contains only SHA-256 and ordinary Inertia projections contain only a configured flag and timing metadata. Existing credential/token/Authorization redaction covers these fields, and global flash exclusions include token/digest names. The React panel uses ephemeral state and explicit clipboard access, never history or browser storage. Neither endpoint nor curl URL contains a secret.

@@ -84,6 +84,22 @@ export interface MonitorDetail extends MonitorSummary {
     withinQuota: boolean;
     /** Safe type-specific settings. */
     configuration: MonitorConfigurationView;
+    /** Non-secret heartbeat metadata, present only for heartbeat monitors. */
+    heartbeat?: HeartbeatView;
+}
+
+/** Safe arming and receipt metadata without bearer credentials or their digests. */
+export interface HeartbeatView {
+    /** Whether a dedicated credential has been issued and remains valid. */
+    configured: boolean;
+    /** Absolute public ingress URL without secrets. */
+    endpoint: string;
+    /** Current arming generation's UTC start. */
+    startedAt: string;
+    /** Last accepted UTC receipt, or null before the first call. */
+    lastReceivedAt: string | null;
+    /** Inclusive rolling deadline; paused monitors are rearmed on explicit resume. */
+    dueAt: string;
 }
 
 /** One page of list rows with counters; links are built client-side from the active filters. */

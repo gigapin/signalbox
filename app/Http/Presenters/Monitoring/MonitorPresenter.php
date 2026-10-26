@@ -14,6 +14,7 @@ use App\Enums\Monitoring\MonitorRegion;
 use App\Enums\Monitoring\MonitorStatus;
 use App\Enums\Monitoring\MonitorType;
 use App\Models\Monitor;
+use App\Models\MonitorHeartbeat;
 use App\Services\Monitoring\MonitorConfigurationProjection;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -71,6 +72,24 @@ final readonly class MonitorPresenter
             'createdAt' => self::instant($monitor->created_at),
             'withinQuota' => $withinQuota,
             'configuration' => $this->configuration->project($monitor->configuration()),
+            ...($monitor->type === MonitorType::Heartbeat ? ['heartbeat' => $this->heartbeat($monitor)] : []),
+        ];
+    }
+
+    /**
+     * @param Monitor $monitor Authorized heartbeat monitor within the active tenant context.
+     * @return array{configured: bool, endpoint: string, startedAt: string, lastReceivedAt: string|null, dueAt: string} Safe receipt metadata without the token digest.
+     */
+    private function heartbeat(Monitor $monitor): array
+    {
+        $state = MonitorHeartbeat::query()->where('monitor_id', $monitor->id)->firstOrFail();
+
+        return [
+            'configured' => $state->token_hash !== null,
+            'endpoint' => route('heartbeats.receive'),
+            'startedAt' => $state->started_at->utc()->format('Y-m-d\TH:i:s.uP'),
+            'lastReceivedAt' => $state->last_received_at?->utc()->format('Y-m-d\TH:i:s.uP'),
+            'dueAt' => ($state->last_received_at ?? $state->started_at)->addSeconds($monitor->interval_seconds + ($monitor->heartbeat_grace_seconds ?? 0))->utc()->format('Y-m-d\TH:i:s.uP'),
         ];
     }
 

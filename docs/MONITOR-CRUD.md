@@ -75,3 +75,8 @@ docker compose run --rm php-test composer test -- --filter='MonitorCrud|PlanLimi
 ## Execution generation (M3.01–M3.02)
 
 Mutations now maintain `execution_revision` under the existing Team → Monitor locks: any validated change except the label increments it, and an actual pause increments it once. Name-only edits and repeated pauses preserve it. Acquisition rejects previously reserved generations, including after pause/resume. This does not change observation resets or slot reset rules described above. See [MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md).
+
+
+## Heartbeat lifecycle integration (M3.05)
+
+ManageMonitors now synchronizes heartbeat state inside its existing Team → Monitor transaction. New heartbeat variants arm immediately; real resume and cadence/grace changes start a fresh arming generation. Type exit deletes state/receipts and invalidates credentials. Dedicated credential mutation routes use the existing update policy, rechecked under the same locks, and return one-time no-store JSON rather than Inertia flash. Apply the new migration before using monitor mutations. See [HEARTBEATS.md](HEARTBEATS.md).

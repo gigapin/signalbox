@@ -54,7 +54,23 @@ function heartbeatState(Team $team, Monitor $monitor): MonitorHeartbeat
     return app(TenantContext::class)->run($team->id, fn (): MonitorHeartbeat => MonitorHeartbeat::query()->where('monitor_id', $monitor->id)->sole());
 }
 
-it('issues plaintext only once through explicit JSON and stores only its digest', function (): void {
+it('issues plaintext only once through explicit JSON and stores only its digest', function (bool $missingManifest): void {
+    if ($missingManifest) {
+        // Point only this application instance at an empty public directory; never alter developer assets.
+        $public = sys_get_temp_dir().'/signalbox-heartbeat-public-'.bin2hex(random_bytes(8));
+
+        if (!mkdir($public, 0700)) {
+            throw new RuntimeException('Cannot create the empty public fixture directory.');
+        }
+        $this->app->usePublicPath($public);
+        config(['app.asset_url' => null]);
+        $this->beforeApplicationDestroyed(static function () use ($public): void {
+            rmdir($public);
+        });
+
+        expect(app(HandleInertiaRequests::class)->version(request()))->toBeNull();
+    }
+
     $response = $this->actingAs($this->actor)->postJson($this->path)->assertOk()->assertHeader('Cache-Control', 'no-store, private');
     $token = $response->json('token');
     $state = heartbeatState($this->team, $this->monitor);
@@ -64,10 +80,11 @@ it('issues plaintext only once through explicit JSON and stores only its digest'
         ->and($response->json('endpoint'))->toBe(route('heartbeats.receive'))
         ->and(session()->all())->not->toContain($token);
 
-    $page = $this->getJson("/teams/{$this->team->id}/monitors/{$this->monitor->id}", ['X-Inertia' => 'true', 'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request())]);
+    // Inertia normalizes a missing asset manifest to an empty version string, including on fresh CI runners.
+    $page = $this->getJson("/teams/{$this->team->id}/monitors/{$this->monitor->id}", ['X-Inertia' => 'true', 'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request()) ?? '']);
     $page->assertOk();
     expect($page->getContent())->not->toContain($token, $state->token_hash);
-});
+})->with(['current asset version' => [false], 'missing asset manifest' => [true]]);
 
 it('accepts Bearer-only calls without session or CSRF and ignores client-supplied times and ownership', function (): void {
     $token = app(ManageHeartbeatCredentials::class)->rotate($this->actor, $this->team->id, $this->monitor->id);

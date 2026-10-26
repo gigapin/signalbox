@@ -10,6 +10,12 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Correzione HeartbeatTest — 2026-10-26
+
+- Riprodotto e corretto un 409 sul primo test in assenza di manifest Vite, condizione del backend CI. L’header versione ora usa una stringa vuota quando il middleware restituisce null.
+- HeartbeatTest: **24 test/121 asserzioni** superati sia con build disponibile sia senza build; formatter dry-run su 312 file passato. Aggiunto un caso permanente senza manifest tramite directory pubblica temporanea.
+- Modificati soltanto test e documentazione. CI remota da confermare dopo il nuovo push; il log remoto non è stato fornito. Le verifiche complete M3.05 riportate sotto restano quelle della consegna precedente.
+
 ## Consegna di sessione — M3.05, 2026-10-26
 
 - **M3.05 completato**: ingresso `POST /heartbeats` con Bearer dedicato, scadenza mobile e tolleranza, snapshot storici allo slot programmato e UI di generazione/rotazione/revoca con segreto una sola volta. Dettagli in [HEARTBEATS.md](HEARTBEATS.md).
@@ -854,3 +860,14 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Limiti: migration non applicata al database di sviluppo dall’agente; va applicata deliberatamente prima dell’uso del CRUD aggiornato. Nessuna modifica `.env`/chiavi/processi di sviluppo; nessuna nuova CI remota, integrazione PHP 8.5, browser E2E o benchmark dichiarati. Motore disabilitato e consumer non associato fino ai task runner/risultati. Git/gh non eseguiti dall’agente.
 - **M3.05 completato**, M3 resta aperta. Prossimo task pronto: **M3.06**; M3.07 per CheckResult/partizioni. Nessuna riduzione di M3/M4/M5; MA.05/MA.06 e soglia di latenza restano rinviati.
 - Messaggio di commit suggerito: `feat(monitoring): add dedicated heartbeat monitoring`.
+
+
+### 2026-10-26 — Regressione CI HeartbeatTest (corretta e verificata localmente)
+
+- Segnalazione utente dopo il push; log remoto richiesto, nessun accesso Git/gh dell’agente. Riprodotto localmente il primo test senza asset Vite: atteso 200, ricevuto 409 a HeartbeatTest:68.
+- Causa verificata: middleware.version restituisce null senza manifest, mentre Inertia normalizza la versione server a stringa vuota. Il test invia invece un header esplicitamente null, che non coincide con la versione server.
+- Corretto l’header del test con `version(...) ?? ''`, coerente con la normalizzazione server di Inertia. Aggiunto dataset con versione corrente e public path temporaneo vuoto, verificando davvero il ritorno null del middleware senza mock di classi final. La directory viene rimossa alla distruzione dell’istanza applicativa; asset di sviluppo non rinominati o cancellati.
+- Verifiche finali su PHP 8.4.27: HeartbeatTest **24 passati/121 asserzioni** con build disponibile e **24 passati/121 asserzioni** con build coperta nel solo container da una directory vuota. PHP-CS-Fixer dry-run su **312 file**, 0 modifiche. Prima della correzione il caso senza build falliva riproducibilmente con 409.
+- File modificati: `tests/Integration/HeartbeatTest.php`, `docs/TESTING.md`, `docs/TASKS.md`. Nessun cambiamento applicativo, CI, dipendenze, migration o ambiente di sviluppo. Suite globale, frontend e Larastan non ripetuti: la correzione riguarda soltanto il test e la documentazione, e i test non rientrano nei percorsi Larastan. I risultati completi della consegna M3.05 restano storici, non sono una nuova esecuzione.
+- Log remoto non ancora fornito; la causa verificata localmente corrisponde a un 409 sulla prima verifica di pagina HeartbeatTest. Nessuna dichiarazione di CI remota verde o verifica PHP 8.5. Git/gh non eseguiti; prossimo passo: commit/push dell’utente e verifica del nuovo job.
+- Messaggio di commit suggerito: `test: fix heartbeat Inertia version without built assets`.

@@ -202,3 +202,8 @@ Run these files with `docker compose run --rm php-test php vendor/bin/pest tests
 ## Heartbeat verification (M3.05)
 
 HeartbeatStrategyTest exercises pure rolling-window rules without infrastructure. HeartbeatTest uses isolated PostgreSQL for ingress, credentials, tenancy/policies, plan/pause behavior, receipt history, migration backfill, deduplication, rollback and traffic limits. HeartbeatConcurrencyTest uses committed synthetic fixtures and real local HTTP servers behind a PostgreSQL lock barrier to check concurrent receipts, token changes and lifecycle state revalidation. No external job or real customer is contacted; child servers and committed fixtures are cleaned up. HeartbeatPanel.test.tsx verifies one-time credential handling, CSRF mutations, permissions, confirmation, copy/hide, abort and errors. See [HEARTBEATS.md](HEARTBEATS.md); the full acceptance command remains `./scripts/verify.sh`.
+
+
+### Heartbeat Inertia asset-version regression
+
+The one-time credential privacy test runs both with the current asset version and with an explicitly empty temporary public directory. It uses the real final middleware and asserts that a missing manifest produces null before normalizing the request header to an empty string, matching Inertia's server version. The temporary directory is removed when that application instance is destroyed; developer build output is never renamed or deleted. To reproduce the original CI condition, mount an empty temporary directory over `/var/www/html/public/build` only in a disposable php-test container and run HeartbeatTest.

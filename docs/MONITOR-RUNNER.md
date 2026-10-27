@@ -42,6 +42,8 @@ Acquisition stores the broker payload UUID and attempt alongside the random acqu
 | `cancelled` | `unknown` | null |
 | `infrastructure_failed` | `unknown` | null |
 
+The monitor summary keeps `ssl_expires_at` as the last observed certificate expiry: a slot without a reading (non-observation, or an observed TLS failure without a certificate) leaves the previous value unchanged; only a configuration change resets it (FX.04).
+
 `recorded_at` is independent durable recording time. The ledger terminal transition, result insertion and summary update occur in one transaction. Result correlation or insertion failure rolls back all three. Recovery and failed hooks use the same transaction and lock order. Pre-migration terminal rows receive no fabricated backfill. A legacy direct `finish()` without a `CheckOutcome` retains its historical completed ledger state but records an infrastructure/unknown result; completion alone never invents an up observation.
 
 Reads require `TenantContext` through `BelongsToTeam`. This milestone adds no public result route or API. The private watermark is hidden from generic monitor serialization and cannot be assigned by public monitor input.
@@ -52,7 +54,7 @@ Only the current execution revision can update a summary, and an earlier slot ca
 
 ## Partition operations and retention boundary
 
-`monitors:partitions` prepares the current UTC month and the next two months. The scheduler runs it daily with shared scheduler coordination; it performs no target work and is independent of the engine gate. The ledger also prepares an execution's month on demand, including an old pending slot. `ResultPartitions` serializes creation with a PostgreSQL transaction advisory lock, a two-second lock timeout and verification of the existing relation's parent/bounds. Failure aborts the operation rather than silently writing to a fallback table.
+`monitors:partitions` prepares the current UTC month and the next two months. The scheduler runs it daily with shared scheduler coordination; it performs no target work and is independent of the engine gate. The ledger also prepares an execution's month on demand, including an old pending slot. `ResultPartitions` first checks an existing month without locks or DDL and verifies its parent/bounds; this is the path of every ledger transition after the month exists. A missing month is created with a PostgreSQL transaction advisory lock, a two-second lock timeout and `CREATE TABLE IF NOT EXISTS`, because a fast-path miss may stay cached in the catalog while waiting on the advisory lock. The caller's previous `lock_timeout` is restored before returning: `SET LOCAL` outlives a released savepoint, and the runner prepares partitions inside its acquisition transaction, so the two-second limit must never reach the following Team/Monitor/heartbeat locks (FX.01). Failure aborts the operation rather than silently writing to a fallback table.
 
 No partition is dropped here. Because an observation in the following month can belong to an earlier slot partition, M7 must reconcile raw retention measured from observation/recording time with monthly slot bounds before cleanup. Dropping a month solely because its slot boundary is old would not implement an exact sliding 30-day raw retention policy. Execution pruning must likewise respect retained results and their cascading ownership.
 

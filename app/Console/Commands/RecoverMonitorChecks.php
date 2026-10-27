@@ -20,7 +20,7 @@ final class RecoverMonitorChecks extends Command
 
     /**
      * @param Operation $operation Cohesive scheduling operation.
-     * @return int Success after reporting work processed, including disabled no-op runs.
+     * @return int Success after reporting work processed, including disabled no-op runs; failure when any item failed.
      */
     public function handle(Operation $operation): int
     {
@@ -30,7 +30,15 @@ final class RecoverMonitorChecks extends Command
             return self::SUCCESS;
         }
 
-        $this->info('Processed: '.$operation->run());
+        $pass = $operation->runPass();
+        $this->info('Processed: '.$pass->processed);
+
+        if ($pass->failed > 0) {
+            // Item details are logged by identity; the scheduler sees a failed run while healthy items progressed.
+            $this->error('Failed: '.$pass->failed);
+
+            return self::FAILURE;
+        }
 
         return self::SUCCESS;
     }

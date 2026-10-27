@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace App\Services\Monitoring\Scheduling;
 
+use App\Data\Monitoring\SchedulingPass;
 use App\Models\CheckExecution;
 use App\Models\Monitor;
 use App\Models\Scopes\TeamScope;
@@ -14,6 +15,8 @@ use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /** Global discovery reads only identities; all private work runs inside its owning tenant. */
 final readonly class ReserveMonitorChecks
@@ -30,11 +33,18 @@ final readonly class ReserveMonitorChecks
     /** @return int Number of regional executions reserved; disabled execution performs no database access. */
     public function run(): int
     {
+        return $this->runPass()->processed;
+    }
+
+    /** @return SchedulingPass Reserved executions and monitors whose reservation failed and will be retried. */
+    public function runPass(): SchedulingPass
+    {
         if (config('monitor-scheduling.enabled') !== true) {
-            return 0;
+            return new SchedulingPass(0, 0);
         }
 
         $count = 0;
+        $failed = 0;
         $cutoff = CarbonImmutable::now('UTC');
         Monitor::withoutGlobalScope(TeamScope::class)
             ->select(['id', 'team_id'])
@@ -43,13 +53,23 @@ final readonly class ReserveMonitorChecks
             ->where(function (Builder $query) use ($cutoff): void {
                 $query->whereNull('next_check_at')->orWhere('next_check_at', '<=', $cutoff);
             })
-            ->chunkById((int) config('monitor-scheduling.chunk_size'), function ($monitors) use (&$count): void {
+            ->chunkById((int) config('monitor-scheduling.chunk_size'), function ($monitors) use (&$count, &$failed): void {
                 foreach ($monitors as $monitor) {
-                    $count += $this->reserve($monitor->team_id, $monitor->id);
+                    // One failing monitor must not starve every later identity, including other tenants.
+                    try {
+                        $count += $this->reserve($monitor->team_id, $monitor->id);
+                    } catch (Throwable $exception) {
+                        $failed++;
+                        Log::error('Monitor reservation failed; continuing with the next monitor.', [
+                            'team_id' => $monitor->team_id,
+                            'monitor_id' => $monitor->id,
+                            'exception' => $exception::class,
+                        ]);
+                    }
                 }
             });
 
-        return $count;
+        return new SchedulingPass($count, $failed);
     }
 
     /**

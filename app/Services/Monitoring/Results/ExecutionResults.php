@@ -109,12 +109,18 @@ final readonly class ExecutionResults
             $checked = $observed;
         }
 
-        $expires = $monitor->type === MonitorType::Tls ? $results->pluck('tls_expires_at')->filter()->sort()->first() : null;
-        Monitor::query()->whereKey($monitor->id)->update([
+        $summary = [
             'last_status' => $status->value,
             'last_result_slot_at' => $work->slot_at,
             'last_checked_at' => $checked?->utc()->format('Y-m-d H:i:sP'),
-            'ssl_expires_at' => $expires instanceof CarbonImmutable ? $expires->utc()->format('Y-m-d H:i:sP') : null,
-        ]);
+        ];
+        $expires = $monitor->type === MonitorType::Tls ? $results->pluck('tls_expires_at')->filter()->sort()->first() : null;
+
+        // A slot without a certificate reading keeps the last observed expiry; definition changes reset it in ManageMonitors.
+        if ($expires instanceof CarbonImmutable) {
+            $summary['ssl_expires_at'] = $expires->utc()->format('Y-m-d H:i:sP');
+        }
+
+        Monitor::query()->whereKey($monitor->id)->update($summary);
     }
 }

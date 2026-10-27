@@ -488,3 +488,44 @@ it('preserves a completed heartbeat cohort when the following HTTP cohort fails 
         ->and(DB::table('check_results')->where('kind', 'infrastructure_failed')->count())->toBe(1);
     Http::assertNothingSent();
 });
+
+it('keeps the caller lock timeout when a partition is ensured inside an outer transaction', function (string $slot): void {
+    DB::statement("SET LOCAL lock_timeout = '7s'");
+    DB::transaction(function () use ($slot): void {
+        app(ResultPartitions::class)->ensure(CarbonImmutable::parse($slot));
+        expect(DB::scalar("SELECT current_setting('lock_timeout')"))->toBe('7s');
+    });
+    expect(DB::scalar("SELECT current_setting('lock_timeout')"))->toBe('7s');
+})->with(['existing month' => '2026-10-26T12:00:00Z', 'missing month' => '2031-02-01T00:00:00Z']);
+
+it('leaves the batch transaction lock timeout unchanged after a nested acquisition', function (): void {
+    $team = Team::factory()->business()->create();
+    runnerMonitor($team);
+    $work = runnerWork($team)->sole();
+    DB::statement("SET LOCAL lock_timeout = '7s'");
+    // RunMonitorChecks::consumeBatch() acquires inside its own transaction before locking the heartbeat state.
+    DB::transaction(function () use ($team, $work): void {
+        expect(app(ExecutionLedger::class)->acquire($team->id, $work->id))->not->toBeNull()
+            ->and(DB::scalar("SELECT current_setting('lock_timeout')"))->toBe('7s');
+    });
+});
+
+it('keeps the last observed certificate expiry when the latest TLS slot observes none', function (string $path): void {
+    $known = CarbonImmutable::parse('2027-01-15T00:00:00Z');
+    $team = Team::factory()->business()->create();
+    $monitor = runnerMonitor($team, 'tls', ['ssl_expires_at' => $known]);
+    $work = runnerWork($team)->sole();
+    $ledger = app(ExecutionLedger::class);
+    if ($path === 'cancelled') {
+        DB::table('monitors')->where('id', $monitor->id)->update(['is_paused' => true]);
+        $ledger->acquire($team->id, $work->id);
+    } elseif ($path === 'missed') {
+        CarbonImmutable::setTestNow($work->expires_at);
+        $ledger->recover($team->id, $work->id);
+    } else {
+        $acquired = $ledger->acquire($team->id, $work->id);
+        $ledger->finish($acquired, $path === 'infrastructure_failed', $path === 'observed' ? runnerOutcome($acquired, MonitorStatus::Down) : null);
+    }
+    expect(DB::table('check_results')->value('kind'))->toBe($path)
+        ->and(CarbonImmutable::parse(DB::table('monitors')->value('ssl_expires_at'))->equalTo($known))->toBeTrue();
+})->with(['cancelled', 'missed', 'infrastructure_failed', 'observed']);

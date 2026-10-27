@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace App\Services\Monitoring\Scheduling;
 
 use App\Contracts\Monitoring\CheckWorkPublisher;
+use App\Data\Monitoring\SchedulingPass;
 use App\Models\CheckExecution;
 use App\Models\Scopes\TeamScope;
 use Carbon\CarbonImmutable;
@@ -27,23 +28,41 @@ final readonly class PublishMonitorChecks
     /** @return int Confirmed publications; individual broker failures retain their leases for recovery. */
     public function run(): int
     {
+        return $this->runPass()->processed;
+    }
+
+    /** @return SchedulingPass Confirmed publications and executions whose lease transition failed and will be retried. */
+    public function runPass(): SchedulingPass
+    {
         if (config('monitor-scheduling.enabled') !== true) {
-            return 0;
+            return new SchedulingPass(0, 0);
         }
 
         $count = 0;
+        $failed = 0;
         $now = CarbonImmutable::now('UTC');
         CheckExecution::withoutGlobalScope(TeamScope::class)
             ->select(['id', 'team_id'])
             ->where('state', 'pending')
             ->where('available_at', '<=', $now)
             ->where('expires_at', '>', $now)
-            ->chunkById((int) config('monitor-scheduling.chunk_size'), function ($rows) use (&$count): void {
+            ->chunkById((int) config('monitor-scheduling.chunk_size'), function ($rows) use (&$count, &$failed): void {
                 $groups = [];
                 $capacity = app(\App\Services\Monitoring\Checks\CheckRuntimeLimits::class)->batchSize();
 
                 foreach ($rows as $row) {
-                    $work = $this->ledger->leasePublication($row->team_id, $row->id);
+                    try {
+                        $work = $this->ledger->leasePublication($row->team_id, $row->id);
+                    } catch (Throwable $exception) {
+                        $failed++;
+                        Log::error('Monitor execution lease failed; continuing with the next execution.', [
+                            'team_id' => $row->team_id,
+                            'execution_id' => $row->id,
+                            'exception' => $exception::class,
+                        ]);
+
+                        continue;
+                    }
 
                     if ($work === null) {
                         continue;
@@ -66,8 +85,9 @@ final readonly class PublishMonitorChecks
                 }
             });
 
-        return $count;
+        return new SchedulingPass($count, $failed);
     }
+
     /**
      * @param list<CheckExecution> $batch Leased rows sharing team and region with distinct monitors.
      * @return int Confirmed row acknowledgements.

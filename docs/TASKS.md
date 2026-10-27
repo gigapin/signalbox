@@ -181,6 +181,17 @@ Uscita: controlli funzionanti per tutti i tipi, errori registrati, carico distri
 
 Uscita soddisfatta il 2026-10-26 con M3.08: tutti i tipi attraversano il motore fino ai risultati, errori osservati distinti dall’infrastruttura, tentativi contati, jitter deterministico e isolamento tenant/regionale verificati. Suite completa e backend senza asset: 1411 test/8991 asserzioni; nessun benchmark di throughput dichiarato. Motore di sviluppo ancora disabilitato. Prossimo task M4.01.
 
+## FX — Correzioni dalla revisione pre-M4 (2026-10-27)
+
+Dipendenze: M3. Da completare prima di M4.01, perché M4 consumerà risultati e transizioni del motore. Evidenze da analisi statica; Docker non attivo durante la revisione, nessuna riproduzione eseguita.
+
+- [x] FX.01 `ResultPartitions::ensure()` esegue `SET LOCAL lock_timeout = '2s'` anche quando è annidato (da `ExecutionLedger::acquire()` dentro la transazione di `RunMonitorChecks::consumeBatch()` e da `finish()` nel ramo di errore dello snapshot): il savepoint rilasciato lascia il limite attivo fino al commit esterno, quindi i lock successivi Team/Monitor/esecuzione/heartbeat falliscono dopo 2 s di contesa e il lotto diventa errore infrastrutturale. Correzione: percorso rapido senza lock se la partizione esiste (memo per processo dei mesi verificati), creazione DDL consentita solo a `transactionLevel() === 0`, nessuna `SET LOCAL` nel percorso annidato. Test PostgreSQL: lock del team tenuto oltre 2 s da un secondo processo durante l’acquisizione di un lotto, che deve attendere e completare.
+- [x] FX.02 La connessione `pgsql` non fissa il fuso di sessione: scritture senza offset (formato data dei modelli, `update(['next_check_at' => $next])` in `ReserveMonitorChecks`) sono corrette solo se il server PostgreSQL è in UTC, come le immagini Docker attuali. Su un database gestito con altro fuso slot, scadenze e trial sarebbero spostati. Correzione: `'timezone' => 'UTC'` in `config/database.php` con documentazione; test che verifica `SHOW TimeZone` e il round-trip di un istante dopo aver impostato un fuso diverso come default del ruolo/sessione e riconnesso.
+- [x] FX.03 `ReserveMonitorChecks`, `PublishMonitorChecks` e `RecoverMonitorChecks` non isolano gli errori per elemento: un’eccezione persistente su un monitor con ID basso interrompe ogni esecuzione al secondo e blocca la prenotazione di tutti i monitor successivi, anche di altri tenant. Correzione: try/catch per elemento con log dei soli identificativi, conteggio degli errori, prosecuzione del ciclo ed esito non zero del comando quando ci sono errori. Test con un elemento che fallisce sempre e altri tenant comunque serviti.
+- [x] FX.04 `ExecutionResults::summarize()` azzera `monitors.ssl_expires_at` quando lo slot più recente di un monitor TLS non contiene una scadenza osservata (missed, cancelled, infrastruttura, errore di handshake), contro la semantica “last observed”. Correzione: conservare il valore precedente salvo nuova osservazione o cambio configurazione (già azzerato da `ManageMonitors`). Test sui quattro esiti.
+
+Note da portare in M4/M12, senza modifica ora: `last_status` resta `unknown` fra il primo e il secondo esito regionale dello stesso slot, quindi M4 deve valutare per regione e slot (ADR-007) e non derivare transizioni da `last_status`; ogni transizione del registro prende `FOR UPDATE` sulla riga del team, collo di bottiglia probabile per il benchmark M12.04 con un solo tenant grande.
+
 ## M4 — Incidenti e manutenzioni (14 h, nucleo obbligatorio)
 
 Dipendenze: M3.
@@ -916,3 +927,35 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Verifiche finali: `./scripts/verify.sh` **exit 0** su PHP **8.4.27**, PHP-CS-Fixer dry-run su **328 file**, Larastan livello 8, **1411 test Pest/8991 asserzioni**, lint/formato/TypeScript, **5 test qualità**, **53 test DOM** e build. Log `/tmp/signalbox-m308-verify.log`.
 - Ripetuta l’intera suite backend con directory vuota read-only montata su `public/build`: `docker compose run --rm -v /tmp/signalbox-heartbeat-no-assets-m8y9j5v1:/var/www/html/public/build:ro php-test composer test -- --fail-on-skipped --compact` **exit 0**, **1411 test/8991 asserzioni** senza salti. Log `/tmp/signalbox-m308-no-assets.log`. Nessun codice sorgente modificato dopo queste verifiche; completati soltanto i resoconti Markdown.
 - **M3.08 completato e M3 completata.** Nessuna modifica applicativa necessaria: cambiati soltanto test, fixture e documentazione. Nessuna nuova migration o dipendenza, nessuna attivazione/modifica dello sviluppo, nessun Git/gh. CI remota, PHP 8.5 integrata, browser E2E e benchmark non eseguiti; non necessari alla verifica locale di questo task e non dichiarati come risultati. Prossimo task pronto: **M4.01**.
+
+### 2026-10-26 — Checklist manuale browser prima di M4
+
+- Richiesto dall’utente un documento con ambiente, ruoli, passaggi e risultati attesi. Creato `docs/MANUAL-BROWSER-TESTS.md` e collegato da `docs/TESTING.md`: preparazione locale, account/seeder e membership, dati sintetici, casi A–G con motore spento, sezione H opzionale, registro e cleanup. Ruoli, URL, codici HTTP e limiti confrontati con route, policy, servizi e documentazione correnti.
+- Solo documentazione: nessun test browser eseguito, nessuna attivazione, migration, modifica applicativa o Git/gh. Suite automatica non rieseguita per queste sole modifiche Markdown; M3 resta completata e il prossimo task implementativo resta M4.01.
+
+- Verifica documentale superata: 47 casi identificati, sezioni ambiente/ruoli/dati/registro presenti e collegamenti locali validi. I casi restano NON ESEGUITI fino alla compilazione del registro manuale.
+
+### 2026-10-27 — Revisione bug pre-M4 e piano FX
+
+- Richiesta utente: controllo dei potenziali bug prima di pianificare M4. Rilette scheduling, registro, runner, risultati, partizioni, heartbeat, limiti ed entitlement.
+- Trovati quattro difetti, registrati come FX.01–FX.04 prima di M4. Due note di progetto sono rinviate a M4/M12. Solo analisi statica: Docker non attivo, nessun test eseguito né codice modificato. Git/gh non eseguiti.
+- Prossimo passo: FX.01–FX.04 dopo l’approvazione dell’utente, poi M4.01.
+
+### 2026-10-27 — FX.01–FX.04: correzioni implementate, verifica da completare
+
+- Richiesta utente: correggere i quattro bug in un unico branch, da creare a cura dell’utente (`git switch -c fix/pre-m4-engine`). Nessun comando Git/gh eseguito dall’agente.
+- Riproduzione prima della correzione: i nuovi test FX.01 (`lock_timeout` lasciato a 2 s dopo `ensure()`/`acquire()` annidati) e FX.04 (`ssl_expires_at` azzerato) **fallivano 7/7**. Il test FX.02 ha mostrato che una sessione senza fuso fissato prende il default del ruolo (`America/New_York`) e sposta gli istanti.
+- FX.01 `ResultPartitions`: controllo rapido senza lock né DDL per i mesi esistenti; creazione con advisory lock, `CREATE TABLE IF NOT EXISTS` (un mancato riscontro può restare in cache nel catalogo durante l’attesa dell’advisory lock: emerso dal test di gara esistente e corretto) e ripristino del `lock_timeout` del chiamante.
+- FX.02 `config/database.php`: `'timezone' => 'UTC'` sulla connessione `pgsql`. FX.03: isolamento per elemento in reserve/publish/recover con log dei soli identificativi e della classe dell’eccezione, nuovo DTO `SchedulingPass`, metodo `runPass()` e comandi che terminano con errore se qualche elemento fallisce. `run(): int` resta invariato. FX.04 `ExecutionResults`: si conserva l’ultima scadenza osservata.
+- Test aggiunti: 3 casi in `MonitorRunnerTest` (+7 righe di dataset), 1 in `ServicesDatabaseTest`, 3 in `MonitorSchedulingTest` (un trigger PostgreSQL creato solo nella transazione del test fa fallire sempre un elemento). Documentazione aggiornata: MONITOR-RUNNER, MONITOR-SCHEDULING, SERVICES.
+- Verifiche: PHP-CS-Fixer dry-run su **329 file**, 0 modifiche; Larastan livello 8 senza errori; **Pest 1422 test/9021 asserzioni, 0 skip**; ESLint, Prettier, TypeScript, test qualità e **53 test DOM** superati. Log nello scratchpad della sessione (`fx-verify2.log`).
+- Non completato: la **build Vite** è stata interrotta dalla perdita del daemon Docker (`error waiting for container: unexpected EOF`); in seguito l’utente ha fermato Docker per liberare risorse. Il primo `./scripts/verify.sh` ha superato il `process-timeout` di 300 s di Composer: la suite oggi ha impiegato 679 s contro i 159 s del 26 ottobre, lentezza dovuta all’ambiente (stesso file con e senza la modifica di FX.02: 33 s contro 35 s; nessuna sessione PostgreSQL appesa). Nessun file frontend è stato modificato.
+- Prossimo passo: con Docker attivo, eseguire `docker compose run --rm node npm run build` (o `./scripts/verify.sh` se l’ambiente torna alla velocità abituale), quindi segnare FX.01–FX.04 completati e passare a M4.01.
+- Messaggio di commit suggerito: `fix(monitoring): harden partitions, UTC sessions and scheduling passes`.
+
+### 2026-10-27 — FX.01–FX.04: verifica completata
+
+- Ripresa dopo il riavvio di Docker da parte dell’utente. Nessun file sorgente modificato rispetto alla sessione precedente.
+- `docker compose run --rm node npm run build` superata (11,2 s). Poi `./scripts/verify.sh` **exit 0** in 3 min 41 s: PHP-CS-Fixer dry-run su **329 file** con 0 modifiche, Larastan livello 8 senza errori, **Pest 1422 test/9021 asserzioni** (155,75 s, 0 skip), lint/formato/TypeScript, **5 test di qualità**, **53 test DOM** e build Vite. Log nello scratchpad della sessione (`fx-verify3.log`). Tempi tornati in linea con il 26 ottobre: la lentezza precedente dipendeva dall’ambiente.
+- **FX.01–FX.04 completati.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E. Git/gh restano all’utente.
+- Prossimo passo: commit a cura dell’utente (messaggio suggerito: `fix(monitoring): harden partitions, UTC sessions and scheduling passes`), poi M4.01.

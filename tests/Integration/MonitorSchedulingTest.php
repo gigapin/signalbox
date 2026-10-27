@@ -427,3 +427,48 @@ it('uses active operator entitlements and stops fast reservations at override ex
     expect(app(ReserveMonitorChecks::class)->run())->toBe(0)
         ->and(app(ExecutionLedger::class)->acquire($team->id, schedulingWork($team)->sole()->id))->toBeNull();
 });
+
+/**
+ * Install a rollback-only PostgreSQL trigger that always rejects one monitor's execution writes.
+ *
+ * @param int $monitorId Poisoned identity, lower than the healthy one so it is visited first.
+ * @param string $events Trigger events, such as INSERT or UPDATE.
+ */
+function poisonSchedulingMonitor(int $monitorId, string $events): void
+{
+    DB::statement("CREATE FUNCTION poison_monitor_execution() RETURNS trigger LANGUAGE plpgsql AS \$\$ BEGIN RAISE EXCEPTION 'synthetic poison secret'; END \$\$");
+    DB::statement("CREATE TRIGGER poison_monitor_execution BEFORE {$events} ON check_executions FOR EACH ROW WHEN (NEW.monitor_id = {$monitorId}) EXECUTE FUNCTION poison_monitor_execution()");
+}
+
+it('keeps serving later monitors and tenants when one item always fails', function (string $command): void {
+    $poisonedTeam = Team::factory()->business()->create();
+    $healthyTeam = Team::factory()->business()->create();
+    $poisoned = schedulingMonitor($poisonedTeam);
+    $healthy = schedulingMonitor($healthyTeam);
+    $due = CarbonImmutable::now()->subSecond();
+    DB::table('monitors')->update(['next_check_at' => $due]);
+    if ($command !== 'monitors:dispatch') {
+        app(ReserveMonitorChecks::class)->run();
+        if ($command === 'monitors:recover') {
+            CarbonImmutable::setTestNow(CarbonImmutable::now()->addHour());
+        }
+    }
+    poisonSchedulingMonitor($poisoned->id, $command === 'monitors:dispatch' ? 'INSERT' : 'UPDATE');
+    Illuminate\Support\Facades\Log::spy();
+
+    expect(Illuminate\Support\Facades\Artisan::call($command))->toBe(1);
+
+    $states = DB::table('check_executions')->pluck('state', 'monitor_id');
+    $logged = $command === 'monitors:dispatch' ? ['team_id' => $poisonedTeam->id, 'monitor_id' => $poisoned->id] : ['team_id' => $poisonedTeam->id];
+    match ($command) {
+        'monitors:dispatch' => expect($states->all())->toBe([$healthy->id => 'pending'])
+            ->and(CarbonImmutable::parse(DB::table('monitors')->where('id', $poisoned->id)->value('next_check_at'))->equalTo($due))->toBeTrue(),
+        'monitors:publish' => expect($this->broker->messages)->toHaveCount(1)
+            ->and($this->broker->messages[0]['team'])->toBe($healthyTeam->id),
+        'monitors:recover' => expect($states[$healthy->id])->toBe('missed')->and($states[$poisoned->id])->toBe('pending'),
+    };
+    Illuminate\Support\Facades\Log::shouldHaveReceived('error')->once()->withArgs(
+        static fn (string $message, array $context): bool => array_intersect_assoc($context, $logged) === $logged
+            && !str_contains(json_encode($context, JSON_THROW_ON_ERROR), 'synthetic poison'),
+    );
+})->with(['monitors:dispatch', 'monitors:publish', 'monitors:recover']);

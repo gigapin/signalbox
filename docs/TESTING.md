@@ -236,3 +236,8 @@ docker compose run --rm php-test composer test -- --filter='MonitorEngine|Monito
 ```
 
 The acceptance gate remains `./scripts/verify.sh`, followed by the complete backend suite with an empty read-only directory mounted over `/var/www/html/public/build` in a disposable php-test container. Use `--fail-on-skipped` for that final Pest run. Keep the development engine disabled; no migration, dependency update or development-process restart belongs to M3.08. This matrix verifies deterministic behavior on synthetic services; it does not constitute a production benchmark, remote CI result or integrated PHP 8.5 verification.
+
+
+## Manual browser smoke before M4
+
+[MANUAL-BROWSER-TESTS.md](MANUAL-BROWSER-TESTS.md) provides the Italian operator checklist: environment and accounts, roles, synthetic inputs, browser/DevTools steps, expected outcomes, optional engine activation, result recording and cleanup. Manual execution remains unconfirmed until its per-case log is filled in; automated test results do not imply a browser run.

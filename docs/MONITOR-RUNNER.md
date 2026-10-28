@@ -50,7 +50,7 @@ Reads require `TenantContext` through `BelongsToTeam`. This milestone adds no pu
 
 ## Monitor summary
 
-Only the current execution revision can update a summary, and an earlier slot cannot replace a later watermark. At the latest slot, one configured region reports its observed status; two regions report up/down only once both have matching observed statuses. Partial, discordant or non-observed regional results yield unknown. `last_checked_at` uses an actual observation and never moves backward. TLS summary expiry is the earliest verified expiry available in that slot. Incident counters are untouched.
+Only the current execution revision can update a summary, and an earlier slot cannot replace a later watermark. At the latest slot, one configured region reports its observed status; two regions report up/down only once both have matching observed statuses. Partial, discordant or non-observed regional results yield unknown. `last_checked_at` uses an actual observation and never moves backward. TLS summary expiry is the earliest verified expiry available in that slot. After the summary, the same transaction passes the result to the `ResultObserver` contract, which advances regional failure sequences, `consecutive_failures` and incidents; see [INCIDENTS.md](INCIDENTS.md#regional-confirmation).
 
 ## Partition operations and retention boundary
 

@@ -402,3 +402,10 @@ Decisioni utente: finestra mobile, arming immediato dalla creazione/ripresa, tol
 [INCIDENTS.md](INCIDENTS.md) introduce l’ambito Incidenti di ADR-001 con soli modelli, enum, vincoli e regole pure: `IncidentStatus` (investigating/identified/monitoring/resolved, riapertura solo verso investigating con contatore), `IncidentSeverity` derivata in modo esaustivo dal `CheckError` della conferma, causa automatica distinta dalla nota dichiarata e presa in carico separata dallo stato. Proprietà tenant tramite FK composite e `BelongsToTeam`; un indice unico parziale garantisce al più un incidente aperto per monitor. La timeline è append-only con pubblicazione esplicita una sola volta, imposta da trigger PostgreSQL e dal modello.
 
 Decisioni utente: stati stile status page, severità dal tipo di errore poi modificabile, riapertura dello stesso incidente entro `reopen_window_seconds` (900 s). Nessuna action, job, rotta o UI: valutazione regionale M4.02, transizioni transazionali M4.03, manutenzioni M4.04, UI/policy M4.05.
+
+## Attuazione M4.02–M4.03 — Conferma regionale e ciclo automatico
+
+[INCIDENTS.md](INCIDENTS.md#regional-confirmation) attua ADR-007: `ExecutionResults` invoca il contratto `ResultObserver` nella stessa transazione del risultato, implementato da `IncidentDetection` nell’ambito Incidenti (nessuna dipendenza del motore dagli incidenti). Sequenze per regione persistite e azzerate al cambio di revisione; slot saltati, successi ed esiti non osservati interrompono la sequenza; verdetto congiunto solo a slot completo. Apertura, riapertura entro la finestra e risoluzione automatica con voci di sistema ed eventi dopo commit; azioni manuali con lock Team → Monitor → Incidente e policy rieseguita.
+
+Decisioni utente: M4.02 e M4.03 nello stesso branch; `consecutive_failures` come minimo dei contatori regionali. Nessuna rotta o UI; manutenzioni e notifiche restano successive.
+

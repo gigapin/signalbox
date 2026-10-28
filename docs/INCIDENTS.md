@@ -1,6 +1,6 @@
-# Incidents and timeline model (M4.01)
+# Incidents, regional confirmation and timeline
 
-M4.01 introduces the persistent incident model, its append-only timeline, the status graph and severity derivation. It does **not** open, resolve, acknowledge or reopen incidents: threshold and regional evaluation belong to M4.02, the transactional actions to M4.03, maintenance windows to M4.04 and pages/policies to M4.05. No route, job or UI is added, so the authorization matrix is unchanged.
+The incident model, its append-only timeline, the status graph and severity derivation were introduced first (M4.01). Regional confirmation, automatic opening/resolution/reopening and the manual incident actions follow (M4.02–M4.03, see [Regional confirmation](#regional-confirmation) and [Manual actions](#manual-actions)). Maintenance windows (M4.04), routes/pages/Form Requests (M4.05) and notifications (M5) remain later work; no route or UI exists yet, so the authorization matrix is unchanged.
 
 ## Lifecycle
 
@@ -59,14 +59,62 @@ All instants are UTC `timestamptz`; the models normalize assigned values to UTC 
 - CHECK constraints for status, severity and cause value lists, nonblank note, temporal order, resolution coherence, acknowledgement and reopen coherence. Value lists are literals frozen in the migration and compared with the enums by `IncidentModelTest`.
 - Both models use `BelongsToTeam`: reads and writes fail closed without a tenant context.
 
-## Notes for M4.02–M4.05 and M12
+## Regional confirmation
 
-- Evaluate per region and slot (ADR-007). Do not derive transitions from `monitors.last_status`, which stays `unknown` between the first and second regional result of the same slot.
-- Every result transition locks the team row `FOR UPDATE`; incident actions should keep the existing Team → Monitor lock order and measure this likely bottleneck in the M12.04 benchmark.
+`ExecutionResults::record()` calls the `ResultObserver` contract after writing each terminal result, inside the ledger's Team → Monitor → execution transaction. `IncidentDetection` implements it, so the monitoring engine does not depend on the incident domain, and the incident change commits or rolls back together with the result.
+
+Per region (`monitor_region_sequences`, one row per monitor and region, migration `2026_10_28_000014_create_monitor_region_sequences.php`):
+
+- Results of a superseded `execution_revision` are ignored. A new revision restarts the sequence; every non-name configuration change (including regions and threshold) and every pause already increments the revision.
+- A slot not after the region's latest processed slot is history or a duplicate and changes nothing.
+- An observed failure continues the sequence only when the previous processed slot is exactly the preceding scheduled slot (`MonitorSlots::latest()`) and was a failure; otherwise it starts a new sequence at this slot.
+- An observed success, a missed, cancelled or infrastructure outcome, or a skipped slot interrupts the sequence.
+
+`ConfirmationRule` evaluates a slot only when every configured region processed it in the current revision:
+
+| Verdict | Condition |
+| --- | --- |
+| confirmed | every region observed a failure and reached `confirmation_threshold` (default 3) |
+| recovered | every region observed the target up |
+| inconclusive | disagreement, a missing observation, an incomplete slot or a threshold not yet reached |
+
+With one region its own outcome decides. With two regions a recovery in one region alone never resolves the incident, so a missing region keeps it visibly open. `monitors.consecutive_failures` stores the smallest current count among configured regions: the joint progress towards confirmation (user decision).
+
+`IncidentAutomation` applies the verdict and locks incidents after the monitor:
+
+- **Confirmed**, no unresolved incident: reopen the latest incident resolved at or after `now − reopen_window_seconds` (boundary included); otherwise open a new one with `started_at` = earliest first failing slot among regions, the cause of the most severe region (earlier region wins ties) and `IncidentSeverity::forCause()`. Confirmed with an open incident changes nothing.
+- **Recovered** with an open incident: resolve it. Otherwise nothing.
+- Each change appends a private system entry and dispatches `IncidentOpened`, `IncidentReopened` or `IncidentResolved` (`ShouldDispatchAfterCommit`, identities only). No listener exists yet; notifications and broadcasting consume them later. A rolled-back transaction dispatches nothing.
+- Instants are clamped (`confirmed_at ≥ started_at`, resolution and reopening ≥ confirmation) so a regressing wall clock cannot violate constraints and roll back the triggering result.
+
+Maintenance windows do not yet suppress confirmation; their effect is defined with the maintenance work.
+
+## Manual actions
+
+`App\Actions\Incidents\ManageIncidents` locks Team → Monitor → Incident (same order as detection) and re-runs `IncidentPolicy::update` under the locks. Owners, admins and members manage incidents; viewers only read; non-members and other teams' identities raise not-found.
+
+| Action | Behaviour |
+| --- | --- |
+| `acknowledge` | Open incidents only. Idempotent for the current responsible user; another manager takes over ("Responsibility reassigned."). |
+| `postUpdate` | Same status adds a note (also after resolution); moves between open statuses; resolves an open incident (event dispatched). A resolved incident cannot be reopened manually: only a newly confirmed failure reopens it, so resolving while the failure persists leads to an automatic reopening. |
+| `changeSeverity` | Records "Severity changed from X to Y."; an unchanged value records nothing. |
+| `declareRootCause` | Sets or clears the declared cause; the timeline records only that it changed, never the note text. |
+| `publish` | Publishes a private entry once; repeated calls are idempotent and keep the first `published_at`. |
+
+Text is trimmed and must be 1–5000 characters (`ManageIncidents::TEXT_MAX_LENGTH`, shared with the future Form Requests). Violations raise `IncidentChangeRejected`.
+
+## Notes for maintenance, pages and M12
+
+- Detection evaluates per region and slot (ADR-007) and never derives transitions from `monitors.last_status`.
+- Every result transition and every incident action locks the team row `FOR UPDATE`; measure this likely bottleneck in the M12.04 benchmark.
 
 ## Tests
 
 - `tests/Unit/IncidentStatusTest.php`: full 4×4 transition matrix, open statuses and lifecycle configuration.
 - `tests/Unit/IncidentSeverityTest.php`: severity for every `CheckError`, ordering and `max()`.
 - `tests/Integration/IncidentModelTest.php` (PostgreSQL): round trip, tenant isolation and cross-team foreign keys, single open incident, every CHECK, enum/constraint parity, model transition guards and counted reopening, append-only timeline and publication, cascades and user deletion.
-- Migration rollback suites in `MonitorModelTest` and `TeamIdentityTest` include the new migration.
+- `tests/Unit/RegionalSequenceTest.php`, `tests/Unit/ConfirmationRuleTest.php`: sequence advance, interruptions, skipped slots, stale and duplicate slots, revision reset, one/two region verdicts, incomplete slots, cause/start selection and joint progress.
+- `tests/Integration/IncidentDetectionTest.php` (PostgreSQL, real ledger): no incident before the third failure, single opening, interruptions, automatic resolution and duration, two-region confirmation/recovery with incomplete slots, reopening at the exact window boundary versus a new incident just beyond it, superseded revisions, tenant isolation, idempotent repeated confirmation and no event on rollback.
+- `tests/Integration/ManageIncidentsTest.php`: role matrix, not-found isolation, acknowledgement and takeover, status updates and manual resolution, rejected manual reopening and invalid text, automatic reopening after manual resolution, severity/cause entries and single publication.
+- Migration rollback suites in `MonitorModelTest` and `TeamIdentityTest` include both incident migrations.
+- Concurrency: both regions of a slot are serialized by the ledger's Team → Monitor locks, already covered by the engine concurrency suites; the partial unique index is the final guard. No new two-session test was added for incidents.

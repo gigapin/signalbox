@@ -12,8 +12,10 @@ use App\Contracts\Monitoring\CheckClock;
 use App\Contracts\Monitoring\CheckWorkConsumer;
 use App\Contracts\Monitoring\CheckWorkPublisher;
 use App\Contracts\Monitoring\DnsTransport;
+use App\Contracts\Monitoring\ResultObserver;
 use App\Contracts\Monitoring\TlsTransport;
 use App\Contracts\Security\HostResolver;
+use App\Services\Incidents\IncidentDetection;
 use App\Services\Monitoring\Checks\MonotonicCheckClock;
 use App\Services\Monitoring\Checks\ReactDnsTransport;
 use App\Services\Monitoring\Checks\ReactTlsTransport;
@@ -40,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(BatchCheckWorkConsumer::class, RunMonitorChecks::class);
         $this->app->bind(CheckWorkConsumer::class, RunMonitorChecks::class);
         $this->app->bind(CheckClock::class, MonotonicCheckClock::class);
+        $this->app->bind(ResultObserver::class, IncidentDetection::class);
         $this->app->bind(DnsTransport::class, ReactDnsTransport::class);
         $this->app->bind(TlsTransport::class, ReactTlsTransport::class);
     }

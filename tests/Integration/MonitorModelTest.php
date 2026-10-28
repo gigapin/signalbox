@@ -264,7 +264,9 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $heartbeats = require base_path('database/migrations/2026_10_26_000011_create_monitor_heartbeats.php');
     $results = require base_path('database/migrations/2026_10_26_000012_create_partitioned_check_results.php');
     $incidents = require base_path('database/migrations/2026_10_28_000013_create_incidents_tables.php');
-    // Roll back incident, result, heartbeat and execution dependents in reverse migration order.
+    $sequences = require base_path('database/migrations/2026_10_28_000014_create_monitor_region_sequences.php');
+    // Roll back sequence, incident, result, heartbeat and execution dependents in reverse migration order.
+    $sequences->down();
     $incidents->down();
     $results->down();
     $heartbeats->down();
@@ -276,6 +278,7 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $heartbeats->up();
     $results->up();
     $incidents->up();
+    $sequences->up();
     app(TenantContext::class)->run($team->id, function () use ($team): void {
         expect(Monitor::query()->count())->toBe(0);
         Monitor::factory()->create();

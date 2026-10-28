@@ -246,3 +246,9 @@ The acceptance gate remains `./scripts/verify.sh`, followed by the complete back
 ## Incident model verification (M4.01)
 
 `IncidentStatusTest` and `IncidentSeverityTest` cover the full status transition matrix, the lifecycle configuration and severity derivation for every `CheckError` without infrastructure. `IncidentModelTest` uses isolated PostgreSQL for tenant isolation, cross-team composite foreign keys, the single-open-incident partial index, every lifecycle CHECK, enum/constraint parity, model transition guards, counted reopenings, the append-only timeline trigger and cascades. Concurrent opening is exercised by the M4.03/M4.06 actions, not here. Run them with `docker compose run --rm php-test vendor/bin/pest tests/Unit/IncidentStatusTest.php tests/Unit/IncidentSeverityTest.php tests/Integration/IncidentModelTest.php`; the acceptance gate remains `./scripts/verify.sh`. See [INCIDENTS.md](INCIDENTS.md).
+
+
+## Regional confirmation and incident lifecycle verification (M4.02–M4.03)
+
+`RegionalSequenceTest` and `ConfirmationRuleTest` cover the pure sequence and verdict rules. `IncidentDetectionTest` drives real reservations and `ExecutionLedger` terminal transitions with a fixed clock (`CarbonImmutable::setTestNow`) and faked incident events; `ManageIncidentsTest` covers the manual actions and their policy. Run them with `docker compose run --rm php-test vendor/bin/pest tests/Unit/RegionalSequenceTest.php tests/Unit/ConfirmationRuleTest.php tests/Integration/IncidentDetectionTest.php tests/Integration/ManageIncidentsTest.php`; the acceptance gate remains `./scripts/verify.sh`. See [INCIDENTS.md](INCIDENTS.md).
+

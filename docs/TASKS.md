@@ -10,6 +10,13 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione — M4.02–M4.03, 2026-10-28
+
+- **M4.02 e M4.03 completati** (uniti su decisione dell’utente): sequenze di fallimento per regione nella transazione del risultato, verdetto congiunto per slot, apertura/riapertura/risoluzione automatica con voci di sistema ed eventi dopo commit, azioni manuali (presa in carico, aggiornamenti e risoluzione, severità, causa dichiarata, pubblicazione) con `IncidentPolicy`. Dettagli in [INCIDENTS.md](INCIDENTS.md#regional-confirmation).
+- `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: PHP-CS-Fixer dry-run su **361 file**, Larastan livello 8, **1551 test Pest/9339 asserzioni** (0 skip), lint/formato/TypeScript, **5 test qualità**, **53 test DOM** e build Vite. Log nello scratchpad della sessione (`m402-verify.log`).
+- Nuova migration `2026_10_28_000014_create_monitor_region_sequences.php`, applicata soltanto al database di test: **applicarla deliberatamente al database di sviluppo dopo quella degli incidenti**. Da quel momento ogni risultato registrato può aprire, risolvere o riaprire incidenti. Nessuna rotta, UI, dipendenza o modifica `.env`; Git/gh non eseguiti. CI remota/PHP 8.5 non eseguite.
+- Prossimo task pronto: **M4.04**, finestre di manutenzione e tracciamento delle pause per lo SLA.
+
 ## Consegna di sessione — M4.01, 2026-10-28
 
 - **M4.01 completato**: tabelle `incidents`/`incident_updates`, enum `IncidentStatus`/`IncidentSeverity`, modelli tenant-scoped, factory, `config/incidents.php` (`reopen_window_seconds` = 900). Un solo incidente aperto per monitor (indice unico parziale), timeline append-only con pubblicazione una tantum (trigger + modello), transizioni e riaperture contate verificate anche dal modello. Dettagli in [INCIDENTS.md](INCIDENTS.md).
@@ -204,8 +211,8 @@ Note da portare in M4/M12, senza modifica ora: `last_status` resta `unknown` fra
 Dipendenze: M3.
 
 - [x] M4.01 Modellare incidenti, aggiornamenti, responsabilità, severità, causa e transizioni consentite.
-- [ ] M4.02 Implementare fallimenti consecutivi, soglia configurabile e conferma da seconda regione simulata; definire comportamento con una sola regione.
-- [ ] M4.03 Implementare apertura/chiusura automatica, presa in carico, aggiornamenti timeline e regole di riapertura con transazioni e vincoli contro duplicati.
+- [x] M4.02 Implementare fallimenti consecutivi, soglia configurabile e conferma da seconda regione simulata; definire comportamento con una sola regione.
+- [x] M4.03 Implementare apertura/chiusura automatica, presa in carico, aggiornamenti timeline e regole di riapertura con transazioni e vincoli contro duplicati.
 - [ ] M4.04 Implementare finestre di manutenzione e tracciamento dei periodi di pausa necessari al futuro calcolo SLA.
 - [ ] M4.05 Creare UI incidenti/timeline/manutenzioni con policy e pubblicazione esplicita degli aggiornamenti.
 - [ ] M4.06 Testare che con soglia 3 il primo fallimento non apra incidenti, recupero, flapping, regioni discordanti, manutenzioni e risultati concorrenti o fuori ordine.
@@ -319,7 +326,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01 completato il 2026-10-28, prossimo task pronto M4.02. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.03 completati il 2026-10-28, prossimo task pronto M4.04. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -362,6 +369,11 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-28 | M4.01: severità derivata dal `CheckError` | Scelta utente: mappatura esaustiva critical/major/minor in [INCIDENTS.md](INCIDENTS.md), massimo fra regioni; modifica manuale in M4.03/M4.05. |
 | 2026-10-28 | M4.01: riapertura entro finestra | Scelta utente: conferma entro `reopen_window_seconds` (900 s) dalla risoluzione riapre lo stesso incidente, oltre ne apre uno nuovo; logica in M4.03. `duration_seconds` = resolved_at − started_at ricalcolata a ogni risoluzione. |
 | 2026-10-28 | M4.01: timeline append-only | Correzioni come nuove voci; unica modifica ammessa la pubblicazione una tantum, più l’azzeramento dell’autore richiesto dalla FK alla cancellazione dell’utente. Liste di valori nei CHECK congelate nella migration e confrontate con gli enum da test. |
+| 2026-10-28 | M4.02–M4.03 uniti in un solo branch | Scelta utente: conferma regionale e ciclo automatico degli incidenti insieme, così il percorso guasto → incidente → ripristino è verificabile end-to-end. Rotte/UI restano in M4.05. |
+| 2026-10-28 | `monitors.consecutive_failures` = progresso verso la conferma | Scelta utente: minimo dei contatori delle regioni configurate (0 se una regione non ha stato corrente); dettaglio per regione in `monitor_region_sequences`. |
+| 2026-10-28 | Slot saltato e cambio di revisione interrompono la sequenza | Attuazione di ADR-007: la sequenza prosegue solo se lo slot precedente processato è lo slot programmato immediatamente precedente; ogni modifica non di solo nome (anche soglia e regioni) e ogni pausa incrementano già la revisione. |
+| 2026-10-28 | Risoluzione manuale ammessa, riapertura solo automatica | Una risoluzione manuale con guasto persistente viene riaperta dalla conferma successiva entro la finestra; le persone non possono riportare un incidente risolto a uno stato aperto. |
+| 2026-10-28 | Contratto `ResultObserver` fra motore e incidenti | Il motore invoca il contratto nella transazione del risultato; l’implementazione vive nell’ambito Incidenti (ADR-001), effetti e risultato si confermano o annullano insieme. |
 
 ## Registro sessioni
 
@@ -983,3 +995,17 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Verifica finale `./scripts/verify.sh` **exit 0**: formatter su 340 file, Larastan livello 8, 1497 test/9134 asserzioni con 0 skip, frontend (lint, formato, TypeScript, 5 test qualità, 53 test DOM, build).
 - **M4.01 completato.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E. Migration non applicata al database di sviluppo.
 - Prossimo passo: **M4.02**. Messaggio di commit suggerito: `feat(incidents): model incidents, timeline and transitions`.
+
+### 2026-10-28 — M4.02–M4.03: conferma regionale e ciclo automatico degli incidenti (completati)
+
+- Piano approvato; dipendenza M4.01 soddisfatta. Decisione utente: unire M4.02 e M4.03 nello stesso branch; `monitors.consecutive_failures` rappresenta il minimo dei contatori delle regioni configurate (progresso verso la conferma).
+- Perimetro: sequenze per regione sotto il lock del ledger, verdetto per slot, apertura/riapertura/risoluzione automatica con voci di sistema ed eventi dopo commit, azioni manuali (presa in carico, aggiornamenti, severità/nota, pubblicazione) con policy. Manutenzioni, rotte/UI e notifiche restano successive.
+- Branch suggerito all’utente: `feat/regional-incident-confirmation`. Nessun Git/gh eseguito dall’agente.
+- Implementati: `App\Contracts\Monitoring\ResultObserver` e `RecordedResult` (invocati da `ExecutionResults::record()`); `RegionalSequence`, `SlotVerdict`, `SlotVerdictKind`, `ConfirmationRule` (regole pure); `IncidentDetection`, `IncidentAutomation`, `IncidentLifecycle`; modello `MonitorRegionSequence` e migration `2026_10_28_000014_create_monitor_region_sequences.php`; eventi `IncidentOpened`/`IncidentReopened`/`IncidentResolved` (`ShouldDispatchAfterCommit`); `ManageIncidents`, `IncidentPolicy`, `IncidentChangeRejected`; binding in `AppServiceProvider`.
+- Test: `RegionalSequenceTest`, `ConfirmationRuleTest` (30 casi), `IncidentDetectionTest` (11, ledger reale con orologio fissato), `ManageIncidentsTest` (13); rollback di `MonitorModelTest`/`TeamIdentityTest` estesi alla nuova migration. Suite del motore esistenti verdi con l’observer attivo (223 test nella regressione mirata).
+- Difetti emersi dai test e corretti: la risoluzione manuale restituiva la prima voce della timeline invece di quella di risoluzione (ordinamento della relazione), ora `IncidentLifecycle::resolve()` restituisce la voce creata; l’helper di test alternava monitor saltando slot, comportamento corretto della sequenza, quindi i monitor sono eseguiti in sequenza.
+- Deviazione dal piano: nessun nuovo test a due sessioni sulla concorrenza degli incidenti. Le due regioni dello stesso slot sono serializzate dai lock Team → Monitor del ledger, già coperti dalle suite di concorrenza del motore; l’indice `incidents_single_open` resta la garanzia finale e la conferma ripetuta è verificata idempotente. Non aggiunta la relazione `Monitor::regionSequences()`, non usata.
+- Documentazione: INCIDENTS (conferma regionale, azioni manuali, test), ARCHITECTURE, TESTING, BOOTSTRAP, MONITOR-RUNNER.
+- Verifica finale `./scripts/verify.sh` **exit 0**: formatter su 361 file, Larastan livello 8, 1551 test/9339 asserzioni con 0 skip, frontend completo e build.
+- **M4.02 e M4.03 completati.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E. Migration non applicata al database di sviluppo.
+- Prossimo passo: **M4.04**. Messaggio di commit suggerito: `feat(incidents): confirm regional failures and open, resolve and reopen incidents automatically`.

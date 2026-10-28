@@ -6,8 +6,11 @@ declare(strict_types=1);
 
 namespace App\Services\Monitoring\Results;
 
+use App\Contracts\Monitoring\ResultObserver;
 use App\Data\Monitoring\Checks\CheckOutcome;
+use App\Data\Monitoring\RecordedResult;
 use App\Enums\Monitoring\CheckResultKind;
+use App\Enums\Monitoring\MonitorRegion;
 use App\Enums\Monitoring\MonitorStatus;
 use App\Enums\Monitoring\MonitorType;
 use App\Models\CheckExecution;
@@ -21,8 +24,11 @@ use InvalidArgumentException;
 /** Call only inside the ledger's Team → Monitor → execution transaction, after partition preparation. */
 final readonly class ExecutionResults
 {
-    /** @param TenantContext $tenants Active private write boundary. */
-    public function __construct(private TenantContext $tenants)
+    /**
+     * @param TenantContext $tenants Active private write boundary.
+     * @param ResultObserver $observer Consumer of each recorded result inside the same transaction.
+     */
+    public function __construct(private TenantContext $tenants, private ResultObserver $observer)
     {
     }
 
@@ -56,6 +62,8 @@ final readonly class ExecutionResults
             CheckResultKind::Cancelled => 'The execution was no longer eligible.',
             CheckResultKind::Infrastructure => 'The worker did not durably complete an observation.',
         };
+        $status = $outcome === null ? MonitorStatus::Unknown : $outcome->status;
+
         DB::table('check_results')->insert([
             'team_id' => $work->team_id,
             'execution_id' => $work->id,
@@ -64,7 +72,7 @@ final readonly class ExecutionResults
             'slot_at' => $work->slot_at->utc()->format('Y-m-d H:i:sP'),
             'monitor_revision' => $work->monitor_revision,
             'kind' => $kind->value,
-            'status' => ($outcome === null ? MonitorStatus::Unknown : $outcome->status)->value,
+            'status' => $status->value,
             'checked_at' => $outcome?->observedAt->utc()->format('Y-m-d H:i:s.uP'),
             'recorded_at' => $recordedAt->utc()->format('Y-m-d H:i:s.uP'),
             'response_time_ms' => $outcome?->latencyMs === null ? null : (int) round($outcome->latencyMs, 0, PHP_ROUND_HALF_UP),
@@ -74,6 +82,17 @@ final readonly class ExecutionResults
             'tls_expires_at' => $outcome?->tlsExpiresAt?->utc()->format('Y-m-d H:i:sP'),
         ]);
         $this->summarize($work);
+        $this->observer->recorded(new RecordedResult(
+            $work->team_id,
+            $work->monitor_id,
+            MonitorRegion::from($work->region),
+            $work->slot_at,
+            $work->monitor_revision,
+            $kind,
+            $status,
+            $outcome?->error,
+            $recordedAt,
+        ));
     }
 
     /**

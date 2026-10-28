@@ -20,6 +20,7 @@ use Database\Factories\MonitorFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Scout\Searchable;
 
 /**
@@ -61,6 +62,7 @@ use Laravel\Scout\Searchable;
  * @property \Carbon\CarbonImmutable|null $created_at UTC creation timestamp.
  * @property \Carbon\CarbonImmutable|null $updated_at UTC modification timestamp.
  * @property-read Team $team Owning team; relation traversal never grants another tenant's data.
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Incident> $incidents Incidents opened for this monitor.
  */
 final class Monitor extends Model
 {
@@ -187,5 +189,11 @@ final class Monitor extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /** @return HasMany<Incident, $this> Incidents of this monitor, resolved through the tenant scope. */
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(Incident::class);
     }
 }

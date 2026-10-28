@@ -10,6 +10,13 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Consegna di sessione — M4.01, 2026-10-28
+
+- **M4.01 completato**: tabelle `incidents`/`incident_updates`, enum `IncidentStatus`/`IncidentSeverity`, modelli tenant-scoped, factory, `config/incidents.php` (`reopen_window_seconds` = 900). Un solo incidente aperto per monitor (indice unico parziale), timeline append-only con pubblicazione una tantum (trigger + modello), transizioni e riaperture contate verificate anche dal modello. Dettagli in [INCIDENTS.md](INCIDENTS.md).
+- `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: PHP-CS-Fixer dry-run su **340 file**, Larastan livello 8, **1497 test Pest/9134 asserzioni** (0 skip), lint/formato/TypeScript, **5 test qualità**, **53 test DOM** e build Vite. Log nello scratchpad della sessione (`m401-verify.log`).
+- Nuova migration `2026_10_28_000013_create_incidents_tables.php`, applicata soltanto al database di test: **applicarla deliberatamente al database di sviluppo**. Nessuna rotta, job, UI, dipendenza o modifica `.env`; Git/gh non eseguiti. CI remota/PHP 8.5 non eseguite.
+- Prossimo task pronto: **M4.02**, fallimenti consecutivi per regione, soglia e conferma dalla seconda regione.
+
 ## Consegna di sessione — M3.08, 2026-10-26
 
 - **M3.08 completato, M3 completata**: matrice integrata con **21 nuovi casi**: sequenze reali fino alla persistenza, errori e ripristini, heartbeat ai confini temporali, pause/modifiche, worker persistenti tra tenant, regioni indipendenti e lock Redis fra processi. Matrice completa in [TESTING.md](TESTING.md#integrated-engine-acceptance-m308).
@@ -196,7 +203,7 @@ Note da portare in M4/M12, senza modifica ora: `last_status` resta `unknown` fra
 
 Dipendenze: M3.
 
-- [ ] M4.01 Modellare incidenti, aggiornamenti, responsabilità, severità, causa e transizioni consentite.
+- [x] M4.01 Modellare incidenti, aggiornamenti, responsabilità, severità, causa e transizioni consentite.
 - [ ] M4.02 Implementare fallimenti consecutivi, soglia configurabile e conferma da seconda regione simulata; definire comportamento con una sola regione.
 - [ ] M4.03 Implementare apertura/chiusura automatica, presa in carico, aggiornamenti timeline e regole di riapertura con transazioni e vincoli contro duplicati.
 - [ ] M4.04 Implementare finestre di manutenzione e tracciamento dei periodi di pausa necessari al futuro calcolo SLA.
@@ -312,7 +319,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; il prossimo task pronto è M4.01 (modello incidenti e transizioni). La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01 completato il 2026-10-28, prossimo task pronto M4.02. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -351,6 +358,10 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-23 | pgAdmin opzionale solo su localhost | Richiesta utente: servizio `pgadmin` nel profilo `dbadmin`, porta pubblicata solo su `127.0.0.1`, login da `.env` senza valori predefiniti, solo database di sviluppo, immagine fissata per digest. Strumento di ispezione: le scritture da pgAdmin non passano da scope, policy e audit. |
 | 2026-10-23 | Aggiornamento di sicurezza a PHP 8.4.27 | Richiesta utente urgente: correzioni di sicurezza del core (GHSA-w8hw-w9fx-j79w, GHSA-6wmf-4rv5-p3rp) verificate nel changelog di php.net; immagine base fissata con tag patch esplicito e nuovo digest. Vincoli Composer, lockfile ed estensioni invariati. |
 | 2026-10-23 | M2.05: filtri invalidi ignorati e segnalati, non errore di validazione | Deviazione dal piano: una validazione GET fallita reindirizza alla URL precedente, che per una lista aperta direttamente è la stessa URL invalida (loop). La pagina mostra `rejectedFilters` come stato di errore. |
+| 2026-10-28 | M4.01: stati incidente stile status page | Scelta utente: investigating/identified/monitoring/resolved; stati aperti liberi fra loro, resolved solo verso investigating come riapertura contata. Presa in carico separata (`acknowledged_by`/`acknowledged_at`). |
+| 2026-10-28 | M4.01: severità derivata dal `CheckError` | Scelta utente: mappatura esaustiva critical/major/minor in [INCIDENTS.md](INCIDENTS.md), massimo fra regioni; modifica manuale in M4.03/M4.05. |
+| 2026-10-28 | M4.01: riapertura entro finestra | Scelta utente: conferma entro `reopen_window_seconds` (900 s) dalla risoluzione riapre lo stesso incidente, oltre ne apre uno nuovo; logica in M4.03. `duration_seconds` = resolved_at − started_at ricalcolata a ogni risoluzione. |
+| 2026-10-28 | M4.01: timeline append-only | Correzioni come nuove voci; unica modifica ammessa la pubblicazione una tantum, più l’azzeramento dell’autore richiesto dalla FK alla cancellazione dell’utente. Liste di valori nei CHECK congelate nella migration e confrontate con gli enum da test. |
 
 ## Registro sessioni
 
@@ -959,3 +970,16 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - `docker compose run --rm node npm run build` superata (11,2 s). Poi `./scripts/verify.sh` **exit 0** in 3 min 41 s: PHP-CS-Fixer dry-run su **329 file** con 0 modifiche, Larastan livello 8 senza errori, **Pest 1422 test/9021 asserzioni** (155,75 s, 0 skip), lint/formato/TypeScript, **5 test di qualità**, **53 test DOM** e build Vite. Log nello scratchpad della sessione (`fx-verify3.log`). Tempi tornati in linea con il 26 ottobre: la lentezza precedente dipendeva dall’ambiente.
 - **FX.01–FX.04 completati.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E. Git/gh restano all’utente.
 - Prossimo passo: commit a cura dell’utente (messaggio suggerito: `fix(monitoring): harden partitions, UTC sessions and scheduling passes`), poi M4.01.
+
+### 2026-10-28 — M4.01: modello incidenti e transizioni (completato)
+
+- Piano approvato; dipendenze M3 e FX.01–FX.04 soddisfatte. Perimetro: schema `incidents`/`incident_updates`, enum di stato e severità, modelli, factory, regole pure di transizione, test e documentazione. Valutazione soglia/regioni (M4.02), action di apertura/chiusura/presa in carico/riapertura (M4.03), manutenzioni (M4.04) e UI/policy (M4.05) restano successive.
+- Decisioni utente: stati stile status page (`investigating`/`identified`/`monitoring`/`resolved`) con presa in carico separata; severità derivata dal `CheckError` della conferma e modificabile in seguito; riapertura dello stesso incidente entro una finestra di cooldown, altrimenti nuovo incidente.
+- Branch suggerito all’utente: `git switch -c feat/incident-model` da `staging`. Nessun Git/gh eseguito dall’agente.
+- Implementati: `app/Enums/Incidents/IncidentStatus.php`, `IncidentSeverity.php`; `app/Models/Incident.php`, `IncidentUpdate.php`, relazione `Monitor::incidents()`; migration `2026_10_28_000013_create_incidents_tables.php` (FK composite tenant, indice `incidents_single_open`, CHECK di coerenza, trigger `guard_incident_update_change`); factory `IncidentFactory`/`IncidentUpdateFactory`; `config/incidents.php`.
+- Test: `tests/Unit/IncidentStatusTest.php`, `tests/Unit/IncidentSeverityTest.php`, `tests/Integration/IncidentModelTest.php`; aggiunta la nuova migration ai test di rollback di `MonitorModelTest` e `TeamIdentityTest`. Prima esecuzione mirata: 2 errori (closure statica nello stato della factory, corretta); poi 162 test/531 asserzioni superati.
+- Durante l’implementazione: la FK `author_id ON DELETE SET NULL` è un UPDATE sulla timeline, quindi il trigger consente esplicitamente il solo azzeramento dell’autore (coperto dal test di cancellazione utente).
+- Documentazione: nuovo [INCIDENTS.md](INCIDENTS.md); sezioni M4.01 in ARCHITECTURE, TESTING e BOOTSTRAP.
+- Verifica finale `./scripts/verify.sh` **exit 0**: formatter su 340 file, Larastan livello 8, 1497 test/9134 asserzioni con 0 skip, frontend (lint, formato, TypeScript, 5 test qualità, 53 test DOM, build).
+- **M4.01 completato.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E. Migration non applicata al database di sviluppo.
+- Prossimo passo: **M4.02**. Messaggio di commit suggerito: `feat(incidents): model incidents, timeline and transitions`.

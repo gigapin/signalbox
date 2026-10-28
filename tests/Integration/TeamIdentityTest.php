@@ -238,6 +238,8 @@ it('reverses identity and dependent migrations without changing baseline identit
         // Incidents reference monitors and users through foreign keys and are reversed before them.
         'database/migrations/2026_10_28_000013_create_incidents_tables.php',
         'database/migrations/2026_10_28_000014_create_monitor_region_sequences.php',
+        'database/migrations/2026_10_28_000015_create_maintenance_windows.php',
+        'database/migrations/2026_10_28_000016_create_monitor_pause_periods.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

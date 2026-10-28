@@ -1,6 +1,6 @@
 # Incidents, regional confirmation and timeline
 
-The incident model, its append-only timeline, the status graph and severity derivation were introduced first (M4.01). Regional confirmation, automatic opening/resolution/reopening and the manual incident actions follow (M4.02–M4.03, see [Regional confirmation](#regional-confirmation) and [Manual actions](#manual-actions)). Maintenance windows (M4.04), routes/pages/Form Requests (M4.05) and notifications (M5) remain later work; no route or UI exists yet, so the authorization matrix is unchanged.
+The incident model, its append-only timeline, the status graph and severity derivation were introduced first (M4.01). Regional confirmation, automatic opening/resolution/reopening and the manual incident actions follow (M4.02–M4.03, see [Regional confirmation](#regional-confirmation) and [Manual actions](#manual-actions)). Maintenance windows and pause history are described in [MAINTENANCE.md](MAINTENANCE.md). Routes/pages/Form Requests (M4.05) and notifications (M5) remain later work; no route or UI exists yet, so the authorization matrix is unchanged.
 
 ## Lifecycle
 
@@ -87,7 +87,7 @@ With one region its own outcome decides. With two regions a recovery in one regi
 - Each change appends a private system entry and dispatches `IncidentOpened`, `IncidentReopened` or `IncidentResolved` (`ShouldDispatchAfterCommit`, identities only). No listener exists yet; notifications and broadcasting consume them later. A rolled-back transaction dispatches nothing.
 - Instants are clamped (`confirmed_at ≥ started_at`, resolution and reopening ≥ confirmation) so a regressing wall clock cannot violate constraints and roll back the triggering result.
 
-Maintenance windows do not yet suppress confirmation; their effect is defined with the maintenance work.
+A confirmation whose slot lies inside a maintenance window opens and reopens nothing, while recovery still resolves; see [MAINTENANCE.md](MAINTENANCE.md#effect-on-incidents).
 
 ## Manual actions
 

@@ -168,7 +168,7 @@ it('reopens a manually resolved incident when the failure is confirmed again', f
     $verdict = new SlotVerdict(SlotVerdictKind::Confirmed, CarbonImmutable::now('UTC'), CheckError::Timeout);
 
     CarbonImmutable::setTestNow(CarbonImmutable::now('UTC')->addMinutes(5));
-    app(TenantContext::class)->run($team->id, fn () => DB::transaction(fn () => app(IncidentAutomation::class)->apply($incident->monitor()->firstOrFail(), $verdict, CarbonImmutable::now('UTC'))));
+    app(TenantContext::class)->run($team->id, fn () => DB::transaction(fn () => app(IncidentAutomation::class)->apply($incident->monitor()->firstOrFail(), $verdict, CarbonImmutable::now('UTC'), CarbonImmutable::now('UTC'))));
     $reopened = app(TenantContext::class)->run($team->id, fn (): Incident => Incident::query()->findOrFail($incident->id));
 
     expect($reopened->status)->toBe(IncidentStatus::Investigating)

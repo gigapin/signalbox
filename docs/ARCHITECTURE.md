@@ -409,3 +409,9 @@ Decisioni utente: stati stile status page, severità dal tipo di errore poi modi
 
 Decisioni utente: M4.02 e M4.03 nello stesso branch; `consecutive_failures` come minimo dei contatori regionali. Nessuna rotta o UI; manutenzioni e notifiche restano successive.
 
+## Attuazione M4.04 — Manutenzioni e storico delle pause
+
+[MAINTENANCE.md](MAINTENANCE.md) attua le esclusioni di ADR-009: finestre di manutenzione per monitor con passato immutabile (azione con lock Team → Monitor → finestra e `MonitorPolicy::update`), storico di pausa volontaria e sospensione di piano scritto da un trigger PostgreSQL su ogni cambio dei flag, `ExclusionPeriods` e `TimeInterval::union()` come base del futuro servizio SLA. Una conferma in manutenzione non apre né riapre incidenti; il ripristino li risolve comunque.
+
+Decisioni utente: nessun nuovo incidente in manutenzione, passato immutabile, trigger come unico scrittore dello storico pause. Nessuna rotta o UI.
+

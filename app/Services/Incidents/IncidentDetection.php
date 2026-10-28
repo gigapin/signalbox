@@ -66,6 +66,6 @@ final readonly class IncidentDetection implements ResultObserver
         }
 
         $verdict = $this->rule->verdict($regions, $sequences, $monitor->confirmation_threshold, $monitor->execution_revision, $result->slotAt);
-        $this->automation->apply($monitor, $verdict, $result->recordedAt);
+        $this->automation->apply($monitor, $verdict, $result->slotAt, $result->recordedAt);
     }
 }

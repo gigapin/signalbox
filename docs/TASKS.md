@@ -10,6 +10,15 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+## Chiusura di sessione e ripartenza — 2026-10-28
+
+- Sessione chiusa su richiesta dell’utente. Completati in questa sessione: **M4.01** (modello incidenti), **M4.02–M4.03** (conferma regionale e ciclo automatico, uniti su decisione dell’utente) e **M4.04** (manutenzioni e storico pause). Ultima verifica completa `./scripts/verify.sh` exit 0: 375 file formattati, Larastan livello 8, 1582 test Pest/9432 asserzioni, 0 skip, frontend e build superati. Le consegne sotto descrivono i singoli interventi.
+- Branch suggeriti all’utente, uno per task: `feat/incident-model`, `feat/regional-incident-confirmation`, `feat/maintenance-windows`. Stato Git, commit, push e CI remota non verificati dall’agente (Git/gh riservati all’utente); nessun esito CI o PHP 8.5 dichiarato.
+- **Database di sviluppo**: l’agente non ha applicato migration. Prima di usare l’applicazione applicare deliberatamente, in ordine, `2026_10_28_000013_create_incidents_tables.php`, `2026_10_28_000014_create_monitor_region_sequences.php`, `2026_10_28_000015_create_maintenance_windows.php`, `2026_10_28_000016_create_monitor_pause_periods.php`. Dopo la 000014 ogni risultato registrato può aprire, risolvere o riaprire incidenti; il motore resta disabilitato per default (`MONITOR_SCHEDULING_ENABLED=false`).
+- **Prossimo task pronto: M4.05**, UI incidenti/timeline/manutenzioni con policy e pubblicazione esplicita. Base già pronta senza rotte: `ManageIncidents` (presa in carico, aggiornamenti/risoluzione, severità, causa, pubblicazione), `ManageMaintenanceWindows` (schedule/reschedule/cancel), `IncidentPolicy`, `MonitorPolicy::update` per le manutenzioni, eccezioni `IncidentChangeRejected`/`MaintenanceWindowRejected` da tradurre in errori di validazione, limiti testo `ManageIncidents::TEXT_MAX_LENGTH` (5000) e `ManageMaintenanceWindows::REASON_MAX_LENGTH` (1000) per le Form Request. Estendere `TeamRouteMatrix`/AUTHORIZATION-MATRIX alle nuove rotte; pagine React con stati di caricamento/errore/vuoto, accessibilità e test DOM. Poi M4.06 (matrice di test della milestone, inclusa concorrenza a due sessioni non ancora coperta per gli incidenti).
+- Per ripartire leggere AGENTS, specifica, questo file, [INCIDENTS.md](INCIDENTS.md), [MAINTENANCE.md](MAINTENANCE.md), ARCHITECTURE (ADR-007/009 e sezioni M4), [MONITOR-UI.md](MONITOR-UI.md) per i pattern delle pagine e TESTING.
+- Preferenze dell’utente da rispettare: nomi di branch, messaggi e corpi di commit solo descrittivi di ciò che viene realizzato, **senza riferimenti a milestone, task o documenti**; messaggio di commit di una breve frase. Decisioni ancora valide: soglia di latenza rinviata, MA.05/MA.06 rinviati, nessuna riduzione di M3/M4/M5.
+
 ## Consegna di sessione — M4.04, 2026-10-28
 
 - **M4.04 completato**: finestre di manutenzione per monitor con passato immutabile (`ManageMaintenanceWindows`: schedule/reschedule/cancel con lock e `MonitorPolicy::update`), storico di pausa volontaria e sospensione di piano scritto da trigger PostgreSQL, `MaintenanceSchedule`, `ExclusionPeriods` e `TimeInterval::union()` per il futuro SLA. Una conferma in manutenzione non apre né riapre incidenti; il ripristino li risolve comunque. Dettagli in [MAINTENANCE.md](MAINTENANCE.md).
@@ -1032,3 +1041,7 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Verifica finale `./scripts/verify.sh` **exit 0**: formatter su 375 file, Larastan livello 8, 1582 test/9432 asserzioni con 0 skip, frontend completo e build.
 - **M4.04 completato.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E. Migration non applicate al database di sviluppo.
 - Prossimo passo: **M4.05**. Messaggio di commit suggerito: `feat(maintenance): schedule maintenance windows and record pause history`.
+
+### 2026-10-28 — Chiusura sessione
+
+- Richiesta dell’utente di chiudere la sessione e preparare la ripartenza. Aggiunta la sezione di chiusura in testa al documento con stato, migration da applicare, prossimo task M4.05 e preferenze. Solo documentazione: nessun codice modificato dopo l’ultima verifica completa, quindi controlli non rieseguiti. Nessun Git/gh.

@@ -78,12 +78,26 @@ All writes retain the framework's CSRF protection. Inertia forms use the existin
 
 The normal local setup must already have the configured application key, installed dependencies and its own database. Apply migrations only deliberately to the intended local environment; automated verification uses only `php-test` and never runs them against development storage. The existing `MAIL_MAILER=log` default records development notification links locally; configure `APP_URL` to the browser-reachable application URL so signed links use the correct host/port. Do not commit keys, real mail credentials or notification logs.
 
-Tests fake notifications and external HTTP, exercise password-broker and verification state against PostgreSQL, cover negative/temporal cases, verify safe projections and perform two-connection registration/reset/recovery lock probes. DOM tests mount the actual Inertia provider and intercept only network boundaries; they cover submission/loading/errors, keyboard method switching, verification resend, explicit empty states and ephemeral recovery-code fetching/error handling. No real mail provider, third-party authenticator, full browser automation, remote CI or production deployment is claimed.
+Tests fake notifications and external HTTP, exercise password-broker and verification state against PostgreSQL, cover negative/temporal cases, verify safe projections and perform two-connection registration/reset/recovery lock probes. DOM tests mount the actual Inertia provider and intercept only network boundaries; they cover submission/loading/errors, keyboard method switching, verification resend, explicit empty states and ephemeral recovery-code fetching/error handling. These automated checks do not exercise a real mail provider, third-party authenticator, full browser automation, remote CI or production deployment. The separate local Mailtrap confirmation below is user-provided manual evidence.
 
 ```sh
 ./scripts/verify.sh
 docker compose run --rm php-test composer test -- --fail-on-skipped
 ```
+
+## Local mail evidence — 2026-10-20
+
+The main development application is available on `http://127.0.0.1:8000`; port 18090 refers only to the older isolated M0 verification environment. After correcting HTTP environment inheritance, local migration status showed all M1 migrations already applied by the user. The agent did not rerun development migrations or seed accounts.
+
+The developer's current local configuration resolves to SMTP at `sandbox.smtp.mailtrap.io:2525`, and the user confirmed that it works. Messages are captured by the corresponding Mailtrap **Email Sandbox inbox**, not delivered to the recipients' real mailboxes. The committed `.env.example` retains the offline `MAIL_MAILER=log` default, which writes messages to the configured application log (normally `storage/logs/laravel.log`). SMTP credentials remain only in the untracked local configuration and are not reproduced here.
+
+Two `MAIL_MAILER` assignments were observed in the local `.env`: `log` followed by `smtp`; the effective configuration check returned `smtp`. Prefer one assignment per key when maintaining that local file. The agent did not edit it. Because the container now preserves environment overrides with `--no-reload`, restart web explicitly after local configuration changes:
+
+```sh
+docker compose restart web
+```
+
+The user's Mailtrap confirmation does not claim a complete manual 2FA walkthrough or production email delivery.
 
 ## M1.03 invitation continuation
 

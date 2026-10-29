@@ -31,4 +31,16 @@ return [
 
     // Minimum seconds between two verification messages for the same channel.
     'verification_resend_seconds' => 60,
+
+    // Single HTTP attempt bounds; DNS has the shared, separate one-second resolution budget.
+    'http' => [
+        // Maximum transfer time in seconds, including connection establishment.
+        'timeout_seconds' => 5,
+
+        // Maximum connection-establishment time in seconds, within the transfer timeout.
+        'connect_timeout_seconds' => 2,
+
+        // Maximum decoded response bytes; a larger response aborts instead of being truncated.
+        'response_max_bytes' => 16384,
+    ],
 ];

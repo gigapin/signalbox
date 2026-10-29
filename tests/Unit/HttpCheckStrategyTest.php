@@ -16,11 +16,11 @@ use App\Enums\Monitoring\KeywordMode;
 use App\Enums\Monitoring\MonitorRegion;
 use App\Enums\Monitoring\MonitorStatus;
 use App\Enums\Monitoring\MonitorType;
-use App\Services\Monitoring\Checks\BoundedResponseBuffer;
+use App\Services\Http\BoundedResponseBuffer;
+use App\Services\Http\ResponseByteBudget;
 use App\Services\Monitoring\Checks\HttpStatusStrategy;
 use App\Services\Monitoring\Checks\HttpStrategyResolver;
 use App\Services\Monitoring\Checks\KeywordStrategy;
-use App\Services\Monitoring\Checks\ResponseByteBudget;
 use Carbon\CarbonImmutable;
 use Tests\Support\CheckInputFixture;
 

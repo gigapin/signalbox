@@ -18,7 +18,7 @@ interface ChannelVerificationSender
      * @param string $channelName Label the recipient sees, so the message is recognizable.
      * @param ChannelConfiguration $configuration Destination and credentials.
      * @param string $code Six-digit plaintext code; never logged.
-     * @throws ChannelDeliveryFailed When the provider refuses, times out or the channel type has no adapter.
+     * @throws ChannelDeliveryFailed When the provider refuses, times out or the recording-only stub cannot verify.
      */
     public function send(string $channelName, ChannelConfiguration $configuration, string $code): void;
 }

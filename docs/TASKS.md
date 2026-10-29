@@ -10,6 +10,8 @@ Stati: `[ ]` da fare, `[/]` in corso, `[x]` completato, `[!]` bloccato. Gli ID s
 
 Le ore sono quelle delle singole righe della specifica: **178 ore complessive**, mentre il totale dichiarato è ~158 ore e l'introduzione indica 130–150 ore. Ristimare dopo M0, includendo documentazione capillare e controlli richiesti; non assumere 8–9 settimane come scadenza confermata.
 
+Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
+
 ## Consegna di sessione — M5.02, 2026-10-29
 
 - **M5.02 completato** su richiesta dell’utente; M5.01 e M4 soddisfano le dipendenze. Adapter email, Slack, Telegram, webhook firmato e SMS stub dietro `ChannelAdapter`, `ChannelAdapterRegistry`, `ChannelMessage` e `ChannelDeliveryReceipt`; `AdapterChannelVerificationSender` sostituisce il sender indisponibile. I quattro canali reali possono ora ricevere il codice e attivarsi; SMS registra solo metadati, restituisce soppressione e non può verificarsi. Dettagli e contratto HMAC in [NOTIFICATIONS.md](NOTIFICATIONS.md#provider-adapters-m502).

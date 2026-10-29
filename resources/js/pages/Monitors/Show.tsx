@@ -9,6 +9,9 @@ import { incidentsPath, maintenancePath } from '../../components/incidents/urls'
 import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
 import HeartbeatPanel from '../../components/monitors/HeartbeatPanel';
 import { intervalLabel, regionLabel, typeLabel } from '../../components/monitors/labels';
+import EscalationPanel from '../../components/notifications/EscalationPanel';
+import type { MonitorEscalationView } from '../../components/notifications/types';
+import { monitorEscalationPath } from '../../components/notifications/urls';
 import type {
     MonitorConfigurationView,
     MonitorDetail,
@@ -24,6 +27,8 @@ interface ShowProps extends MonitorPageProps {
     recentIncidents: IncidentSummary[];
     /** Current and recently finished maintenance windows. */
     maintenance: MaintenanceView;
+    /** Escalation policy choice and its effect. */
+    escalation: MonitorEscalationView;
     /** Interface hints derived from MonitorPolicy. */
     can: { update: boolean; delete: boolean; pause: boolean; resume: boolean };
 }
@@ -131,7 +136,8 @@ function Configuration({ configuration }: ConfigurationProps) {
 
 /** Keep actions in one form so their shared processing state prevents concurrent submissions. */
 export default function Show() {
-    const { team, monitor, recentIncidents, maintenance, can } = usePage<ShowProps>().props;
+    const { team, monitor, recentIncidents, maintenance, escalation, can } =
+        usePage<ShowProps>().props;
     const form = useForm<Record<string, never>>({});
     const path = monitorPath(team.id, monitor.id);
 
@@ -227,6 +233,14 @@ export default function Show() {
             <MaintenancePanel
                 path={maintenancePath(team.id, monitor.id)}
                 maintenance={maintenance}
+                canManage={can.update}
+            />
+
+            <EscalationPanel
+                key={`${monitor.id}:${escalation.policyId ?? 'default'}`}
+                teamId={team.id}
+                action={monitorEscalationPath(team.id, monitor.id)}
+                escalation={escalation}
                 canManage={can.update}
             />
 

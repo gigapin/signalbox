@@ -5,8 +5,10 @@
 use App\Enums\Identity\TeamRole;
 use App\Exceptions\MissingTenantContext;
 use App\Http\Middleware\EstablishTeamContext;
+use App\Models\EscalationPolicy;
 use App\Models\Membership;
 use App\Models\Monitor;
+use App\Models\NotificationChannel;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Notifications\TeamInvitationNotification;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
+use Tests\Support\RecordingVerificationSender;
 use Tests\Support\TeamAuthorizationFixture;
 use Tests\Support\TeamRouteMatrix;
 
@@ -29,6 +32,7 @@ beforeEach(function (): void {
     $this->freezeTime();
     Cache::flush();
     Notification::fake();
+    $this->sender = RecordingVerificationSender::bind();
 });
 
 it('keeps the route catalogue complete and each private verb behind its declared gates', function (): void {
@@ -111,7 +115,8 @@ it('enforces route role and membership boundaries without hidden cross-team effe
     expect(fn () => app(TenantContext::class)->requireTeamId())->toThrow(MissingTenantContext::class);
 
     if (!$allowed) {
-        expect($fixture->snapshot())->toBe($before);
+        expect($fixture->snapshot())->toBe($before)
+            ->and($this->sender->sent)->toBe([]);
         Notification::assertNothingSent();
 
         return;
@@ -244,6 +249,62 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.monitors.maintenance.destroy':
             expect($fixture->loadWindows())->toBe([]);
             break;
+        case 'teams.notifications.index':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Notifications/Index')
+                ->where('team.id', $fixture->team->id)
+                ->where('channels.0.id', $fixture->channel->id)
+                ->where('channels.0.editable', in_array($role, ['owner', 'admin'], true) ? [] : null)
+                ->has('policies', 1)
+                ->where('policies.0.id', $fixture->policy->id)
+                ->where('can.manage', in_array($role, ['owner', 'admin'], true)));
+            $response->assertDontSee($fixture->channel->config_json['signing_secret'], false)
+                ->assertDontSee('hooks.example.test/signalbox', false);
+            break;
+        case 'teams.notification-channels.store':
+            $created = app(TenantContext::class)->run($fixture->team->id, fn () => NotificationChannel::query()->where('name', 'Matrix created channel')->sole());
+            expect($created->team_id)->toBe($fixture->team->id)->and($created->is_active)->toBeFalse();
+            break;
+        case 'teams.notification-channels.update':
+            expect($fixture->loadChannel()?->name)->toBe('Matrix renamed channel')
+                ->and($fixture->loadChannel()?->is_active)->toBeTrue();
+            break;
+        case 'teams.notification-channels.destroy':
+            expect($fixture->loadChannel())->toBeNull();
+            break;
+        case 'teams.notification-channels.verification.store':
+            expect($this->sender->sent)->toHaveCount(1)
+                ->and($fixture->loadChannel()?->verification_sent_at?->toIso8601String())->toBe(now()->toIso8601String());
+            break;
+        case 'teams.notification-channels.verification.confirm':
+            expect($fixture->loadChannel()?->verification_code_hash)->toBeNull()
+                ->and($fixture->loadChannel()?->verified_at?->toIso8601String())->toBe(now()->toIso8601String());
+            break;
+        case 'teams.notification-channels.activation':
+            expect($fixture->loadChannel()?->is_active)->toBeFalse();
+            break;
+        case 'teams.notification-channels.signing-secret':
+            expect($fixture->loadChannel()?->config_json['signing_secret'])->toBe($response->json('secret'))
+                ->and($response->headers->get('Cache-Control'))->toContain('no-store');
+            break;
+        case 'teams.escalation-policies.store':
+            expect(array_map(static fn (EscalationPolicy $policy): array => [$policy->name, $policy->is_default], $fixture->loadPolicies()))
+                ->toBe([['Matrix policy', false], ['Matrix created policy', true]]);
+            break;
+        case 'teams.escalation-policies.update':
+            expect($fixture->loadPolicies()[0]->name)->toBe('Matrix renamed policy')
+                ->and($fixture->loadPolicies()[0]->steps_json)->toEqual([['after_minutes' => 0, 'channel_ids' => [$fixture->channel->id]]]);
+            break;
+        case 'teams.escalation-policies.destroy':
+            expect($fixture->loadPolicies())->toBe([]);
+            break;
+        case 'teams.monitors.escalation-policy':
+            expect($fixture->loadMonitor()?->escalation_policy_id)->toBe($fixture->policy->id);
+            break;
+    }
+
+    if (!str_contains($name, 'verification.store')) {
+        expect($this->sender->sent)->toBe([]);
     }
 
     if (in_array($name, ['teams.invitations.store', 'teams.invitations.resend'], true)) {
@@ -302,6 +363,15 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
     'teams.monitors.maintenance.store',
     'teams.monitors.maintenance.update',
     'teams.monitors.maintenance.destroy',
+    'teams.notification-channels.update',
+    'teams.notification-channels.destroy',
+    'teams.notification-channels.verification.store',
+    'teams.notification-channels.verification.confirm',
+    'teams.notification-channels.activation',
+    'teams.notification-channels.signing-secret',
+    'teams.escalation-policies.update',
+    'teams.escalation-policies.destroy',
+    'teams.monitors.escalation-policy',
 ]);
 
 it('rejects a foreign ownership successor despite a forged selected team and fresh password', function (): void {

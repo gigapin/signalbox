@@ -14,6 +14,7 @@ use App\Contracts\Monitoring\CheckWorkPublisher;
 use App\Contracts\Monitoring\DnsTransport;
 use App\Contracts\Monitoring\ResultObserver;
 use App\Contracts\Monitoring\TlsTransport;
+use App\Contracts\Notifications\ChannelVerificationSender;
 use App\Contracts\Security\HostResolver;
 use App\Services\Incidents\IncidentDetection;
 use App\Services\Monitoring\Checks\MonotonicCheckClock;
@@ -21,6 +22,7 @@ use App\Services\Monitoring\Checks\ReactDnsTransport;
 use App\Services\Monitoring\Checks\ReactTlsTransport;
 use App\Services\Monitoring\Checks\RunMonitorChecks;
 use App\Services\Monitoring\Scheduling\RedisCheckWorkPublisher;
+use App\Services\Notifications\UnavailableChannelVerificationSender;
 use App\Services\Security\SystemHostResolver;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
@@ -30,8 +32,8 @@ use Laravel\Cashier\Cashier;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register tenant identity, the execution publisher, monotonic check clock and outbound DNS resolver,
-     * and disable billing entry points until M9.
+     * Register tenant identity, the execution publisher, monotonic check clock, outbound DNS resolver and the
+     * verification sender (unavailable until channel adapters exist), and disable billing entry points until M9.
      */
     public function register(): void
     {
@@ -45,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ResultObserver::class, IncidentDetection::class);
         $this->app->bind(DnsTransport::class, ReactDnsTransport::class);
         $this->app->bind(TlsTransport::class, ReactTlsTransport::class);
+        $this->app->bind(ChannelVerificationSender::class, UnavailableChannelVerificationSender::class);
     }
 
     /**

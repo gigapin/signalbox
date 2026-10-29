@@ -59,11 +59,13 @@ use Laravel\Scout\Searchable;
  * @property \Carbon\CarbonImmutable|null $next_check_at Next scheduled UTC slot; null means not initialized.
  * @property \Carbon\CarbonImmutable|null $ssl_expires_at Last observed certificate expiry in UTC.
  * @property \Carbon\CarbonImmutable|null $last_result_slot_at Latest slot admitted to the observation summary.
+ * @property int|null $escalation_policy_id Same-team policy overriding the team default; null uses the default.
  * @property \Carbon\CarbonImmutable|null $created_at UTC creation timestamp.
  * @property \Carbon\CarbonImmutable|null $updated_at UTC modification timestamp.
  * @property-read Team $team Owning team; relation traversal never grants another tenant's data.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Incident> $incidents Incidents opened for this monitor.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, MaintenanceWindow> $maintenanceWindows Planned maintenance of this monitor.
+ * @property-read EscalationPolicy|null $escalationPolicy Override policy within the same tenant.
  */
 final class Monitor extends Model
 {
@@ -131,6 +133,7 @@ final class Monitor extends Model
             'next_check_at' => 'immutable_datetime',
             'ssl_expires_at' => 'immutable_datetime',
             'last_result_slot_at' => 'immutable_datetime',
+            'escalation_policy_id' => 'integer',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];
@@ -202,5 +205,11 @@ final class Monitor extends Model
     public function maintenanceWindows(): HasMany
     {
         return $this->hasMany(MaintenanceWindow::class);
+    }
+
+    /** @return BelongsTo<EscalationPolicy, $this> Override policy, resolved through the tenant scope. */
+    public function escalationPolicy(): BelongsTo
+    {
+        return $this->belongsTo(EscalationPolicy::class);
     }
 }

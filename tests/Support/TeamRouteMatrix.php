@@ -39,6 +39,18 @@ final class TeamRouteMatrix
         'teams.monitors.maintenance.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.maintenance.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.maintenance.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.notifications.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.notification-channels.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.verification.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.verification.confirm' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.activation' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.signing-secret' => ['method' => 'POST', 'status' => 200, 'roles' => ['owner', 'admin']],
+        'teams.escalation-policies.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.escalation-policies.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.escalation-policies.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.monitors.escalation-policy' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
     ];
 
     /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */

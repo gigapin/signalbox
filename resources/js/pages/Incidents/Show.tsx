@@ -18,11 +18,15 @@ import type {
 } from '../../components/incidents/types';
 import { incidentPath, incidentsPath } from '../../components/incidents/urls';
 import { monitorPath } from '../../components/monitors/urls';
+import DeliveryLog from '../../components/notifications/DeliveryLog';
+import type { DeliveryView } from '../../components/notifications/types';
 
 /** Detail page response from IncidentPageController::show. */
 interface ShowProps extends IncidentPageProps {
     /** Detail projection with the oldest-first timeline. */
     incident: IncidentDetail;
+    /** Notification deliveries of the incident, oldest first. */
+    deliveries: DeliveryView[];
     /** Status values a new timeline entry may carry; only `resolved` once resolved. */
     postableStatuses: string[];
     /** Enum values offered by the forms. */
@@ -313,7 +317,7 @@ function Entry({ path, entry, canPublish }: EntryProps) {
 
 /** Responsibility is offered only while open; forms re-render from the server after every change. */
 export default function Show() {
-    const { team, incident, postableStatuses, options, textMaxLength, can, errors } =
+    const { team, incident, deliveries, postableStatuses, options, textMaxLength, can, errors } =
         usePage<ShowProps>().props;
     const acknowledge = useForm<Record<string, never>>({});
     const path = incidentPath(team.id, incident.id);
@@ -413,6 +417,8 @@ export default function Show() {
                     </ol>
                 )}
             </section>
+
+            <DeliveryLog deliveries={deliveries} />
 
             {can.update ? (
                 <section

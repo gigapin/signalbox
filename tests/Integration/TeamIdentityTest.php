@@ -240,6 +240,9 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_10_28_000014_create_monitor_region_sequences.php',
         'database/migrations/2026_10_28_000015_create_maintenance_windows.php',
         'database/migrations/2026_10_28_000016_create_monitor_pause_periods.php',
+        // Channels, policies and delivery logs reference teams and incidents; the override references policies.
+        'database/migrations/2026_10_29_000017_create_notification_tables.php',
+        'database/migrations/2026_10_29_000018_add_escalation_policy_to_monitors.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

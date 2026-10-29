@@ -5,13 +5,16 @@
 namespace Tests\Support;
 
 use App\Actions\Monitoring\ManageHeartbeatCredentials;
+use App\Models\EscalationPolicy;
 use App\Models\Incident;
 use App\Models\IncidentUpdate;
 use App\Models\MaintenanceWindow;
 use App\Models\Monitor;
+use App\Models\NotificationChannel;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
+use App\Services\Notifications\ChannelVerificationCodes;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +22,9 @@ use Illuminate\Support\Facades\DB;
 /** All identities and capabilities are synthetic; raw links stay in memory only. */
 final readonly class TeamAuthorizationFixture
 {
+    /** @var string Plaintext of the pending verification code of both fixture channels. */
+    public const string PENDING_CODE = '123456';
+
     /**
      * @param Team $team Actor's initial team.
      * @param Team $foreign Disjoint team with distinct owner and invitation.
@@ -37,6 +43,10 @@ final readonly class TeamAuthorizationFixture
      * @param IncidentUpdate $foreignEntry Private timeline entry of the foreign incident.
      * @param MaintenanceWindow $window Upcoming window of the local monitor, still editable and deletable.
      * @param MaintenanceWindow $foreignWindow Upcoming window of the foreign monitor.
+     * @param NotificationChannel $channel Verified local webhook channel with the pending code PENDING_CODE, used by no policy.
+     * @param NotificationChannel $foreignChannel Equivalent channel of the foreign team.
+     * @param EscalationPolicy $policy Local policy notifying its own separate channel.
+     * @param EscalationPolicy $foreignPolicy Policy of the foreign team.
      */
     private function __construct(
         public Team $team,
@@ -56,6 +66,10 @@ final readonly class TeamAuthorizationFixture
         public IncidentUpdate $foreignEntry,
         public MaintenanceWindow $window,
         public MaintenanceWindow $foreignWindow,
+        public NotificationChannel $channel,
+        public NotificationChannel $foreignChannel,
+        public EscalationPolicy $policy,
+        public EscalationPolicy $foreignPolicy,
     ) {
     }
 
@@ -93,6 +107,8 @@ final readonly class TeamAuthorizationFixture
 
         [$incident, $entry, $window] = self::incidentState($team, $monitor);
         [$foreignIncident, $foreignEntry, $foreignWindow] = self::incidentState($foreign, $foreignMonitor);
+        [$channel, $policy] = self::notificationState($team);
+        [$foreignChannel, $foreignPolicy] = self::notificationState($foreign);
 
         return new self(
             $team,
@@ -112,7 +128,30 @@ final readonly class TeamAuthorizationFixture
             $foreignEntry,
             $window,
             $foreignWindow,
+            $channel,
+            $foreignChannel,
+            $policy,
+            $foreignPolicy,
         );
+    }
+
+    /**
+     * @param Team $team Owning team.
+     * @return array{NotificationChannel, EscalationPolicy} Verified webhook channel whose code was sent two minutes ago, and a policy using another channel.
+     */
+    private static function notificationState(Team $team): array
+    {
+        return app(TenantContext::class)->run($team->id, function (): array {
+            $now = CarbonImmutable::now('UTC');
+            $channel = NotificationChannel::factory()->webhook()->active()->create(['name' => 'Matrix channel']);
+            $channel->forceFill([
+                'verification_code_hash' => app(ChannelVerificationCodes::class)->digest($channel->id, self::PENDING_CODE),
+                'verification_expires_at' => $now->addMinutes(13),
+                'verification_sent_at' => $now->subMinutes(2),
+            ])->save();
+
+            return [$channel, EscalationPolicy::factory()->create(['name' => 'Matrix policy'])];
+        });
     }
 
     /**
@@ -142,7 +181,7 @@ final readonly class TeamAuthorizationFixture
     /**
      * @param string $route Named private route with optional member or invitation identifiers.
      * @param bool $foreignTeam Whether to target the disjoint aggregate instead of the actor's team.
-     * @param bool $foreignChild Whether to put a foreign member, invitation, monitor, incident, entry or window under the actor's own parents.
+     * @param bool $foreignChild Whether to put a foreign member, invitation, monitor, incident, entry, window, channel or policy under the actor's own parents.
      * @return string Relative URL using actual persisted identifiers, never guessed fixture IDs.
      */
     public function url(string $route, bool $foreignTeam = false, bool $foreignChild = false): string
@@ -166,6 +205,14 @@ final readonly class TeamAuthorizationFixture
         if (in_array($route, ['teams.monitors.maintenance.update', 'teams.monitors.maintenance.destroy'], true)) {
             $parameters['monitor'] = $foreignTeam ? $this->foreignMonitor->id : $this->monitor->id;
             $parameters['maintenanceWindow'] = $foreignTeam || $foreignChild ? $this->foreignWindow->id : $this->window->id;
+        }
+
+        if (str_starts_with($route, 'teams.notification-channels.') && $route !== 'teams.notification-channels.store') {
+            $parameters['channel'] = $foreignTeam || $foreignChild ? $this->foreignChannel->id : $this->channel->id;
+        }
+
+        if (str_starts_with($route, 'teams.escalation-policies.') && $route !== 'teams.escalation-policies.store') {
+            $parameters['policy'] = $foreignTeam || $foreignChild ? $this->foreignPolicy->id : $this->policy->id;
         }
 
         if (str_starts_with($route, 'teams.incidents.') && $route !== 'teams.incidents.index') {
@@ -217,7 +264,41 @@ final readonly class TeamAuthorizationFixture
             return ['root_cause_note' => 'Matrix declared cause'];
         }
 
-        if (str_starts_with($route, 'teams.monitors.') || str_starts_with($route, 'teams.incidents.')) {
+        if ($route === 'teams.notification-channels.store') {
+            return ['type' => 'email', 'name' => 'Matrix created channel', 'config' => ['address' => 'matrix-channel@example.test'], 'team_id' => $this->foreign->id];
+        }
+
+        if ($route === 'teams.notification-channels.update') {
+            return ['name' => 'Matrix renamed channel', 'config' => ['url' => '']];
+        }
+
+        if ($route === 'teams.notification-channels.verification.confirm') {
+            return ['code' => self::PENDING_CODE];
+        }
+
+        if ($route === 'teams.notification-channels.activation') {
+            return ['active' => false];
+        }
+
+        if (in_array($route, ['teams.escalation-policies.store', 'teams.escalation-policies.update'], true)) {
+            return [
+                'name' => $route === 'teams.escalation-policies.store' ? 'Matrix created policy' : 'Matrix renamed policy',
+                'is_default' => true,
+                'steps' => [['after_minutes' => 0, 'channel_ids' => [$this->channel->id]]],
+                'team_id' => $this->foreign->id,
+            ];
+        }
+
+        if ($route === 'teams.monitors.escalation-policy') {
+            return ['escalation_policy_id' => $this->policy->id];
+        }
+
+        if (
+            str_starts_with($route, 'teams.monitors.')
+            || str_starts_with($route, 'teams.incidents.')
+            || str_starts_with($route, 'teams.notification')
+            || str_starts_with($route, 'teams.escalation-policies.')
+        ) {
             return [];
         }
 
@@ -248,6 +329,18 @@ final readonly class TeamAuthorizationFixture
         return app(TenantContext::class)->run($this->team->id, fn (): array => MaintenanceWindow::query()->orderBy('id')->get()->all());
     }
 
+    /** @return NotificationChannel|null Current local fixture channel loaded inside its tenant context, null once deleted. */
+    public function loadChannel(): ?NotificationChannel
+    {
+        return app(TenantContext::class)->run($this->team->id, fn (): ?NotificationChannel => NotificationChannel::query()->find($this->channel->id));
+    }
+
+    /** @return list<EscalationPolicy> Local policies loaded inside their tenant context, in ID order. */
+    public function loadPolicies(): array
+    {
+        return app(TenantContext::class)->run($this->team->id, fn (): array => EscalationPolicy::query()->orderBy('id')->get()->all());
+    }
+
     /** @return TeamInvitation Current local lifecycle loaded only inside its explicit tenant context. */
     public function loadInvitation(): TeamInvitation
     {
@@ -257,7 +350,7 @@ final readonly class TeamAuthorizationFixture
     /**
      * Read the test database directly to detect writes even if a scope would hide a changed record.
      *
-     * @return array<string, list<array<string, mixed>>> Persistent team, membership, preference, invitation, monitor, incident and maintenance state.
+     * @return array<string, list<array<string, mixed>>> Persistent team, membership, preference, invitation, monitor, incident, maintenance and notification state.
      */
     public function snapshot(): array
     {
@@ -272,6 +365,9 @@ final readonly class TeamAuthorizationFixture
             'incidents' => self::rows('incidents', ['*'], ['id']),
             'incident_updates' => self::rows('incident_updates', ['*'], ['id']),
             'maintenance_windows' => self::rows('maintenance_windows', ['*'], ['id']),
+            'notification_channels' => self::rows('notification_channels', ['*'], ['id']),
+            'escalation_policies' => self::rows('escalation_policies', ['*'], ['id']),
+            'notification_logs' => self::rows('notification_logs', ['*'], ['id']),
         ];
     }
 
@@ -291,6 +387,9 @@ final readonly class TeamAuthorizationFixture
             'incidents' => array_values(array_filter($snapshot['incidents'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'incident_updates' => array_values(array_filter($snapshot['incident_updates'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'maintenance_windows' => array_values(array_filter($snapshot['maintenance_windows'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'notification_channels' => array_values(array_filter($snapshot['notification_channels'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'escalation_policies' => array_values(array_filter($snapshot['escalation_policies'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'notification_logs' => array_values(array_filter($snapshot['notification_logs'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
         ];
     }
 

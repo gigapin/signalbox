@@ -49,10 +49,11 @@ const defaults: MonitorDefaults = {
 /** Quota with room left on a Free plan. */
 const usage = { used: 2, limit: 5, minimumIntervalSeconds: 300, full: false };
 
-/** Monitor detail sections without incidents or maintenance, as for a new monitor. */
+/** Monitor detail sections without incidents, maintenance or escalation policies, as for a new monitor. */
 const quietHistory = {
     recentIncidents: [],
     maintenance: { current: [], finished: [], reasonMaxLength: 1000 },
+    escalation: { policyId: null, effective: null, options: [] },
 };
 
 /** No active filters. */

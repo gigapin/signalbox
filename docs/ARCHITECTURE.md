@@ -421,3 +421,8 @@ Decisioni utente: nessun nuovo incidente in manutenzione, passato immutabile, tr
 
 Decisioni utente: lista incidenti di team con dettaglio e sezioni nel dettaglio monitor; ogni voce nasce privata e si pubblica solo con un pulsante esplicito con conferma; orari delle manutenzioni inseriti nel fuso del browser e inviati in UTC con offset obbligatorio.
 
+## Attuazione M5.01 — Canali, policy di escalation e log di consegna
+
+[NOTIFICATIONS.md](NOTIFICATIONS.md) introduce l’ambito Notifiche di ADR-001 con soli modelli, regole e UI di gestione. Le configurazioni dei canali sono DTO immutabili per famiglia dietro il contratto `ChannelConfiguration`, prodotte da un unico parser senza rete (ADR-002: il guard SSRF resta obbligatorio a ogni consegna) e salvate in una colonna cifrata; le pagine ricevono solo proiezioni mascherate. La verifica passa dal contratto `ChannelVerificationSender` (adapter in M5.02, per ora un’implementazione che rifiuta), con digest HMAC del codice, scadenza, tentativi durevoli e invio fuori transazione. Policy di escalation con step assoluti crescenti, default unico per team e override per monitor con FK composita (ADR-003); `EscalationPolicyResolver` è il punto unico di risoluzione per M5.03–M5.04. Lock Team → risorsa e policy rieseguite sotto lock (ADR-004).
+
+Decisioni utente: canali e policy gestiti solo da owner/admin; verifica con codice a 6 cifre inviato dal canale stesso; policy predefinita di team con override per monitor. La scelta della policy di un monitor resta configurazione del monitor (`MonitorPolicy::update`). Nessun adapter, job o temporizzazione: M5.02–M5.05.

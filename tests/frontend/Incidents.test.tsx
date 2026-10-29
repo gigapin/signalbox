@@ -120,6 +120,7 @@ function showProps(
                 : ['investigating', 'identified', 'monitoring', 'resolved'],
         options,
         textMaxLength: 5000,
+        deliveries: [],
         can: { update: canUpdate },
         ...extra,
     };
@@ -218,6 +219,7 @@ function monitorProps(canUpdate: boolean, view = maintenance, recentIncidents = 
         monitor,
         recentIncidents,
         maintenance: view,
+        escalation: { policyId: null, effective: null, options: [] },
         can: { update: canUpdate, delete: canUpdate, pause: canUpdate, resume: canUpdate },
     };
 }

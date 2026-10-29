@@ -1,5 +1,6 @@
 /** Manage one-time heartbeat credentials in ephemeral component state, outside Inertia props and history. */
 import { useEffect, useRef, useState } from 'react';
+import { csrfHeader } from '../csrf';
 import type { HeartbeatView } from './types';
 
 /** Private issuance data returned only by an explicit authorized mutation. */
@@ -27,17 +28,6 @@ interface HeartbeatPanelProps {
  */
 function shellQuote(value: string): string {
     return `'${value.replaceAll("'", "'\\''")}'`;
-}
-
-/**
- * Read Laravel's current encrypted CSRF cookie for same-origin web mutations.
- * @returns URL-decoded XSRF cookie to echo in Laravel's expected header.
- * @throws Error When the browser has no current CSRF cookie.
- */
-function csrfHeader(): string {
-    const cookie = document.cookie.split('; ').find((entry) => entry.startsWith('XSRF-TOKEN='));
-    if (!cookie) throw new Error('Reload this page before changing the heartbeat credential.');
-    return decodeURIComponent(cookie.substring('XSRF-TOKEN='.length));
 }
 
 /** Generate, rotate, revoke, copy and hide secrets without storing them in navigation or browser storage. */
@@ -96,7 +86,12 @@ function HeartbeatControls({ path, heartbeat, canManage }: HeartbeatPanelProps) 
                 credentials: 'same-origin',
                 cache: 'no-store',
                 signal: operation.signal,
-                headers: { Accept: 'application/json', 'X-XSRF-TOKEN': csrfHeader() },
+                headers: {
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': csrfHeader(
+                        'Reload this page before changing the heartbeat credential.',
+                    ),
+                },
             });
             if (!response.ok || response.redirected)
                 throw new Error(

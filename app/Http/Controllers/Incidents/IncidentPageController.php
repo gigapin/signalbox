@@ -9,8 +9,10 @@ namespace App\Http\Controllers\Incidents;
 use App\Actions\Incidents\ManageIncidents;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\Incidents\IncidentPresenter;
+use App\Http\Presenters\Notifications\NotificationPresenter;
 use App\Http\Requests\Incidents\ListIncidentsRequest;
 use App\Models\Incident;
+use App\Models\NotificationLog;
 use App\Models\Team;
 use App\Services\Incidents\IncidentListing;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +25,9 @@ use Inertia\Response;
  */
 final class IncidentPageController extends Controller
 {
+    /** @var int Oldest delivery log rows shown on the incident page. */
+    private const int DELIVERY_LIMIT = 100;
+
     /** @param IncidentPresenter $presenter Safe page projections. */
     public function __construct(private readonly IncidentPresenter $presenter)
     {
@@ -49,11 +54,12 @@ final class IncidentPageController extends Controller
     }
 
     /**
+     * @param NotificationPresenter $notifications Safe delivery rows.
      * @param int $team Route team.
      * @param Incident $incident Incident bound inside the route team.
-     * @return Response Detail with the oldest-first timeline, the statuses a new entry may carry and permissions.
+     * @return Response Detail with the oldest-first timeline, its deliveries, the statuses a new entry may carry and permissions.
      */
-    public function show(int $team, Incident $incident): Response
+    public function show(NotificationPresenter $notifications, int $team, Incident $incident): Response
     {
         Gate::authorize('view', $incident);
         $incident->load(['monitor:id,team_id,name', 'acknowledgedBy:id,name', 'updates.author:id,name']);
@@ -61,6 +67,14 @@ final class IncidentPageController extends Controller
         return Inertia::render('Incidents/Show', [
             'team' => $this->teamSummary($team),
             'incident' => $this->presenter->detail($incident),
+            'deliveries' => NotificationLog::query()
+                ->where('incident_id', $incident->id)
+                ->with('channel:id,team_id,name')
+                ->orderBy('id')
+                ->limit(self::DELIVERY_LIMIT)
+                ->get()
+                ->map(static fn (NotificationLog $log): array => $notifications->delivery($log))
+                ->all(),
             'postableStatuses' => $this->presenter->postableStatuses($incident),
             'options' => IncidentPresenter::options(),
             'textMaxLength' => ManageIncidents::TEXT_MAX_LENGTH,

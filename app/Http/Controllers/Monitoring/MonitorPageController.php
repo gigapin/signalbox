@@ -11,7 +11,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Presenters\Incidents\IncidentPresenter;
 use App\Http\Presenters\Incidents\MaintenanceWindowPresenter;
 use App\Http\Presenters\Monitoring\MonitorPresenter;
+use App\Http\Presenters\Notifications\NotificationPresenter;
 use App\Http\Requests\Monitoring\ListMonitorsRequest;
+use App\Models\EscalationPolicy;
 use App\Models\Monitor;
 use App\Models\Team;
 use App\Services\Incidents\IncidentListing;
@@ -93,7 +95,8 @@ final class MonitorPageController extends Controller
      * @param IncidentPresenter $incidentPresenter Safe incident rows.
      * @param MaintenanceSchedule $schedule Tenant-scoped maintenance reads.
      * @param MaintenanceWindowPresenter $windowPresenter Safe maintenance rows with their phase.
-     * @return Response Safe detail, recent incidents, maintenance windows and the actor's management permissions.
+     * @param NotificationPresenter $notificationPresenter Escalation choice projection.
+     * @return Response Safe detail, recent incidents, maintenance windows, escalation choice and the actor's management permissions.
      */
     public function show(
         int $team,
@@ -102,6 +105,7 @@ final class MonitorPageController extends Controller
         IncidentPresenter $incidentPresenter,
         MaintenanceSchedule $schedule,
         MaintenanceWindowPresenter $windowPresenter,
+        NotificationPresenter $notificationPresenter,
     ): Response {
         Gate::authorize('view', $monitor);
         $identity = $this->team($team);
@@ -135,6 +139,7 @@ final class MonitorPageController extends Controller
                 'finished' => $finished,
                 'reasonMaxLength' => ManageMaintenanceWindows::REASON_MAX_LENGTH,
             ],
+            'escalation' => $notificationPresenter->monitorEscalation($monitor, array_values(EscalationPolicy::query()->orderBy('name')->get()->all())),
             'can' => [
                 'update' => Gate::allows('update', $monitor),
                 'delete' => Gate::allows('delete', $monitor),

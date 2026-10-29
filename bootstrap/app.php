@@ -43,14 +43,15 @@ $configureMiddleware = function (Middleware $middleware) use ($preserveMonitorIn
 };
 
 /**
- * Prevent second-factor credentials and private monitor configuration from being flashed after validation errors.
+ * Prevent second-factor credentials, private monitor configuration, notification channel configuration and
+ * verification codes from being flashed after validation errors, including domain refusals rethrown by controllers.
  *
  * @param Exceptions $exceptions Framework exception and validation configuration builder.
  */
 $configureExceptions = function (Exceptions $exceptions): void {
     $exceptions->dontFlash([
         'code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes', 'credential', 'token', 'token_hash',
-        ...MonitorConfigurationMapper::COLUMNS, 'headers',
+        ...MonitorConfigurationMapper::COLUMNS, 'headers', 'config',
     ]);
 };
 

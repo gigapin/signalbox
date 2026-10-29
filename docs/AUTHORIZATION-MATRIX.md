@@ -36,6 +36,18 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 | teams.monitors.maintenance.store | POST | 302 | 302 | 302 | 403 |
 | teams.monitors.maintenance.update | PATCH | 302 | 302 | 302 | 403 |
 | teams.monitors.maintenance.destroy | DELETE | 302 | 302 | 302 | 403 |
+| teams.notifications.index | GET | 200 | 200 | 200 | 200 |
+| teams.notification-channels.store | POST | 302 | 302 | 403 | 403 |
+| teams.notification-channels.update | PATCH | 302 | 302 | 403 | 403 |
+| teams.notification-channels.destroy | DELETE | 302 | 302 | 403 | 403 |
+| teams.notification-channels.verification.store | POST | 302 | 302 | 403 | 403 |
+| teams.notification-channels.verification.confirm | POST | 302 | 302 | 403 | 403 |
+| teams.notification-channels.activation | PATCH | 302 | 302 | 403 | 403 |
+| teams.notification-channels.signing-secret | POST | 200 | 200 | 403 | 403 |
+| teams.escalation-policies.store | POST | 302 | 302 | 403 | 403 |
+| teams.escalation-policies.update | PATCH | 302 | 302 | 403 | 403 |
+| teams.escalation-policies.destroy | DELETE | 302 | 302 | 403 | 403 |
+| teams.monitors.escalation-policy | PATCH | 302 | 302 | 302 | 403 |
 
 Every route is tested with each actor role in three states: current membership, a disjoint target team and revoked membership with a stale selected team and preloaded membership collection. The last two states must return 404. Separate guest and unverified scenarios must redirect to login and email verification respectively. GET routes retain Laravel's HEAD alias; the inventory checks exact verbs excluding that implicit alias.
 

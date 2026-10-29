@@ -1,6 +1,6 @@
 # Notification channels, provider adapters, escalation policies and delivery log
 
-M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. Delivery jobs with deduplication and retries (M5.03), escalation timing and cancellation (M5.04) and quiet hours (M5.05) build on this model. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
+M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. M5.03 adds durable incident deliveries with deduplication, coalescing, resolution summaries and retries. Later escalation timing/cancellation (M5.04) and quiet hours (M5.05) build on this model. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
 
 ## User decisions
 
@@ -19,7 +19,7 @@ Migrations `2026_10_29_000017_create_notification_tables.php` and `2026_10_29_00
 | `notification_logs` | One row per delivery: incident, channel (nullable), channel type snapshot, kind, step, status, attempts, redacted response, dedupe key, `sent_at` | Dedupe key unique per team; status `sent` ⇒ `sent_at`; response ≤ 1000 characters; deleting the channel sets `channel_id` null and keeps the row |
 | `monitors.escalation_policy_id` | Optional override | Composite key to a policy of the same team; deleting the policy clears only the override |
 
-Delivery logs are modelled and shown on the incident page now; M5.03 writes them. `kind` is `opened`, `escalated` or `resolved`; `status` is `pending`, `sent`, `failed` or `suppressed` (`NotificationKind`, `DeliveryStatus`).
+Delivery logs are written by M5.03 and shown on the incident page. Migration `2026_10_29_000019_add_notification_delivery_outbox.php` adds encrypted message snapshots, attempt leases and the internal processed-event marker; see [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md). `kind` is `opened`, `escalated` or `resolved`; `status` is `pending`, `sent`, `failed` or `suppressed` (`NotificationKind`, `DeliveryStatus`).
 
 ## Channel configurations
 
@@ -94,7 +94,7 @@ Steps reference channels by identity in JSON, as in the specification. Channel d
 
 `ChannelAdapter::send()` performs one attempt with typed configuration and an immutable `ChannelMessage`. `ChannelAdapterRegistry` maps every `ChannelType` explicitly; each adapter rejects another family's DTO before touching a transport. Adapters contain no tenant queries, persistence, queues, automatic retries or incident orchestration. The caller must authorize the channel and supply only the intended recipient's content. `ChannelDeliveryReceipt` reports `sent` (provider acceptance) or `suppressed` (SMS stub), with fixed safe summaries. Delivery failures throw `ChannelDeliveryFailed` without chaining an exception that contains credentials.
 
-`ChannelMessage` carries a caller-chosen UUID, controlled event name, original UTC event time, single-line subject (1–200 characters), plain text (1–2800 characters, Unicode counted as characters) and explicitly selected scalar event fields. Supported events are `channel.verification`, `incident.opened`, `incident.reopened`, `incident.escalated`, `incident.resolved`; only verification is wired into the application at this stage. No Eloquent model is serialized. Debug output shows only identity and event.
+`ChannelMessage` carries a caller-chosen UUID, controlled event name, original UTC event time, single-line subject (1–200 characters), plain text (1–2800 characters, Unicode counted as characters) and explicitly selected scalar event fields. Supported events are `channel.verification`, `incident.opened`, `incident.reopened`, `incident.escalated`, `incident.resolved`; verification and incident opening/reopening/resolution are wired into the application. No Eloquent model is serialized. Debug output shows only identity and event.
 
 | Family | Request and acceptance | Privacy and limits |
 |---|---|---|
@@ -125,13 +125,17 @@ Headers:
 - `X-Signalbox-Timestamp`: attempt time as decimal Unix seconds;
 - `X-Signalbox-Signature`: `v1=` followed by lowercase hexadecimal `HMAC-SHA256(key, timestamp + "." + raw_body)`.
 
-The JSON envelope contains exactly `schema_version` (1), `id`, `event`, `occurred_at` (original event time, ISO 8601 UTC), `subject`, `text` and `data` (an object of explicitly selected scalar fields). Encoding preserves Unicode and slashes; receivers must verify the **raw received bytes**, never decoded/re-encoded JSON. Verification `data` contains `code` (a six-character string, including leading zeroes) and `expires_in_seconds` (900 by default). Incident payload content and persistence of stable delivery UUIDs are defined by M5.03 when the incident orchestrator exists.
+The JSON envelope contains exactly `schema_version` (1), `id`, `event`, `occurred_at` (original event time, ISO 8601 UTC), `subject`, `text` and `data` (an object of explicitly selected scalar fields). Encoding preserves Unicode and slashes; receivers must verify the **raw received bytes**, never decoded/re-encoded JSON. Verification `data` contains `code` (a six-character string, including leading zeroes) and `expires_in_seconds` (900 by default). Incident payload fields, persistent UUIDs and delivery semantics are defined in [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md#recipient-payload-and-idempotency-limits).
 
 Receiver verification must check the signature with a constant-time comparison, reject malformed/unsupported signature versions and reject timestamps more than 300 seconds away from its clock. After authenticating, require header ID = body ID and deduplicate by the signed body ID before applying any effect. Each attempt gets a fresh timestamp/signature; the caller must retain the same message ID/body across retries. A timestamp window alone does not prevent duplicate effects within that window. Return a 2xx status only once accepted; redirects are refused.
 
+## Incident deliveries (M5.03)
+
+[NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md) documents transactional preparation, frozen audiences, encrypted snapshots, duplicate-event grouping, three bounded attempts with backoff, resolution summaries, the dedicated Redis queue, recovery and external at-least-once limits. Apply the incremental outbox migration before using this version; migration/process commands are in that document.
+
 ## Current limits
 
-- No incident listeners/jobs, delivery-log writes, deduplication, retry, escalation timer, maintenance silencing or quiet hours: M5.03–M5.05. Verifications deliberately do not write `notification_logs`, whose rows require an incident.
+- Later escalation steps and maintenance silencing remain M5.04; quiet hours remain M5.05. Verifications deliberately do not write `notification_logs`, whose rows require an incident.
 - SMS is deliberately unverified and inactive in the running application because it cannot deliver a verification code.
 - Verification is synchronous in the request with bounded HTTP/SMTP I/O. SMTP requires the existing mail settings; its transport is operator-configured and never comes from tenant input. A Mailtrap Email Sandbox configuration captures email in its sandbox inbox.
 - No real provider account, external network delivery or PHP 8.5 CI run is claimed by the adapter tests.

@@ -20,3 +20,6 @@ foreach (['monitors:dispatch', 'monitors:publish', 'monitors:recover'] as $comma
 
 // Partition maintenance performs no target checks and preserves all retained result months.
 Schedule::command('monitors:partitions')->daily()->onOneServer()->withoutOverlapping(5);
+
+// Recover committed notifications after publication gaps, expired attempts and provider backoff.
+Schedule::command('notifications:dispatch')->everyTenSeconds()->onOneServer()->withoutOverlapping(1);

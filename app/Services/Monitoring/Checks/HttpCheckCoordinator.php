@@ -12,6 +12,7 @@ use App\Data\Monitoring\Checks\CheckOutcome;
 use App\Data\Monitoring\Checks\HttpObservation;
 use App\Enums\Monitoring\CheckError;
 use App\Enums\Monitoring\HttpMethod;
+use App\Services\Http\BoundedResponseBuffer;
 use App\Services\Monitoring\MonitorInputLimits;
 use App\Services\Security\GuardedHttpOptions;
 use App\Services\Security\OutboundDestinationGuard;

@@ -14,6 +14,7 @@ use App\Data\Security\AuthorizedDestination;
 use App\Enums\Monitoring\CheckError;
 use App\Enums\Monitoring\HttpMethod;
 use App\Enums\Monitoring\MonitorStatus;
+use App\Services\Http\ResponseByteBudget;
 use Carbon\CarbonImmutable;
 
 /** No state object escapes as a public result or is serialized into queues. */

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /** Bound actual sink writes, including decoded cURL output and Laravel fake response writes. */
 
-namespace App\Services\Monitoring\Checks;
+namespace App\Services\Http;
 
 use LogicException;
 use php_user_filter;

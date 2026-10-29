@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-/** Share one decoded byte allowance across all response hops of a single observation. */
+/** Share one decoded byte allowance across the response streams of an HTTP operation. */
 
-namespace App\Services\Monitoring\Checks;
+namespace App\Services\Http;
 
 use InvalidArgumentException;
 
-/** A rejected write permanently marks the observation incomplete. */
+/** A rejected write permanently marks the operation incomplete, including notification acknowledgements. */
 final class ResponseByteBudget
 {
     /** @var int Decoded bytes accepted across response streams. */

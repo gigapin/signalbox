@@ -206,13 +206,13 @@ it('withdraws an undelivered code and frees the cooldown', function (): void {
     expect($this->sender->sent)->toHaveCount(1);
 });
 
-it('reports that delivery is unavailable while no adapter is bound', function (): void {
+it('withdraws verification when the real adapter refuses an unsafe destination', function (): void {
     app()->forgetInstance(\App\Contracts\Notifications\ChannelVerificationSender::class);
-    app()->bind(\App\Contracts\Notifications\ChannelVerificationSender::class, \App\Services\Notifications\UnavailableChannelVerificationSender::class);
+    app()->instance(\App\Contracts\Security\HostResolver::class, new \Tests\Support\FakeHostResolver(['hooks.slack.com' => ['127.0.0.1']]));
     $channel = app(TenantContext::class)->run($this->team->id, fn (): NotificationChannel => NotificationChannel::factory()->slack()->create());
 
     expect(fn () => ncActions()->sendVerification($this->owner, $this->team->id, $channel->id))
-        ->toThrow(NotificationChannelRejected::class, 'Delivery to Slack channels is not available yet.')
+        ->toThrow(NotificationChannelRejected::class, 'The notification destination was refused by outbound security.')
         ->and(ncFresh($this->team, $channel->id)->verification_code_hash)->toBeNull();
 });
 

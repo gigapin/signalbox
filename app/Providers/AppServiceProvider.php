@@ -22,7 +22,7 @@ use App\Services\Monitoring\Checks\ReactDnsTransport;
 use App\Services\Monitoring\Checks\ReactTlsTransport;
 use App\Services\Monitoring\Checks\RunMonitorChecks;
 use App\Services\Monitoring\Scheduling\RedisCheckWorkPublisher;
-use App\Services\Notifications\UnavailableChannelVerificationSender;
+use App\Services\Notifications\AdapterChannelVerificationSender;
 use App\Services\Security\SystemHostResolver;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Support\ServiceProvider;
@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ResultObserver::class, IncidentDetection::class);
         $this->app->bind(DnsTransport::class, ReactDnsTransport::class);
         $this->app->bind(TlsTransport::class, ReactTlsTransport::class);
-        $this->app->bind(ChannelVerificationSender::class, UnavailableChannelVerificationSender::class);
+        $this->app->bind(ChannelVerificationSender::class, AdapterChannelVerificationSender::class);
     }
 
     /**

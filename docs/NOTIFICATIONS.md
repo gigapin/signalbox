@@ -1,6 +1,6 @@
-# Notification channels, escalation policies and delivery log (M5.01)
+# Notification channels, provider adapters, escalation policies and delivery log
 
-M5.01 models where notifications go and when, and gives owners and admins a page to manage it. Adapters that actually deliver (M5.02), delivery jobs with deduplication and retries (M5.03), escalation timing and cancellation (M5.04) and quiet hours (M5.05) build on this model. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
+M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. Delivery jobs with deduplication and retries (M5.03), escalation timing and cancellation (M5.04) and quiet hours (M5.05) build on this model. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
 
 ## User decisions
 
@@ -35,7 +35,7 @@ Delivery logs are modelled and shown on the incident page now; M5.03 writes them
 
 - The whole configuration is stored in one `encrypted:array` column and hidden from Eloquent serialization. Pages receive only `NotificationPresenter` projections.
 - On edit, a blank secret field keeps the stored secret, so forms never receive secrets back. The type cannot change.
-- URL syntax reuses `MonitorInputSyntax::url()`. It authorizes no destination: the delivery adapters must re-run the SSRF guard ([OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md)) at every attempt (M5.02).
+- URL syntax reuses `MonitorInputSyntax::url()`. It authorizes no destination: the delivery adapters re-run the SSRF guard ([OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md)) at every attempt.
 - The webhook signing key is a 256-bit hex value. It is shown only through `POST …/signing-secret`, which rotates it and returns it once as non-cacheable JSON, never in Inertia props or the session (same pattern as heartbeat credentials). Rotation keeps the verification, because the destination is unchanged.
 - Error messages never echo submitted values. `config` and `code` are in the global `dontFlash` list of `bootstrap/app.php`, so neither Form Request failures nor domain refusals rethrown by controllers put them in the session.
 
@@ -49,7 +49,7 @@ Delivery logs are modelled and shown on the incident page now; M5.03 writes them
 4. **Edit** (`update`): a label change keeps everything; any destination or credential change resets `verified_at`, deactivates the channel and discards a pending code.
 5. **Delete**: refused while any policy step references the channel, naming those policies; delivery logs survive with `channel_id` null.
 
-Until M5.02 the container binds `UnavailableChannelVerificationSender`, which refuses with "Delivery to <type> channels is not available yet." The page shows that refusal; no channel can be verified in the running application before the adapters exist. Tests bind `Tests\Support\RecordingVerificationSender`.
+The container binds `AdapterChannelVerificationSender`, which creates a `channel.verification` message and resolves the family through `ChannelAdapterRegistry`. Email, Slack, Telegram and webhook codes are sent through their real adapters. The SMS stub records metadata only and then verification is refused: no code could be received, so the action withdraws it and leaves the channel unverified/inactive. Domain/UI tests may still bind `Tests\Support\RecordingVerificationSender`; adapter tests keep the production binding and fake only HTTP/Mail/DNS.
 
 Brute force: five guesses per code and one code per minute limit an admin to about 7,200 guesses per day against a million values, and every new code is a visible message to the destination owner. Only owners and admins can try at all.
 
@@ -90,9 +90,50 @@ Steps reference channels by identity in JSON, as in the specification. Channel d
 - The incident detail page has a **Notifications sent** table (`DeliveryLog`, at most 100 rows, oldest first) without dedupe keys; a deleted channel shows its family only.
 - Links to the page were added to the team and monitor list navigation.
 
-## Limits of this task
+## Provider adapters (M5.02)
 
-- No adapter, job, delivery, deduplication, retry, escalation timer, maintenance silencing or quiet hours: M5.02–M5.05.
-- Verification messages cannot be delivered until M5.02 binds real adapters; the SMS stub will record without sending.
-- Verification is synchronous in the request; M5.02 adapters must bound their timeouts.
+`ChannelAdapter::send()` performs one attempt with typed configuration and an immutable `ChannelMessage`. `ChannelAdapterRegistry` maps every `ChannelType` explicitly; each adapter rejects another family's DTO before touching a transport. Adapters contain no tenant queries, persistence, queues, automatic retries or incident orchestration. The caller must authorize the channel and supply only the intended recipient's content. `ChannelDeliveryReceipt` reports `sent` (provider acceptance) or `suppressed` (SMS stub), with fixed safe summaries. Delivery failures throw `ChannelDeliveryFailed` without chaining an exception that contains credentials.
+
+`ChannelMessage` carries a caller-chosen UUID, controlled event name, original UTC event time, single-line subject (1–200 characters), plain text (1–2800 characters, Unicode counted as characters) and explicitly selected scalar event fields. Supported events are `channel.verification`, `incident.opened`, `incident.reopened`, `incident.escalated`, `incident.resolved`; only verification is wired into the application at this stage. No Eloquent model is serialized. Debug output shows only identity and event.
+
+| Family | Request and acceptance | Privacy and limits |
+|---|---|---|
+| Email | Synchronous plain-text `ChannelNotificationMail`, explicitly through `Mail::mailer('smtp')` | Uses existing operator `MAIL_*` SMTP settings; five-second socket-operation timeout; the default `log` mailer is deliberately bypassed to avoid recording codes/content |
+| Slack | Incoming-webhook JSON POST; HTTP 200 and text `ok` required | Section uses `plain_text`; fallback escapes `&`, `<`, `>` to prevent mentions; link/media previews disabled |
+| Telegram | Fixed `https://api.telegram.org/bot<token>/sendMessage`; HTTP 200 with JSON `ok` exactly `true` required | Chat and text only, plus disabled link previews; no parse mode; token URL never enters errors/logs |
+| Webhook | Versioned signed JSON POST; any 2xx response accepted | Exact-byte HMAC contract below; response body discarded |
+| SMS | No provider, Mail or HTTP call | Logs only UUID, event and family through `SecretRedactor`; no phone, code, label or message text; returns suppression, never carrier acceptance |
+
+Provider formats were checked against [Slack incoming webhooks](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/) and the [Telegram Bot API](https://core.telegram.org/bots/api#sendmessage). No provider account or live delivery is required by automated tests.
+
+### HTTP security and bounds
+
+`NotificationHttpTransport` authorizes the initial URL through `OutboundDestinationGuard` **on every attempt**, then applies `GuardedHttpOptions`: pin all validated addresses, fresh connections, no reuse, no environment proxy, TLS certificate/hostname verification enabled, and no cookies. Only HTTPS is accepted. **Every redirect is a failed delivery**, including same-origin redirects; no `Location` is followed and no POST data/signature/token is forwarded. `RedirectPolicy` is therefore unnecessary in this transport: its hop-authorization contract applies only to transports that follow redirects.
+
+`notifications.http` defines a 5 s total HTTP transfer timeout (hard accepted configuration range 1–10 s), a 2 s connection timeout (1–5 s) and a 16 KiB decoded response cap (1–64 KiB). The shared resolver has its separate 1 s cumulative DNS deadline. HTTP timeout includes the connection phase; DNS authorization precedes it. SMTP's 5 s setting bounds each socket operation, rather than providing one overall SMTP transaction deadline.
+
+`BoundedResponseBuffer`, `ResponseByteBudget` and `ResponseLimitFilter` now live in `App\Services\Http`, shared with the monitor transport without a notification-to-monitor-domain dependency. The filter aborts oversized decoded writes, including gzip output, instead of accepting a truncated acknowledgement. Error messages contain fixed reasons and, where useful, HTTP status only; neither provider bodies nor raw exception messages/chains are retained. HTTP 429/5xx, connection failure and timeout are returned as failures of this single attempt; queue retry/backoff belongs to M5.03.
+
+### Signed webhook contract, version 1
+
+Rotate/reveal the channel's signing secret once in the management page and configure it on the receiver before requesting verification. It is the 64-character hexadecimal string generated by Signalbox. Use those **literal UTF-8 characters as the HMAC key**, without hexadecimal decoding. Key rotation takes effect on the next attempt.
+
+Headers:
+
+- `Content-Type: application/json`
+- `X-Signalbox-Id`: the message UUID, also present in the signed body;
+- `X-Signalbox-Timestamp`: attempt time as decimal Unix seconds;
+- `X-Signalbox-Signature`: `v1=` followed by lowercase hexadecimal `HMAC-SHA256(key, timestamp + "." + raw_body)`.
+
+The JSON envelope contains exactly `schema_version` (1), `id`, `event`, `occurred_at` (original event time, ISO 8601 UTC), `subject`, `text` and `data` (an object of explicitly selected scalar fields). Encoding preserves Unicode and slashes; receivers must verify the **raw received bytes**, never decoded/re-encoded JSON. Verification `data` contains `code` (a six-character string, including leading zeroes) and `expires_in_seconds` (900 by default). Incident payload content and persistence of stable delivery UUIDs are defined by M5.03 when the incident orchestrator exists.
+
+Receiver verification must check the signature with a constant-time comparison, reject malformed/unsupported signature versions and reject timestamps more than 300 seconds away from its clock. After authenticating, require header ID = body ID and deduplicate by the signed body ID before applying any effect. Each attempt gets a fresh timestamp/signature; the caller must retain the same message ID/body across retries. A timestamp window alone does not prevent duplicate effects within that window. Return a 2xx status only once accepted; redirects are refused.
+
+## Current limits
+
+- No incident listeners/jobs, delivery-log writes, deduplication, retry, escalation timer, maintenance silencing or quiet hours: M5.03–M5.05. Verifications deliberately do not write `notification_logs`, whose rows require an incident.
+- SMS is deliberately unverified and inactive in the running application because it cannot deliver a verification code.
+- Verification is synchronous in the request with bounded HTTP/SMTP I/O. SMTP requires the existing mail settings; its transport is operator-configured and never comes from tenant input. A Mailtrap Email Sandbox configuration captures email in its sandbox inbox.
+- No real provider account, external network delivery or PHP 8.5 CI run is claimed by the adapter tests.
 - No real browser test; focus does not move after a refusal (same limit as the incident pages).
+

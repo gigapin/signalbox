@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-/** Own the resource sink used for one HTTP hop and close it on every exit path. */
+/** Own the bounded response sink shared by monitoring checks and notification HTTP attempts. */
 
-namespace App\Services\Monitoring\Checks;
+namespace App\Services\Http;
 
 use RuntimeException;
 
@@ -12,13 +12,13 @@ use RuntimeException;
 final class BoundedResponseBuffer
 {
     /** @var string Process-local filter name; registration is reused by long-lived workers. */
-    private const string FILTER = 'signalbox.check-response-limit';
+    private const string FILTER = 'signalbox.http-response-limit';
 
     /** @var resource Temporary stream containing at most the remaining decoded allowance. */
     private $stream;
 
     /**
-     * @param ResponseByteBudget $budget Shared observation allowance across redirect hops.
+     * @param ResponseByteBudget $budget Decoded-byte allowance for one request or a sequence of redirect hops.
      * @throws RuntimeException When the temporary stream or its enforcing filter cannot be created.
      */
     public function __construct(ResponseByteBudget $budget)

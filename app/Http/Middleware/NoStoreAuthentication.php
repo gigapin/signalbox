@@ -18,9 +18,10 @@ final class NoStoreAuthentication
      */
     public function handle(Request $request, Closure $next): Response
     {
-        /** @var Response $response Downstream response including redirects and JSON security payloads. */
         $response = $next($request);
         $response->headers->set('Cache-Control', 'no-store, private');
+        // Bearer invitation URLs must not leak through browser referrer headers.
+        $response->headers->set('Referrer-Policy', 'no-referrer');
 
         return $response;
     }

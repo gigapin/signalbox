@@ -147,4 +147,61 @@ This completes M0 together with the previously user-confirmed PHP 8.4/8.5 CI res
 
 ## M1.02 web authentication
 
-[AUTHENTICATION.md](AUTHENTICATION.md) documents implemented registration, login/logout, password recovery, mandatory email verification and optional 2FA with English Inertia pages. Registration creates the initial team atomically; existing users remain intact. One incremental migration adds nullable encrypted-secret storage and case-insensitive email uniqueness. Apply migrations deliberately to the intended local environment; automatic checks continue to use only the isolated test database. Fortify and its lock changes, including the targeted HttpFoundation advisory fix, are documented in [DEPENDENCIES.md](DEPENDENCIES.md). Invitations/switching and tenant policies remain M1.03–M1.04.
+[AUTHENTICATION.md](AUTHENTICATION.md) documents implemented registration, login/logout, password recovery, mandatory email verification and optional 2FA with English Inertia pages. Registration creates the initial team atomically; existing users remain intact. One incremental migration adds nullable encrypted-secret storage and case-insensitive email uniqueness. Apply migrations deliberately to the intended local environment; automatic checks continue to use only the isolated test database. Fortify and its lock changes, including the targeted HttpFoundation advisory fix, are documented in [DEPENDENCIES.md](DEPENDENCIES.md). Invitations/switching are now documented in [TEAMS.md](TEAMS.md); general tenant policies remain M1.04.
+
+## M1.03 invitations and membership management
+
+[TEAMS.md](TEAMS.md) documents the incremental invitation migration, explicit team routes, membership actions and Inertia pages. Apply the new migration deliberately to development storage; automated verification continues to target only isolated PostgreSQL. No dependencies or lockfiles change. Ordinary registration still creates a first team; invited registration creates only an unverified identity until explicit acceptance. TeamScope/context and general policies remain M1.04.
+
+## M2.01 monitor persistence
+
+[MONITORS.md](MONITORS.md) documents the new incremental monitors migration, DTOs and encrypted network fields. Apply the migration deliberately to the intended local database; automated verification uses isolated PostgreSQL only. There is no new route, checker, scheduled execution, seed data or dependency in this task. Existing application keys remain unchanged.
+
+## Monitor input boundary (M2.02)
+
+[MONITOR-INPUT.md](MONITOR-INPUT.md) describes the new `config/monitor-input.php` operational bounds and the narrowly scoped global string-middleware exceptions. No environment variables, dependencies, migration, production routes or process changes are required. The Form Requests deny without future monitor policies; test routes and Gate grants exist only in the isolated test application. SSRF protection remains M2.03 before any outbound monitor I/O.
+
+M2.03 adds `config/outbound-security.php` and the optional `OUTBOUND_ALLOWED_CIDRS` variable (comma-separated CIDR exceptions, empty by default and documented in `.env.example`), and taps `App\Logging\RedactSecrets` into every concrete log channel. No dependency, migration, route or process change is required. See [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md).
+
+M2.04 adds `config/plans.php` (plan entitlements) and `routes/monitors.php`, included by `routes/web.php`. No environment variable, dependency, migration or process change is required. See [MONITOR-CRUD.md](MONITOR-CRUD.md).
+
+M2.05 adds monitor page routes to `routes/monitors.php` and makes `App\Models\Monitor` Scout-searchable with the existing database driver. No environment variable, dependency, migration, index rebuild or process change is required. See [MONITOR-UI.md](MONITOR-UI.md).
+
+M2.06 adds tests only. The concurrency suite starts its own short-lived `artisan serve` inside `php-test` against the isolated test database; it does not use the development server on port 8000. No environment variable, dependency, migration or process change is required. See [TESTING.md](TESTING.md).
+
+MA adds three migrations: `users.is_platform_admin`, `platform_audit_events` and `team_plan_overrides`. It also adds the `signalbox:platform-admin` command and `routes/admin.php`. `HORIZON_ADMIN_EMAILS` is removed: Horizon now requires a platform operator. After applying the migrations, grant the first operator with `php artisan signalbox:platform-admin <email>`. No new variable or dependency is required. See [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
+
+
+## Recoverable scheduling foundation (M3.01–M3.02)
+
+[MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) documents the execution outbox migration, monitor execution generation, three scheduling commands and `config/monitor-scheduling.php`. `MONITOR_SCHEDULING_ENABLED` defaults to false; keep it disabled until the real consumer/runner is integrated and the migration is deliberately applied to the intended database. Automated checks apply it only to the isolated test database. No dependency, lockfile, development key or process change is required.
+
+
+## HTTP and keyword acquisition (M3.03)
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) documents the typed checker boundary and `config/monitor-checks.php` (10 observations per batch, 1 MiB decoded response bytes per observation across redirects). The provider binds the monotonic check clock; the application consumer remains unbound and scheduling disabled. Guarded HTTP connections now forbid reuse so each hop honours its freshly authorized pin. No new environment variable, migration, dependency or process change is required.
+
+
+## TLS/DNS acquisition and bounded resolution (M3.04)
+
+[TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) documents the shared concurrent TLS/DNS coordinator, replaceable transports, verified certificate expiry and exact DNS comparison. `monitor-checks.resolution_timeout_ms` defaults to 1000 ms and bounds the complete A/AAAA resolution used by the HTTP guard. OpenSSL and the existing locked ReactPHP components become explicit direct requirements; no package version changes. Scheduling remains disabled and the consumer unbound. No migration, environment variable, development-key or process change is required.
+
+
+## Heartbeat ingress and lifecycle (M3.05)
+
+[HEARTBEATS.md](HEARTBEATS.md) documents the incremental `2026_10_26_000011_create_monitor_heartbeats.php` migration, bearer-only `POST /heartbeats`, authenticated credential mutations, receipt history and pure slot evaluation. Apply the migration deliberately before using the updated monitor lifecycle; automated checks apply it only to isolated PostgreSQL. Existing heartbeat monitors arm at migration time without a credential. `config/heartbeat.php` contains mandatory IP/credential traffic limits. No dependency, environment variable, key or application-process change is required. The consumer remains unbound and scheduling disabled.
+
+
+## Regional runner and results (M3.06–M3.07)
+
+[MONITOR-RUNNER.md](MONITOR-RUNNER.md) supersedes the earlier unbound-consumer notes: both consumer contracts now resolve to the real runner. Apply `2026_10_26_000012_create_partitioned_check_results.php` deliberately to the intended database after the heartbeat migration. Automated checks migrate only isolated PostgreSQL. It adds the immutable monthly result parent, current/next-two partitions, broker attempt fence and monitor watermark. `monitors:partitions` prepares months daily and on demand; it never drops retained data. Regional job/Horizon timeout is 45 s, deadline 50 s, cache locks 55 s and Redis retry_after remains 90 s. The regional batch limit is two. No dependency/lockfile, environment variable, development key or process change is required. Keep `MONITOR_SCHEDULING_ENABLED=false` until operational activation is deliberately chosen.
+
+[INCIDENTS.md](INCIDENTS.md) documents the incremental `2026_10_28_000013_create_incidents_tables.php` migration (incidents, append-only timeline, single-open-incident index and lifecycle constraints) and `config/incidents.php` (`reopen_window_seconds`, default 900). Apply the migration deliberately to the intended database after the result migration; automated checks migrate only isolated PostgreSQL. No dependency, environment variable, key or process change is required.
+
+`2026_10_28_000014_create_monitor_region_sequences.php` adds the per-region failure sequences used by incident detection ([INCIDENTS.md](INCIDENTS.md#regional-confirmation)). Apply it deliberately after the incident migration. Once applied, every recorded check result also updates sequences and may open, resolve or reopen incidents; no dependency, environment variable or process change is required.
+
+`2026_10_28_000015_create_maintenance_windows.php` and `2026_10_28_000016_create_monitor_pause_periods.php` add maintenance windows and the pause history trigger ([MAINTENANCE.md](MAINTENANCE.md)). Apply them deliberately after the regional sequence migration. Monitors already paused or suspended receive an open period starting at the migration instant. No dependency, environment variable or process change is required.
+
+M4.05 adds `routes/incidents.php`, included by `routes/web.php`, with the incident pages, incident changes and monitor maintenance routes. No migration, environment variable, dependency or process change is required; the incident and maintenance migrations of M4.01–M4.04 must already be applied. See [INCIDENT-UI.md](INCIDENT-UI.md).
+
+M5.01 adds `2026_10_29_000017_create_notification_tables.php` (channels, escalation policies, delivery logs) and `2026_10_29_000018_add_escalation_policy_to_monitors.php` (optional per-monitor override). Apply them deliberately, in this order, after the M4 migrations. It also adds `config/notifications.php` (operational bounds, no environment variable), `routes/notifications.php` included by `routes/web.php`, and adds `config` to the global `dontFlash` list. Until the M5.02 adapters exist, verification messages are refused by `UnavailableChannelVerificationSender`. No dependency or process change is required. See [NOTIFICATIONS.md](NOTIFICATIONS.md).

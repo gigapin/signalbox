@@ -12,7 +12,7 @@ The initial trial starts at team creation and ends exactly 14 UTC days later. Bo
 
 `Membership` is the typed pivot for `team_user`, with a composite primary key `(team_id, user_id)`, user lookup index, timestamps and `TeamRole` enum. A PostgreSQL check restricts roles to `owner`, `admin`, `member` and `viewer`. One user can belong to several teams with different roles. **Multiple owners are permitted** by the user's M1.01 decision; `owner_id` identifies the designated primary owner and production creation also gives that identity an owner membership.
 
-Deleting a team removes its memberships and nulls any current-team preferences. Deleting an ordinary member removes their memberships. A primary owner cannot be deleted while referenced by a team. Last-owner protection and ownership transfer belong to M1.03; direct pivot writes are trusted persistence operations and do not enforce those future domain transitions.
+Deleting a team removes its memberships and nulls any current-team preferences. Deleting an ordinary member removes their memberships. A primary owner cannot be deleted while referenced by a team. M1.03 now implements last-owner protection and ownership transfer through the actions documented in [TEAMS.md](TEAMS.md); direct pivot writes remain trusted persistence operations and do not enforce those transitions.
 
 ## Domain interface and current selection
 
@@ -28,7 +28,7 @@ The action locks the owner's row inside a transaction, then creates the team, ow
 
 ## Factories and explicit synthetic seeding
 
-`UserFactory` continues to create identities without implicit teams. `TeamFactory` creates the designated owner's membership after persistence and supports `free()`, `pro()` and `business()` states. These are base-plan fixtures, not simulated subscriptions. `MembershipFactory` creates an additional participant and supports all four role states; `owner()` adds an owner without replacing `owner_id`. Factory `make()` does not persist membership side effects.
+`UserFactory` continues to create identities without implicit teams. `TeamFactory` creates the designated owner's membership after persistence and supports `free()`, `pro()` and `business()` states, plus `trialEnded()` (added in M2.04) for teams whose initial trial is over. These are base-plan fixtures, not simulated subscriptions. `MembershipFactory` creates an additional participant and supports all four role states; `owner()` adds an owner without replacing `owner_id`. Factory `make()` does not persist membership side effects.
 
 After applying migrations to a configured local database, explicitly seed with:
 
@@ -57,4 +57,12 @@ M1.01 introduces no public HTTP/TypeScript API and does not establish complete t
 
 ## M1.02 follow-up
 
-[AUTHENTICATION.md](AUTHENTICATION.md) now documents the implemented authentication UI, email verification and optional 2FA. The M1.01-only statements above describe that task’s historical boundary. User now normalizes assigned emails, implements mandatory verification and hides Fortify-encrypted authenticator fields. Registration uses the existing CreateTeam action inside an outer transaction, then notifies after commit; it does not introduce general team creation/switching or tenant authorization. M1.03–M1.05 remain open.
+[AUTHENTICATION.md](AUTHENTICATION.md) now documents the implemented authentication UI, email verification and optional 2FA. The M1.01-only statements above describe that task’s historical boundary. User now normalizes assigned emails, implements mandatory verification and hides Fortify-encrypted authenticator fields. Registration uses the existing CreateTeam action inside an outer transaction, then notifies after commit; it does not introduce general team creation/switching or tenant authorization. M1.03 is documented in [TEAMS.md](TEAMS.md); M1.04 is documented in [TENANCY.md](TENANCY.md); M1.05 coverage is documented in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
+
+## M1.03 follow-up
+
+[TEAMS.md](TEAMS.md) documents invitation storage, verified explicit acceptance, invited accounts without a personal team, membership mutations, primary-owner transfer and team switching. These operations coordinate on the Team row and lock the affected User when changing preferences. Direct composite-key membership writes avoid standalone Pivot relation metadata assumptions. M1.04 adds TeamScope on private invitations, explicit context and team/invitation policies; [TENANCY.md](TENANCY.md) describes the implemented boundary. Earlier milestone-only descriptions above are historical.
+
+## M1 completion
+
+M1.05 adds the [parametrized authorization matrix](AUTHORIZATION-MATRIX.md) for the available team, invitation and account surface, including revoked membership, foreign nested IDs and actor/target roles. M1 is complete for these implemented paths; monitor and other domain resources must extend scope/policy and entrance coverage in their own milestones.

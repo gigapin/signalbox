@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
- * Cast membership roles without granting permissions outside future policies.
+ * Cast membership roles for explicit identity actions; general resource policies remain M1.04.
  *
  * @property int $team_id Team participating in this unique pair.
  * @property int $user_id User participating in this unique pair.

@@ -1,0 +1,187 @@
+{
+  "defaults": {
+    "name": "",
+    "type": "http",
+    "interval_seconds": 300,
+    "timeout_ms": 5000,
+    "confirmation_threshold": 3,
+    "regions": [
+      "eu"
+    ],
+    "method": "GET",
+    "expected_status": 200,
+    "follow_redirects": false,
+    "keyword_mode": "present",
+    "tls_port": 443,
+    "dns_record_type": "A",
+    "heartbeat_grace_seconds": 0
+  },
+  "cases": {
+    "http": {
+      "form": {
+        "name": "Contract HTTP",
+        "url": "https://contract.example.invalid/health?token=contract-secret",
+        "method": "POST",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer contract-secret"
+          },
+          {
+            "name": "",
+            "value": ""
+          }
+        ],
+        "body": "{\"ping\":true}",
+        "expected_status": "204",
+        "follow_redirects": true,
+        "regions": [
+          "eu",
+          "us"
+        ]
+      },
+      "create": {
+        "name": "Contract HTTP",
+        "type": "http",
+        "interval_seconds": "300",
+        "timeout_ms": "5000",
+        "confirmation_threshold": "3",
+        "regions": [
+          "eu",
+          "us"
+        ],
+        "method": "POST",
+        "expected_status": "204",
+        "follow_redirects": true,
+        "url": "https://contract.example.invalid/health?token=contract-secret",
+        "headers": {
+          "Authorization": "Bearer contract-secret"
+        },
+        "body": "{\"ping\":true}"
+      },
+      "edit": {
+        "name": "Contract HTTP",
+        "type": "http",
+        "interval_seconds": "300",
+        "timeout_ms": "5000",
+        "confirmation_threshold": "3",
+        "regions": [
+          "eu",
+          "us"
+        ],
+        "method": "POST",
+        "expected_status": "204",
+        "follow_redirects": true
+      }
+    },
+    "keyword": {
+      "form": {
+        "name": "Contract keyword",
+        "type": "keyword",
+        "url": "https://contract.example.invalid/status",
+        "expected_keyword": "all systems go",
+        "keyword_mode": "absent"
+      },
+      "create": {
+        "name": "Contract keyword",
+        "type": "keyword",
+        "interval_seconds": "300",
+        "timeout_ms": "5000",
+        "confirmation_threshold": "3",
+        "regions": [
+          "eu"
+        ],
+        "method": "GET",
+        "expected_status": "200",
+        "follow_redirects": false,
+        "expected_keyword": "all systems go",
+        "keyword_mode": "absent",
+        "url": "https://contract.example.invalid/status",
+        "headers": {},
+        "body": null
+      },
+      "edit": {
+        "name": "Contract keyword",
+        "type": "keyword",
+        "interval_seconds": "300",
+        "timeout_ms": "5000",
+        "confirmation_threshold": "3",
+        "regions": [
+          "eu"
+        ],
+        "method": "GET",
+        "expected_status": "200",
+        "follow_redirects": false,
+        "expected_keyword": "all systems go",
+        "keyword_mode": "absent"
+      }
+    },
+    "tls": {
+      "form": {
+        "name": "Contract TLS",
+        "type": "tls",
+        "tls_host": "contract.example.invalid",
+        "tls_port": "8443"
+      },
+      "create": {
+        "name": "Contract TLS",
+        "type": "tls",
+        "interval_seconds": "300",
+        "timeout_ms": "5000",
+        "confirmation_threshold": "3",
+        "regions": [
+          "eu"
+        ],
+        "tls_host": "contract.example.invalid",
+        "tls_port": "8443",
+        "tls_expiry_warning_days": null
+      }
+    },
+    "dns": {
+      "form": {
+        "name": "Contract DNS",
+        "type": "dns",
+        "dns_name": "contract.example.invalid",
+        "dns_record_type": "TXT",
+        "dns_expected_values": [
+          "v=spf1 -all"
+        ]
+      },
+      "create": {
+        "name": "Contract DNS",
+        "type": "dns",
+        "interval_seconds": "300",
+        "timeout_ms": "5000",
+        "confirmation_threshold": "3",
+        "regions": [
+          "eu"
+        ],
+        "dns_name": "contract.example.invalid",
+        "dns_record_type": "TXT",
+        "dns_expected_values": [
+          "v=spf1 -all"
+        ],
+        "dns_resolver": null
+      }
+    },
+    "heartbeat": {
+      "form": {
+        "name": "Contract heartbeat",
+        "type": "heartbeat",
+        "interval_seconds": "600",
+        "heartbeat_grace_seconds": "60"
+      },
+      "create": {
+        "name": "Contract heartbeat",
+        "type": "heartbeat",
+        "interval_seconds": "600",
+        "timeout_ms": "5000",
+        "confirmation_threshold": "3",
+        "regions": [
+          "eu"
+        ],
+        "heartbeat_grace_seconds": "60"
+      }
+    }
+  }
+}

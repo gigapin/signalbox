@@ -100,6 +100,9 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
+            // Model and query-builder writes format UTC instants without an offset; pin the session so a managed
+            // server with a non-UTC default cannot shift slots, deadlines or trials.
+            'timezone' => 'UTC',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 

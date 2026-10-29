@@ -98,3 +98,34 @@ it(
         expect(SearchDocument::search('missing')->where('team_id', 10)->get())->toBeEmpty();
     },
 )->group('docker')->skip(getenv('RUN_DOCKER_TESTS') !== '1', 'Requires local PostgreSQL.');
+
+it(
+    'pins the PostgreSQL session to UTC even when the role default is another timezone',
+    /** Simulate a managed server default on fresh sessions and restore the role setting afterwards. */
+    function (): void {
+        $base = config('database.connections.pgsql');
+        config([
+            'database.connections.timezone_admin' => $base,
+            'database.connections.timezone_raw' => array_diff_key($base, ['timezone' => true]),
+            'database.connections.timezone_app' => $base,
+        ]);
+        $admin = DB::connection('timezone_admin');
+
+        try {
+            $admin->statement("ALTER ROLE CURRENT_USER SET timezone = 'America/New_York'");
+            $raw = DB::connection('timezone_raw');
+            $app = DB::connection('timezone_app');
+            $instant = "SELECT extract(epoch FROM '2026-10-26 12:00:00'::timestamptz)::bigint";
+
+            expect($raw->scalar('SHOW TimeZone'))->toBe('America/New_York')
+                ->and($app->scalar('SHOW TimeZone'))->toBe('UTC')
+                ->and((int) $app->scalar($instant))->toBe(Carbon\CarbonImmutable::parse('2026-10-26T12:00:00Z')->getTimestamp())
+                ->and((int) $raw->scalar($instant))->not->toBe(Carbon\CarbonImmutable::parse('2026-10-26T12:00:00Z')->getTimestamp());
+        } finally {
+            $admin->statement('ALTER ROLE CURRENT_USER RESET timezone');
+            DB::purge('timezone_raw');
+            DB::purge('timezone_app');
+            DB::purge('timezone_admin');
+        }
+    },
+)->group('docker')->skip(getenv('RUN_DOCKER_TESTS') !== '1', 'Requires isolated PostgreSQL.');

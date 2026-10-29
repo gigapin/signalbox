@@ -52,6 +52,15 @@ class TeamFactory extends Factory
         return $this->state(['plan' => Plan::Pro]);
     }
 
+    /** @return static Team whose single initial trial already ended, so a Free base plan is effective. */
+    public function trialEnded(): static
+    {
+        return $this->state(fn (): array => [
+            'trial_started_at' => CarbonImmutable::now('UTC')->subDays(30),
+            'trial_ends_at' => CarbonImmutable::now('UTC')->subDays(16),
+        ]);
+    }
+
     /** @return static Explicit Business base-plan fixture without external billing effects. */
     public function business(): static
     {

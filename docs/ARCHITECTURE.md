@@ -18,6 +18,7 @@ Questi record stabiliscono come implementare le milestone successive. Stato di t
 | ADR-008 | Retention, rollup e percentili esatti | M3, M7–M9 |
 | ADR-009 | SLA temporale e copertura | M4, M6–M8 |
 | ADR-010 | Piani, trial e riconciliazione | M1–M2, M7–M10 |
+| ADR-011 | Operatore di piattaforma e override di entitlement | MA, rispettato da M9 |
 
 ## ADR-001 — Monolite modulare e responsabilità del dominio
 
@@ -143,9 +144,9 @@ Gli eventi asincroni richiedono rivalutazione dello stato applicabile al momento
 
 ### Contesto e decisione
 
-Applichiamo la documentazione capillare di AGENTS.md a ogni nuovo file e modifica. Commenti di codice, docblock, PHPDoc e TSDoc/JSDoc sono in inglese; i documenti di pianificazione e questi record possono restare in italiano. Il requisito copre anche test, migration, factory, seeder, configurazioni e script, incluse proprietà, costanti, parametri, callback e variabili locali.
+Applichiamo la documentazione capillare di AGENTS.md a ogni nuovo file e modifica. Commenti di codice, docblock, PHPDoc e TSDoc/JSDoc sono in inglese; i documenti di pianificazione e questi record possono restare in italiano. Il requisito copre anche test, migration, factory, seeder, configurazioni e script. Si documentano le dichiarazioni e i relativi contratti; per le variabili locali bastano nomi e tipi chiari, con commenti ordinari soltanto quando utili.
 
-Documentiamo scopo del file, responsabilità, significato dei dati, unità, nullabilità, forme degli array/DTO, invarianti, effetti collaterali ed errori pertinenti. PHP usa descrizioni e tag appropriati `@param`, `@return`, `@throws`, `@var`; TypeScript usa TSDoc/JSDoc e commenti locali. Tipi e nomi restano espliciti: i commenti spiegano il significato, senza sostituire validazione o tipizzazione. Le modifiche aggiornano anche i commenti interessati e non introducono segreti o dati reali negli esempi.
+Documentiamo scopo del file, responsabilità, significato dei dati, unità, nullabilità, forme degli array/DTO, invarianti, effetti collaterali ed errori pertinenti. PHPDoc e TSDoc/JSDoc con tag sono collocati prima delle dichiarazioni, mai nei corpi dei metodi o tra gli argomenti di una chiamata. Le annotazioni `@var` locali sono escluse; i callback brevi usano firme esplicite e i passaggi complessi metodi dedicati. Righe vuote separano i passaggi logici; array e query lunghe vengono espansi. Tipi e nomi restano espliciti: i commenti spiegano il significato, senza sostituire validazione o tipizzazione. Le modifiche aggiornano anche i commenti interessati e non introducono segreti o dati reali negli esempi.
 
 JSON e lockfile restano senza commenti. Campi dei manifest e configurazioni JSON hanno un riferimento Markdown associato e collegato; i file generati sono documentati al livello del formato/proprietario, senza aggiungere annotazioni ai record di terze parti. Per manifest e lockfile il riferimento attuale è DEPENDENCIES, per TypeScript anche BOOTSTRAP/QUALITY/TESTING.
 
@@ -274,6 +275,28 @@ UI, API, CLI e job condividono la definizione centralizzata. Un job vecchio riva
 - M1 prepara gli attributi Team necessari quando introduce il modello; M2 applica monitor/frequenze e quota concorrente; M7 retention; M8 pagine; M9 trial, Stripe e riconciliazione completa; M10 equivalenza API. Nessuna tabella billing anticipata in M0.09.
 - Testare 5/6 monitor Free, due creazioni concorrenti, trial al confine di 14 giorni, fine periodo pagato, webhook duplicati/fuori ordine, downgrade concorrente a creazione/dispatch, date di creazione uguali, risorse in pausa, eccedenza pagine e cache, upgrade senza ripresa implicita e protezione cross-tenant.
 
+## ADR-011 — Operatore di piattaforma e override di entitlement
+
+Data/task: 2026-10-23, MA. Stato: adottato; implementazione MA.01–MA.04. Fuori dalla specifica, per scelta di scope dell'utente.
+
+### Contesto e decisione
+
+Servono prove senza vincoli di piano e piani concessi senza sottoscrizione.
+- **Ruolo.** L'operatore di piattaforma è un flag su `users`, separato dai ruoli dei team e modificabile solo da CLI. Il gate rilegge il flag a ogni richiesta e in produzione richiede la 2FA.
+- **Horizon.** Usa lo stesso gate.
+- **Override.** Un override per team (illimitato o piano omaggio) entra nella precedenza di `TeamEntitlement` prima del piano salvato e del trial; un omaggio non abbassa mai un piano pagato.
+- **Profilo illimitato.** Il caso illimitato usa il profilo finito `internal` di `config/plans.php`, così l'invariante di ADR-010 («nessun valore illimitato») resta valida.
+- **Concorrenza e audit.** Le modifiche prendono il lock Team di ADR-004 e scrivono un evento di audit append-only nella stessa transazione.
+
+### Conseguenze
+
+- `MonitorLimits` e tutti i futuri consumatori del piano effettivo rispettano gli override senza logica propria.
+- M9 deve preservare la precedenza e riconciliare la scadenza o la revoca di un override.
+- Il pannello legge dati di tutti i team: è l'unica eccezione a TeamScope, limitata ai conteggi e protetta dal gate. La risposta 404 nasconde il pannello ai non operatori.
+- Escluse l'email dell'operatore in variabile d'ambiente (attributo mutabile, nessuna traccia, redeploy per revocare) e la promozione via HTTP.
+
+Dettagli in [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md).
+
 ## Stato dopo M0.09
 
 ADR-006–ADR-010 chiudono le decisioni fondanti residue e completano ADR-001–ADR-005. Tutte sono indirizzi adottati per le milestone indicate, non funzionalità disponibili. M0.09 non aggiunge API pubbliche, contratti PHP/TypeScript eseguibili, tabelle, dipendenze o cambi allo scheduler corrente. Le future interfacce rappresenteranno identità di esecuzione, classificazione infrastrutturale, copertura SLA e motivi distinti di sospensione nei task proprietari.
@@ -297,3 +320,109 @@ L'action RegisterUser compone CreateTeam nella stessa transazione e pubblica Reg
 Conferma password recente, challenge pendente a tempo e fingerprint delle credenziali proteggono le transizioni. Consumo/rigenerazione recovery e reset password si coordinano sulla riga User; uno scope tenant non è appropriato per queste operazioni di identità. Il provider TOTP delega la crittografia alla libreria e adatta soltanto clock/replay cache, isolando i contatori per segreto. Props condivise e pagina account espongono proiezioni minime; dettagli 2FA restano su JSON no-store e stato UI non ricordato. Dettagli in [AUTHENTICATION.md](AUTHENTICATION.md).
 
 Questa attuazione non sostituisce ADR-003/004: tenant context, policy e gestione membri restano nei task successivi. Adeguamento dipendenze registrato: Fortify ^1.41 e correzione mirata dell'advisory HttpFoundation con versione compatibile 7.4.21; nessuna riduzione di scope.
+
+## M1.03 — Inviti e transizioni di membership
+
+Data: 2026-10-21. Decisioni utente: inviti validi 7 giorni, email verificata corrispondente e accettazione esplicita; reinvio invalida il token precedente. Owner gestiscono tutti i ruoli, admin soltanto member/viewer; uscita volontaria per ogni membro salvo vincoli owner. Il titolare trasferisce esplicitamente a un owner esistente con password recente e conserva il ruolo owner. Registrazione da invito senza team personale.
+
+Le action di identità acquisiscono il lock Team, rivalutano membership/ruoli e poi, quando modificano la preferenza, il lock User. Token casuali restano soltanto nella notifica sincrona dopo commit; database/sessione conservano il digest e la UI nessuna credenziale. Una riga unica team/email rappresenta il ciclo di vita riemesso; replay non promuove né ripristina membri rimossi. Le scritture composite sul pivot usano chiavi esplicite. TeamAccess riusa la gerarchia senza introdurre il sistema generale di policy/context/TeamScope di M1.04. Dettagli, permessi, rotte e limiti in [TEAMS.md](TEAMS.md).
+
+### Chiarimento documentazione — 2026-10-21
+
+L'utente ha respinto la documentazione di ogni variabile locale applicata in M1.03 perché interrompeva la lettura. Questa decisione sostituisce quel requisito di AGENTS/ADR-005: documentazione prima delle dichiarazioni, soli commenti ordinari necessari nei corpi e nessuna annotazione locale per forzare i tipi. La revisione M1.03 mantiene firme esplicite, introduce un controllo reale dell'identità autenticata nel controller comune e separa le proiezioni complesse in metodi documentati. Contratti, permessi e ordine dei lock restano quelli approvati.
+
+## M1.04 implementation follow-up
+
+ADR-003/004 now have concrete request-scoped TenantContext, fail-closed TeamScope/BelongsToTeam on TeamInvitation, authorized HTTP middleware ordered before binding, and team/invitation policies sharing TeamAccess. User, Team and initial membership lookup remain outside the scope. The sole capability resolver performs a restricted scope-free lookup; acceptance derives context from the proved invitation and revalidates under lock. Existing transactional ownership and role rules remain unchanged.
+
+[TENANCY.md](TENANCY.md) documents explicit nested lifetimes, model reload/restoration safeguards, scalar-only tenant jobs and worker/CLI tests. M1.04 introduces no speculative product resource, schema change or generic bypass. Raw/bulk persistence remains an explicit trusted boundary. API, public status, search/cache and broadcast enforcement are added with their owning features; M1.05 supplies the complete parametrized matrix of available entrances.
+
+## M1.05 verification follow-up
+
+M1.05 verifies ADR-003/004 with an independent route catalogue and actor/target role expectations, cross-team nested identifiers, stale membership/preferences, bounded capabilities and assertions of both allowed effects and unchanged persistence on denial. [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) describes discovery and extension rules. Existing scope, worker and PostgreSQL concurrency suites remain enabled. No domain permission, scope bypass or new transport is introduced; M1 completion covers implemented paths and subsequent milestones extend the matrix with their resources.
+
+## M2.01 monitor foundation
+
+[MONITORS.md](MONITORS.md) documents the tenant Monitor model, five readonly configuration variants, composition of HTTP settings for keyword monitors, dedicated-column mapper and typed canonical simulated regions. The specification's column layout is extended for TLS/DNS/heartbeat; URL/header/body use encrypted text columns, while DNS expectations and regions use JSONB. Configuration replacement clears irrelevant fields without implicit persistence.
+
+The shared tenant trait protects Monitor and the Team inverse relation. Initial status is unknown, scheduling/observation timestamps are null, and voluntary pause is separate from plan suspension. UTC instants are normalized before SQL formatting. Plan limits, regional incident state, scheduling transitions, network validation, SSRF and checker I/O remain in their owning tasks; no resource controller or policy is anticipated. PostgreSQL constraints and test-only factories verify this foundation without provisioning implicit teams or contacting targets.
+
+## M2.02 monitor input boundary
+
+[MONITOR-INPUT.md](MONITOR-INPUT.md) defines the network-free validator, configurable operational bounds and Form Request adapters. Syntax parsing, limit configuration and HTTP adaptation have separate responsibilities; existing variant DTOs remain the typed output. Validation returns both a complete candidate and an explicit normalized patch so future transactional actions can revalidate that patch against a locked fresh snapshot, preserving concurrent edits and omitted secrets. No speculative mutation service or transport is introduced.
+
+Authorization runs before configuration decryption; absent tenant context or MonitorPolicy denies access. Test-only grants/routes cover the adapters without exposing production CRUD. Global string transformations are bypassed only for the defined numeric monitor mutation paths, preserving meaningful bytes for the dedicated normalizer. Validation errors never flash original monitor input or echo secret values. This boundary does not replace M2.03 outbound security or M2.04 policy/plan enforcement.
+
+## M2.03 outbound security boundary
+
+[OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md) implements the ADR-002 SSRF boundary as small services: a byte-level address policy with an explicit, empty-by-default CIDR exception list; a replaceable host resolver; a guard that authorizes URLs, TLS endpoints and resolvers only when every resolved address is allowed; Guzzle options pinning the connection to those addresses; and a redirect policy that re-authorizes each hop, refuses downgrades and drops configured headers across origins. Form validation applies only the network-free subset. Secret redaction is centralized in one redactor used by a Monolog processor tapped into every concrete channel and by the safe configuration projection. Transports, retry semantics and checker results remain M3/M5.
+
+## M2.04 monitor mutations and plan limits
+
+[MONITOR-CRUD.md](MONITOR-CRUD.md) applies ADR-004/ADR-010 to monitors. `config/plans.php` is the single plan matrix read by `PlanLimits`; `TeamEntitlement` resolves the effective plan (stored Pro/Business as paid placeholder until M9, otherwise Pro during the exclusive 14-day trial, else Free); `MonitorLimits` checks quota, cadence and deterministic quota position. One cohesive action, `ManageMonitors`, locks Team then Monitor, re-runs `MonitorPolicy` and re-validates the explicit patch under lock, as the identity actions do. Viewers are read-only; deletion is permanent; voluntary pause and plan suspension stay independent. Scheduling slots are left null for the M3 dispatcher; no events are published before M6.
+
+## M2.05 monitor pages
+
+[MONITOR-UI.md](MONITOR-UI.md) separates read pages (`MonitorPageController`) from mutations (`MonitorController`). Projections live in one presenter that reads configuration only through `MonitorConfigurationProjection`. Tenant-filtered search is a small service over Scout with an explicit team predicate and literal LIKE escaping (ADR-003). Quota and permission props are ADR-004 hints only; the lock-aware action remains the authority. Invalid list filters are reported rather than redirected, to avoid a GET redirect loop.
+
+## M2.06 integrated monitor coverage
+
+M2.06 adds tests and test support only; no production code changes. It verifies ADR-004 on the real transport: a real `artisan serve` process with several workers receives the Inertia submissions, and the sixth Free creation is shown to wait on the same Team row lock and then be refused. A shared JSON contract keeps the React form payloads and server validation in step. Details are in [MONITOR-UI.md](MONITOR-UI.md#integrated-coverage-m206) and [TESTING.md](TESTING.md).
+
+
+## Attuazione M3.01–M3.02 — Scheduler e consegna recuperabile
+
+[MONITOR-SCHEDULING.md](MONITOR-SCHEDULING.md) attua ADR-006: slot UTC con fase CRC32, selezione chunkById, prenotazione transazionale Team → Monitor, outbox regionale, publisher con lease, ripubblicazione prima dell'acquisizione, fencing e recupero degli abbandoni. Il gate unico è disabilitato fino all'integrazione del runner reale; i consumer applicativi e i CheckResult restano nei task successivi.
+
+La revisione positiva `execution_revision` invalida lavori non iniziati quando cambiano impostazioni operative o viene applicata una pausa effettiva. I soli cambi di nome la conservano. Scelta: una generazione semantica al posto di un hash dei ciphertext, che cambiano anche per modifiche senza cambiamento dei segreti. Il CRUD mantiene la generazione sotto i lock esistenti; M9 dovrà rispettarla durante la riconciliazione. Nessuna modifica alla specifica di prodotto né promessa exactly-once.
+
+
+## Attuazione M3.03 — HTTP e keyword
+
+[HTTP-CHECKERS.md](HTTP-CHECKERS.md) attua ADR-002 con contesto/ingresso/esito normalizzati, evaluator Strategy puri e resolver esplicito, separati dal coordinatore `Http::pool()`. HTTP e keyword condividono lo stesso trasporto protetto; batch di 10, budget di rete cumulativo e cap di 1 MiB decompressi fra redirect. Il sink usa un filtro PHP per interrompere realmente i trasferimenti troppo grandi; le connessioni sono sempre nuove per rispettare il pin corrente.
+
+Decisione utente: la latenza viene misurata, ma la soglia di latenza citata nella specifica resta rinviata. Nessuna soglia implicita o modifica silenziosa della specifica. Il resolver DNS conserva il limite noto senza timeout applicativo, da affrontare in M3.04. Nessuna associazione del consumer, persistenza CheckResult o attivazione dello scheduler in questo task.
+
+
+## Attuazione M3.04 — TLS/DNS e risoluzione limitata
+
+[TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) completa i trasporti TLS/DNS di ADR-002: due strategie pure e due contratti di acquisizione sostituibili, con un coordinatore condiviso per ammissione tenant, concorrenza, deadline e classificazione sicura. Il coordinatore unico sostituisce i due coordinatori del piano per evitare duplicazione degli stessi vincoli. TLS collega IP autorizzati conservando identità originale/SNI e verifica catena, hostname e validità; DNS confronta insiemi esatti normalizzati e segue alias limitati.
+
+Decisioni utente: finestra TLS inclusiva con esito down, resolver di sistema fidato per default e resolver custom soggetto al guard. ReactPHP già nel lockfile viene dichiarato dipendenza diretta senza aggiornamenti. Il guard HTTP sostituisce `dns_get_record()` con A/AAAA concorrenti entro 1000 ms complessivi; la latenza HTTP resta quella di rete, distinta dal DNS. Queste note superano il limite storico senza timeout riportato in M2.03/M3.03. Nessun retry automatico, binding del consumer, aggiornamento dei riepiloghi, persistenza risultati o attivazione del motore.
+
+
+## Attuazione M3.05 — Heartbeat push e snapshot temporali
+
+[HEARTBEATS.md](HEARTBEATS.md) attua il confine push di ADR-002/003: ingresso Bearer fuori dallo stack web, discovery limitata a identità dal digest e rivalidazione sotto lock Team → Monitor → stato heartbeat. Le ricezioni registrano solo il tempo server; l’ammissibilità riusa ExecutionEligibility. Le mutazioni della credenziale riusano MonitorPolicy e non spostano la finestra di controllo.
+
+Decisioni utente: finestra mobile, arming immediato dalla creazione/ripresa, tolleranza esplicita e 204 senza registrazione durante pausa o inammissibilità di piano. Lo storico per generazione consente snapshot allo slot di riferimento: una chiamata tardiva non ripara retroattivamente un’osservazione mancata. La strategia pura restituisce heartbeat_missed con latenza/codice HTTP null. UI minima con segreto una sola volta in memoria, senza props/history/flash/storage. Runner, risultati e incidenti restano successivi; nessun consumer associato o motore abilitato. La pulizia delle ricezioni va integrata in M7 preservando gli slot ancora validi.
+
+## Attuazione M4.01 — Modello incidenti e transizioni
+
+[INCIDENTS.md](INCIDENTS.md) introduce l’ambito Incidenti di ADR-001 con soli modelli, enum, vincoli e regole pure: `IncidentStatus` (investigating/identified/monitoring/resolved, riapertura solo verso investigating con contatore), `IncidentSeverity` derivata in modo esaustivo dal `CheckError` della conferma, causa automatica distinta dalla nota dichiarata e presa in carico separata dallo stato. Proprietà tenant tramite FK composite e `BelongsToTeam`; un indice unico parziale garantisce al più un incidente aperto per monitor. La timeline è append-only con pubblicazione esplicita una sola volta, imposta da trigger PostgreSQL e dal modello.
+
+Decisioni utente: stati stile status page, severità dal tipo di errore poi modificabile, riapertura dello stesso incidente entro `reopen_window_seconds` (900 s). Nessuna action, job, rotta o UI: valutazione regionale M4.02, transizioni transazionali M4.03, manutenzioni M4.04, UI/policy M4.05.
+
+## Attuazione M4.02–M4.03 — Conferma regionale e ciclo automatico
+
+[INCIDENTS.md](INCIDENTS.md#regional-confirmation) attua ADR-007: `ExecutionResults` invoca il contratto `ResultObserver` nella stessa transazione del risultato, implementato da `IncidentDetection` nell’ambito Incidenti (nessuna dipendenza del motore dagli incidenti). Sequenze per regione persistite e azzerate al cambio di revisione; slot saltati, successi ed esiti non osservati interrompono la sequenza; verdetto congiunto solo a slot completo. Apertura, riapertura entro la finestra e risoluzione automatica con voci di sistema ed eventi dopo commit; azioni manuali con lock Team → Monitor → Incidente e policy rieseguita.
+
+Decisioni utente: M4.02 e M4.03 nello stesso branch; `consecutive_failures` come minimo dei contatori regionali. Nessuna rotta o UI; manutenzioni e notifiche restano successive.
+
+## Attuazione M4.04 — Manutenzioni e storico delle pause
+
+[MAINTENANCE.md](MAINTENANCE.md) attua le esclusioni di ADR-009: finestre di manutenzione per monitor con passato immutabile (azione con lock Team → Monitor → finestra e `MonitorPolicy::update`), storico di pausa volontaria e sospensione di piano scritto da un trigger PostgreSQL su ogni cambio dei flag, `ExclusionPeriods` e `TimeInterval::union()` come base del futuro servizio SLA. Una conferma in manutenzione non apre né riapre incidenti; il ripristino li risolve comunque.
+
+Decisioni utente: nessun nuovo incidente in manutenzione, passato immutabile, trigger come unico scrittore dello storico pause. Nessuna rotta o UI.
+
+## Attuazione M4.05 — UI incidenti, timeline e manutenzioni
+
+[INCIDENT-UI.md](INCIDENT-UI.md) espone le azioni di M4.03–M4.04 al browser senza nuove regole di dominio: controller sottili che delegano a `ManageIncidents`/`ManageMaintenanceWindows`, Form Request per la sola sintassi con autorizzazione prima della validazione, presenter dedicati (nessun modello serializzato), binding annidati con `scopeBindings()` e predicato `team_id` esplicito nella lista (ADR-003). Le eccezioni di dominio diventano errori di sessione sulle chiavi `incident`/`maintenance`; le policy restano rieseguite sotto lock (ADR-004).
+
+Decisioni utente: lista incidenti di team con dettaglio e sezioni nel dettaglio monitor; ogni voce nasce privata e si pubblica solo con un pulsante esplicito con conferma; orari delle manutenzioni inseriti nel fuso del browser e inviati in UTC con offset obbligatorio.
+
+## Attuazione M5.01 — Canali, policy di escalation e log di consegna
+
+[NOTIFICATIONS.md](NOTIFICATIONS.md) introduce l’ambito Notifiche di ADR-001 con soli modelli, regole e UI di gestione. Le configurazioni dei canali sono DTO immutabili per famiglia dietro il contratto `ChannelConfiguration`, prodotte da un unico parser senza rete (ADR-002: il guard SSRF resta obbligatorio a ogni consegna) e salvate in una colonna cifrata; le pagine ricevono solo proiezioni mascherate. La verifica passa dal contratto `ChannelVerificationSender` (adapter in M5.02, per ora un’implementazione che rifiuta), con digest HMAC del codice, scadenza, tentativi durevoli e invio fuori transazione. Policy di escalation con step assoluti crescenti, default unico per team e override per monitor con FK composita (ADR-003); `EscalationPolicyResolver` è il punto unico di risoluzione per M5.03–M5.04. Lock Team → risorsa e policy rieseguite sotto lock (ADR-004).
+
+Decisioni utente: canali e policy gestiti solo da owner/admin; verifica con codice a 6 cifre inviato dal canale stesso; policy predefinita di team con override per monitor. La scelta della policy di un monitor resta configurazione del monitor (`MonitorPolicy::update`). Nessun adapter, job o temporizzazione: M5.02–M5.05.

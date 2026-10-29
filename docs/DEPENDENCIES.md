@@ -197,3 +197,24 @@ The initial targeted require installed 14 packages and updated/removed none: For
 The require surfaced a real advisory on **pre-existing** `symfony/http-foundation` v8.0.15: [CVE-2026-108082](https://symfony.com/cve-2026-108082), concerning Cache-Control header parsing. A targeted `composer update symfony/http-foundation --with-dependencies --minimal-changes --no-interaction --no-scripts --no-plugins --prefer-dist` changed only that package to **v7.4.21**. This supported LTS branch is allowed by Laravel 13's existing `^7.4.0 || ^8.0.0` constraint and avoids the affected range; no direct constraint or required product stack major was changed. This is an explicit security adjustment, not a silent general dependency refresh. Composer then reported no security advisories. Actual full quality/integration results and limits are recorded in [TASKS.md](TASKS.md).
 
 [AUTHENTICATION.md](AUTHENTICATION.md) documents the application-owned Fortify configuration, permitted features, request/response interfaces, encrypted fields, replay handling and local notification behavior. Application providers disable package routes before boot; package publication is not run over existing application files.
+
+## Optional pgAdmin image (2026-10-23)
+
+User request: the optional local `pgadmin` service uses `dpage/pgadmin4:9.18.0` pinned to `sha256:c332c5f6dfba995d9ebc4af261d93506d6876085d712eaaa3defc8dd1a3f26de`, resolved with `docker buildx imagetools inspect` (linux/amd64 and linux/arm64). It is a development tool behind the `dbadmin` profile and changes no application dependency, lockfile or CI job. Configuration and limits are in [DOCKER.md](DOCKER.md#optional-pgadmin).
+
+## PHP 8.4.27 security update (2026-10-23)
+
+User request for a security update: `docker/php/Dockerfile` moves from `php:8.4-cli-bookworm@sha256:836ac6c6…`, which ran PHP 8.4.26, to `php:8.4.27-cli-bookworm@sha256:496b5e02fe9fe44fcfb715023b931048111dc4e0bc719789d83c906be9f04b05`, resolved with `docker buildx imagetools inspect`. The php.net 8.4.27 changelog lists core fixes for GHSA-w8hw-w9fx-j79w and GHSA-6wmf-4rv5-p3rp (state corruption via bailout) plus several use-after-free fixes. The tag now names the patch explicitly. Composer constraints (`~8.4.0 || ~8.5.0`, platform 8.4.0), lockfiles and extensions are unchanged. CI installs `PHP_VERSION: '8.4'` through setup-php, which selects the latest patch it ships; the patch actually used by CI must be read from its job log.
+
+
+
+## M3.04 direct transport dependencies
+
+TLS/DNS acquisition directly uses existing ReactPHP dependencies previously installed transitively through Reverb. They are now declared explicitly in `composer.json`: `react/dns` ^1.14 (locked v1.14.0), `react/event-loop` ^1.6 (v1.6.0), `react/promise` ^3.3 (v3.3.0), `react/promise-timer` ^1.11 (v1.11.0), and `react/socket` ^1.17 (v1.17.0). `ext-openssl` * makes the existing runtime capability an explicit platform requirement for certificate verification and test certificate generation. These additional `require` keys describe application-owned transport use; no package version was updated. Composer synchronized the lock metadata with `composer update --lock --no-install --no-scripts --no-audit --no-interaction`, reporting nothing to modify in the locked package graph.
+
+The adapters compose cancellable operations on private loops; DNS uses explicit UDP/TCP executors with one timeout, avoiding the factory's default retries, hosts-file handling and cache. See [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md), [official DNS documentation](https://reactphp.org/dns/), [Socket documentation](https://reactphp.org/socket/), and [PHP TLS options](https://www.php.net/manual/en/context.ssl.php). No Docker image, framework major, npm manifest or npm lockfile changes.
+
+
+## M3.05 heartbeat compatibility
+
+Heartbeat uses the existing Laravel/PostgreSQL/React stack and PHP random_bytes/hash primitives. No manifest, lockfile, package version or runtime extension changes. `config/heartbeat.php` is PHP configuration, with mandatory positive IP/credential requests-per-minute limits documented in [HEARTBEATS.md](HEARTBEATS.md).

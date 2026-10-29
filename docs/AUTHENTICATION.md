@@ -1,12 +1,12 @@
 # Web authentication and optional two-factor security
 
-M1.02 implements browser-session registration, login/logout, password recovery, mandatory email verification and optional authenticator-based 2FA. It preserves Laravel 13, Inertia 2, React 19 and the [M1.01 identity foundation](IDENTITY.md). Invitations/team switching remain M1.03, tenant context and role policies M1.04, and API token issuance M10. See [TASKS.md](TASKS.md) for actual verification evidence.
+M1.02 implements browser-session registration, login/logout, password recovery, mandatory email verification and optional authenticator-based 2FA. It preserves Laravel 13, Inertia 2, React 19 and the [M1.01 identity foundation](IDENTITY.md). M1.03 invitations/team switching are documented in [TEAMS.md](TEAMS.md), tenant context and role policies M1.04, and API token issuance M10. See [TASKS.md](TASKS.md) for actual verification evidence.
 
 ## Dependencies and boundaries
 
 Laravel Fortify 1.41.0 supplies the maintained authentication pipeline, password broker integration, verification controllers, encrypted authenticator storage and QR generation. Its automatic routes are disabled; `routes/auth.php` declares exactly the supported endpoints. Profile editing, ordinary authenticated password changes, passkeys and API endpoints are not enabled. `laravel/passkeys` is a transitive dependency of this Fortify version, not an exposed product feature. Manifest and lock changes are documented in [DEPENDENCIES.md](DEPENDENCIES.md).
 
-Application Form Requests validate registration, reset, password confirmation and setup confirmation; Fortify's login/reset-link requests and the application challenge request retain their existing contracts. Cohesive actions own registration persistence and reset password rules. The existing `CreateTeam` action remains the only production team creator. Application controller adapters orchestrate Fortify and session responses; they do not depend on future tenant authorization.
+Application Form Requests validate registration, reset, password confirmation and setup confirmation; Fortify's login/reset-link requests and the application challenge request retain their existing contracts. Cohesive actions own registration persistence and reset password rules. The existing `CreateTeam` action remains the only production team creator; M1.03 invited registration deliberately creates no team. Application controller adapters orchestrate Fortify and session responses; they do not depend on future tenant authorization.
 
 ## Registration and email identity
 
@@ -49,7 +49,7 @@ Reset links use the existing broker's 60-minute lifetime, hashed token storage, 
 
 ## Second-factor state and concurrency
 
-Enabling 2FA generates encrypted pending secret/recovery fields; it does not enable login challenges until a valid six-digit code sets `two_factor_confirmed_at`. The security page supports QR/manual-key enrollment, confirmation, cancellation of pending setup, showing/regenerating eight recovery codes, and disabling confirmed 2FA. Disabling clears all three fields. The recent-password gate lasts 900 seconds; successful confirmation deliberately returns to the security page rather than redirecting to a previously requested sensitive JSON endpoint.
+Enabling 2FA generates encrypted pending secret/recovery fields; it does not enable login challenges until a valid six-digit code sets `two_factor_confirmed_at`. The security page supports QR/manual-key enrollment, confirmation, cancellation of pending setup, showing/regenerating eight recovery codes, and disabling confirmed 2FA. Disabling clears all three fields. The recent-password gate lasts 900 seconds; successful confirmation returns to the security page by default; M1.03 also permits a server-selected ownership page after rechecking primary ownership. Previously requested sensitive JSON endpoints and arbitrary intended URLs remain excluded.
 
 Fortify encrypts secret and recovery JSON using the application key. These attributes are hidden and excluded from normal mass assignment. No Eloquent encrypted cast is added on top of Fortify's encryption. Changing the application key without a migration/key-rotation strategy would make existing encrypted authenticators unreadable; normal development setup must not regenerate a configured key.
 
@@ -85,7 +85,7 @@ Tests fake notifications and external HTTP, exercise password-broker and verific
 docker compose run --rm php-test composer test -- --fail-on-skipped
 ```
 
-## Session handoff — 2026-10-20
+## Local mail evidence — 2026-10-20
 
 The main development application is available on `http://127.0.0.1:8000`; port 18090 refers only to the older isolated M0 verification environment. After correcting HTTP environment inheritance, local migration status showed all M1 migrations already applied by the user. The agent did not rerun development migrations or seed accounts.
 
@@ -97,4 +97,8 @@ Two `MAIL_MAILER` assignments were observed in the local `.env`: `log` followed 
 docker compose restart web
 ```
 
-Next session is planned for **2026-10-21**, starting with M1.03 invitations, membership management and team switching. M1.03 has not started. Latest backend verification after the HTTP fix: 128 Pest cases/632 assertions without skips, PHP-CS-Fixer and Larastan successful. Frontend evidence remains the M1.02 checks (five quality-tool tests, ten DOM cases and build). The user's Mailtrap confirmation does not claim a complete manual 2FA walkthrough or production email delivery. No services were stopped or reset for this documentation-only handoff.
+The user's Mailtrap confirmation does not claim a complete manual 2FA walkthrough or production email delivery.
+
+## M1.03 invitation continuation
+
+[TEAMS.md](TEAMS.md) specifies the separate invited-registration action and browser routes. A verified matching account must explicitly accept; login, 2FA and verification only continue to the invitation review. An application VerifyEmailResponse adapter preserves that continuation while delegating all non-invitation behavior to Fortify. The account page exposes only a pending-invitation boolean/link; shared auth props remain unchanged. Explicit invitation account switching regenerates session/CSRF and preserves only a freshly resolved capability. No existing ordinary registration or team trial is replaced.

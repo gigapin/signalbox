@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Store team configuration without resolving paid subscription rights or tenant context.
@@ -24,7 +26,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * @property \Carbon\CarbonImmutable $trial_ends_at Exclusive UTC boundary of the initial trial.
  * @property \Carbon\CarbonImmutable|null $created_at Team creation timestamp in UTC.
  * @property \Carbon\CarbonImmutable|null $updated_at Last team modification in UTC.
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Monitor> $monitors Monitors visible only within the active tenant context.
  * @property-read User $owner Primary owner identity.
+ * @property-read TeamPlanOverride|null $planOverride Operator-granted override, active or expired.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $users Users with explicit membership.
  */
 class Team extends Model
@@ -57,5 +61,17 @@ class Team extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->using(Membership::class)->withPivot('role')->withTimestamps();
+    }
+
+    /** @return HasMany<Monitor, $this> Tenant-scoped monitors; traversing another team's relation grants no access. */
+    public function monitors(): HasMany
+    {
+        return $this->hasMany(Monitor::class);
+    }
+
+    /** @return HasOne<TeamPlanOverride, $this> Operator-granted entitlement override; read through TeamEntitlement. */
+    public function planOverride(): HasOne
+    {
+        return $this->hasOne(TeamPlanOverride::class);
     }
 }

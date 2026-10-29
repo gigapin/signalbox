@@ -1,0 +1,116 @@
+<?php
+
+/** Declare independent expected access for every currently available private team route. */
+
+namespace Tests\Support;
+
+/** Keep expected permissions explicit rather than deriving test outcomes from production policies. */
+final class TeamRouteMatrix
+{
+    /** @var array<string, array{method: string, status: int, roles: list<string>, methods?: list<string>}> Route contract and successful actor roles; owner fixtures are primary owners; `methods` lists every verb when a route accepts more than the tested one. */
+    public const array PRIVATE_ROUTES = [
+        'teams.show' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.select' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.members.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.members.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.ownership' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner']],
+        'teams.ownership.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner']],
+        'teams.invitations.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.invitations.resend' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.invitations.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.monitors.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.monitors.create' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.show' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.monitors.edit' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member'], 'methods' => ['PUT', 'PATCH']],
+        'teams.monitors.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.pause' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.resume' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.heartbeat-credential.store' => ['method' => 'POST', 'status' => 200, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.heartbeat-credential.destroy' => ['method' => 'DELETE', 'status' => 204, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.incidents.show' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.incidents.acknowledge' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.updates.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.updates.publish' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.severity' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.root-cause' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.maintenance.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.maintenance.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.maintenance.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.notifications.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.notification-channels.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.verification.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.verification.confirm' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.activation' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.signing-secret' => ['method' => 'POST', 'status' => 200, 'roles' => ['owner', 'admin']],
+        'teams.escalation-policies.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.escalation-policies.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.escalation-policies.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.monitors.escalation-policy' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+    ];
+
+    /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */
+    public const array OTHER_ROUTES = [
+        'teams.index' => 'GET',
+        'invitations.open' => 'GET',
+        'invitations.review' => 'GET',
+        'invitations.switch-account' => 'POST',
+        'invitations.register' => 'GET',
+        'invitations.register.store' => 'POST',
+        'invitations.accept' => 'POST',
+        'account' => 'GET',
+        'account.security' => 'GET',
+        'heartbeats.receive' => 'POST',
+    ];
+
+    /** @return array<string, array{string, string, string}> Route/role/access scenarios with readable Pest dataset names. */
+    public static function accessCases(): array
+    {
+        $cases = [];
+
+        foreach (array_keys(self::PRIVATE_ROUTES) as $route) {
+            foreach (['owner', 'admin', 'member', 'viewer'] as $role) {
+                foreach (['member', 'foreign', 'revoked'] as $access) {
+                    $cases[$route.' '.$role.' '.$access] = [$route, $role, $access];
+                }
+            }
+        }
+
+        return $cases;
+    }
+
+    /** @return array<string, array{string, string}> Every private route tested against both authentication gates. */
+    public static function authenticationCases(): array
+    {
+        $cases = [];
+
+        foreach (array_keys(self::PRIVATE_ROUTES) as $route) {
+            foreach (['guest', 'unverified'] as $identity) {
+                $cases[$route.' '.$identity] = [$route, $identity];
+            }
+        }
+
+        return $cases;
+    }
+
+    /** @return array<string, array{string, string, string}> Full actor/target hierarchy for member transitions and invitation lifecycles. */
+    public static function roleCases(): array
+    {
+        $cases = [];
+
+        foreach (['teams.members.update', 'teams.members.destroy', 'teams.invitations.store', 'teams.invitations.resend', 'teams.invitations.destroy'] as $route) {
+            foreach (['owner', 'admin', 'member', 'viewer'] as $actor) {
+                foreach (['owner', 'admin', 'member', 'viewer'] as $target) {
+                    $cases[$route.' actor '.$actor.' target '.$target] = [$route, $actor, $target];
+                }
+            }
+        }
+
+        return $cases;
+    }
+
+}

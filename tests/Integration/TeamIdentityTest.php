@@ -221,21 +221,33 @@ it('refuses synthetic seeding in production before writing any account', /** Ver
     }
 });
 
-it('reverses only M1 migrations and reapplies them without changing baseline identities', /** Exercise incremental upgrade and rollback on the dedicated database inside its test transaction. */ function (): void {
-    /** @var User $user Existing identity created before reapplying the domain migrations. */
+it('reverses identity and dependent migrations without changing baseline identities', function (): void {
     $user = User::factory()->create();
-    /** @var list<string> $files Domain migration paths in dependency order. */
     $files = [
         'database/migrations/2026_10_20_000001_create_teams_table.php',
         'database/migrations/2026_10_20_000002_create_team_user_table.php',
         'database/migrations/2026_10_20_000003_add_current_team_to_users.php',
+        'database/migrations/2026_10_21_000005_create_team_invitations_table.php',
+        'database/migrations/2026_10_22_000006_create_monitors_table.php',
+        // Plan overrides reference teams, so they are removed before teams and restored after them.
+        'database/migrations/2026_10_23_000009_create_team_plan_overrides_table.php',
+        // Execution ownership references monitors and teams and must be reversed first.
+        'database/migrations/2026_10_23_000010_create_check_executions_table.php',
+        'database/migrations/2026_10_26_000011_create_monitor_heartbeats.php',
+        'database/migrations/2026_10_26_000012_create_partitioned_check_results.php',
+        // Incidents reference monitors and users through foreign keys and are reversed before them.
+        'database/migrations/2026_10_28_000013_create_incidents_tables.php',
+        'database/migrations/2026_10_28_000014_create_monitor_region_sequences.php',
+        'database/migrations/2026_10_28_000015_create_maintenance_windows.php',
+        'database/migrations/2026_10_28_000016_create_monitor_pause_periods.php',
+        // Channels, policies and delivery logs reference teams and incidents; the override references policies.
+        'database/migrations/2026_10_29_000017_create_notification_tables.php',
+        'database/migrations/2026_10_29_000018_add_escalation_policy_to_monitors.php',
     ];
-    /** @var string $file Domain migration being reversed, starting with the last dependency. */
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();
     }
     expect(User::query()->findOrFail($user->id)->email)->toBe($user->email);
-    /** @var string $file Domain migration being applied after its prerequisites. */
     foreach ($files as $file) {
         (require base_path($file))->up();
     }

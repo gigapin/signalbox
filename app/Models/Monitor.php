@@ -63,6 +63,7 @@ use Laravel\Scout\Searchable;
  * @property \Carbon\CarbonImmutable|null $updated_at UTC modification timestamp.
  * @property-read Team $team Owning team; relation traversal never grants another tenant's data.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Incident> $incidents Incidents opened for this monitor.
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, MaintenanceWindow> $maintenanceWindows Planned maintenance of this monitor.
  */
 final class Monitor extends Model
 {
@@ -195,5 +196,11 @@ final class Monitor extends Model
     public function incidents(): HasMany
     {
         return $this->hasMany(Incident::class);
+    }
+
+    /** @return HasMany<MaintenanceWindow, $this> Planned maintenance of this monitor, resolved through the tenant scope. */
+    public function maintenanceWindows(): HasMany
+    {
+        return $this->hasMany(MaintenanceWindow::class);
     }
 }

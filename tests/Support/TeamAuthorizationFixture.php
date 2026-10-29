@@ -5,11 +5,15 @@
 namespace Tests\Support;
 
 use App\Actions\Monitoring\ManageHeartbeatCredentials;
+use App\Models\Incident;
+use App\Models\IncidentUpdate;
+use App\Models\MaintenanceWindow;
 use App\Models\Monitor;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Services\Tenancy\TenantContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /** All identities and capabilities are synthetic; raw links stay in memory only. */
@@ -27,6 +31,12 @@ final readonly class TeamAuthorizationFixture
      * @param string $foreignCapabilityUrl Foreign capability used to test ID/token mismatches.
      * @param Monitor $monitor Local monitor targeted by monitor mutation routes.
      * @param Monitor $foreignMonitor Monitor of the disjoint team, never reachable through the actor's team.
+     * @param Incident $incident Open local incident of the local monitor.
+     * @param Incident $foreignIncident Open incident of the foreign monitor.
+     * @param IncidentUpdate $entry Private timeline entry of the local incident.
+     * @param IncidentUpdate $foreignEntry Private timeline entry of the foreign incident.
+     * @param MaintenanceWindow $window Upcoming window of the local monitor, still editable and deletable.
+     * @param MaintenanceWindow $foreignWindow Upcoming window of the foreign monitor.
      */
     private function __construct(
         public Team $team,
@@ -40,6 +50,12 @@ final readonly class TeamAuthorizationFixture
         public string $foreignCapabilityUrl,
         public Monitor $monitor,
         public Monitor $foreignMonitor,
+        public Incident $incident,
+        public Incident $foreignIncident,
+        public IncidentUpdate $entry,
+        public IncidentUpdate $foreignEntry,
+        public MaintenanceWindow $window,
+        public MaintenanceWindow $foreignWindow,
     ) {
     }
 
@@ -75,6 +91,9 @@ final readonly class TeamAuthorizationFixture
             app(ManageHeartbeatCredentials::class)->rotate($foreign->owner, $foreign->id, $foreignMonitor->id);
         }
 
+        [$incident, $entry, $window] = self::incidentState($team, $monitor);
+        [$foreignIncident, $foreignEntry, $foreignWindow] = self::incidentState($foreign, $foreignMonitor);
+
         return new self(
             $team,
             $foreign,
@@ -87,13 +106,43 @@ final readonly class TeamAuthorizationFixture
             $remote['url'],
             $monitor,
             $foreignMonitor,
+            $incident,
+            $foreignIncident,
+            $entry,
+            $foreignEntry,
+            $window,
+            $foreignWindow,
         );
+    }
+
+    /**
+     * @param Team $team Owning team.
+     * @param Monitor $monitor Monitor of that team.
+     * @return array{Incident, IncidentUpdate, MaintenanceWindow} Open incident with one private entry and an upcoming window starting in a day.
+     */
+    private static function incidentState(Team $team, Monitor $monitor): array
+    {
+        return app(TenantContext::class)->run($team->id, function () use ($monitor): array {
+            $incident = Incident::factory()->create(['monitor_id' => $monitor->id]);
+            $entry = IncidentUpdate::factory()->create(['incident_id' => $incident->id]);
+            $start = CarbonImmutable::now('UTC')->addDay();
+
+            $window = new MaintenanceWindow();
+            $window->forceFill([
+                'monitor_id' => $monitor->id,
+                'starts_at' => $start,
+                'ends_at' => $start->addHour(),
+                'reason' => 'Matrix maintenance',
+            ])->save();
+
+            return [$incident, $entry, $window];
+        });
     }
 
     /**
      * @param string $route Named private route with optional member or invitation identifiers.
      * @param bool $foreignTeam Whether to target the disjoint aggregate instead of the actor's team.
-     * @param bool $foreignChild Whether to put a foreign member/invitation under the actor's team URL.
+     * @param bool $foreignChild Whether to put a foreign member, invitation, monitor, incident, entry or window under the actor's own parents.
      * @return string Relative URL using actual persisted identifiers, never guessed fixture IDs.
      */
     public function url(string $route, bool $foreignTeam = false, bool $foreignChild = false): string
@@ -111,6 +160,21 @@ final readonly class TeamAuthorizationFixture
         // Collection routes (list, creation form and store) carry no monitor identifier.
         if (str_starts_with($route, 'teams.monitors.') && !in_array($route, ['teams.monitors.index', 'teams.monitors.create', 'teams.monitors.store'], true)) {
             $parameters['monitor'] = $foreignTeam || $foreignChild ? $this->foreignMonitor->id : $this->monitor->id;
+        }
+
+        // A foreign window or entry is placed under the actor's own monitor or incident: the deepest child is foreign.
+        if (in_array($route, ['teams.monitors.maintenance.update', 'teams.monitors.maintenance.destroy'], true)) {
+            $parameters['monitor'] = $foreignTeam ? $this->foreignMonitor->id : $this->monitor->id;
+            $parameters['maintenanceWindow'] = $foreignTeam || $foreignChild ? $this->foreignWindow->id : $this->window->id;
+        }
+
+        if (str_starts_with($route, 'teams.incidents.') && $route !== 'teams.incidents.index') {
+            $parameters['incident'] = $foreignTeam || $foreignChild ? $this->foreignIncident->id : $this->incident->id;
+        }
+
+        if ($route === 'teams.incidents.updates.publish') {
+            $parameters['incident'] = $foreignTeam ? $this->foreignIncident->id : $this->incident->id;
+            $parameters['update'] = $foreignTeam || $foreignChild ? $this->foreignEntry->id : $this->entry->id;
         }
 
         return route($route, $parameters, absolute: false);
@@ -131,7 +195,29 @@ final readonly class TeamAuthorizationFixture
             return ['name' => 'Matrix renamed monitor'];
         }
 
-        if (str_starts_with($route, 'teams.monitors.')) {
+        if (in_array($route, ['teams.monitors.maintenance.store', 'teams.monitors.maintenance.update'], true)) {
+            $start = CarbonImmutable::now('UTC')->addDays(2);
+
+            return [
+                'starts_at' => $start->toIso8601String(),
+                'ends_at' => $start->addHours(2)->toIso8601String(),
+                'reason' => 'Matrix planned work',
+            ];
+        }
+
+        if ($route === 'teams.incidents.updates.store') {
+            return ['status' => 'identified', 'message' => 'Matrix update'];
+        }
+
+        if ($route === 'teams.incidents.severity') {
+            return ['severity' => 'minor'];
+        }
+
+        if ($route === 'teams.incidents.root-cause') {
+            return ['root_cause_note' => 'Matrix declared cause'];
+        }
+
+        if (str_starts_with($route, 'teams.monitors.') || str_starts_with($route, 'teams.incidents.')) {
             return [];
         }
 
@@ -150,6 +236,18 @@ final readonly class TeamAuthorizationFixture
         return app(TenantContext::class)->run($this->team->id, fn (): ?Monitor => Monitor::query()->find($this->monitor->id));
     }
 
+    /** @return Incident Current local incident loaded inside its tenant context. */
+    public function loadIncident(): Incident
+    {
+        return app(TenantContext::class)->run($this->team->id, fn (): Incident => Incident::query()->findOrFail($this->incident->id));
+    }
+
+    /** @return list<MaintenanceWindow> Local windows loaded inside their tenant context, in ID order. */
+    public function loadWindows(): array
+    {
+        return app(TenantContext::class)->run($this->team->id, fn (): array => MaintenanceWindow::query()->orderBy('id')->get()->all());
+    }
+
     /** @return TeamInvitation Current local lifecycle loaded only inside its explicit tenant context. */
     public function loadInvitation(): TeamInvitation
     {
@@ -159,7 +257,7 @@ final readonly class TeamAuthorizationFixture
     /**
      * Read the test database directly to detect writes even if a scope would hide a changed record.
      *
-     * @return array<string, list<array<string, mixed>>> Persistent team, membership, preference and invitation state.
+     * @return array<string, list<array<string, mixed>>> Persistent team, membership, preference, invitation, monitor, incident and maintenance state.
      */
     public function snapshot(): array
     {
@@ -171,6 +269,9 @@ final readonly class TeamAuthorizationFixture
             'monitors' => self::rows('monitors', ['*'], ['id']),
             'heartbeats' => self::rows('monitor_heartbeats', ['*'], ['id']),
             'receipts' => self::rows('heartbeat_receipts', ['*'], ['id']),
+            'incidents' => self::rows('incidents', ['*'], ['id']),
+            'incident_updates' => self::rows('incident_updates', ['*'], ['id']),
+            'maintenance_windows' => self::rows('maintenance_windows', ['*'], ['id']),
         ];
     }
 
@@ -187,6 +288,9 @@ final readonly class TeamAuthorizationFixture
             'monitors' => array_values(array_filter($snapshot['monitors'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'heartbeats' => array_values(array_filter($snapshot['heartbeats'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'receipts' => array_values(array_filter($snapshot['receipts'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'incidents' => array_values(array_filter($snapshot['incidents'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'incident_updates' => array_values(array_filter($snapshot['incident_updates'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'maintenance_windows' => array_values(array_filter($snapshot['maintenance_windows'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
         ];
     }
 

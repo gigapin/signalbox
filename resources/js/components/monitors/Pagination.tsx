@@ -1,4 +1,4 @@
-/** Render keyboard-navigable page links for the monitor list. */
+/** Render keyboard-navigable page links for the monitor and incident lists. */
 import { Link } from '@inertiajs/react';
 
 /** Pagination inputs. */

@@ -19,6 +19,13 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 - Per ripartire leggere AGENTS, specifica, questo file, [INCIDENTS.md](INCIDENTS.md), [MAINTENANCE.md](MAINTENANCE.md), ARCHITECTURE (ADR-007/009 e sezioni M4), [MONITOR-UI.md](MONITOR-UI.md) per i pattern delle pagine e TESTING.
 - Preferenze dell’utente da rispettare: nomi di branch, messaggi e corpi di commit solo descrittivi di ciò che viene realizzato, **senza riferimenti a milestone, task o documenti**; messaggio di commit di una breve frase. Decisioni ancora valide: soglia di latenza rinviata, MA.05/MA.06 rinviati, nessuna riduzione di M3/M4/M5.
 
+## Consegna di sessione — M4.05, 2026-10-29
+
+- **M4.05 completato**: lista incidenti di team (aperti prima, filtri stato/severità, paginazione), pagina incidente con timeline e azioni (presa in carico, aggiornamenti con stato, severità, causa dichiarata, pubblicazione esplicita con conferma), sezioni "Recent incidents" e "Maintenance" nel dettaglio monitor (pianifica, modifica, termina ora, elimina). Dieci nuove rotte in `routes/incidents.php`, Form Request, controller sottili, presenter, binding annidati con `scopeBindings()`. Dettagli in [INCIDENT-UI.md](INCIDENT-UI.md).
+- `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: PHP-CS-Fixer dry-run su **391 file**, Larastan livello 8, **1756 test Pest/11334 asserzioni** (0 skip), lint/formato/TypeScript, **5 test qualità**, **65 test DOM** e build Vite. Log nello scratchpad della sessione (`m405-verify.log`).
+- Nessuna migration, dipendenza o modifica `.env`. Per usare le pagine servono le migration 000013–000016 già applicate al database di sviluppo. Git/gh non eseguiti; CI remota/PHP 8.5 e browser reale non eseguiti.
+- Prossimo task pronto: **M4.06**, matrice di test della milestone (soglia 3, recupero, flapping, regioni discordanti, manutenzioni, risultati concorrenti o fuori ordine; concorrenza a due sessioni per gli incidenti non ancora coperta).
+
 ## Consegna di sessione — M4.04, 2026-10-28
 
 - **M4.04 completato**: finestre di manutenzione per monitor con passato immutabile (`ManageMaintenanceWindows`: schedule/reschedule/cancel con lock e `MonitorPolicy::update`), storico di pausa volontaria e sospensione di piano scritto da trigger PostgreSQL, `MaintenanceSchedule`, `ExclusionPeriods` e `TimeInterval::union()` per il futuro SLA. Una conferma in manutenzione non apre né riapre incidenti; il ripristino li risolve comunque. Dettagli in [MAINTENANCE.md](MAINTENANCE.md).
@@ -230,7 +237,7 @@ Dipendenze: M3.
 - [x] M4.02 Implementare fallimenti consecutivi, soglia configurabile e conferma da seconda regione simulata; definire comportamento con una sola regione.
 - [x] M4.03 Implementare apertura/chiusura automatica, presa in carico, aggiornamenti timeline e regole di riapertura con transazioni e vincoli contro duplicati.
 - [x] M4.04 Implementare finestre di manutenzione e tracciamento dei periodi di pausa necessari al futuro calcolo SLA.
-- [ ] M4.05 Creare UI incidenti/timeline/manutenzioni con policy e pubblicazione esplicita degli aggiornamenti.
+- [x] M4.05 Creare UI incidenti/timeline/manutenzioni con policy e pubblicazione esplicita degli aggiornamenti.
 - [ ] M4.06 Testare che con soglia 3 il primo fallimento non apra incidenti, recupero, flapping, regioni discordanti, manutenzioni e risultati concorrenti o fuori ordine.
 
 Uscita: ciclo guasto/ripristino coerente, nessun incidente duplicato e timeline verificabile.
@@ -342,7 +349,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, prossimo task pronto M4.05. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05 il 2026-10-29; prossimo task pronto M4.06. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -392,6 +399,10 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-28 | Contratto `ResultObserver` fra motore e incidenti | Il motore invoca il contratto nella transazione del risultato; l’implementazione vive nell’ambito Incidenti (ADR-001), effetti e risultato si confermano o annullano insieme. |
 | 2026-10-28 | M4.04: nessun nuovo incidente in manutenzione | Scelta utente: una conferma con slot in manutenzione non apre né riapre; risultati e sequenze proseguono, il ripristino risolve. Se il guasto supera la finestra, la prima conferma successiva apre l’incidente con `started_at` al primo slot fallito della sequenza. |
 | 2026-10-28 | M4.04: passato immutabile per le manutenzioni | Scelta utente: inizio non nel passato (assente = adesso), modifica/eliminazione solo prima dell’inizio, chiusura anticipata di una finestra in corso, finestre concluse non modificabili. |
+| 2026-10-29 | M4.05: lista incidenti di team + dettaglio, sezioni nel dettaglio monitor | Scelta utente: `/teams/{team}/incidents` (aperti prima, filtri stato/severità) e `/teams/{team}/incidents/{incident}`; incidenti recenti (5) e manutenzioni (in corso/future fino a 50, ultime 5 concluse) nel dettaglio monitor. |
+| 2026-10-29 | M4.05: pubblicazione solo con pulsante esplicito | Scelta utente: ogni voce nasce privata; "Publish update" con conferma, irreversibile. Nessuna modifica a `ManageIncidents`. |
+| 2026-10-29 | M4.05: orari delle manutenzioni nel fuso del browser | Scelta utente: `datetime-local` convertito dal client in ISO UTC; il server accetta solo istanti con offset esplicito (`Z` o `±hh:mm`), senza indovinare il fuso. Fuso del team rinviato a M6 come per le altre date. |
+| 2026-10-29 | M4.05: rifiuti di dominio come errori di sessione | `IncidentChangeRejected` → chiave `incident`, `MaintenanceWindowRejected` → chiave `maintenance`; le regole restano nelle azioni, le Form Request verificano solo la sintassi e autorizzano prima di validare. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
 ## Registro sessioni
@@ -1045,3 +1056,17 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 ### 2026-10-28 — Chiusura sessione
 
 - Richiesta dell’utente di chiudere la sessione e preparare la ripartenza. Aggiunta la sezione di chiusura in testa al documento con stato, migration da applicare, prossimo task M4.05 e preferenze. Solo documentazione: nessun codice modificato dopo l’ultima verifica completa, quindi controlli non rieseguiti. Nessun Git/gh.
+
+### 2026-10-29 — M4.05: UI incidenti, timeline e manutenzioni (completato)
+
+- Ripresa dalla chiusura del 2026-10-28; dipendenze M4.01–M4.04 soddisfatte. Task segnato in corso prima delle modifiche. Branch già creato dall’utente: `feat/ui-incidents`. Nessun Git/gh eseguito dall’agente.
+- Decisioni utente: lista incidenti di team con pagina di dettaglio e sezioni nel dettaglio monitor; pubblicazione solo con pulsante esplicito; orari delle manutenzioni nel fuso del browser inviati in UTC con offset.
+- Implementati backend: `routes/incidents.php` (incluso da `routes/web.php`); `IncidentPageController`, `IncidentController`, `MaintenanceWindowController`; Form Request `ListIncidentsRequest`, `IncidentChangeRequest` (base astratta), `PostIncidentUpdateRequest`, `ChangeIncidentSeverityRequest`, `DeclareRootCauseRequest`, `MaintenanceWindowRequest`; `IncidentPresenter`, `MaintenanceWindowPresenter`; `IncidentListing`, `IncidentListFilter`, enum `IncidentListState`; `MaintenanceSchedule::current()/finished()`; relazione `Monitor::maintenanceWindows()` per i binding annidati; props aggiuntive in `MonitorPageController::show`; messaggi flash in `HandleInertiaRequests`.
+- Implementati frontend: `pages/Incidents/Index.tsx`, `pages/Incidents/Show.tsx`; componenti `components/incidents/` (`types`, `labels`, `urls`, `time`, `IncidentBadges`, `IncidentTable`, `MaintenancePanel`); sezioni nel dettaglio monitor e link "Incidents" nelle navigazioni di team e monitor.
+- Test: nuovo `tests/Integration/IncidentPagesTest.php` (25 casi); `TeamRouteMatrix`, `TeamAuthorizationFixture` e `TeamAuthorizationMatrixTest` estesi alle dieci rotte (snapshot con incidenti, voci e finestre; figli esterni sotto genitori locali); nuovo `tests/frontend/Incidents.test.tsx` (12 casi); `Monitors.test.tsx` aggiornato con le nuove props. Difetti emersi e corretti durante lo sviluppo: attese del test sull’ordine delle severità (dichiarazione dell’enum minor→critical) e sull’email dell’utente autenticato, presente legittimamente nelle props condivise; accessi indicizzati nei test DOM non accettati da TypeScript rigoroso.
+- Documentazione: nuovo [INCIDENT-UI.md](INCIDENT-UI.md); aggiornati INCIDENTS, MAINTENANCE, AUTHORIZATION-MATRIX, TESTING, ARCHITECTURE, BOOTSTRAP.
+- Verifica finale `./scripts/verify.sh` **exit 0**: formatter su 391 file, Larastan livello 8, 1756 test/11334 asserzioni con 0 skip, frontend (lint, formato, TypeScript, 5 test qualità, 65 test DOM, build).
+- Limiti dichiarati: nessun browser reale (scelta M2.06), focus non spostato dopo un errore (annunciato con `role="alert"`), pagine non aggiornate in tempo reale fino a M6.
+- **M4.05 completato.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E, checklist manuale.
+- Prossimo passo: **M4.06**. Messaggio di commit suggerito: `feat(incidents): add incident pages, timeline publishing and maintenance scheduling`.
+

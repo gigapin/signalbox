@@ -49,6 +49,12 @@ const defaults: MonitorDefaults = {
 /** Quota with room left on a Free plan. */
 const usage = { used: 2, limit: 5, minimumIntervalSeconds: 300, full: false };
 
+/** Monitor detail sections without incidents or maintenance, as for a new monitor. */
+const quietHistory = {
+    recentIncidents: [],
+    maintenance: { current: [], finished: [], reasonMaxLength: 1000 },
+};
+
 /** No active filters. */
 const noFilters = { q: '', type: null, status: null, state: null };
 
@@ -400,6 +406,7 @@ async function showsDetailAndConfirmsDeletion(): Promise<void> {
     const all = { update: true, delete: true, pause: true, resume: true };
 
     const view = renderInertia('Signalbox', Show, {
+        ...quietHistory,
         team,
         monitor: httpDetail,
         can: { update: false, delete: false, pause: false, resume: false },
@@ -410,7 +417,7 @@ async function showsDetailAndConfirmsDeletion(): Promise<void> {
     expect(screen.queryByRole('link', { name: 'Edit monitor' })).not.toBeInTheDocument();
     view.unmount();
 
-    renderInertia('Signalbox', Show, { team, monitor: httpDetail, can: all });
+    renderInertia('Signalbox', Show, { ...quietHistory, team, monitor: httpDetail, can: all });
     expect(screen.getByRole('button', { name: 'Pause monitor' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Resume monitor' })).not.toBeInTheDocument();
 
@@ -424,6 +431,7 @@ async function showsDetailAndConfirmsDeletion(): Promise<void> {
 /** Suspended monitors explain why they do not run and offer no pause or resume. */
 function explainsSuspension(): void {
     renderInertia('Signalbox', Show, {
+        ...quietHistory,
         team,
         monitor: { ...httpDetail, state: 'suspended', withinQuota: false },
         can: { update: true, delete: true, pause: true, resume: true },

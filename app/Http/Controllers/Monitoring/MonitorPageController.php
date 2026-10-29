@@ -6,13 +6,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Monitoring;
 
+use App\Actions\Incidents\ManageMaintenanceWindows;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\Incidents\IncidentPresenter;
+use App\Http\Presenters\Incidents\MaintenanceWindowPresenter;
 use App\Http\Presenters\Monitoring\MonitorPresenter;
 use App\Http\Requests\Monitoring\ListMonitorsRequest;
 use App\Models\Monitor;
 use App\Models\Team;
+use App\Services\Incidents\IncidentListing;
+use App\Services\Incidents\MaintenanceSchedule;
 use App\Services\Monitoring\MonitorLimits;
 use App\Services\Monitoring\MonitorListing;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,6 +29,12 @@ use Inertia\Response;
  */
 final class MonitorPageController extends Controller
 {
+    /** @var int Latest incidents listed on a monitor page; the incident list holds the rest. */
+    private const int RECENT_INCIDENTS = 5;
+
+    /** @var int Latest finished maintenance windows listed on a monitor page. */
+    private const int FINISHED_MAINTENANCE = 5;
+
     /**
      * @param MonitorPresenter $presenter Safe page projections.
      * @param MonitorLimits $limits Plan quota and cadence minimums.
@@ -77,16 +89,52 @@ final class MonitorPageController extends Controller
     /**
      * @param int $team Route team.
      * @param Monitor $monitor Monitor bound inside the route team; foreign IDs are already 404.
-     * @return Response Safe detail and the actor's management permissions.
+     * @param IncidentListing $incidents Tenant-filtered incident reads.
+     * @param IncidentPresenter $incidentPresenter Safe incident rows.
+     * @param MaintenanceSchedule $schedule Tenant-scoped maintenance reads.
+     * @param MaintenanceWindowPresenter $windowPresenter Safe maintenance rows with their phase.
+     * @return Response Safe detail, recent incidents, maintenance windows and the actor's management permissions.
      */
-    public function show(int $team, Monitor $monitor): Response
-    {
+    public function show(
+        int $team,
+        Monitor $monitor,
+        IncidentListing $incidents,
+        IncidentPresenter $incidentPresenter,
+        MaintenanceSchedule $schedule,
+        MaintenanceWindowPresenter $windowPresenter,
+    ): Response {
         Gate::authorize('view', $monitor);
         $identity = $this->team($team);
+        $now = CarbonImmutable::now('UTC');
+
+        $recent = [];
+
+        foreach ($incidents->recentForMonitor($team, $monitor->id, self::RECENT_INCIDENTS) as $incident) {
+            $incident->setRelation('monitor', $monitor);
+            $recent[] = $incidentPresenter->summary($incident);
+        }
+
+        $current = [];
+
+        foreach ($schedule->current($monitor->id, $now) as $window) {
+            $current[] = $windowPresenter->window($window, $now);
+        }
+
+        $finished = [];
+
+        foreach ($schedule->finished($monitor->id, $now, self::FINISHED_MAINTENANCE) as $window) {
+            $finished[] = $windowPresenter->window($window, $now);
+        }
 
         return Inertia::render('Monitors/Show', [
             'team' => $this->teamSummary($identity),
             'monitor' => $this->presenter->detail($monitor, $this->limits->isWithinQuota($identity, $monitor)),
+            'recentIncidents' => $recent,
+            'maintenance' => [
+                'current' => $current,
+                'finished' => $finished,
+                'reasonMaxLength' => ManageMaintenanceWindows::REASON_MAX_LENGTH,
+            ],
             'can' => [
                 'update' => Gate::allows('update', $monitor),
                 'delete' => Gate::allows('delete', $monitor),

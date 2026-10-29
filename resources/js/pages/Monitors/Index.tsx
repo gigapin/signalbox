@@ -158,6 +158,7 @@ export default function Index() {
         <AuthLayout title="Monitors" description={`Monitors of ${team.name}.`} wide>
             <nav aria-label="Team navigation" className="mb-6 flex gap-4 text-sm text-emerald-300">
                 <Link href={`/teams/${team.id}`}>Team members</Link>
+                <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
             </nav>
 
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">

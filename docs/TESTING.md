@@ -257,3 +257,8 @@ The acceptance gate remains `./scripts/verify.sh`, followed by the complete back
 
 `TimeIntervalTest` covers pure interval merging. `MaintenanceWindowTest`, `PausePeriodTest` and `ExclusionPeriodsTest` run on PostgreSQL for scheduling rules, the pause trigger and excluded time; `IncidentDetectionTest` covers the effect of maintenance on confirmation. Pause instants come from the database transaction clock, not the faked application clock. Run them with `docker compose run --rm php-test vendor/bin/pest tests/Unit/TimeIntervalTest.php tests/Integration/MaintenanceWindowTest.php tests/Integration/PausePeriodTest.php tests/Integration/ExclusionPeriodsTest.php tests/Integration/IncidentDetectionTest.php`; the acceptance gate remains `./scripts/verify.sh`. See [MAINTENANCE.md](MAINTENANCE.md).
 
+
+## Incident and maintenance pages verification (M4.05)
+
+`IncidentPagesTest` drives the production routes on PostgreSQL with a fixed clock (`CarbonImmutable::setTestNow`) for listing, projections, every incident change, maintenance input in UTC and phases, refusals and scoped bindings. `TeamAuthorizationMatrixTest` includes the ten new routes. `tests/frontend/Incidents.test.tsx` covers the pages and the maintenance panel with the Inertia router intercepted; maintenance expectations are computed with `Date` so they hold in any test timezone. Run them with `docker compose run --rm php-test vendor/bin/pest tests/Integration/IncidentPagesTest.php tests/Integration/TeamAuthorizationMatrixTest.php` and `docker compose run --rm node npx vitest run tests/frontend/Incidents.test.tsx`; the acceptance gate remains `./scripts/verify.sh`. See [INCIDENT-UI.md](INCIDENT-UI.md).
+

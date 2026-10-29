@@ -1,6 +1,6 @@
 # Maintenance windows and pause history (M4.04)
 
-Planned maintenance and historical pauses are the excluded time of ADR-009: the SLA denominator removes the union of voluntary pauses, plan suspensions and maintenance windows, all as half-open UTC intervals `[start, end)`. Maintenance also prevents incidents from opening. Pages, routes and Form Requests come later (M4.05), notification silencing with notifications (M5) and the SLA computation with metrics (M7).
+Planned maintenance and historical pauses are the excluded time of ADR-009: the SLA denominator removes the union of voluntary pauses, plan suspensions and maintenance windows, all as half-open UTC intervals `[start, end)`. Maintenance also prevents incidents from opening. Routes and the monitor page section are described in [INCIDENT-UI.md](INCIDENT-UI.md) (M4.05); notification silencing comes with notifications (M5) and the SLA computation with metrics (M7).
 
 ## Maintenance windows
 
@@ -16,7 +16,7 @@ Planned maintenance and historical pauses are the excluded time of ADR-009: the 
 
 Reasons are trimmed and must be 1–1000 characters (`REASON_MAX_LENGTH`). Every change locks Team → Monitor → window and re-runs `MonitorPolicy::update` under the locks: owners, admins and members manage maintenance, viewers are denied, other teams' identities are reported as missing. Violations raise `MaintenanceWindowRejected`.
 
-`App\Services\Incidents\MaintenanceSchedule::activeAt()` tells whether a window covers an instant.
+`App\Services\Incidents\MaintenanceSchedule::activeAt()` tells whether a window covers an instant; `current()` and `finished()` list a monitor's ongoing/upcoming and latest finished windows for the monitor page.
 
 ## Effect on incidents
 

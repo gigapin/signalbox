@@ -15,4 +15,6 @@ require __DIR__.'/teams.php';
 
 require __DIR__.'/monitors.php';
 
+require __DIR__.'/incidents.php';
+
 require __DIR__.'/admin.php';

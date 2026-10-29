@@ -1,6 +1,6 @@
 # Incidents, regional confirmation and timeline
 
-The incident model, its append-only timeline, the status graph and severity derivation were introduced first (M4.01). Regional confirmation, automatic opening/resolution/reopening and the manual incident actions follow (M4.02–M4.03, see [Regional confirmation](#regional-confirmation) and [Manual actions](#manual-actions)). Maintenance windows and pause history are described in [MAINTENANCE.md](MAINTENANCE.md). Routes/pages/Form Requests (M4.05) and notifications (M5) remain later work; no route or UI exists yet, so the authorization matrix is unchanged.
+The incident model, its append-only timeline, the status graph and severity derivation were introduced first (M4.01). Regional confirmation, automatic opening/resolution/reopening and the manual incident actions follow (M4.02–M4.03, see [Regional confirmation](#regional-confirmation) and [Manual actions](#manual-actions)). Maintenance windows and pause history are described in [MAINTENANCE.md](MAINTENANCE.md). Routes, pages and Form Requests (M4.05) are described in [INCIDENT-UI.md](INCIDENT-UI.md); notifications (M5) remain later work.
 
 ## Lifecycle
 
@@ -101,7 +101,7 @@ A confirmation whose slot lies inside a maintenance window opens and reopens not
 | `declareRootCause` | Sets or clears the declared cause; the timeline records only that it changed, never the note text. |
 | `publish` | Publishes a private entry once; repeated calls are idempotent and keep the first `published_at`. |
 
-Text is trimmed and must be 1–5000 characters (`ManageIncidents::TEXT_MAX_LENGTH`, shared with the future Form Requests). Violations raise `IncidentChangeRejected`.
+Text is trimmed and must be 1–5000 characters (`ManageIncidents::TEXT_MAX_LENGTH`, shared with the Form Requests of [INCIDENT-UI.md](INCIDENT-UI.md)). Violations raise `IncidentChangeRejected`, which the browser controllers report as a session error on `incident`.
 
 ## Notes for maintenance, pages and M12
 

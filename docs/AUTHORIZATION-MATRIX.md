@@ -26,6 +26,16 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 | teams.monitors.destroy | DELETE | 302 | 302 | 302 | 403 |
 | teams.monitors.pause | POST | 302 | 302 | 302 | 403 |
 | teams.monitors.resume | POST | 302 | 302 | 302 | 403 |
+| teams.incidents.index | GET | 200 | 200 | 200 | 200 |
+| teams.incidents.show | GET | 200 | 200 | 200 | 200 |
+| teams.incidents.acknowledge | POST | 302 | 302 | 302 | 403 |
+| teams.incidents.updates.store | POST | 302 | 302 | 302 | 403 |
+| teams.incidents.updates.publish | POST | 302 | 302 | 302 | 403 |
+| teams.incidents.severity | PATCH | 302 | 302 | 302 | 403 |
+| teams.incidents.root-cause | PATCH | 302 | 302 | 302 | 403 |
+| teams.monitors.maintenance.store | POST | 302 | 302 | 302 | 403 |
+| teams.monitors.maintenance.update | PATCH | 302 | 302 | 302 | 403 |
+| teams.monitors.maintenance.destroy | DELETE | 302 | 302 | 302 | 403 |
 
 Every route is tested with each actor role in three states: current membership, a disjoint target team and revoked membership with a stale selected team and preloaded membership collection. The last two states must return 404. Separate guest and unverified scenarios must redirect to login and email verification respectively. GET routes retain Laravel's HEAD alias; the inventory checks exact verbs excluding that implicit alias.
 
@@ -104,3 +114,7 @@ Admin routes are not tenant routes. TeamAuthorizationMatrixTest's discovery excl
 Valid paused/ineligible credentials receive 204 without recording; invalid/revoked credentials receive the same generic 404. New cases are covered by HeartbeatTest and the real HTTP barrier suite. Credentials never enter shared props or the ordinary detail projection. See [HEARTBEATS.md](HEARTBEATS.md).
 
 The central TeamRouteMatrix also explicitly includes both credential mutations and the public ingress catalogue entry. Its parameterized cases cover all managing/viewer roles, foreign or revoked memberships, guest/unverified gates and foreign-child identifiers; aggregate snapshots include heartbeat state and receipts so unauthorized side effects cannot hide outside the original monitor table.
+
+## M4.05 incident and maintenance routes
+
+The ten routes of [INCIDENT-UI.md](INCIDENT-UI.md) join the private matrix with the same role × membership-state cases and guest/unverified gates. The fixture gives each team an open incident with one private entry and an upcoming maintenance window; raw snapshots now include `incidents`, `incident_updates` and `maintenance_windows`, so a rejected request or a foreign aggregate cannot change them unnoticed. Allowed cases assert the persisted effect: list and detail projections, acknowledgement by the actor, status change by a new entry, publication, severity, declared cause, a second window, a rescheduled reason and a deleted upcoming window. Foreign children are placed under the actor's own parents (a foreign incident under the local team, a foreign entry under the local incident, a foreign window under the local monitor) and must return 404 with snapshots unchanged. Scoped bindings additionally reject an entry of another incident or a window of another monitor of the same team, covered by IncidentPagesTest.

@@ -205,6 +205,45 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.monitors.heartbeat-credential.destroy':
             expect(DB::table('monitor_heartbeats')->where('monitor_id', $fixture->monitor->id)->value('token_hash'))->toBeNull();
             break;
+        case 'teams.incidents.index':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Incidents/Index')
+                ->where('team.id', $fixture->team->id)
+                ->has('incidents.data', 1)
+                ->where('incidents.data.0.id', $fixture->incident->id));
+            break;
+        case 'teams.incidents.show':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Incidents/Show')
+                ->where('incident.id', $fixture->incident->id)
+                ->has('incident.timeline', 1)
+                ->where('can.update', $role !== 'viewer'));
+            break;
+        case 'teams.incidents.acknowledge':
+            expect($fixture->loadIncident()->acknowledged_by)->toBe($fixture->actor->id);
+            break;
+        case 'teams.incidents.updates.store':
+            expect($fixture->loadIncident()->status->value)->toBe('identified');
+            break;
+        case 'teams.incidents.updates.publish':
+            expect(DB::table('incident_updates')->where('id', $fixture->entry->id)->value('is_public'))->toBeTrue();
+            break;
+        case 'teams.incidents.severity':
+            expect($fixture->loadIncident()->severity->value)->toBe('minor');
+            break;
+        case 'teams.incidents.root-cause':
+            expect($fixture->loadIncident()->root_cause_note)->toBe('Matrix declared cause');
+            break;
+        case 'teams.monitors.maintenance.store':
+            expect($fixture->loadWindows())->toHaveCount(2)
+                ->and($fixture->loadWindows()[1]->reason)->toBe('Matrix planned work');
+            break;
+        case 'teams.monitors.maintenance.update':
+            expect($fixture->loadWindows()[0]->reason)->toBe('Matrix planned work');
+            break;
+        case 'teams.monitors.maintenance.destroy':
+            expect($fixture->loadWindows())->toBe([]);
+            break;
     }
 
     if (in_array($name, ['teams.invitations.store', 'teams.invitations.resend'], true)) {
@@ -254,6 +293,15 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
     'teams.monitors.resume',
     'teams.monitors.heartbeat-credential.store',
     'teams.monitors.heartbeat-credential.destroy',
+    'teams.incidents.show',
+    'teams.incidents.acknowledge',
+    'teams.incidents.updates.store',
+    'teams.incidents.updates.publish',
+    'teams.incidents.severity',
+    'teams.incidents.root-cause',
+    'teams.monitors.maintenance.store',
+    'teams.monitors.maintenance.update',
+    'teams.monitors.maintenance.destroy',
 ]);
 
 it('rejects a foreign ownership successor despite a forged selected team and fresh password', function (): void {

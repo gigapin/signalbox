@@ -1,7 +1,11 @@
-/** Show one monitor's safe configuration and offer pause, resume, edit and delete when permitted. */
+/** Show one monitor's safe configuration, recent incidents and maintenance; offer management when permitted. */
 import { Link, useForm, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import AuthLayout from '../../components/auth/AuthLayout';
+import IncidentTable from '../../components/incidents/IncidentTable';
+import MaintenancePanel from '../../components/incidents/MaintenancePanel';
+import type { IncidentSummary, MaintenanceView } from '../../components/incidents/types';
+import { incidentsPath, maintenancePath } from '../../components/incidents/urls';
 import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
 import HeartbeatPanel from '../../components/monitors/HeartbeatPanel';
 import { intervalLabel, regionLabel, typeLabel } from '../../components/monitors/labels';
@@ -16,6 +20,10 @@ import { monitorPath, monitorsPath } from '../../components/monitors/urls';
 interface ShowProps extends MonitorPageProps {
     /** Safe detail projection. */
     monitor: MonitorDetail;
+    /** Latest incidents of this monitor, newest first. */
+    recentIncidents: IncidentSummary[];
+    /** Current and recently finished maintenance windows. */
+    maintenance: MaintenanceView;
     /** Interface hints derived from MonitorPolicy. */
     can: { update: boolean; delete: boolean; pause: boolean; resume: boolean };
 }
@@ -123,7 +131,7 @@ function Configuration({ configuration }: ConfigurationProps) {
 
 /** Keep actions in one form so their shared processing state prevents concurrent submissions. */
 export default function Show() {
-    const { team, monitor, can } = usePage<ShowProps>().props;
+    const { team, monitor, recentIncidents, maintenance, can } = usePage<ShowProps>().props;
     const form = useForm<Record<string, never>>({});
     const path = monitorPath(team.id, monitor.id);
 
@@ -150,6 +158,7 @@ export default function Show() {
                 className="mb-6 flex gap-4 text-sm text-emerald-300"
             >
                 <Link href={monitorsPath(team.id)}>Back to monitors</Link>
+                <Link href={incidentsPath(team.id)}>All incidents</Link>
                 {can.update && <Link href={`${path}/edit`}>Edit monitor</Link>}
             </nav>
 
@@ -198,6 +207,28 @@ export default function Show() {
                     canManage={can.update}
                 />
             )}
+
+            <section aria-labelledby="incidents-heading" className="mt-8">
+                <h2 id="incidents-heading" className="mb-2 text-lg font-semibold">
+                    Recent incidents
+                </h2>
+                {recentIncidents.length === 0 ? (
+                    <p className="text-slate-300">No incidents recorded for this monitor.</p>
+                ) : (
+                    <IncidentTable
+                        teamId={team.id}
+                        incidents={recentIncidents}
+                        caption={`Recent incidents of ${monitor.name}`}
+                        showMonitor={false}
+                    />
+                )}
+            </section>
+
+            <MaintenancePanel
+                path={maintenancePath(team.id, monitor.id)}
+                maintenance={maintenance}
+                canManage={can.update}
+            />
 
             <div className="mt-8 flex flex-wrap gap-3">
                 {monitor.state === 'active' && can.pause && (

@@ -415,3 +415,9 @@ Decisioni utente: M4.02 e M4.03 nello stesso branch; `consecutive_failures` come
 
 Decisioni utente: nessun nuovo incidente in manutenzione, passato immutabile, trigger come unico scrittore dello storico pause. Nessuna rotta o UI.
 
+## Attuazione M4.05 — UI incidenti, timeline e manutenzioni
+
+[INCIDENT-UI.md](INCIDENT-UI.md) espone le azioni di M4.03–M4.04 al browser senza nuove regole di dominio: controller sottili che delegano a `ManageIncidents`/`ManageMaintenanceWindows`, Form Request per la sola sintassi con autorizzazione prima della validazione, presenter dedicati (nessun modello serializzato), binding annidati con `scopeBindings()` e predicato `team_id` esplicito nella lista (ADR-003). Le eccezioni di dominio diventano errori di sessione sulle chiavi `incident`/`maintenance`; le policy restano rieseguite sotto lock (ADR-004).
+
+Decisioni utente: lista incidenti di team con dettaglio e sezioni nel dettaglio monitor; ogni voce nasce privata e si pubblica solo con un pulsante esplicito con conferma; orari delle manutenzioni inseriti nel fuso del browser e inviati in UTC con offset obbligatorio.
+

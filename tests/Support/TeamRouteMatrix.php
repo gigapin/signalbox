@@ -29,6 +29,16 @@ final class TeamRouteMatrix
         'teams.monitors.resume' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.heartbeat-credential.store' => ['method' => 'POST', 'status' => 200, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.heartbeat-credential.destroy' => ['method' => 'DELETE', 'status' => 204, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.incidents.show' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.incidents.acknowledge' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.updates.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.updates.publish' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.severity' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.incidents.root-cause' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.maintenance.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.maintenance.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.monitors.maintenance.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
     ];
 
     /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */

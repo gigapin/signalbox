@@ -9,6 +9,7 @@ namespace App\Services\Incidents;
 use App\Enums\Incidents\IncidentSeverity;
 use App\Enums\Incidents\IncidentStatus;
 use App\Enums\Monitoring\CheckError;
+use App\Events\Incidents\IncidentNotificationRequested;
 use App\Events\Incidents\IncidentOpened;
 use App\Events\Incidents\IncidentReopened;
 use App\Events\Incidents\IncidentResolved;
@@ -55,6 +56,7 @@ final readonly class IncidentLifecycle
             $cause->value,
         );
         $this->record($incident, null, $message, $now);
+        $this->requestNotifications($incident, 'incident.opened');
         $this->events->dispatch(new IncidentOpened($incident->team_id, $incident->id, $incident->monitor_id));
 
         return $incident;
@@ -75,6 +77,7 @@ final readonly class IncidentLifecycle
         ])->save();
 
         $this->record($incident, null, 'The failure was confirmed again shortly after resolution; the incident was reopened.', $now);
+        $this->requestNotifications($incident, 'incident.reopened');
         $this->events->dispatch(new IncidentReopened($incident->team_id, $incident->id, $incident->monitor_id));
     }
 
@@ -100,6 +103,7 @@ final readonly class IncidentLifecycle
         ])->save();
 
         $update = $this->record($incident, $author, $message, $now);
+        $this->requestNotifications($incident, 'incident.resolved');
         $this->events->dispatch(new IncidentResolved($incident->team_id, $incident->id, $incident->monitor_id));
 
         return $update;
@@ -124,5 +128,20 @@ final readonly class IncidentLifecycle
         ])->save();
 
         return $update;
+    }
+
+    /**
+     * @param Incident $incident Locked incident after its lifecycle transition.
+     * @param string $event Controlled transition name for synchronous durable notification preparation.
+     */
+    private function requestNotifications(Incident $incident, string $event): void
+    {
+        $this->events->dispatch(new IncidentNotificationRequested(
+            $incident->team_id,
+            $incident->id,
+            $incident->monitor_id,
+            $incident->reopened_count,
+            $event,
+        ));
     }
 }

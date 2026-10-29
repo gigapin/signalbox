@@ -282,3 +282,18 @@ The acceptance gate remains `./scripts/verify.sh`, followed by the complete back
 docker compose run --rm php-test vendor/bin/pest tests/Unit/ChannelMessageTest.php tests/Feature/NotificationAdaptersTest.php tests/Integration/NotificationAdapterVerificationTest.php --fail-on-skipped --fail-on-warning
 ./scripts/verify.sh
 ```
+
+
+## Incident delivery and concurrency (M5.03)
+
+`NotificationDeliveryConfigurationTest` validates retry/coalescing bounds, the dedicated Horizon supervisor and ten-second recovery schedule, safe worker/lease/Redis ordering, explicit Redis selection under a synchronous default and scalar-only queue envelopes. `IncidentNotificationDeliveryTest` exercises the real lifecycle, synchronous preparation and provider adapters on isolated PostgreSQL with fake HTTP/Mail and a controlled clock: encrypted snapshots, stable UUID/body across retry signatures, duplicate events and frozen empty audiences, policy changes, coalescing, recovery summaries to already notified channels, duplicate recipients across steps, in-flight openings, reopening/carryover, inactive/deleted/reverified destinations, signing-key rotation, bounded retries and crashed-attempt exhaustion, corrupt payload terminalization, safe failed hooks, stale token/expiry fences, worker context restoration after unexpected provider errors, lost publications, per-tenant error isolation, foreign identities, initial policy delays, uniqueness and rollback of the whole incident when preparation fails. Provider callbacks assert that the admission transaction has ended.
+
+`NotificationConcurrencyTest` uses `CommittedTeamFixture` and guarded children in `tests/Fixtures/RunNotificationProbe.php`. Two preparation processes waiting on the same Team row produce one event marker and one delivery. Two delivery processes start behind the same barrier; the first fake provider then waits on a PostgreSQL advisory lock while the other process returns without sending. Only one synthetic receipt exists and the final attempt count is one. The child asserts zero open database transactions before provider I/O. Another test uses the normal `DatabaseTransactionsManager` on the independent committing connection (restored afterward), because RefreshDatabase's test manager deliberately treats its outer transaction as already committed; it proves no publication before real commit, and recovery of an after-commit broker failure.
+
+`MonitorModelTest` and `TeamIdentityTest` reverse and restore the new dependent migration before their existing rollback checks. No real external provider, browser or development database is used; subprocesses contain only guarded synthetic test configuration. Targeted command:
+
+```sh
+docker compose run --rm php-test vendor/bin/pest tests/Feature/NotificationDeliveryConfigurationTest.php tests/Integration/IncidentNotificationDeliveryTest.php tests/Integration/NotificationConcurrencyTest.php --fail-on-skipped --fail-on-warning
+```
+
+The acceptance gate remains `./scripts/verify.sh`; counts and actual results are recorded in TASKS, without implying remote CI or PHP 8.5 execution.

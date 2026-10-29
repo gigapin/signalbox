@@ -19,6 +19,7 @@ Questi record stabiliscono come implementare le milestone successive. Stato di t
 | ADR-009 | SLA temporale e copertura | M4, M6–M8 |
 | ADR-010 | Piani, trial e riconciliazione | M1–M2, M7–M10 |
 | ADR-011 | Operatore di piattaforma e override di entitlement | MA, rispettato da M9 |
+| ADR-012 | Consegne notifiche persistenti e deduplicazione | M5.03, esteso in M5.04–M5.05 |
 
 ## ADR-001 — Monolite modulare e responsabilità del dominio
 
@@ -434,3 +435,26 @@ Decisioni utente: canali e policy gestiti solo da owner/admin; verifica con codi
 Decisioni implementative: gli HTTP POST sono HTTPS con guard e pin nuovi a ogni tentativo, timeout e risposta limitati; tutti i redirect sono rifiutati per non inoltrare credenziali o body. I tre helper di buffer/limite vengono estratti senza cambi di comportamento da Monitoring a `App\Services\Http`, perché condivisi concretamente da check e notifiche. Webhook versione 1: HMAC-SHA256 del timestamp e degli esatti byte JSON, chiave esadecimale usata come stringa letterale, UUID stabile del messaggio; il ricevente verifica timestamp entro 300 secondi e deduplica l’identità firmata. Nessun errore conserva body o eccezioni private del provider.
 
 Email: mailer `smtp` esplicito con timeout socket di 5 s, mantenendo il default delle altre email; evitare il mailer `log` impedisce la registrazione dei codici e dei testi. SMS registra soltanto UUID/evento/famiglia con `SecretRedactor`, restituisce soppressione e non può verificare una destinazione mai raggiunta. Nessuna riduzione di scope e nessun nuovo servizio/pacchetto; retry, deduplica, quiet hours ed escalation restano nei task successivi.
+
+## ADR-012 — Consegne notifiche persistenti e deduplicazione
+
+Data/task: 2026-10-29, M5.03. Stato: adottato; implementazione M5.03, temporizzazioni/soppressioni estese in M5.04–M5.05. Attua ADR-001/002/003/004 e applica il principio di outbox di ADR-006 alle consegne, senza riutilizzare lo stato dei check.
+
+### Contesto e decisione
+
+Un evento dopo commit non è un outbox: il processo può interrompersi fra il commit dell’incidente e la pubblicazione, e un webhook può essere accettato senza che il mittente riceva conferma. Le notifiche devono poter ritentare senza ripetere effetti locali, preservando tenant, destinatario originale e contenuto; i fallimenti dei check restano osservazioni con un solo tentativo.
+
+- `IncidentLifecycle` emette un evento interno sincrono, distinto dai tre eventi pubblici dopo commit. Il listener prepara nella transazione i marker `incident_notification_events` e le righe outbox/log `notification_logs`. Un errore di preparazione annulla anche transizione e timeline. Nessuna dipendenza diretta di Incidents dagli adapter o dai servizi Notifications.
+- Il marker unico per team/incidente/ciclo/kind congela il pubblico, anche vuoto. Ripetere l’evento dopo una modifica alla policy non aggiunge altri destinatari. Ogni consegna ha dedupe key unica per team, UUID stabile, snapshot cifrato e fingerprint HMAC della destinazione originale; nessun segreto nei payload di coda o nelle proiezioni.
+- I listener dopo commit pubblicano su Redis `notifications`; `notifications:dispatch` recupera ogni 10 s le righe pendenti con scansione globale di sole identità, rivalutazione nel tenant e isolamento degli errori per riga. Un invio perso o duplicato dal broker non cambia lo stato dell’incidente.
+- Il ledger prende lock Team → Monitor → Incident → consegna e ammette un solo tentativo attivo per incidente/canale. Stato/ciclo, canale attivo/verificato e fingerprint sono rivalutati prima di ogni invio. Il provider è chiamato fuori transazione. La rotazione della sola chiave HMAC webhook resta ammessa sulla stessa destinazione.
+- Tentativi acquisiti persistenti (default 3), backoff 30/120 s, worker 60 s, lease 75 s e `retry_after` Redis 90 s. Ogni envelope ha un fence UUID immutabile, disponibile anche al nuovo oggetto ripristinato da `failed()`. Hook e conferme tardive non possono sovrascrivere il tentativo successivo. Un worker scomparso conta nel budget e il recupero applica il backoff prima della nuova acquisizione.
+- Finestra di raggruppamento di 5 s: aperture mai accettate vengono soppresse al ripristino; riaperture rendono obsolete le attese precedenti. Un solo riepilogo per destinatario con consegna accettata ancora da riepilogare, anche se notificato in più step/cicli. Gli invii già in corso possono registrare l’accettazione e il riepilogo li attende.
+
+### Alternative, conseguenze e verifica
+
+Esclusi listener accodati come unica fonte di verità, invio dentro la transazione e solo `ShouldBeUnique`/lock cache: non coprono il crash fra database e broker o fra accettazione remota e commit locale. Escluso il contenuto completo dei modelli: il messaggio seleziona classificazione, tempi, durata e conteggio riaperture, omettendo target, credenziali, cause testuali e timeline.
+
+PostgreSQL e provider non possono confermare atomicamente. Le garanzie di deduplica, ammissione e fencing sono locali; dopo una conferma remota persa un retry può duplicare email/Slack/Telegram. È un limite esplicito di consegna at-least-once. Il webhook conserva UUID/body e consente al ricevente di deduplicare gli effetti firmati. Non si dichiara exactly-once remoto.
+
+I test usano fake Mail/HTTP, tempo controllato e PostgreSQL reale; due processi separati provano eventi duplicati e un solo invio mentre il primo provider è bloccato su una barriera PostgreSQL. Un test di commit usa il transaction manager di produzione sulla connessione indipendente, evitando la scorciatoia di RefreshDatabase. Dettagli in [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md) e [TESTING.md](TESTING.md#incident-delivery-and-concurrency-m503). Manutenzioni/step successivi e quiet hours restano esplicitamente M5.04/M5.05, senza riduzioni di scope.

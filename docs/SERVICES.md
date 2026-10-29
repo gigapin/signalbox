@@ -27,7 +27,7 @@ Snapshots run every five minutes, with overlap locks expiring after five minutes
 
 ## Horizon ownership, retries and access
 
-`config/horizon.php` defines one worker for each queue: `default`, `checks:eu` and `checks:us`. Separate supervisors prevent a busy region from starving another. Regions are simulated, not geographically deployed. Every baseline worker has one attempt, a 30-second timeout and a 128 MB memory limit. Horizon's master limit is 64 MB. Redis's 90-second reservation lifetime exceeds the worker timeout. The Compose queue shutdown grace is 60 seconds; fast termination is disabled. Future notification jobs can explicitly define their delivery retries in M5; monitoring check failures must remain recorded domain data.
+`config/horizon.php` defines independent workers for `default`, `checks:eu`, `checks:us` and `notifications`, each with a 128 MB memory limit and one broker attempt. Default timeout is 30 s; regional checks use 45 s and notifications 60 s. Regions are simulated, not geographically deployed. Horizon's master limit is 64 MB. Redis retry_after is 90 s; the notification lease is 75 s and Compose queue shutdown grace is 80 s, with fast termination disabled. M5.03 notification retries use the persisted outbox budget (three acquired attempts, 30/120 s backoff), while monitoring failures remain recorded observations with no automatic check retry. See [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md).
 
 Horizon metadata uses the default Redis connection and its own `HORIZON_PREFIX`, not the reserved internal connection name `horizon`. Successful metadata is retained for 60 minutes and failed metadata for seven days; those limits concern queue diagnostics, not check-result retention.
 

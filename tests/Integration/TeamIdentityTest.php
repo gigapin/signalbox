@@ -243,6 +243,7 @@ it('reverses identity and dependent migrations without changing baseline identit
         // Channels, policies and delivery logs reference teams and incidents; the override references policies.
         'database/migrations/2026_10_29_000017_create_notification_tables.php',
         'database/migrations/2026_10_29_000018_add_escalation_policy_to_monitors.php',
+        'database/migrations/2026_10_29_000019_add_notification_delivery_outbox.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

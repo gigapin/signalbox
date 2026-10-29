@@ -50,7 +50,7 @@ services:
   queue:
     <<: *php
     command: [php, artisan, horizon]
-    stop_grace_period: 60s
+    stop_grace_period: 80s
 
   # Run Laravel's local foreground scheduler; distributed scheduling belongs to M3.
   scheduler:

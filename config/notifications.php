@@ -32,6 +32,18 @@ return [
     // Minimum seconds between two verification messages for the same channel.
     'verification_resend_seconds' => 60,
 
+    // Persistent provider retries are independent of queue redelivery and monitoring observations.
+    'delivery' => [
+        // Total acquired attempts, including crashed or timed-out attempts.
+        'max_attempts' => 3,
+
+        // Seconds after the first and second failed attempts, respectively.
+        'backoff_seconds' => [30, 120],
+
+        // Combine rapid transitions before sending an opening or resolution summary.
+        'coalesce_seconds' => 5,
+    ],
+
     // Single HTTP attempt bounds; DNS has the shared, separate one-second resolution budget.
     'http' => [
         // Maximum transfer time in seconds, including connection establishment.

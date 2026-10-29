@@ -84,7 +84,7 @@ With one region its own outcome decides. With two regions a recovery in one regi
 
 - **Confirmed**, no unresolved incident: reopen the latest incident resolved at or after `now − reopen_window_seconds` (boundary included); otherwise open a new one with `started_at` = earliest first failing slot among regions, the cause of the most severe region (earlier region wins ties) and `IncidentSeverity::forCause()`. Confirmed with an open incident changes nothing.
 - **Recovered** with an open incident: resolve it. Otherwise nothing.
-- Each change appends a private system entry and dispatches `IncidentOpened`, `IncidentReopened` or `IncidentResolved` (`ShouldDispatchAfterCommit`, identities only). No listener exists yet; notifications and broadcasting consume them later. A rolled-back transaction dispatches nothing.
+- Each change appends a private system entry and dispatches `IncidentOpened`, `IncidentReopened` or `IncidentResolved` (`ShouldDispatchAfterCommit`, identities only). M5.03 listens to publish the committed notification outbox; broadcasting remains M6. A rolled-back transaction dispatches nothing.
 - Instants are clamped (`confirmed_at ≥ started_at`, resolution and reopening ≥ confirmation) so a regressing wall clock cannot violate constraints and roll back the triggering result.
 
 A confirmation whose slot lies inside a maintenance window opens and reopens nothing, while recovery still resolves; see [MAINTENANCE.md](MAINTENANCE.md#effect-on-incidents).
@@ -133,3 +133,7 @@ Text is trimmed and must be 1–5000 characters (`ManageIncidents::TEXT_MAX_LENG
 | Concurrent results | Two-session races in `IncidentConcurrencyTest`; repeated confirmation is idempotent in `IncidentDetectionTest`. |
 
 Out-of-order semantics follow ADR-007: a newer slot that does not follow a processed slot starts a new sequence, so a late older slot can delay confirmation by the slots it interrupted. This is deliberate: results are never reordered after the fact.
+
+## Transactional notification preparation (M5.03)
+
+Before each public after-commit lifecycle event, `IncidentLifecycle` emits the internal synchronous `IncidentNotificationRequested` event with tenant/incident/monitor identities, cycle and controlled event name. Its notification listener prepares the frozen audience and encrypted outbox inside the same transaction, without network I/O. Failure rolls back the incident and timeline together with notification preparation; repeated requests keep the original audience, including an empty one. These changes do not alter regional confirmation, status transitions or the public event payloads. Apply the incremental `000019` migration before using the updated lifecycle. See [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md).

@@ -34,8 +34,8 @@ Open <http://127.0.0.1:8000>. `APP_PORT` changes the published web port; also up
 | Service / path | Responsibility |
 |---|---|
 | `web` | Laravel local development server, port 8000 inside the container; `/up` liveness check. |
-| `queue` | Horizon with separate workers for `default`, `checks:eu`, `checks:us`; one attempt, 30-second timeout, 60-second shutdown grace. Application configuration and operator access are documented in [SERVICES.md](SERVICES.md). |
-| `scheduler` | Foreground `schedule:work`; Horizon snapshots every five minutes, with monitor dispatch deferred to M3. |
+| `queue` | Horizon with separate workers for `default`, `checks:eu`, `checks:us` and `notifications`; one broker attempt, respective timeouts 30/45/45/60 s and 80 s shutdown grace. Application configuration and operator access are documented in [SERVICES.md](SERVICES.md). |
+| `scheduler` | Foreground `schedule:work`; Horizon snapshots every five minutes, explicitly gated monitor scheduling, and notification outbox recovery every ten seconds. |
 | `reverb` | Optional `realtime` profile, internal port 8080; explicit local origins and signed backend transport configured in M0.04. Browser UI and private channels follow in M6. |
 | `node` | One-off frontend tool, Node 22/npm 10; `tools` profile avoids a permanent idle container. Explicit `compose run node` activates it automatically. |
 | `php-test` | One-off isolated backend verification, with dedicated test service dependencies; see [TESTING.md](TESTING.md). |
@@ -148,3 +148,7 @@ The isolated environment remains available at `http://127.0.0.1:18090`. Run `doc
 ## HTTP server environment preservation
 
 The PHP image starts `artisan serve --no-reload` so its HTTP child inherits Compose overrides such as `DB_HOST=postgres` and `REDIS_HOST=redis`. Without this flag, Laravel filters those variables and the child can reload host-oriented `.env` values such as `DB_HOST=127.0.0.1`, breaking browser requests while Artisan commands still connect successfully. After changing `.env`, restart the web service explicitly: `docker compose restart web`. PHP source files remain available through the existing bind mount. To adopt the corrected image, use `docker compose build web` followed by `docker compose up -d --no-deps web`; no database reset or migration is needed for this fix. A real HTTP regression test exercises the image command against only the isolated test database.
+
+## Notification delivery processes (M5.03)
+
+The new outbox migration must be deliberately applied to the development database before using notification-producing incident transitions or `notifications:dispatch`. After migrating, recreate `queue` and `scheduler` with `docker compose up -d --no-deps --force-recreate queue scheduler` to load the dedicated notification supervisor and the 80-second queue shutdown grace. Tests run only isolated services and never perform these development operations. See [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md#operations-and-remaining-scope).

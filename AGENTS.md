@@ -16,6 +16,7 @@ Signalbox è un SaaS multi-tenant di monitoraggio applicativo, incident manageme
 - Tutti i comandi Git, inclusi quelli di sola lettura, sono eseguiti esclusivamente dall’utente. L’agente fornisce soltanto i comandi e le spiegazioni, senza eseguirli direttamente, tramite script o altri strumenti.
 - Anche GitHub CLI (`gh`), operazioni su branch, commit, sincronizzazione, merge, rebase e pull request sono riservati all’utente.
 - Non modificare `.git` e non usare librerie o API per aggirare questa regola. Se serve conoscere lo stato Git, chiedere all’utente l’output pertinente.
+- Alla conclusione di ogni task, suggerire nella risposta finale un comando `git commit -m "..."` con messaggio in inglese, breve e specifico per le modifiche realizzate, usando un prefisso appropriato come `feat:`, `fix:` o `docs:`. Descrivere il contenuto implementato senza riferimenti a milestone, task o documenti. L’utente esegue il comando; l’agente non lo esegue.
 
 ## Flusso di ogni sessione
 

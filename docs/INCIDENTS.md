@@ -117,4 +117,19 @@ Text is trimmed and must be 1–5000 characters (`ManageIncidents::TEXT_MAX_LENG
 - `tests/Integration/IncidentDetectionTest.php` (PostgreSQL, real ledger): no incident before the third failure, single opening, interruptions, automatic resolution and duration, two-region confirmation/recovery with incomplete slots, reopening at the exact window boundary versus a new incident just beyond it, superseded revisions, tenant isolation, idempotent repeated confirmation and no event on rollback.
 - `tests/Integration/ManageIncidentsTest.php`: role matrix, not-found isolation, acknowledgement and takeover, status updates and manual resolution, rejected manual reopening and invalid text, automatic reopening after manual resolution, severity/cause entries and single publication.
 - Migration rollback suites in `MonitorModelTest` and `TeamIdentityTest` include both incident migrations.
-- Concurrency: both regions of a slot are serialized by the ledger's Team → Monitor locks, already covered by the engine concurrency suites; the partial unique index is the final guard. No new two-session test was added for incidents.
+- Concurrency: both regions of a slot are serialized by the ledger's Team → Monitor locks; the partial unique index is the final guard. `tests/Integration/IncidentConcurrencyTest.php` (M4.06) proves it with separate PHP processes released together from a PostgreSQL barrier: two regions confirming the same slot open exactly one incident with one entry, and a joint recovery racing a manual resolution leaves one resolved incident.
+- `tests/Integration/IncidentLifecycleMatrixTest.php` (M4.06) is the milestone matrix: threshold-three sequences, interruptions, recovery, reopening at and beyond the window, flapping with and without an open incident, regional disagreement, maintenance and late results of older slots. See [Milestone acceptance](#milestone-acceptance-m406).
+
+## Milestone acceptance (M4.06)
+
+| Criterion | Evidence |
+| --- | --- |
+| Threshold 3: the first failure opens nothing | Matrix rows `first failure`, `second failure`, `third failure confirms` (single region) and `both regions confirm`; joint progress asserted for each. |
+| Recovery | `recovery resolves`, `joint recovery resolves`; infrastructure failures neither confirm nor resolve. |
+| Flapping | Alternating and two-failure flapping never open; flapping around an incident reopens the same incident (`reopened_count` 2) with one system entry and one event per change. |
+| Disagreeing regions | One region always down, regions failing in turn, a disagreement breaking one sequence, infrastructure in one region and one region recovering alone: no opening and no resolution until both agree. |
+| Maintenance | A failure contained in a window opens nothing; an incident opened before a window stays single during it and still resolves (plus the cases in `IncidentDetectionTest`). |
+| Out-of-order results | A slot completing after the next one is history: it neither extends a sequence nor resolves an open incident; the newer slot starts the sequence and becomes `started_at`. |
+| Concurrent results | Two-session races in `IncidentConcurrencyTest`; repeated confirmation is idempotent in `IncidentDetectionTest`. |
+
+Out-of-order semantics follow ADR-007: a newer slot that does not follow a processed slot starts a new sequence, so a late older slot can delay confirmation by the slots it interrupted. This is deliberate: results are never reordered after the fact.

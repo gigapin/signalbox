@@ -19,6 +19,13 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 - Per ripartire leggere AGENTS, specifica, questo file, [INCIDENTS.md](INCIDENTS.md), [MAINTENANCE.md](MAINTENANCE.md), ARCHITECTURE (ADR-007/009 e sezioni M4), [MONITOR-UI.md](MONITOR-UI.md) per i pattern delle pagine e TESTING.
 - Preferenze dell’utente da rispettare: nomi di branch, messaggi e corpi di commit solo descrittivi di ciò che viene realizzato, **senza riferimenti a milestone, task o documenti**; messaggio di commit di una breve frase. Decisioni ancora valide: soglia di latenza rinviata, MA.05/MA.06 rinviati, nessuna riduzione di M3/M4/M5.
 
+## Consegna di sessione — M4.06, 2026-10-29
+
+- **M4.06 completato, M4 completata**: nuova matrice `IncidentLifecycleMatrixTest` (25 casi sul ledger reale) e nuova suite `IncidentConcurrencyTest` con processi PHP separati rilasciati insieme da una barriera PostgreSQL (`tests/Fixtures/RunIncidentProbe.php`): due regioni che confermano lo stesso slot aprono un solo incidente; recupero congiunto in gara con risoluzione manuale lascia un solo incidente risolto. Stabile su tre esecuzioni consecutive. Tabella dei criteri in [INCIDENTS.md](INCIDENTS.md#milestone-acceptance-m406).
+- `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: PHP-CS-Fixer dry-run su **394 file**, Larastan livello 8, **1783 test Pest/11932 asserzioni** (0 skip), lint/formato/TypeScript, **5 test qualità**, **65 test DOM** e build Vite. Log nello scratchpad della sessione (`m406-verify.log`).
+- Solo test e documentazione: nessun codice applicativo, migration, dipendenza o `.env` modificati. Git/gh non eseguiti; CI remota/PHP 8.5 non eseguite.
+- Prossimo task pronto: **M5.01**, canali di notifica, configurazioni protette, verifica/attivazione, policy di escalation, log di consegna e UI.
+
 ## Consegna di sessione — M4.05, 2026-10-29
 
 - **M4.05 completato**: lista incidenti di team (aperti prima, filtri stato/severità, paginazione), pagina incidente con timeline e azioni (presa in carico, aggiornamenti con stato, severità, causa dichiarata, pubblicazione esplicita con conferma), sezioni "Recent incidents" e "Maintenance" nel dettaglio monitor (pianifica, modifica, termina ora, elimina). Dieci nuove rotte in `routes/incidents.php`, Form Request, controller sottili, presenter, binding annidati con `scopeBindings()`. Dettagli in [INCIDENT-UI.md](INCIDENT-UI.md).
@@ -238,9 +245,11 @@ Dipendenze: M3.
 - [x] M4.03 Implementare apertura/chiusura automatica, presa in carico, aggiornamenti timeline e regole di riapertura con transazioni e vincoli contro duplicati.
 - [x] M4.04 Implementare finestre di manutenzione e tracciamento dei periodi di pausa necessari al futuro calcolo SLA.
 - [x] M4.05 Creare UI incidenti/timeline/manutenzioni con policy e pubblicazione esplicita degli aggiornamenti.
-- [ ] M4.06 Testare che con soglia 3 il primo fallimento non apra incidenti, recupero, flapping, regioni discordanti, manutenzioni e risultati concorrenti o fuori ordine.
+- [x] M4.06 Testare che con soglia 3 il primo fallimento non apra incidenti, recupero, flapping, regioni discordanti, manutenzioni e risultati concorrenti o fuori ordine.
 
 Uscita: ciclo guasto/ripristino coerente, nessun incidente duplicato e timeline verificabile.
+
+Uscita soddisfatta il 2026-10-29 con M4.06: matrice del ciclo di vita sul ledger reale (soglia, recupero, riaperture, flapping, regioni discordanti, manutenzioni, risultati fuori ordine) e gare a due sessioni PostgreSQL senza incidenti duplicati; timeline con una voce di sistema per ogni cambio. Evidenze in [INCIDENTS.md](INCIDENTS.md#milestone-acceptance-m406). Notifiche, broadcast e SLA restano M5–M7. Prossimo task M5.01.
 
 ## M5 — Notifiche (16 h, nucleo obbligatorio)
 
@@ -349,7 +358,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05 il 2026-10-29; prossimo task pronto M4.06. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata, prossimo task pronto M5.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -402,6 +411,7 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-29 | M4.05: lista incidenti di team + dettaglio, sezioni nel dettaglio monitor | Scelta utente: `/teams/{team}/incidents` (aperti prima, filtri stato/severità) e `/teams/{team}/incidents/{incident}`; incidenti recenti (5) e manutenzioni (in corso/future fino a 50, ultime 5 concluse) nel dettaglio monitor. |
 | 2026-10-29 | M4.05: pubblicazione solo con pulsante esplicito | Scelta utente: ogni voce nasce privata; "Publish update" con conferma, irreversibile. Nessuna modifica a `ManageIncidents`. |
 | 2026-10-29 | M4.05: orari delle manutenzioni nel fuso del browser | Scelta utente: `datetime-local` convertito dal client in ISO UTC; il server accetta solo istanti con offset esplicito (`Z` o `±hh:mm`), senza indovinare il fuso. Fuso del team rinviato a M6 come per le altre date. |
+| 2026-10-29 | M4.06: un risultato tardivo di uno slot precedente è storia | Attuazione di ADR-007 resa esplicita dai test: lo slot più recente che non segue uno slot processato avvia una nuova sequenza, lo slot tardivo non estende la sequenza né risolve; la conferma può quindi slittare degli slot interrotti. Nessun riordino a posteriori dei risultati. |
 | 2026-10-29 | M4.05: rifiuti di dominio come errori di sessione | `IncidentChangeRejected` → chiave `incident`, `MaintenanceWindowRejected` → chiave `maintenance`; le regole restano nelle azioni, le Form Request verificano solo la sintassi e autorizzano prima di validare. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
@@ -1069,4 +1079,15 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Limiti dichiarati: nessun browser reale (scelta M2.06), focus non spostato dopo un errore (annunciato con `role="alert"`), pagine non aggiornate in tempo reale fino a M6.
 - **M4.05 completato.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E, checklist manuale.
 - Prossimo passo: **M4.06**. Messaggio di commit suggerito: `feat(incidents): add incident pages, timeline publishing and maintenance scheduling`.
+
+### 2026-10-29 — M4.06: matrice di test degli incidenti (completato)
+
+- Richiesta dell’utente di procedere con M4.06; dipendenze M4.01–M4.05 soddisfatte. Task segnato in corso prima delle modifiche. Branch suggerito all’utente: `test/incident-lifecycle-matrix`. Nessun Git/gh eseguito dall’agente.
+- Analisi della copertura esistente: `IncidentDetectionTest` copriva già soglia, interruzioni, conferma a due regioni, riapertura al confine, revisioni superate, manutenzioni e idempotenza; mancavano la matrice di sequenze, il flapping esplicito, la discordanza prolungata fra regioni, i risultati fuori ordine e la concorrenza a due sessioni dichiarata come lacuna in M4.02–M4.03.
+- Implementati: `tests/Integration/IncidentLifecycleMatrixTest.php` (14 sequenze a una regione, 7 a due regioni, flapping con voci ed eventi, manutenzioni, due casi fuori ordine con acquisizione prima della scadenza e completamento dopo lo slot successivo); `tests/Integration/IncidentConcurrencyTest.php` e `tests/Fixtures/RunIncidentProbe.php` (barriera sul lock della riga del team osservata in `pg_stat_activity`, come le suite di scheduling).
+- Primo errore emerso e corretto: attesa sbagliata del testo della voce di apertura, che riporta la causa e non le regioni. Gare ripetute tre volte, sempre verdi. Nessun difetto applicativo trovato.
+- Documentazione: INCIDENTS (criteri di accettazione della milestone, nota sulla concorrenza aggiornata) e TESTING.
+- Verifica finale `./scripts/verify.sh` **exit 0**: formatter su 394 file, Larastan livello 8, 1783 test/11932 asserzioni con 0 skip, frontend completo e build.
+- **M4.06 completato; M4 completata.** Non eseguiti: CI remota, PHP 8.5 integrata, browser E2E.
+- Prossimo passo: **M5.01**. Messaggio di commit suggerito: `test(incidents): cover lifecycle sequences, flapping, late results and concurrent confirmations`.
 

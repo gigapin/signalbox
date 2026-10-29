@@ -265,7 +265,11 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $results = require base_path('database/migrations/2026_10_26_000012_create_partitioned_check_results.php');
     $incidents = require base_path('database/migrations/2026_10_28_000013_create_incidents_tables.php');
     $sequences = require base_path('database/migrations/2026_10_28_000014_create_monitor_region_sequences.php');
-    // Roll back sequence, incident, result, heartbeat and execution dependents in reverse migration order.
+    $maintenance = require base_path('database/migrations/2026_10_28_000015_create_maintenance_windows.php');
+    $pauses = require base_path('database/migrations/2026_10_28_000016_create_monitor_pause_periods.php');
+    // Roll back pause, maintenance, sequence, incident, result, heartbeat and execution dependents in reverse order.
+    $pauses->down();
+    $maintenance->down();
     $sequences->down();
     $incidents->down();
     $results->down();
@@ -279,6 +283,8 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $results->up();
     $incidents->up();
     $sequences->up();
+    $maintenance->up();
+    $pauses->up();
     app(TenantContext::class)->run($team->id, function () use ($team): void {
         expect(Monitor::query()->count())->toBe(0);
         Monitor::factory()->create();

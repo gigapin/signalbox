@@ -17,23 +17,29 @@ use LogicException;
 /**
  * Called under the terminal transaction's Team → Monitor locks; incidents are then locked in turn. Repeated
  * verdicts are idempotent: a confirmation with an open incident and a recovery without one change nothing.
+ * A confirmation whose slot lies in planned maintenance opens and reopens nothing; recovery still resolves.
  */
 final readonly class IncidentAutomation
 {
     /**
      * @param IncidentLifecycle $lifecycle State changes with timeline entries and events.
+     * @param MaintenanceSchedule $maintenance Planned maintenance lookup.
      * @param Repository $config Source of the reopen window.
      */
-    public function __construct(private IncidentLifecycle $lifecycle, private Repository $config)
-    {
+    public function __construct(
+        private IncidentLifecycle $lifecycle,
+        private MaintenanceSchedule $maintenance,
+        private Repository $config,
+    ) {
     }
 
     /**
      * @param Monitor $monitor Locked monitor of the evaluated slot.
      * @param SlotVerdict $verdict Joint verdict of that slot.
+     * @param CarbonImmutable $slot UTC slot the verdict belongs to.
      * @param CarbonImmutable $now UTC instant of the terminal transaction.
      */
-    public function apply(Monitor $monitor, SlotVerdict $verdict, CarbonImmutable $now): void
+    public function apply(Monitor $monitor, SlotVerdict $verdict, CarbonImmutable $slot, CarbonImmutable $now): void
     {
         if ($verdict->kind === SlotVerdictKind::Inconclusive) {
             return;
@@ -54,6 +60,10 @@ final readonly class IncidentAutomation
         }
 
         if ($open !== null || $verdict->startedAt === null || $verdict->cause === null) {
+            return;
+        }
+
+        if ($this->maintenance->activeAt($monitor->id, $slot)) {
             return;
         }
 

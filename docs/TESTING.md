@@ -252,3 +252,8 @@ The acceptance gate remains `./scripts/verify.sh`, followed by the complete back
 
 `RegionalSequenceTest` and `ConfirmationRuleTest` cover the pure sequence and verdict rules. `IncidentDetectionTest` drives real reservations and `ExecutionLedger` terminal transitions with a fixed clock (`CarbonImmutable::setTestNow`) and faked incident events; `ManageIncidentsTest` covers the manual actions and their policy. Run them with `docker compose run --rm php-test vendor/bin/pest tests/Unit/RegionalSequenceTest.php tests/Unit/ConfirmationRuleTest.php tests/Integration/IncidentDetectionTest.php tests/Integration/ManageIncidentsTest.php`; the acceptance gate remains `./scripts/verify.sh`. See [INCIDENTS.md](INCIDENTS.md).
 
+
+## Maintenance and pause history verification (M4.04)
+
+`TimeIntervalTest` covers pure interval merging. `MaintenanceWindowTest`, `PausePeriodTest` and `ExclusionPeriodsTest` run on PostgreSQL for scheduling rules, the pause trigger and excluded time; `IncidentDetectionTest` covers the effect of maintenance on confirmation. Pause instants come from the database transaction clock, not the faked application clock. Run them with `docker compose run --rm php-test vendor/bin/pest tests/Unit/TimeIntervalTest.php tests/Integration/MaintenanceWindowTest.php tests/Integration/PausePeriodTest.php tests/Integration/ExclusionPeriodsTest.php tests/Integration/IncidentDetectionTest.php`; the acceptance gate remains `./scripts/verify.sh`. See [MAINTENANCE.md](MAINTENANCE.md).
+

@@ -301,7 +301,7 @@ it('treats a repeated confirmation as idempotent and dispatches nothing when the
     $tenants->run($monitor->team_id, function () use ($automation, $monitor, $verdict): void {
         try {
             DB::transaction(function () use ($automation, $monitor, $verdict): never {
-                $automation->apply($monitor, $verdict, CarbonImmutable::now('UTC'));
+                $automation->apply($monitor, $verdict, CarbonImmutable::now('UTC'), CarbonImmutable::now('UTC'));
 
                 throw new RuntimeException('Synthetic rollback.');
             });
@@ -313,10 +313,72 @@ it('treats a repeated confirmation as idempotent and dispatches nothing when the
     Event::assertNotDispatched(IncidentOpened::class);
 
     $tenants->run($monitor->team_id, function () use ($automation, $monitor, $verdict): void {
-        DB::transaction(fn () => $automation->apply($monitor, $verdict, CarbonImmutable::now('UTC')));
-        DB::transaction(fn () => $automation->apply($monitor, $verdict, CarbonImmutable::now('UTC')));
+        DB::transaction(fn () => $automation->apply($monitor, $verdict, CarbonImmutable::now('UTC'), CarbonImmutable::now('UTC')));
+        DB::transaction(fn () => $automation->apply($monitor, $verdict, CarbonImmutable::now('UTC'), CarbonImmutable::now('UTC')));
     });
 
     expect(detectionIncidents($monitor))->toHaveCount(1);
     Event::assertDispatchedTimes(IncidentOpened::class, 1);
+});
+
+/**
+ * @param Monitor $monitor Monitor under maintenance.
+ * @param CarbonImmutable $start Inclusive window start.
+ * @param CarbonImmutable $end Exclusive window end.
+ */
+function detectionMaintenance(Monitor $monitor, CarbonImmutable $start, CarbonImmutable $end): void
+{
+    DB::table('maintenance_windows')->insert([
+        'team_id' => $monitor->team_id,
+        'monitor_id' => $monitor->id,
+        'starts_at' => $start,
+        'ends_at' => $end,
+        'reason' => 'Synthetic maintenance',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+it('opens no incident during maintenance and opens it once a persistent failure outlasts the window', function (): void {
+    $monitor = detectionMonitor(Team::factory()->create());
+    // The window covers the first slots, which may precede the reference instant, and ends 25 minutes later.
+    $end = CarbonImmutable::now('UTC')->addMinutes(25);
+    detectionMaintenance($monitor, CarbonImmutable::now('UTC')->subHour(), $end);
+    $slots = [];
+
+    foreach (range(1, 8) as $slot) {
+        $slots[] = detectionSlot($monitor, ['eu' => 'down']);
+    }
+
+    // The first slot both at or after the window end and at or after the third consecutive failure confirms.
+    $confirming = collect($slots)->slice(2)->first(static fn (CarbonImmutable $slot): bool => !$slot->isBefore($end));
+    $incidents = detectionIncidents($monitor);
+
+    expect(collect($slots)->filter(static fn (CarbonImmutable $slot): bool => $slot->isBefore($end))->count())->toBeGreaterThanOrEqual(5)
+        ->and($incidents)->toHaveCount(1)
+        ->and($incidents[0]->confirmed_at->equalTo($confirming))->toBeTrue()
+        ->and($incidents[0]->started_at->equalTo($slots[0]))->toBeTrue()
+        ->and(detectionProgress($monitor))->toBe(8);
+});
+
+it('resolves during maintenance but does not reopen during it', function (): void {
+    $monitor = detectionMonitor(Team::factory()->create());
+
+    foreach (['down', 'down', 'down'] as $outcome) {
+        detectionSlot($monitor, ['eu' => $outcome]);
+    }
+
+    $now = CarbonImmutable::now('UTC');
+    detectionMaintenance($monitor, $now, $now->addHours(2));
+
+    foreach (['up', 'down', 'down', 'down'] as $outcome) {
+        detectionSlot($monitor, ['eu' => $outcome]);
+    }
+
+    [$incident] = detectionIncidents($monitor);
+
+    expect(detectionIncidents($monitor))->toHaveCount(1)
+        ->and($incident->status)->toBe(IncidentStatus::Resolved)
+        ->and($incident->reopened_count)->toBe(0);
+    Event::assertNotDispatched(IncidentReopened::class);
 });

@@ -47,6 +47,10 @@ Route::middleware(['auth', 'verified', EstablishTeamContext::class])
             ->whereNumber(['team', 'channel'])
             ->name('teams.notification-channels.activation');
 
+        Route::patch('/teams/{team}/notification-channels/{channel}/quiet-hours', [NotificationChannelController::class, 'quietHours'])
+            ->whereNumber(['team', 'channel'])
+            ->name('teams.notification-channels.quiet-hours');
+
         Route::post('/teams/{team}/escalation-policies', [EscalationPolicyController::class, 'store'])
             ->whereNumber('team')
             ->name('teams.escalation-policies.store');

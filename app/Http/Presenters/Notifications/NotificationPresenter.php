@@ -33,12 +33,13 @@ final readonly class NotificationPresenter
      * @param bool $manager Whether the viewer may edit channels.
      * @param list<string> $usedBy Names of the policies notifying the channel.
      * @param CarbonImmutable $now Current UTC instant.
-     * @return array{id: int, type: string, name: string, hint: string, isActive: bool, isStub: bool, verifiedAt: string|null, verificationPending: bool, verificationExpiresAt: string|null, editable: array<string, string>|null, usedBy: list<string>} Safe channel row.
+     * @return array{id: int, type: string, name: string, hint: string, isActive: bool, isStub: bool, verifiedAt: string|null, verificationPending: bool, verificationExpiresAt: string|null, editable: array<string, string>|null, usedBy: list<string>, quietHours: array{start: string, end: string, timezone: string}|null} Safe channel row.
      */
     public function channel(NotificationChannel $channel, bool $manager, array $usedBy, CarbonImmutable $now): array
     {
         $configuration = $channel->configuration();
         $pending = $channel->hasPendingCode($now);
+        $hours = $channel->quietHours();
 
         return [
             'id' => $channel->id,
@@ -52,6 +53,11 @@ final readonly class NotificationPresenter
             'verificationExpiresAt' => $pending ? $channel->verification_expires_at?->toIso8601String() : null,
             'editable' => $manager ? $configuration->editable() : null,
             'usedBy' => $usedBy,
+            'quietHours' => $hours === null ? null : [
+                'start' => $hours->start,
+                'end' => $hours->end,
+                'timezone' => $hours->timezone,
+            ],
         ];
     }
 

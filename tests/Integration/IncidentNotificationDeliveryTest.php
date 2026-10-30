@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 /** Exercise durable notification planning, escalation, maintenance silencing, coalescing and fenced retries on isolated PostgreSQL. */
 
+use App\Actions\Notifications\ManageNotificationChannels;
 use App\Data\Monitoring\HttpMonitorConfiguration;
 use App\Data\Notifications\ChannelDeliveryReceipt;
+use App\Data\Notifications\QuietHours;
 use App\Enums\Monitoring\CheckError;
 use App\Enums\Notifications\DeliveryStatus;
 use App\Enums\Notifications\NotificationKind;
@@ -966,4 +968,175 @@ it('keeps maintenance and delayed escalation jobs inside the correct monitor and
 
     expect(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Sent);
     Http::assertSentCount(1);
+});
+
+/**
+ * @param Team $team Owning tenant and authorized owner.
+ * @param NotificationChannel $channel Recipient whose live admission rule changes.
+ * @param QuietHours|null $hours Daily interval, or null to disable.
+ */
+function deliveryQuietHours(Team $team, NotificationChannel $channel, ?QuietHours $hours): void
+{
+    app(ManageNotificationChannels::class)->setQuietHours($team->owner, $team->id, $channel->id, $hours);
+}
+
+it('applies half-open quiet-hour boundaries to openings escalations and resolution summaries', function (string $kind, string $at, bool $suppressed): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->firstOrFail();
+
+    if ($kind === 'escalated') {
+        $row = deliveryRows($this->team)->last();
+    }
+
+    if ($kind === 'resolved') {
+        CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+        deliveryRun($row);
+        deliveryTransition($this->team, $incident, 'resolve');
+        $row = deliveryRows($this->team)->last();
+    }
+
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:06', '10:07', 'UTC'));
+    CarbonImmutable::setTestNow($at);
+    deliveryRun($row);
+    $fresh = deliveryRows($this->team)->find($row->id);
+
+    expect($fresh->status)->toBe($suppressed ? DeliveryStatus::Suppressed : DeliveryStatus::Sent)
+        ->and($fresh->attempts)->toBe($suppressed ? 0 : 1)
+        ->and($fresh->message_uuid)->toBe($row->message_uuid);
+    Http::assertSentCount(($kind === 'resolved' ? 1 : 0) + ($suppressed ? 0 : 1));
+})->with(['opened', 'escalated', 'resolved'])->with([
+    'before start' => ['2026-10-29 10:05:59', false],
+    'at start' => ['2026-10-29 10:06:00', true],
+    'inside' => ['2026-10-29 10:06:59', true],
+    'at end' => ['2026-10-29 10:07:00', false],
+]);
+
+it('checks a changed quiet-hours rule on retries and does not revive a suppressed message after disabling it', function (): void {
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+    $payload = $row->message()->payload();
+    $this->providerResponses = Http::sequence()->pushStatus(503)->pushStatus(204);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:50');
+    deliveryRun($row);
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:06', '10:07', 'UTC'));
+    CarbonImmutable::setTestNow('2026-10-29 10:06:20');
+    deliveryRun($row);
+    deliveryQuietHours($this->team, $this->channel, null);
+    CarbonImmutable::setTestNow('2026-10-29 10:07:00');
+    deliveryRun($row);
+
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Suppressed)
+        ->and(deliveryRows($this->team)->sole()->attempts)->toBe(1)
+        ->and(deliveryRows($this->team)->sole()->message()->payload())->toBe($payload);
+    Http::assertSentCount(1);
+});
+
+it('suppresses expired attempts during quiet hours and fences their late completion', function (): void {
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+    $ledger = app(NotificationDeliveryLedger::class);
+    $token = (string) Str::uuid();
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    expect($ledger->acquire($this->team->id, $row->id, $token))->not->toBeNull();
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:06', '10:07', 'UTC'));
+    CarbonImmutable::setTestNow('2026-10-29 10:06:15');
+    deliveryRun($row);
+
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Suppressed)
+        ->and(deliveryRows($this->team)->sole()->attempts)->toBe(1)
+        ->and($ledger->complete($this->team->id, $row->id, $token, new ChannelDeliveryReceipt()))->toBeFalse();
+    Http::assertNothingSent();
+});
+
+it('retains provider acceptance when quiet hours start after admission', function (): void {
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+    $ledger = app(NotificationDeliveryLedger::class);
+    $token = (string) Str::uuid();
+    CarbonImmutable::setTestNow('2026-10-29 10:05:50');
+    expect($ledger->acquire($this->team->id, $row->id, $token))->not->toBeNull();
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:06', '10:07', 'UTC'));
+    CarbonImmutable::setTestNow('2026-10-29 10:06:00');
+
+    expect($ledger->complete($this->team->id, $row->id, $token, new ChannelDeliveryReceipt()))->toBeTrue()
+        ->and(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Sent);
+});
+
+it('keeps future steps outside quiet hours and never summarizes an entirely silenced incident', function (): void {
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:06', 'UTC'));
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 10, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun(deliveryRows($this->team)->firstOrFail());
+    CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+    deliveryRun(deliveryRows($this->team)->last());
+    deliveryTransition($this->team, $incident, 'resolve');
+    CarbonImmutable::setTestNow('2026-10-29 10:10:05');
+    deliveryRun(deliveryRows($this->team)->last());
+    Http::assertSentCount(2);
+
+    CarbonImmutable::setTestNow('2026-10-30 10:00:00');
+    $next = deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-30 10:00:05');
+    $row = deliveryRows($this->team)->where('incident_id', $next->id)->firstOrFail();
+    deliveryRun($row);
+    deliveryTransition($this->team, $next, 'resolve');
+    expect(deliveryRows($this->team)->where('incident_id', $next->id)->where('kind', NotificationKind::Resolved))->toHaveCount(0);
+    Http::assertSentCount(2);
+});
+
+it('respects both repeated local hours and the spring gap through actual delivery admission', function (string $prepared, string $attempt, string $start, string $end, bool $silenced): void {
+    CarbonImmutable::setTestNow($prepared);
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+    deliveryQuietHours($this->team, $this->channel, new QuietHours($start, $end, 'Europe/Rome'));
+    CarbonImmutable::setTestNow($attempt);
+    deliveryRun($row);
+
+    expect(deliveryRows($this->team)->sole()->status)->toBe($silenced ? DeliveryStatus::Suppressed : DeliveryStatus::Sent);
+    Http::assertSentCount($silenced ? 0 : 1);
+})->with([
+    ['2026-10-25 00:00:00', '2026-10-25 00:15:00', '02:15', '02:45', true],
+    ['2026-10-25 00:00:00', '2026-10-25 01:15:00', '02:15', '02:45', true],
+    ['2026-10-25 00:00:00', '2026-10-25 01:45:00', '02:15', '02:45', false],
+    ['2026-03-29 00:00:00', '2026-03-29 01:00:00', '02:15', '02:45', false],
+    ['2026-03-29 00:00:00', '2026-03-29 01:00:00', '01:30', '03:30', true],
+]);
+
+it('keeps quiet-hour settings local to the selected recipient and tenant', function (): void {
+    $other = Team::factory()->create();
+    $foreign = app(TenantContext::class)->run($other->id, fn () => NotificationChannel::factory()->active()->create());
+    deliveryQuietHours($other, $foreign, new QuietHours('09:00', '11:00', 'UTC'));
+    $extra = app(TenantContext::class)->run($this->team->id, fn () => NotificationChannel::factory()->webhook()->active()->create());
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('09:00', '11:00', 'UTC'));
+    deliverySteps($this->team, [['after_minutes' => 0, 'channel_ids' => [$this->channel->id, $extra->id]]]);
+    deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+
+    foreach (deliveryRows($this->team) as $row) {
+        deliveryRun($row);
+    }
+
+    expect(deliveryRows($this->team)->pluck('status')->all())->toBe([DeliveryStatus::Suppressed, DeliveryStatus::Sent]);
+    Http::assertSentCount(1);
+});
+
+it('fails closed for an unsupported stored timezone without leaking it or retrying forever', function (): void {
+    deliveryOpen($this->team, $this->monitor);
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('09:00', '11:00', 'UTC'));
+    DB::table('notification_channels')->where('id', $this->channel->id)->update(['quiet_hours_timezone' => 'Invalid/StoredZone']);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun(deliveryRows($this->team)->sole());
+
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Failed)
+        ->and(deliveryRows($this->team)->sole()->attempts)->toBe(0)
+        ->and(deliveryRows($this->team)->sole()->response)->not->toContain('Invalid/StoredZone');
+    Http::assertNothingSent();
 });

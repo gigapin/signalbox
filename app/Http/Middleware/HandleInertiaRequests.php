@@ -62,6 +62,7 @@ final class HandleInertiaRequests extends Middleware
                 'channel-verified' => 'Channel verified and active.',
                 'channel-activated' => 'Channel active.',
                 'channel-deactivated' => 'Channel paused. It receives no notifications.',
+                'channel-quiet-hours-updated' => 'Channel quiet hours updated.',
                 'policy-created' => 'Escalation policy created.',
                 'policy-updated' => 'Escalation policy saved.',
                 'policy-deleted' => 'Escalation policy deleted.',

@@ -76,12 +76,6 @@ final readonly class NotificationDeliveryLedger
                 return null;
             }
 
-            if ($log->claim_until !== null) {
-                $this->retry($log, 'The previous worker did not complete its delivery attempt.', $now);
-
-                return null;
-            }
-
             $channel = $log->channel;
 
             if ($channel === null || !$channel->is_active || $channel->verified_at === null) {
@@ -91,10 +85,23 @@ final readonly class NotificationDeliveryLedger
             }
 
             try {
+                $quietHours = $channel->quietHours();
                 $configuration = $channel->configuration();
                 $message = $log->message();
             } catch (Throwable) {
-                $log->forceFill(['status' => DeliveryStatus::Failed, 'response' => 'The stored recipient configuration or message could not be read safely.'])->save();
+                $log->forceFill(['status' => DeliveryStatus::Failed, 'claim_until' => null, 'response' => 'The stored recipient configuration or message could not be read safely.'])->save();
+
+                return null;
+            }
+
+            if ($quietHours?->contains($now) === true) {
+                $this->suppress($log, 'The channel is within its configured quiet hours.');
+
+                return null;
+            }
+
+            if ($log->claim_until !== null) {
+                $this->retry($log, 'The previous worker did not complete its delivery attempt.', $now);
 
                 return null;
             }

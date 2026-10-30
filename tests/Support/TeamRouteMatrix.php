@@ -46,6 +46,7 @@ final class TeamRouteMatrix
         'teams.notification-channels.verification.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.notification-channels.verification.confirm' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.notification-channels.activation' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.notification-channels.quiet-hours' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.notification-channels.signing-secret' => ['method' => 'POST', 'status' => 200, 'roles' => ['owner', 'admin']],
         'teams.escalation-policies.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.escalation-policies.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],

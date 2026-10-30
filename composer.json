@@ -39,6 +39,7 @@
         "platform": {
             "php": "8.4.0"
         },
+        "process-timeout": 900,
         "sort-packages": true,
         "preferred-install": "dist",
         "allow-plugins": {

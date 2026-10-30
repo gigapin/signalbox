@@ -222,3 +222,7 @@ Incident transitions now prepare notification intents transactionally; public af
 ## Daily channel quiet hours (M5.05)
 
 [QUIET-HOURS.md](QUIET-HOURS.md) documents the incremental `2026_10_30_000020_add_channel_quiet_hours.php` migration, explicit IANA local times and DST semantics. Apply it deliberately after the outbox migration before configuring silencing. Existing channels have no interval by default. The owner/admin `PATCH …/notification-channels/{channel}/quiet-hours` route edits silencing independently of credentials and verification; the notification page includes its editor. The ledger checks the current interval before each attempt/retry. Reload long-lived queue/scheduler code after migrating. Verification migrates only isolated PostgreSQL and never restarts development processes. No dependency, lockfile, environment variable or key changes.
+
+## Notification acceptance matrix (M5.06)
+
+[NOTIFICATION-ACCEPTANCE.md](NOTIFICATION-ACCEPTANCE.md) maps notification exit criteria to the automated suites. M5.06 adds tests/documentation and raises Composer's finite child-process timeout from 300 to 900 seconds after the full PostgreSQL suite exceeded the default. No migration, dependency, environment variable, application key, queue timeout or application-process change. Existing channel/outbox/quiet-hour migrations remain prerequisites for their application features. Full verification still uses isolated test storage and fake recipient services; no development migration or worker restart is performed.

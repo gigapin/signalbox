@@ -77,6 +77,7 @@ This section documents the comment-free JSON manifest. Package keys and their in
 | `require-dev` | Formatting, analysis, factory and testing tools excluded from production installs. |
 | `config` | Project-local Composer behavior, without modifying global configuration. |
 | `config.platform.php` | Resolve dependencies against PHP 8.4.0 even on the local PHP 8.5 runtime; this does not emulate runtime execution or extension availability. |
+| `config.process-timeout` | Bound each Composer child process to 900 seconds. M5.06's full PostgreSQL suite exceeded Composer's default 300-second limit; this finite check-runtime adjustment leaves package constraints, lockfiles, application and queue timeouts unchanged. |
 | `config.sort-packages` | Maintain deterministic alphabetical package ordering on future Composer changes. |
 | `config.preferred-install` | Prefer release archives (`dist`) over source checkouts. |
 | `config.allow-plugins` | Explicit allow-list for Composer plugins. |

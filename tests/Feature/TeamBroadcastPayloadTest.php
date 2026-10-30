@@ -130,9 +130,10 @@ it('sends only the selected payload and private channel through the actual Rever
     expect($signature)->toBe(hash_hmac('sha256', "POST\n/apps/signalbox-test/events\n".http_build_query($query), 'fake-test-secret'));
 });
 
-it('keeps private subscription endpoints unavailable until the authorization task', function (): void {
-    $this->get('/broadcasting/auth')->assertNotFound();
-    $this->post('/broadcasting/auth')->assertNotFound();
+it('exposes only session-protected POST authorization without a user-signin endpoint', function (): void {
+    $this->get('/broadcasting/auth')->assertMethodNotAllowed();
+    $this->postJson('/broadcasting/auth')->assertUnauthorized();
+    $this->postJson('/broadcasting/user-auth')->assertNotFound();
 });
 
 it('selects Redis explicitly even when the application default queue is synchronous', function (): void {

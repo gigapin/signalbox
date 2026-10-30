@@ -229,4 +229,8 @@ Incident transitions now prepare notification intents transactionally; public af
 
 ## Committed private team broadcasts (M6.01)
 
-[BROADCASTING.md](BROADCASTING.md) documents the new result event, after-commit listener and scalar `TeamUpdate` frame. Horizon adds a dedicated Redis `broadcasts` supervisor with three transport attempts and a 10-second timeout. No migration, dependency, lockfile, environment variable or key change. Recreate queue/scheduler deliberately to load the new code/supervisor; verification touches only test services. Null broadcasting disables publication. Private subscription endpoints remain unavailable until M6.02; Echo/frontend reconciliation remains M6.03.
+[BROADCASTING.md](BROADCASTING.md) documents the new result event, after-commit listener and scalar `TeamUpdate` frame. Horizon adds a dedicated Redis `broadcasts` supervisor with three transport attempts and a 10-second timeout. No migration, dependency, lockfile, environment variable or key change. Recreate queue/scheduler deliberately to load the new code/supervisor; verification touches only test services. Null broadcasting disables publication. Echo/frontend reconciliation remains M6.03.
+
+## Private subscription authorization (M6.02)
+
+`POST /broadcasting/auth` uses verified web sessions, real CSRF protection and current membership for every team role. It locally signs only canonical private-team channels using the existing Reverb credentials, even when publication uses null/log. Incomplete credentials fail with 503 without affecting unrelated bootstrap paths. No dependency, environment, migration or worker change is needed for this endpoint. [BROADCASTING.md](BROADCASTING.md#subscription-authorization-m602) documents inputs, denials and the protocol limitation: membership revocation denies new grants but does not forcibly evict an already subscribed socket.

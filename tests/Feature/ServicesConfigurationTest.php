@@ -46,14 +46,14 @@ it(
 );
 
 it(
-    'keeps unfinished billing and broadcast authorization endpoints unregistered',
-    /** Prevent package discovery from exposing unscoped billing or unsigned webhook handling. */
+    'keeps unfinished billing endpoints unregistered and broadcast authorization session protected',
+    /** Keep billing package routes absent and private channel grants behind web-session authentication. */
     function (): void {
         expect(Route::has('cashier.webhook'))->toBeFalse()
             ->and(Route::has('cashier.payment'))->toBeFalse();
         $this->postJson('/stripe/webhook', ['type' => 'customer.subscription.deleted'])->assertNotFound();
         $this->get('/stripe/payment/example')->assertNotFound();
-        $this->postJson('/broadcasting/auth')->assertNotFound();
+        $this->postJson('/broadcasting/auth')->assertUnauthorized();
     },
 );
 

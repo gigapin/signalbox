@@ -19,4 +19,6 @@ require __DIR__.'/incidents.php';
 
 require __DIR__.'/notifications.php';
 
+require __DIR__.'/broadcasting.php';
+
 require __DIR__.'/admin.php';

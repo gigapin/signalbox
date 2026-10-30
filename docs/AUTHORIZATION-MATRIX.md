@@ -73,6 +73,7 @@ The inventory explicitly classifies the remaining routes without forcing them in
 | teams.index | GET | Membership-constrained listing; four roles, revoked membership, guest and verification gates |
 | account | GET | Authenticated account projection; foreign input IDs and stale selection |
 | account.security | GET | Own account, verified email and recent password; foreign query IDs ignored |
+| broadcasting.auth | POST | Verified web session and CSRF; canonical private team/socket input; fresh membership, all four roles; native local Reverb signature |
 | invitations.open | GET | Proved capability only; ID/token from different teams rejected |
 | invitations.review | GET | Minimal capability-proved preview; no private team access before acceptance |
 | invitations.register | GET | Guest with pending capability; registration page tested in M1.03 |
@@ -86,9 +87,11 @@ Public authentication/home routes do not expose tenant resources; their request/
 
 ## Keeping the matrix complete
 
-TeamRouteMatrix declares the nine private routes and nine account/capability routes independently of application policies. The inventory assertion compares registered routes with that catalogue and verifies private middleware and verbs. It discovers domain controllers outside the Auth namespace and HomeController, team/invitation URI prefixes, account URIs and any route using EstablishTeamContext. Adding a new domain controller or tenant route therefore requires an explicit catalogue update rather than silently omitting authorization coverage.
+TeamRouteMatrix declares the private routes and account/capability/subscription routes independently of application policies. The inventory assertion compares registered routes with that catalogue and verifies private middleware and verbs. It discovers domain controllers outside the Auth namespace and HomeController, team/invitation URI prefixes, account URIs and any route using EstablishTeamContext. Adding a new domain controller or tenant route therefore requires an explicit catalogue update rather than silently omitting authorization coverage.
 
 Each subsequent milestone must extend the catalogue and datasets for its concrete resources, roles, nested IDs and side effects. API routes must add token abilities alongside membership and policy; search, cache, CLI, jobs and broadcasts require their own actual integration assertions. Public projections need explicit publication tests, not an artificial browser tenant. Document exceptions and the owning milestone instead of excluding a private entrypoint without explanation.
+
+`broadcasting.auth` is classified outside the route-team matrix because the tenant is carried by the validated private channel, not a `{team}` route binding. `BroadcastAuthorizationTest` supplies its actual integration matrix: all roles may receive a grant for a current membership; foreign/revoked/missing teams produce the same 403 rather than the route-team 404. Membership is queried afresh without selecting a team or changing TenantContext. JSON guests/bearer-only actors receive 401, unverified accounts 403, malformed input 422, missing CSRF 419 and incomplete signing credentials 503. Signature verification/tampering tests use the real Reverb verifier in memory. The admission boundary does not evict sockets already subscribed before revocation; see [BROADCASTING.md](BROADCASTING.md#subscription-authorization-m602).
 
 Run targeted and complete checks using the isolated services:
 

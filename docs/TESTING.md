@@ -327,3 +327,13 @@ docker compose run --rm node npx vitest run tests/frontend/Notifications.test.ts
 ```
 
 The first targeted run found only a test expectation comparing a factory timestamp string with PostgreSQL's timezone-qualified representation; it now compares the same persisted representation. No provider or application regression was found in that run. Final counts/results are recorded in TASKS; complete notification acceptance remains M5.06.
+
+## Notification milestone acceptance matrix (M5.06)
+
+[NOTIFICATION-ACCEPTANCE.md](NOTIFICATION-ACCEPTANCE.md) maps every M5 exit criterion to its existing and new executable evidence, with focused reproduction commands and practical limits. `NotificationDeliveryMatrixTest` adds 19 cross-boundary cases: real lifecycle/listeners → production Redis publisher → serialized/restored QueueFake envelopes → actual job middleware/handler → provider adapters. All recipient I/O is fake; the SMTP error case uses a deterministic throwing mailer. Laravel's controlled clock includes explicit five-minute travel. A fake queue does not execute jobs or implement real broker delays; manually invoked early envelopes are rejected by the ledger.
+
+The matrix covers opening/escalation/recovery through all four real families, duplicated queue envelopes, recoverable HTTP/SMTP failures with stable message bytes and fresh attempt fences, signed webhook bytes across retries, terminal outage without a false summary, SMS across steps, forged/interleaved tenant envelopes, rapid resolve/reopen with obsolete queued cycles and independent incidents sharing a recipient. Four combined quiet-hour/maintenance scenarios cover touching starts/ends, overlap priority and terminal suppression without catch-up. Providers are asserted outside the domain transaction.
+
+Initial failures were confined to a test using an integer count where `Queue::assertPushedOn()` expects a callback; queue placement and count are now asserted separately. No application changes were required. The final targeted matrix passed **19 tests/229 assertions**. Full verification results remain in TASKS; no remote, live-worker, browser or external-provider run is implied.
+
+The first complete M5.06 gate was interrupted by Composer's default 300-second child-process timeout during the growing PostgreSQL suite, with no assertion failure reported before interruption. `composer.json` now sets a finite 900-second `config.process-timeout`; [DEPENDENCIES.md](DEPENDENCIES.md) documents this manifest field. This does not change worker/lease/queue deadlines, package versions or lockfiles. The full gate is rerun after the adjustment, with its final result recorded in TASKS.

@@ -143,3 +143,7 @@ Receiver verification must check the signature with a constant-time comparison, 
 - No real provider account, external network delivery or PHP 8.5 CI run is claimed by the adapter tests.
 - No real browser test; focus does not move after a refusal (same limit as the incident pages).
 
+
+## Notification milestone acceptance (M5.06)
+
+[NOTIFICATION-ACCEPTANCE.md](NOTIFICATION-ACCEPTANCE.md) links the complete acceptance matrix to executable tests, including real lifecycle/job flow behind fake queues and providers, retries, five-minute escalation travel, combined silencing, signatures, independent incidents and tenant isolation. It also retains the existing at-least-once provider limit. M5.06 adds tests/documentation and raises the finite Composer check timeout to 900 seconds after the full suite exceeded the default; no migration, dependency, application route or delivery behavior changes. Actual verification results are in TASKS.

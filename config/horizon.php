@@ -26,7 +26,7 @@ return [
     'prefix' => env('HORIZON_PREFIX', Str::slug((string) env('APP_NAME', 'Signalbox'), '_').'_horizon:'),
     'middleware' => ['web'],
     // Alert thresholds are queue waiting durations in seconds.
-    'waits' => ['redis:default' => 60, 'redis:checks:eu' => 60, 'redis:checks:us' => 60, 'redis:notifications' => 60],
+    'waits' => ['redis:default' => 60, 'redis:checks:eu' => 60, 'redis:checks:us' => 60, 'redis:notifications' => 60, 'redis:broadcasts' => 60],
     // Retain successful job metadata for one hour and failures for one week, in minutes.
     'trim' => ['recent' => 60, 'pending' => 60, 'completed' => 60, 'recent_failed' => 10080, 'failed' => 10080, 'monitored' => 10080],
     'silenced' => [],
@@ -42,7 +42,9 @@ return [
         'checks-us' => [...$worker, 'queue' => ['checks:us'], 'timeout' => 45],
         // Provider retry budgets live in the outbox; kill workers before the 75-second persistent lease expires.
         'notifications' => [...$worker, 'queue' => ['notifications'], 'timeout' => 60],
+        // UI transport retries are independent of monitoring observations and durable notification retries.
+        'broadcasts' => [...$worker, 'queue' => ['broadcasts'], 'tries' => 3, 'timeout' => 10],
     ],
     // Reuse the explicit limits in every runtime; production scaling remains an M12 decision.
-    'environments' => ['*' => ['default' => [], 'checks-eu' => [], 'checks-us' => [], 'notifications' => []]],
+    'environments' => ['*' => ['default' => [], 'checks-eu' => [], 'checks-us' => [], 'notifications' => [], 'broadcasts' => []]],
 ];

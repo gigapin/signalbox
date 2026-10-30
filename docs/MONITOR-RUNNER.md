@@ -65,3 +65,7 @@ No partition is dropped here. Because an observation in the following month can 
 ### Integrated acceptance (M3.08)
 
 The [engine acceptance matrix](TESTING.md#integrated-engine-acceptance-m308) connects scheduled checker sequences and historical heartbeat semantics to the real publisher, Redis envelopes and persisted results. Persistent worker tests cover tenant restoration after exceptions, independent regional progress under a gated target and interprocess Redis monitor-lock exclusion followed by outbox redelivery. These tests preserve the existing runtime semantics and disabled development gate; no new public API or migration is introduced.
+
+## After-commit UI facts (M6.01)
+
+Every terminal result recorded by the ledger now emits an immutable internal `CheckCompleted` after the transaction commits. Its private-team frame selects result identity/slot/revision/region, regional status/kind and measured/null latency and instants. It never copies monitor configuration or infers target success from infrastructure outcomes. Broadcast publication/delivery failures are isolated from result persistence and check retry semantics. The frontend must distinguish regional observations from the monitor's agreed aggregate and reconcile historical revisions. See [BROADCASTING.md](BROADCASTING.md).

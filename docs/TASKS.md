@@ -12,6 +12,12 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M7.02, 2026-10-30
+
+- **M7.02 completato**: percentili esatti confermati e costo misurato, senza modifiche a schema o scrittura dei rollup. Valori verificati contro `percentile_disc` di PostgreSQL sui grezzi. Misure, definizioni e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#percentiles-and-storage-cost-m702). Nuovo comando di sola lettura `metrics:rollup-storage`.
+- Gate `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: **2530 test Pest/17263 asserzioni**, 5 qualità, 148 DOM e build.
+- **Prossimo task pronto: M7.03**, servizio SLA pesato sul tempo, che consente di chiudere M6.04. Restano da applicare la migration dei rollup e, in M7.04, la schedulazione.
+
 ## Consegna di sessione — M7.01, 2026-10-30
 
 - **M7.01 completato**: rollup orari e giornalieri UTC idempotenti, con uptime pesato sul tempo, conteggi, media, p50 e p95. Contratto e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md). Entrata operativa `metrics:rollups`, anche per la ricostruzione di un intervallo.
@@ -411,14 +417,14 @@ Dipendenze: M3–M5.
 - [/] M6.04 Creare dashboard con stato monitor, incidenti, latenza e uptime; usare il servizio SLA di M7 per i valori definitivi.
 - [x] M6.05 Testare payload, aggiornamenti UI, assenza di duplicati e sicurezza dei canali.
 
-Uscita: dashboard aggiornata via WebSocket e grafici coerenti; chiusura definitiva dopo M7 per le metriche SLA. Accettazione operativa/payload/canali completata con M6.05 il 2026-10-30; M6.04 e uscita numerica restano aperte fino all'integrazione M7.03. Prossimo lavoro pronto M7.02.
+Uscita: dashboard aggiornata via WebSocket e grafici coerenti; chiusura definitiva dopo M7 per le metriche SLA. Accettazione operativa/payload/canali completata con M6.05 il 2026-10-30; M6.04 e uscita numerica restano aperte fino all'integrazione M7.03. Prossimo lavoro pronto M7.03.
 
 ## M7 — Aggregazioni, retention e SLA (12 h)
 
 Dipendenze: M3–M4; completa le metriche di M6.
 
 - [x] M7.01 Implementare rollup orari/giornalieri idempotenti con uptime, conteggi, media, p50 e p95; estendere lo schema esemplificativo dove necessario.
-- [ ] M7.02 Definire percentili esatti o approssimati e dati aggregabili da conservare: non mediare i percentili orari per ottenere quelli giornalieri.
+- [x] M7.02 Definire percentili esatti o approssimati e dati aggregabili da conservare: non mediare i percentili orari per ottenere quelli giornalieri.
 - [ ] M7.03 Implementare servizio SLA pesato sul tempo con esclusione di manutenzioni/pause, intersezioni e intervalli parziali; definire assenza dati e denominatore nullo.
 - [ ] M7.04 Implementare job notturno, creazione/drop partizioni, retention per piano e verifica dei rollup prima della rimozione; rispettare la politica concordata sui 30 giorni. Integrare la pulizia delle ricezioni heartbeat introdotte in M3.05 preservando quelle necessarie agli slot ancora validi.
 - [ ] M7.05 Implementare report mensile PDF con autorizzazione tenant e timezone corretta.
@@ -495,7 +501,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 UI operativa verificata, in corso per integrazione numerica M7.03; M7.01 completato il 2026-10-30; prossimo task pronto M7.02. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 UI operativa verificata, in corso per integrazione numerica M7.03; M7.01–M7.02 completati il 2026-10-30; prossimo task pronto M7.03. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -1369,3 +1375,14 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Documenti: nuovo METRIC-ROLLUPS; aggiornati ARCHITECTURE, BOOTSTRAP, MONITOR-RUNNER, TENANCY, TESTING e questo piano.
 - Verifiche: mirate **51 test/156 asserzioni** prima delle correzioni di tipo; Larastan aveva segnalato 7 errori di tipo nel nuovo codice, corretti. Gate finale `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run, Larastan livello 8, **2522 Pest/17023 asserzioni**, lint/formato/TypeScript, test frontend e build. Frontend invariato. Log locali temporanei `m701-verify.log` (primo) e `m701-verify-final.log` nello scratchpad di sessione. Dopo il gate modificato soltanto Markdown.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, migration sul database di sviluppo, `metrics:rollups` su dati di sviluppo, browser/worker live, benchmark. **M7.01 completato; prossimo task pronto M7.02; M6.04 resta [/].**
+
+### 2026-10-30 — M7.02: percentili esatti e costo misurato (completato)
+
+- Richiesta dell'utente di implementare il task; dipendenza M7.01 soddisfatta, task segnato in corso prima delle modifiche. Git/gh non eseguiti. ADR-008 aveva già scelto i percentili esatti e M7.01 li aveva implementati: restavano prova indipendente e misura del costo.
+- Decisione: **percentili esatti confermati**, nessuno sketch. Stima lineare da un giorno misurato, senza indici e overhead di pagina: circa 3,4 GiB per un team Business con 200 monitor a 30 s su 730 giorni, 7 GiB nel caso peggiore in cui ogni campione ha un valore diverso.
+- Aggiunti `RollupStorageLevel`, `RollupStorageReport`, comando `metrics:rollup-storage` (solo aggregati, nessuna identità di tenant o monitor) e `RollupStorageBenchmarkTest`. Il benchmark usa il `RollupStore` di produzione con seed fissi, fa rollback e stampa la tabella solo con `RUN_ROLLUP_STORAGE_BENCHMARK=1`; nella suite verifica solo invarianti strutturali, non dimensioni o tempi.
+- Aggiunti a `CheckRollupsTest` il confronto con `percentile_disc`, conteggi e somme su 3 seed (ore diseguali, ripetizioni, zeri, latenze null), coerenza delle frequenze, differenza dalla media dei p95 orari e comando. In `LatencyDistributionTest` l'indipendenza dall'ordine di unione. L'arrotondamento half-up era già in `ExecutionResults`.
+- Il primo confronto ha dato 3 fallimenti per un errore della fixture (monitor creato alle 09:00, dati da mezzanotte); il prodotto non è cambiato per questo.
+- Benchmark eseguito due volte: byte e valori distinti identici, tempi di unione leggermente diversi e quindi non assunti come garanzia. Le righe più grandi di Pro stabile rispetto a Business stabile dipendono dalla compressione TOAST.
+- Gate finale `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run **525 file**, Larastan livello 8, **2530 Pest/17263 asserzioni**, lint/formato/TypeScript, **5 qualità / 148 DOM** e build. Log locali temporanei `m702-verify.log` e `m702-bench2.log` nello scratchpad di sessione. Dopo il gate modificato soltanto questo piano.
+- Non eseguiti: Git/gh, CI remota/PHP 8.5, migration o comandi sul database di sviluppo, misura su rollup reali (il comando ha girato solo su righe di test), carico prolungato. **M7.02 completato; prossimo task pronto M7.03; M6.04 resta [/].**

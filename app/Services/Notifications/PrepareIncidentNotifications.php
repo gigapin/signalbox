@@ -87,17 +87,17 @@ final readonly class PrepareIncidentNotifications
 
                 $this->cancelWaiting($incident, $now, true);
                 $policy = $this->policies->forMonitor($monitor);
-                $step = $policy?->steps()[0] ?? null;
-
-                if ($step === null) {
-                    return;
-                }
-
                 $confirmedAt = $incident->last_reopened_at ?? $incident->confirmed_at;
-                $availableAt = $confirmedAt->addMinutes($step->afterMinutes)->max($now->addSeconds($this->settings->coalesceSeconds));
 
-                foreach (NotificationChannel::query()->whereIn('id', $step->channelIds)->get() as $channel) {
-                    $this->prepare($incident, $monitor, $channel, NotificationKind::Opened, $event->event, $availableAt);
+                foreach ($policy?->steps() ?? [] as $index => $step) {
+                    $scheduledAt = $confirmedAt->addMinutes($step->afterMinutes);
+                    $availableAt = $scheduledAt->max($now->addSeconds($this->settings->coalesceSeconds));
+                    $kind = $index === 0 ? NotificationKind::Opened : NotificationKind::Escalated;
+                    $name = $index === 0 ? $event->event : 'incident.escalated';
+
+                    foreach (NotificationChannel::query()->whereIn('id', $step->channelIds)->get() as $channel) {
+                        $this->prepare($incident, $monitor, $channel, $kind, $name, $availableAt, stepIndex: $index, scheduledAt: $scheduledAt);
+                    }
                 }
             });
         });
@@ -172,10 +172,12 @@ final readonly class PrepareIncidentNotifications
      * @param Incident $incident Locked incident after its transition.
      * @param Monitor $monitor Locked monitor providing its public label only.
      * @param NotificationChannel $channel Recipient inside the same tenant.
-     * @param NotificationKind $kind Opening or resolution; later escalation preparation belongs to the next task.
+     * @param NotificationKind $kind Opening, later escalation or resolution summary.
      * @param string $event Controlled event name for the snapshot.
      * @param CarbonImmutable $availableAt Earliest provider attempt time.
      * @param string|null $originalDestination Original notified destination for a resolution summary.
+     * @param int|null $stepIndex Zero-based frozen policy step; null for a resolution.
+     * @param CarbonImmutable|null $scheduledAt Absolute step instant; escalation event time independent of queue latency.
      */
     private function prepare(
         Incident $incident,
@@ -185,14 +187,20 @@ final readonly class PrepareIncidentNotifications
         string $event,
         CarbonImmutable $availableAt,
         ?string $originalDestination = null,
+        ?int $stepIndex = null,
+        ?CarbonImmutable $scheduledAt = null,
     ): void {
         $key = 'incident:'.$incident->id.':cycle:'.$incident->reopened_count.':'.$kind->value.':channel:'.$channel->id;
+
+        if ($kind === NotificationKind::Escalated) {
+            $key .= ':step:'.$stepIndex;
+        }
 
         if (NotificationLog::query()->where('dedupe_key', $key)->exists()) {
             return;
         }
 
-        $message = $this->messages->make($incident, $monitor, $event);
+        $message = $this->messages->make($incident, $monitor, $event, $stepIndex, $scheduledAt);
         $active = $channel->is_active && $channel->verified_at !== null;
         $log = new NotificationLog();
         $log->forceFill([
@@ -200,7 +208,7 @@ final readonly class PrepareIncidentNotifications
             'channel_id' => $channel->id,
             'channel_type' => $channel->type,
             'kind' => $kind,
-            'step_index' => $kind === NotificationKind::Opened ? 0 : null,
+            'step_index' => $stepIndex,
             'status' => $active ? DeliveryStatus::Pending : DeliveryStatus::Suppressed,
             'attempts' => 0,
             'response' => $active ? null : 'The channel is inactive or unverified.',

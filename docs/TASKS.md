@@ -12,6 +12,14 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M5.04, 2026-10-30
+
+- **M5.04 completato**: tutti gli step di escalation congelati alla conferma/riapertura, ritardi assoluti, deduplica per step/canale e cancellazione al ripristino. Un solo riepilogo per canale realmente notificato, anche dopo più step. Soppressione in manutenzione verificata prima di ogni tentativo, retry e recupero di lease scaduto; nessun tentativo aggiuntivo consumato, nessuna riattivazione delle consegne silenziate. Gli step futuri conservano il calendario e gli invii già ammessi possono registrare il vero esito.
+- File, contratto e decisioni: [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md), ADR-012 in ARCHITECTURE e registro in fondo al piano. Nessuna nuova migration/dipendenza/variabile/chiave. I cicli preparati prima di questa versione conservano il pubblico originale; tutte le escalation si applicano alle nuove aperture/riaperture.
+- `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: PHP-CS-Fixer dry-run su **476 file**, Larastan livello 8, **2197 test Pest/15347 asserzioni**, **5 test qualità**, **75 test DOM**, lint/formato/TypeScript e build superati. Log `/tmp/signalbox-m504-verify.log`. Regressioni mirate: **71 test/345 asserzioni**, exit 0, con gare a due sessioni PostgreSQL anche per le escalation. Aggiunti 26 casi rispetto a M5.03.
+- Nessuna migration o modifica ai processi di sviluppo eseguita. Per adottare il codice nei processi persistenti: `docker compose up -d --no-deps --force-recreate queue scheduler`. La migration M5.03 `000019` resta necessaria se non già applicata; la conferma operativa rimane quella descritta nella consegna precedente. CI remota/PHP 8.5, browser reale e provider esterni non eseguiti; Git/gh non eseguiti.
+- **Prossimo task pronto: M5.05**, quiet hours per timezone, intervalli oltre mezzanotte e DST. Riutilizzare l’ammissione sotto lock del ledger senza alterare UUID/body, pubblico congelato, riepiloghi per destinatario e fencing. M5.06 resta aperto per la matrice completa; nessuna riduzione di M3/M4/M5.
+
 ## Chiusura di sessione e ripartenza — 2026-10-29, dopo M5.03
 
 - Sessione chiusa su richiesta dell’utente. **M5.02 e M5.03 completati**: adapter email/Slack/Telegram/webhook HMAC e SMS stub, verifica effettiva dei canali, consegne incidenti persistenti, deduplica/pubblico congelato, raggruppamento, riepiloghi di risoluzione, retry/backoff, log sicuri e recupero dei worker/broker. M0–M4 restano completate; M5 resta aperta per M5.04–M5.06. Le consegne sotto conservano file, decisioni ed evidenze di ogni intervento.
@@ -315,7 +323,7 @@ Dipendenze: M4.
 - [x] M5.01 Modellare canali, configurazioni protette, verifica/attivazione, policy di escalation e log di consegna; creare UI di gestione.
 - [x] M5.02 Implementare adapter email, Slack, Telegram e webhook firmato; includere SMS come stub dichiarato.
 - [x] M5.03 Implementare deduplica, raggruppamento, riepilogo di risoluzione e job di consegna idempotenti con retry/backoff e log redatti.
-- [ ] M5.04 Implementare escalation dopo X minuti, annullamento al ripristino e silenziamento durante le manutenzioni.
+- [x] M5.04 Implementare escalation dopo X minuti, annullamento al ripristino e silenziamento durante le manutenzioni.
 - [ ] M5.05 Implementare quiet hours per timezone, intervalli oltre mezzanotte e cambi di ora legale.
 - [ ] M5.06 Testare fake di notifiche/code/HTTP, time travel di cinque minuti, duplicati, firme, provider indisponibili e quiet hours.
 
@@ -415,7 +423,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01 completato il 2026-10-29, prossimo task pronto M5.02. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04 il 2026-10-30; prossimo task pronto M5.05. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -1173,3 +1181,13 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Verifica finale `./scripts/verify.sh` **exit 0**: formatter su 443 file, Larastan livello 8, 2019 test/14560 asserzioni, 75 test DOM, build.
 - **M5.01 completato.** Non eseguiti: CI remota, PHP 8.5, browser E2E; nessun canale verificabile nell’app finché M5.02 non lega gli adapter.
 - Prossimo passo: **M5.02**. Messaggio di commit suggerito: `feat(notifications): add notification channels with code verification, escalation policies and delivery log`.
+
+### 2026-10-30 — M5.04: escalation e silenziamento in manutenzione (completato)
+
+- Prossimo task pronto scelto su richiesta dell’utente; dipendenze M4 e M5.01–M5.03 soddisfatte. Nessun comando Git/gh eseguito.
+- Implementati: tutti gli step nel medesimo outbox alla conferma/riapertura, ritardi assoluti dal relativo istante, deduplica per step/canale; riusate cancellazione al ripristino, riepiloghi per destinatario e pubblicazioni recuperabili. Messaggio `incident.escalated` con `step_index` e istante programmato; UUID/body distinti per step e stabili nei retry.
+- Decisione: manutenzione valutata all’ammissione di ogni tentativo sul monitor e nel tenant corretto, con intervalli UTC `[inizio, fine)`. La consegna dovuta in manutenzione viene soppressa definitivamente, senza recupero massivo al termine; gli step futuri mantengono il proprio calendario. Invii già ammessi possono registrare il vero esito. Quiet hours restano M5.05.
+- File applicativi: `PrepareIncidentNotifications`, `IncidentNotificationMessage`, `NotificationDeliveryLedger`. Test estesi: `IncidentNotificationDeliveryTest` e `NotificationConcurrencyTest` (24 nuovi casi di consegna + 2 varianti concorrenti). Documentazione: NOTIFICATION-DELIVERY, NOTIFICATIONS, MAINTENANCE, ARCHITECTURE/ADR-012, BOOTSTRAP, TESTING e questo piano.
+- Compatibilità: nessuna migration, dipendenza, lockfile, variabile o chiave nuova. I cicli già preparati da M5.03 conservano il pubblico originale: niente backfill dai dati attuali, che non ricostruiscono la policy storica. Ricaricare deliberatamente queue/scheduler per adottare il nuovo codice; nessun processo di sviluppo modificato dall’agente.
+- Verifiche mirate: **55 test/288 asserzioni** sulle consegne; regressioni comprensive di configurazione e concorrenza **71 test/345 asserzioni**, exit 0, log `/tmp/signalbox-m504-regression.log`. PHP-CS-Fixer: 476 file, 0 modifiche. `./scripts/verify.sh` **exit 0**: PHP 8.4.27, formatter dry-run su 476 file, Larastan livello 8, **2197 test Pest/15347 asserzioni**, frontend lint/formato/TypeScript, **5 test qualità**, **75 test DOM** e build. Log `/tmp/signalbox-m504-verify.log`. Nessun errore applicativo rilevato nelle verifiche.
+- **M5.04 completato**; prossimo task pronto **M5.05**. Non eseguiti CI remota/PHP 8.5, browser reale, invii a provider esterni o modifiche al database/processi di sviluppo. Messaggio di commit suggerito: `feat: add timed escalation and maintenance silencing`.

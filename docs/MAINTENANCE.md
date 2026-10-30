@@ -1,6 +1,6 @@
 # Maintenance windows and pause history (M4.04)
 
-Planned maintenance and historical pauses are the excluded time of ADR-009: the SLA denominator removes the union of voluntary pauses, plan suspensions and maintenance windows, all as half-open UTC intervals `[start, end)`. Maintenance also prevents incidents from opening. Routes and the monitor page section are described in [INCIDENT-UI.md](INCIDENT-UI.md) (M4.05); notification silencing comes with notifications (M5) and the SLA computation with metrics (M7).
+Planned maintenance and historical pauses are the excluded time of ADR-009: the SLA denominator removes the union of voluntary pauses, plan suspensions and maintenance windows, all as half-open UTC intervals `[start, end)`. Maintenance also prevents incidents from opening. Routes and the monitor page section are described in [INCIDENT-UI.md](INCIDENT-UI.md) (M4.05); notification silencing is implemented in M5.04 and the SLA computation remains M7.
 
 ## Maintenance windows
 
@@ -21,6 +21,10 @@ Reasons are trimmed and must be 1–1000 characters (`REASON_MAX_LENGTH`). Every
 ## Effect on incidents
 
 A **confirmed** slot verdict whose slot lies inside a maintenance window opens and reopens nothing (user decision). Results are still recorded and regional sequences keep counting, so when a failure outlasts the window the first confirmed slot after it opens the incident; `started_at` remains the first failing slot of the sequence, which may lie inside the window. A **recovered** verdict resolves an open incident even during maintenance.
+
+## Effect on notifications
+
+Notification admission independently checks the **current** instant against these windows for every opening, escalation, resolution summary and retry. A due attempt during maintenance is terminally suppressed without consuming an additional provider attempt; future escalation steps retain their own schedule. Requests already admitted may finish and record their real provider outcome. See [notification maintenance silencing](NOTIFICATION-DELIVERY.md#maintenance-silencing-m504). This does not stop result collection, alter incident recovery or silence channel verification codes.
 
 ## Pause history
 

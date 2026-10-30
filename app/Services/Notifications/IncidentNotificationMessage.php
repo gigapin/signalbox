@@ -9,6 +9,7 @@ namespace App\Services\Notifications;
 use App\Data\Notifications\ChannelMessage;
 use App\Models\Incident;
 use App\Models\Monitor;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 use LogicException;
 
@@ -19,15 +20,18 @@ final class IncidentNotificationMessage
      * @param Incident $incident Locked incident after the transition.
      * @param Monitor $monitor Locked monitor of the same tenant.
      * @param string $event Controlled incident lifecycle event.
+     * @param int|null $stepIndex Zero-based frozen policy step, required for escalations.
+     * @param CarbonImmutable|null $scheduledAt Absolute scheduled step instant, required for escalations.
      * @return ChannelMessage Fresh UUID and event-time snapshot, without URL, headers, body, root-cause note or timeline text.
      * @throws LogicException When the transition has no matching event instant.
      */
-    public function make(Incident $incident, Monitor $monitor, string $event): ChannelMessage
+    public function make(Incident $incident, Monitor $monitor, string $event, ?int $stepIndex = null, ?CarbonImmutable $scheduledAt = null): ChannelMessage
     {
         $at = match ($event) {
             'incident.opened' => $incident->confirmed_at,
             'incident.reopened' => $incident->last_reopened_at,
             'incident.resolved' => $incident->resolved_at,
+            'incident.escalated' => $stepIndex !== null && $stepIndex > 0 ? $scheduledAt : null,
             default => null,
         };
 
@@ -38,6 +42,7 @@ final class IncidentNotificationMessage
         $state = match ($event) {
             'incident.resolved' => 'resolved',
             'incident.reopened' => 'reopened',
+            'incident.escalated' => 'escalated',
             default => 'opened',
         };
         $name = preg_replace('/[\x00-\x1f\x7f]/u', ' ', $monitor->name) ?? 'Monitor';
@@ -46,6 +51,10 @@ final class IncidentNotificationMessage
 
         if ($event === 'incident.resolved') {
             $text .= ' Duration: '.$incident->duration_seconds.' seconds. Reopenings: '.$incident->reopened_count.'.';
+        }
+
+        if ($event === 'incident.escalated' && $stepIndex !== null) {
+            $text .= ' Escalation step: '.($stepIndex + 1).'.';
         }
 
         return new ChannelMessage(
@@ -65,6 +74,7 @@ final class IncidentNotificationMessage
                 'resolved_at' => $incident->resolved_at?->toIso8601String(),
                 'duration_seconds' => $incident->duration_seconds,
                 'reopened_count' => $incident->reopened_count,
+                ...($event === 'incident.escalated' ? ['step_index' => $stepIndex] : []),
             ],
         );
     }

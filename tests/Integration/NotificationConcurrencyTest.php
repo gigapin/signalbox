@@ -39,15 +39,22 @@ afterEach(function (): void {
 /**
  * @param CommittedTeamFixture $fixture Independent committing session.
  * @param bool $open Whether to use the real lifecycle or leave only an incident for parallel preparation.
+ * @param bool $escalation Whether to include a later step for duplicate escalation preparation/admission races.
  * @return array{incident: int, monitor: int} Committed identities; public events publish only after commit.
  */
-function notificationRaceFixture(CommittedTeamFixture $fixture, bool $open): array
+function notificationRaceFixture(CommittedTeamFixture $fixture, bool $open, bool $escalation = false): array
 {
-    return $fixture->committed(fn (): array => app(TenantContext::class)->run($fixture->teamId, fn (): array => DB::transaction(function () use ($fixture, $open): array {
+    return $fixture->committed(fn (): array => app(TenantContext::class)->run($fixture->teamId, fn (): array => DB::transaction(function () use ($fixture, $open, $escalation): array {
         Team::query()->whereKey($fixture->teamId)->lockForUpdate()->firstOrFail();
         $monitor = Monitor::query()->lockForUpdate()->firstOrFail();
         $channel = NotificationChannel::factory()->webhook()->active()->create();
-        EscalationPolicy::factory()->create(['is_default' => true, 'steps_json' => [['after_minutes' => 0, 'channel_ids' => [$channel->id]]]]);
+        $steps = [['after_minutes' => 0, 'channel_ids' => [$channel->id]]];
+
+        if ($escalation) {
+            $steps[] = ['after_minutes' => 5, 'channel_ids' => [$channel->id]];
+        }
+
+        EscalationPolicy::factory()->create(['is_default' => true, 'steps_json' => $steps]);
         $incident = $open
             ? app(IncidentLifecycle::class)->open($monitor, CarbonImmutable::now()->subMinute(), CheckError::UnexpectedStatus, CarbonImmutable::now())
             : Incident::factory()->create(['monitor_id' => $monitor->id]);
@@ -148,12 +155,12 @@ it('publishes only committed intents and recovers a failed after-commit broker s
     }
 })->with([false, true]);
 
-it('prepares one frozen audience when duplicate events race in separate sessions', function (): void {
+it('prepares one frozen audience when duplicate events race in separate sessions', function (bool $escalation): void {
     $fixture = CommittedTeamFixture::freeTeam(1);
     $children = [];
 
     try {
-        $ids = notificationRaceFixture($fixture, false);
+        $ids = notificationRaceFixture($fixture, false, $escalation);
         $fixture->connection->beginTransaction();
         $fixture->connection->table('teams')->where('id', $fixture->teamId)->lockForUpdate()->first();
 
@@ -171,7 +178,7 @@ it('prepares one frozen audience when duplicate events race in separate sessions
             expect($child->isSuccessful())->toBeTrue($child->getErrorOutput());
         }
 
-        expect($fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])->count())->toBe(1)
+        expect($fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])->count())->toBe($escalation ? 2 : 1)
             ->and($fixture->connection->table('incident_notification_events')->where('incident_id', $ids['incident'])->count())->toBe(1);
     } finally {
         if ($fixture->connection->transactionLevel() > 0) {
@@ -186,18 +193,19 @@ it('prepares one frozen audience when duplicate events race in separate sessions
 
         $fixture->cleanup();
     }
-});
+})->with([false, true]);
 
-it('makes one provider call when duplicate deliveries race while the accepted provider request is still in flight', function (): void {
+it('makes one provider call when duplicate deliveries race while the accepted provider request is still in flight', function (bool $escalation): void {
     $fixture = CommittedTeamFixture::freeTeam(1);
     $children = [];
     $receipts = sys_get_temp_dir().'/signalbox-notification-receipts-'.bin2hex(random_bytes(8));
     $deliveryId = null;
 
     try {
-        $ids = notificationRaceFixture($fixture, true);
-        $deliveryId = (int) $fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])->value('id');
-        CarbonImmutable::setTestNow(CarbonImmutable::now()->addSeconds(5));
+        $ids = notificationRaceFixture($fixture, true, $escalation);
+        $deliveryId = (int) $fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])
+            ->where('step_index', $escalation ? 1 : 0)->value('id');
+        CarbonImmutable::setTestNow(CarbonImmutable::now()->addSeconds($escalation ? 300 : 5));
         $fixture->connection->select('SELECT pg_advisory_lock(177503, ?)', [$deliveryId]);
         $fixture->connection->beginTransaction();
         $fixture->connection->table('teams')->where('id', $fixture->teamId)->lockForUpdate()->first();
@@ -255,4 +263,4 @@ it('makes one provider call when duplicate deliveries race while the accepted pr
 
         $fixture->cleanup();
     }
-});
+})->with([false, true]);

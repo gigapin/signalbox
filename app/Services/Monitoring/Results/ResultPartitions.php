@@ -26,6 +26,24 @@ final class ResultPartitions
         return 3;
     }
 
+    /** @return CarbonImmutable|null Start of the oldest retained partition month; null when none exists. */
+    public function oldestMonth(): ?CarbonImmutable
+    {
+        // Generated names are zero-padded, so their text order is chronological.
+        $name = DB::scalar(<<<'SQL'
+            SELECT min(child.relname::text)
+            FROM pg_inherits inheritance
+            JOIN pg_class child ON child.oid = inheritance.inhrelid
+            WHERE inheritance.inhparent = 'check_results'::regclass
+            SQL);
+
+        if (!is_string($name)) {
+            return null;
+        }
+
+        return CarbonImmutable::createFromFormat('Y_m_d H:i:s', substr($name, strlen('check_results_')).'_01 00:00:00', 'UTC') ?: null;
+    }
+
     /**
      * @param CarbonImmutable $slot Scheduled reference selecting the immutable partition month.
      * @return string Internally generated, validated partition identifier.

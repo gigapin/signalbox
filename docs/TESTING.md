@@ -385,3 +385,15 @@ First static checks identified the paginator contract lacking `getCollection()` 
 `RealtimeAcceptance.test.tsx` adds eleven DOM cases using native Echo, the production authorizer/store/hook and actual dashboard through the real Inertia provider. Only Pusher I/O and HTTP replies are doubled. Duplicate/reordered events, missed/cancelled/infrastructure frames, private-name separation, recovery, access loss and team/account disposal are exercised together. `TeamStream.test.ts` adds three race regressions for pending response/late JSON success/late JSON failure across replacement sockets. The initial pending-grant case failed before the authorization-generation fix. Earlier dashboard cases share the extracted public test fixture. Test-fixture corrections included its named export, the real accessible `Incident #31` label, and allowing Inertia's final Head flush after unmount.
 
 M6.04/M6 availability remains pending M7; these tests certify the nullable contract and implemented operational behavior. No dependency, migration, environment/key change or development-process action. Real browser/Reverb/worker and remote PHP 8.5 checks are not part of these simulated transports; actual gate outcomes are in TASKS.
+
+## Check rollups (M7.01)
+
+`LatencyDistributionTest` and `AvailabilityTimelineTest` are infrastructure-free: percentile positions, exact merging, ADR-009 validity, late results, regional agreement, exclusions and hour splitting. `CheckRollupsTest` uses real ledger and result rows on isolated PostgreSQL with a fixed clock: exact durations, hour/day/month boundaries, closure, repeated runs, rebuilds, retention refusal, tenancy, constraints, failure isolation and the command. Concurrency is proven by a second PostgreSQL session holding the cursor and by a simulated competing cursor advance, not by parallel PHP processes. `MonitorModelTest` and `TeamIdentityTest` reverse and restore the new migration.
+
+A committed fixture's cleanup waits for any row lock held by the test's outer transaction: take such locks inside a savepoint and roll it back before cleanup.
+
+```sh
+docker compose run --rm php-test vendor/bin/pest tests/Unit/LatencyDistributionTest.php tests/Unit/AvailabilityTimelineTest.php tests/Integration/CheckRollupsTest.php --fail-on-skipped --fail-on-warning
+```
+
+The acceptance gate remains `./scripts/verify.sh`. Results are recorded in TASKS.

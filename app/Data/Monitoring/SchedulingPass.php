@@ -10,7 +10,7 @@ namespace App\Data\Monitoring;
 final readonly class SchedulingPass
 {
     /**
-     * @param int $processed Items whose operation produced its domain effect (reservations, publications, recoveries).
+     * @param int $processed Items whose operation produced its domain effect (reservations, publications, recoveries, rollup hours).
      * @param int $failed Items whose operation threw; their transactions were rolled back and logged by identity only.
      */
     public function __construct(

@@ -1,8 +1,20 @@
-# Private team broadcast production (M6.01)
+# Private team broadcasts (M6.01–M6.02)
 
 Committed monitoring results and incident transitions now produce minimal private-team updates through the existing Reverb infrastructure. Work state/results are in [TASKS.md](TASKS.md), architectural decision ADR-013 is in [ARCHITECTURE.md](ARCHITECTURE.md), infrastructure configuration is in [SERVICES.md](SERVICES.md).
 
-This task implements producers and delivery only. It adds **no broadcast authorization endpoint or subscription callback**: `/broadcasting/auth` remains unavailable, so private subscriptions cannot yet be authorized. M6.02 implements authorization; M6.03 adds Echo/frontend reconciliation and reconnect recovery. No dashboard or definitive uptime/SLA metric is introduced here.
+M6.01 implements producers and delivery; M6.02 adds session-protected private subscription authorization. M6.03 adds Echo/frontend reconciliation and reconnect recovery. No dashboard or definitive uptime/SLA metric is introduced here.
+
+## Subscription authorization (M6.02)
+
+`POST /broadcasting/auth` (`broadcasting.auth`) uses the normal web middleware, CSRF protection, the explicit `web` guard, verified email and private/no-store responses. Native broadcast routes are not enabled: GET returns 405 and `/broadcasting/user-auth` remains absent. Bearer tokens alone cannot authorize browser subscriptions. Requests expecting JSON receive 401 for guests and 403 for unverified accounts; ordinary web requests retain the existing login/verification redirects.
+
+`AuthorizeBroadcastRequest` accepts only a canonical `private-team.{id}` channel with a positive decimal team identity (up to 19 digits) and a Pusher socket ID containing two numeric parts (up to 20 digits each). Exact channel/socket input bypasses string trimming, so surrounding whitespace and newlines are rejected rather than silently signed. Public, presence, user, suffix and JSONP callback variants fail validation with 422. Out-of-range integer IDs, foreign teams and nonexistent teams receive the same 403 denial without a signature.
+
+`TeamChannel::join()` delegates to the shared `TeamAccess` persisted-membership query. Owner, admin, member and viewer may subscribe to each team they currently belong to. A selected team, operator flag, posted user/team fields or previously loaded relation never grants access. Authorization does not change the selected team or install/change a tenant context. Each subsequent authorization checks membership again, including after revocation.
+
+`BroadcastAuthorizationController` lazily registers only `team.{teamId}` on the explicit native Reverb connection with the `web` guard. This avoids resolving credentials during unrelated application bootstrap and works independently of the publishing driver's null/log setting. Missing/blank application ID, key or secret, or a non-Reverb driver configuration, yields 503. The installed Pusher broadcaster generates the local HMAC over `socket_id:channel_name`; the response contains only `auth: "public-key:signature"`. No network request, presence data, model, secret or notification dispatch is involved. A signature for another socket/channel fails the real Reverb private-channel verifier.
+
+This is an admission/reauthorization boundary. Standard private-channel grants are checked by Reverb when subscribing, not on each delivered message; removing a membership does not forcibly disconnect an already subscribed socket or expire an already issued grant. The endpoint denies new grants after revocation but implements no server-side eviction. M6.03 must manage subscription cleanup and recovery through the client lifecycle; channel hardening remains part of M6.05. No claim of immediate revocation for an existing live connection is made.
 
 ## Transaction and tenant boundary
 
@@ -58,11 +70,13 @@ No migration, dependency, lockfile, environment variable or key changes. Existin
 docker compose up -d --no-deps --force-recreate queue scheduler
 ```
 
-Verification never restarts development processes or migrates development storage. Tests use `Queue::fake()->serializeAndRestore()`, guarded PostgreSQL and fake Reverb/Guzzle transports. `TeamBroadcastPayloadTest` verifies exact schemas, private channels, native Redis/queue/retry metadata, explicit Redis under a synchronous default, the signed real broadcaster request and unavailable subscription endpoints. `TeamBroadcastTest` covers observed/non-observed outcomes, duplicate completion, observer rollback, real outer commit/rollback on an independent connection using the production transaction manager, incident invalidations, broker/transport failures, independent notification intents, foreign/deleted correlations, context restoration, disabled drivers, regional disagreement, historical revisions and equivalent UTC slot instants.
+Verification never restarts development processes or migrates development storage. Tests use `Queue::fake()->serializeAndRestore()`, guarded PostgreSQL and fake Reverb/Guzzle transports. `TeamBroadcastPayloadTest` verifies exact schemas, private channels, native Redis/queue/retry metadata, explicit Redis under a synchronous default, the signed real broadcaster request and the POST-only session authorization surface. `TeamBroadcastTest` covers observed/non-observed outcomes, duplicate completion, observer rollback, real outer commit/rollback on an independent connection using the production transaction manager, incident invalidations, broker/transport failures, independent notification intents, foreign/deleted correlations, context restoration, disabled drivers, regional disagreement, historical revisions and equivalent UTC slot instants.
+
+`BroadcastAuthorizationTest` covers all roles, foreign/revoked/stale membership, multiple accessible teams, context restoration, forged identities, guest/unverified/bearer-only entry, malformed inputs and JSONP, integer overflow, missing credentials, exact signatures, cache headers and real CSRF middleware. Native Reverb private-channel verification uses a real connection with an in-memory socket adapter to prove acceptance and socket/channel/signature tampering rejection without opening a listener.
 
 ```sh
-docker compose run --rm php-test vendor/bin/pest tests/Feature/TeamBroadcastPayloadTest.php tests/Integration/TeamBroadcastTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm php-test vendor/bin/pest tests/Feature/TeamBroadcastPayloadTest.php tests/Integration/TeamBroadcastTest.php tests/Integration/BroadcastAuthorizationTest.php --fail-on-skipped --fail-on-warning
 ./scripts/verify.sh
 ```
 
-Actual counts/results are recorded in TASKS. Remote CI/PHP 8.5, real browser/Echo subscriptions and live Reverb worker delivery are not implied by these tests. M6.02–M6.05 and M7 remain open.
+Actual counts/results are recorded in TASKS. Remote CI/PHP 8.5, real browser/Echo subscriptions and live Reverb worker delivery are not implied by these tests. M6.03–M6.05 and M7 remain open.

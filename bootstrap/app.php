@@ -17,21 +17,22 @@ use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 /**
- * Preserve exact monitor payload bytes until the dedicated normalizer handles each field.
+ * Preserve exact monitor payload and broadcast socket/channel bytes until their dedicated input boundaries.
  *
  * @param Request $request Request examined before routing and input transformation.
  * @return bool Whether standard trimming and empty-to-null conversion must be skipped.
  */
-$preserveMonitorInput = static fn (Request $request): bool => MonitorInputTransport::matches($request);
+$preserveExactInput = static fn (Request $request): bool => MonitorInputTransport::matches($request)
+    || ($request->isMethod('POST') && $request->is('broadcasting/auth'));
 
 /**
  * Configure web authentication, tenant binding order and token ability middleware.
  *
  * @param Middleware $middleware Framework middleware configuration builder.
  */
-$configureMiddleware = function (Middleware $middleware) use ($preserveMonitorInput): void {
-    $middleware->trimStrings(except: [$preserveMonitorInput]);
-    $middleware->convertEmptyStringsToNull(except: [$preserveMonitorInput]);
+$configureMiddleware = function (Middleware $middleware) use ($preserveExactInput): void {
+    $middleware->trimStrings(except: [$preserveExactInput]);
+    $middleware->convertEmptyStringsToNull(except: [$preserveExactInput]);
     $middleware->web(append: [HandleInertiaRequests::class]);
     $middleware->authenticateSessions();
     $middleware->prependToPriorityList(SubstituteBindings::class, EstablishTeamContext::class);

@@ -66,6 +66,7 @@ final class TeamRouteMatrix
         'account' => 'GET',
         'account.security' => 'GET',
         'heartbeats.receive' => 'POST',
+        'broadcasting.auth' => 'POST',
     ];
 
     /** @return array<string, array{string, string, string}> Route/role/access scenarios with readable Pest dataset names. */

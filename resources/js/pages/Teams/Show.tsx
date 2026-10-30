@@ -263,6 +263,7 @@ export default function Team() {
             >
                 <Link href="/teams">Your teams</Link>
                 <Link href={`/teams/${team.id}/monitors`}>Monitors</Link>
+                <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
                 <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
                 {team.ownerId === actorId ? (

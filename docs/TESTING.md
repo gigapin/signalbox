@@ -367,3 +367,11 @@ docker compose run --rm php-test vendor/bin/pest tests/Integration/LivePageRecov
 ```
 
 The new lock includes Echo/Pusher and the targeted existing undici advisory fix documented in DEPENDENCIES. Runtime configuration/lifecycle/cost limits are in [REALTIME-CLIENT.md](REALTIME-CLIENT.md). A live Reverb/browser session, remote CI/PHP 8.5 and load measurements remain unexecuted by these transport simulations; actual outcomes are in TASKS.
+
+## Operational dashboard and numeric event contract (M6.04)
+
+`DashboardTest` adds 15 isolated PostgreSQL cases: empty/null states, disjoint operational counts and suspension precedence, secrets/foreign data omitted, separate measured regional means with zero/null/missed/failed data, half-open UTC bounds across month partitions, future recording exclusion, selection/pagination, invalid GET filters, revoked partial reads, mismatched context and a result recorded within the current fractional second. Results use real ledger/result composite constraints. The dashboard joins the complete route-role-membership matrix with explicit success-projection assertions.
+
+`Dashboard.test.tsx` adds seven DOM cases using actual Inertia/page/hook components, SVG gap/single-point semantics, keyboard region selection, equivalent data tables, pagination links, nullable/future-service percentage rendering and numeric check/reconnect recovery without idle polling. The shared `team-broadcast-payloads.json` fixture is asserted against real PHP TeamUpdate output; `TeamPayloadContract.test.ts` adds eleven client cases accepting all four event shapes and refusing invalid execution IDs. Existing coordinator cases now use numeric ledger identities. This fixes M6.03's UUID-only validator, which synthetic UUID tests previously failed to expose. The fixture's comment-free schema is documented in [DASHBOARD.md](DASHBOARD.md).
+
+First static checks identified the paginator contract lacking `getCollection()` and Carbon's nullable `toISOString()` return declaration; the read uses bounded explicit Eloquent pagination and non-null UTC `format()` with microseconds. No real browser/Reverb, remote CI/PHP 8.5 or performance benchmark is implied. Gate outcomes and the pending M7 availability integration remain explicit in TASKS.

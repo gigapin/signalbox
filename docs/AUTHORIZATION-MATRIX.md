@@ -138,3 +138,7 @@ The ten routes of [INCIDENT-UI.md](INCIDENT-UI.md) join the private matrix with 
 ## M6.03 partial page recovery
 
 There is no new HTTP route to catalogue. `LivePageRecoveryTest` repeats the four concrete monitor/incident list/detail entrances through real Inertia partial requests, crossing all four roles with current/foreign/revoked membership and preloaded/selected foreign preferences. Existing read permissions remain 200 for members and 404 for foreign/revoked access. Partial reads preserve those gates and public-only connection metadata; filtered pagination is recovered after a missed deletion without returning foreign rows. Frontend tests separately reject cross-team/account responses, fence late reads after a same-component switch/logout, and close the socket when a read denies access. See [REALTIME-CLIENT.md](REALTIME-CLIENT.md).
+
+## M6.04 dashboard entrance
+
+`teams.dashboard` is a GET/HEAD private route for owner/admin/member/viewer and joins the complete current/foreign/revoked matrix plus guest/unverified gates. Successful reads assert the route team, local monitor count and identity, and omitted configuration. Foreign/revoked access stays 404 even with forged actor/team query fields and loaded preferences. `DashboardTest` also checks explicit cross-team chart selection, aggregate isolation under mismatched context and the real Inertia partial-read entrance. No selection or read modifies persisted preferences. Details and the remaining SLA dependency are in [DASHBOARD.md](DASHBOARD.md).

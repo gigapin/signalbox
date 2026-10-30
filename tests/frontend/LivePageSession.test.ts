@@ -21,7 +21,7 @@ const props = {
 const check = {
     schema_version: 1,
     monitor_id: 11,
-    execution_id: '00000000-0000-4000-8000-000000000001',
+    execution_id: 21,
     region: 'eu',
     monitor_revision: 1,
     kind: 'observed',
@@ -118,7 +118,7 @@ test('coalesces duplicate and out-of-order regional facts without applying their
     f.callbacks[0]?.event('CheckCompleted', check);
     f.callbacks[0]?.event('CheckCompleted', {
         ...check,
-        execution_id: '00000000-0000-4000-8000-000000000002',
+        execution_id: 22,
         slot_at: '2026-10-29T12:00:00+00:00',
     });
     expect(f.session.getSnapshot().props.monitor.lastStatus).toBe('up');
@@ -308,7 +308,7 @@ test('keeps duplicate memory bounded and still refreshes a continuous sequence o
     for (let i = 1; i <= 513; i++)
         f.callbacks[0]?.event('CheckCompleted', {
             ...check,
-            execution_id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+            execution_id: i + 20,
         });
     await tick(250);
     expect(f.read).toHaveBeenCalledTimes(2);

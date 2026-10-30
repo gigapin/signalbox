@@ -1,0 +1,30 @@
+{
+  "CheckCompleted": {
+    "schema_version": 1,
+    "monitor_id": 11,
+    "execution_id": 21,
+    "region": "eu",
+    "slot_at": "2026-10-30T10:00:00+00:00",
+    "monitor_revision": 3,
+    "kind": "observed",
+    "status": "down",
+    "response_time_ms": 123,
+    "checked_at": "2026-10-30T10:00:01+00:00",
+    "recorded_at": "2026-10-30T10:00:02+00:00"
+  },
+  "IncidentOpened": {
+    "schema_version": 1,
+    "monitor_id": 11,
+    "incident_id": 31
+  },
+  "IncidentReopened": {
+    "schema_version": 1,
+    "monitor_id": 11,
+    "incident_id": 31
+  },
+  "IncidentResolved": {
+    "schema_version": 1,
+    "monitor_id": 11,
+    "incident_id": 31
+  }
+}

@@ -9,6 +9,7 @@ final class TeamRouteMatrix
 {
     /** @var array<string, array{method: string, status: int, roles: list<string>, methods?: list<string>}> Route contract and successful actor roles; owner fixtures are primary owners; `methods` lists every verb when a route accepts more than the tested one. */
     public const array PRIVATE_ROUTES = [
+        'teams.dashboard' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.show' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.select' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.members.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],

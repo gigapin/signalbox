@@ -65,8 +65,7 @@ export function validTeamEvent(
     }
 
     return (
-        typeof payload.execution_id === 'string' &&
-        /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(payload.execution_id) &&
+        positiveId(payload.execution_id) &&
         typeof payload.region === 'string' &&
         ['eu', 'us'].includes(payload.region) &&
         typeof payload.kind === 'string' &&

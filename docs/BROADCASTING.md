@@ -2,7 +2,7 @@
 
 Committed monitoring results and incident transitions now produce minimal private-team updates through the existing Reverb infrastructure. Work state/results are in [TASKS.md](TASKS.md), architectural decision ADR-013 is in [ARCHITECTURE.md](ARCHITECTURE.md), infrastructure configuration is in [SERVICES.md](SERVICES.md).
 
-M6.01 implements producers and delivery; M6.02 adds session-protected private subscription authorization. M6.03 adds Echo/frontend reconciliation and reconnect recovery on the four existing monitor/incident pages; see [REALTIME-CLIENT.md](REALTIME-CLIENT.md) for runtime configuration, lifecycle, bounded event-driven partial reads and tests. Dashboard/charts remain M6.04 and definitive uptime/SLA remains M7.
+M6.01 implements producers and delivery; M6.02 adds session-protected private subscription authorization. M6.03 adds Echo/frontend reconciliation and reconnect recovery; M6.04 extends it to the operational dashboard and measured regional latency chart. [REALTIME-CLIENT.md](REALTIME-CLIENT.md) documents lifecycle and bounded recovery; [DASHBOARD.md](DASHBOARD.md) records the remaining M6.04 numerical uptime/SLA dependency on M7.
 
 ## Subscription authorization (M6.02)
 
@@ -31,6 +31,8 @@ After commit the listener constructs `TeamUpdate`, which retains only scalar whi
 All frames target exactly one `PrivateChannel('team.{id}')`; its protocol name is `private-team.{id}`. No public or presence channel is emitted. `team_id` is routing metadata and is not duplicated in the wire payload. Short event names are explicit `broadcastAs()` values; Echo listeners use leading-dot names such as `.CheckCompleted`.
 
 Every payload includes integer `schema_version: 1` and `monitor_id`.
+
+`CheckCompleted.execution_id` is a positive integer ledger identity. M6.04 corrects the client's earlier UUID-only validation; `tests/Fixtures/team-broadcast-payloads.json` now pins real PHP producer output against TypeScript validation. The backend schema and version remain unchanged.
 
 | Event | Additional fields | Meaning |
 |---|---|---|

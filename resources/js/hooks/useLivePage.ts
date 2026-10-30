@@ -7,6 +7,7 @@ import type { ReverbConfiguration } from '../realtime/types';
 
 /** Stable prop-root selections for the existing monitoring screens; forms retain their own local drafts. */
 const PAGE_KEYS = {
+    'Dashboard/Show': ['dashboard'],
     'Monitors/Index': ['monitors', 'usage', 'can'],
     'Monitors/Show': ['monitor', 'recentIncidents', 'maintenance', 'escalation', 'can'],
     'Incidents/Index': ['incidents'],

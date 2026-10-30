@@ -297,3 +297,16 @@ docker compose run --rm php-test vendor/bin/pest tests/Feature/NotificationDeliv
 ```
 
 The acceptance gate remains `./scripts/verify.sh`; counts and actual results are recorded in TASKS, without implying remote CI or PHP 8.5 execution.
+
+## Escalation and maintenance (M5.04)
+
+`IncidentNotificationDeliveryTest` adds frozen multi-step schedules on the real lifecycle: exact five/ten-minute boundaries, within-step deduplication and distinct UUID/keys across steps, policy edits/deletion/replay, recovery cancellation including the exact due instant, one summary per notified channel across steps, reopened-cycle delays, byte-stable retries independent of later delays and recovery of lost publications. A 12-case matrix checks inclusive start/exclusive end for openings, escalations and summaries. Further cases cover maintenance starting after provider failure, terminal suppression without catch-up, future steps after maintenance, already-admitted acceptance, expired leases/late fences and monitor/tenant isolation. The original delivery cases use a single-step fixture; multi-step behavior is asserted explicitly.
+
+`NotificationConcurrencyTest` now runs both duplicate-event preparation and duplicate-worker admission with and without escalation. PostgreSQL barriers and the existing guarded child/fake provider prove that two sessions prepare one row per step and admit only one provider attempt for a due escalation. Ordinary tests use no real provider or development data.
+
+```sh
+docker compose run --rm php-test vendor/bin/pest tests/Feature/NotificationDeliveryConfigurationTest.php tests/Integration/IncidentNotificationDeliveryTest.php tests/Integration/NotificationConcurrencyTest.php --fail-on-skipped --fail-on-warning
+./scripts/verify.sh
+```
+
+Actual counts and results are recorded in TASKS. Quiet-hours/DST coverage remains M5.05/M5.06.

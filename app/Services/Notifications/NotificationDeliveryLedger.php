@@ -14,6 +14,7 @@ use App\Models\Incident;
 use App\Models\Monitor;
 use App\Models\NotificationLog;
 use App\Models\Team;
+use App\Services\Incidents\MaintenanceSchedule;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -29,11 +30,13 @@ final readonly class NotificationDeliveryLedger
      * @param TenantContext $tenants Explicit team boundary restored on every exit path.
      * @param NotificationDeliverySettings $settings Persistent attempt budget and retry delays.
      * @param ChannelDestinationFingerprint $destinations Bind attempts to the verified destination selected originally.
+     * @param MaintenanceSchedule $maintenance Recheck the monitor's half-open UTC windows before every provider attempt.
      */
     public function __construct(
         private TenantContext $tenants,
         private NotificationDeliverySettings $settings,
         private ChannelDestinationFingerprint $destinations,
+        private MaintenanceSchedule $maintenance,
     ) {
     }
 
@@ -59,16 +62,22 @@ final readonly class NotificationDeliveryLedger
                 return null;
             }
 
-            if ($log->claim_until !== null) {
-                $this->retry($log, 'The previous worker did not complete its delivery attempt.', $now);
-
-                return null;
-            }
-
             $resolved = $log->kind === NotificationKind::Resolved;
 
             if ($log->cycle !== $incident->reopened_count || $resolved !== ($incident->resolved_at !== null)) {
                 $this->suppress($log, 'Superseded by the current incident state.');
+
+                return null;
+            }
+
+            if ($this->maintenance->activeAt($incident->monitor_id, $now)) {
+                $this->suppress($log, 'The monitor is under planned maintenance.');
+
+                return null;
+            }
+
+            if ($log->claim_until !== null) {
+                $this->retry($log, 'The previous worker did not complete its delivery attempt.', $now);
 
                 return null;
             }

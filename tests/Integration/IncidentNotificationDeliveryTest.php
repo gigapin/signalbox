@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Exercise durable incident notification planning, coalescing, retries and fenced delivery on isolated PostgreSQL. */
+/** Exercise durable notification planning, escalation, maintenance silencing, coalescing and fenced retries on isolated PostgreSQL. */
 
 use App\Data\Monitoring\HttpMonitorConfiguration;
 use App\Data\Notifications\ChannelDeliveryReceipt;
@@ -16,6 +16,7 @@ use App\Events\Incidents\IncidentResolved;
 use App\Jobs\DeliverIncidentNotification;
 use App\Models\EscalationPolicy;
 use App\Models\Incident;
+use App\Models\MaintenanceWindow;
 use App\Models\Monitor;
 use App\Models\NotificationChannel;
 use App\Models\NotificationLog;
@@ -57,7 +58,6 @@ beforeEach(function (): void {
             'is_default' => true,
             'steps_json' => [
                 ['after_minutes' => 0, 'channel_ids' => [$channel->id]],
-                ['after_minutes' => 5, 'channel_ids' => [$channel->id]],
             ],
         ]);
 
@@ -447,14 +447,16 @@ it('honours an initial policy delay and does not dispatch later escalation steps
         ['after_minutes' => 10, 'channel_ids' => [$this->channel->id]],
     ]]));
     deliveryOpen($this->team, $this->monitor);
-    $row = deliveryRows($this->team)->sole();
+    $row = deliveryRows($this->team)->firstOrFail();
     CarbonImmutable::setTestNow(CarbonImmutable::now()->addSeconds(299));
     deliveryRun($row);
     Http::assertNothingSent();
     CarbonImmutable::setTestNow(CarbonImmutable::now()->addSecond());
     deliveryRun($row);
     Http::assertSentCount(1);
-    expect(deliveryRows($this->team))->toHaveCount(1);
+    expect(deliveryRows($this->team))->toHaveCount(2)
+        ->and(deliveryRows($this->team)->last()->attempts)->toBe(0)
+        ->and(deliveryRows($this->team)->last()->available_at?->toIso8601String())->toBe('2026-10-29T10:10:00+00:00');
 });
 
 it('preserves database uniqueness and rejects incomplete outbox identities', function (): void {
@@ -625,4 +627,343 @@ it('contains unexpected provider errors and restores tenant context in a persist
     });
     expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Sent)
         ->and(deliveryRows($this->team)->sole()->attempts)->toBe(2);
+});
+
+/**
+ * @param Team $team Owning tenant.
+ * @param list<array{after_minutes: int, channel_ids: list<int>}> $steps Frozen schedule to install before the transition.
+ */
+function deliverySteps(Team $team, array $steps): void
+{
+    app(TenantContext::class)->run($team->id, fn () => EscalationPolicy::query()->update(['steps_json' => $steps]));
+}
+
+/**
+ * @param Team $team Owning tenant.
+ * @param Monitor $monitor Monitor to silence.
+ * @param string $start UTC start inclusive.
+ * @param string $end UTC end exclusive.
+ * @return MaintenanceWindow Synthetic persisted window; no real scheduler or provider is used.
+ */
+function deliveryMaintenance(Team $team, Monitor $monitor, string $start, string $end): MaintenanceWindow
+{
+    return app(TenantContext::class)->run($team->id, function () use ($monitor, $start, $end): MaintenanceWindow {
+        $window = new MaintenanceWindow();
+        $window->forceFill([
+            'monitor_id' => $monitor->id,
+            'starts_at' => CarbonImmutable::parse($start, 'UTC'),
+            'ends_at' => CarbonImmutable::parse($end, 'UTC'),
+            'reason' => 'Synthetic notification maintenance.',
+        ])->save();
+
+        return $window;
+    });
+}
+
+it('delivers each frozen escalation exactly at its absolute delay with a distinct step identity', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id, $this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 10, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    $rows = deliveryRows($this->team);
+
+    expect($rows)->toHaveCount(3)
+        ->and($rows->pluck('step_index')->all())->toBe([0, 1, 2])
+        ->and($rows->pluck('kind')->all())->toBe([NotificationKind::Opened, NotificationKind::Escalated, NotificationKind::Escalated])
+        ->and($rows->pluck('message_uuid')->unique())->toHaveCount(3)
+        ->and($rows->pluck('dedupe_key')->unique())->toHaveCount(3);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun($rows[0]);
+    CarbonImmutable::setTestNow('2026-10-29 10:04:59');
+    deliveryRun($rows[1]);
+    Http::assertSentCount(1);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    deliveryRun($rows[1]);
+    deliveryRun($rows[1]);
+    Http::assertSentCount(2);
+    CarbonImmutable::setTestNow('2026-10-29 10:09:59');
+    deliveryRun($rows[2]);
+    Http::assertSentCount(2);
+    CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+    deliveryRun($rows[2]);
+    Http::assertSentCount(3);
+    Http::assertSent(fn (Request $request): bool => $request['event'] === 'incident.escalated'
+        && $request['data']['step_index'] === 1 && $request['occurred_at'] === '2026-10-29T10:05:00+00:00');
+    expect(deliveryRows($this->team)->pluck('attempts')->all())->toBe([1, 1, 1]);
+});
+
+it('freezes future steps across policy edits deletion and duplicate event replay', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $snapshot = deliveryRows($this->team)->map(fn (NotificationLog $row): array => [$row->dedupe_key, $row->message_uuid, $row->message()->payload()])->all();
+    app(TenantContext::class)->run($this->team->id, function (): void {
+        $extra = NotificationChannel::factory()->active()->create();
+        EscalationPolicy::query()->update(['steps_json' => [['after_minutes' => 1, 'channel_ids' => [$extra->id]]]]);
+        EscalationPolicy::query()->delete();
+    });
+    app(PrepareIncidentNotifications::class)->record(new IncidentNotificationRequested($this->team->id, $incident->id, $this->monitor->id, 0, 'incident.opened'));
+
+    expect(deliveryRows($this->team)->map(fn (NotificationLog $row): array => [$row->dedupe_key, $row->message_uuid, $row->message()->payload()])->all())->toBe($snapshot);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    deliveryRun(deliveryRows($this->team)->last());
+    Http::assertSentCount(1);
+});
+
+it('cancels every waiting escalation at recovery and sends one summary per actually notified channel', function (): void {
+    $extra = app(TenantContext::class)->run($this->team->id, fn () => NotificationChannel::factory()->webhook()->active()->create());
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id, $extra->id]],
+        ['after_minutes' => 10, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun(deliveryRows($this->team)->firstOrFail());
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+
+    foreach (deliveryRows($this->team)->where('step_index', 1) as $row) {
+        deliveryRun($row);
+    }
+
+    deliveryTransition($this->team, $incident, 'resolve');
+    $rows = deliveryRows($this->team);
+    expect($rows->where('kind', NotificationKind::Resolved))->toHaveCount(2)
+        ->and($rows->where('step_index', 2)->sole()->status)->toBe(DeliveryStatus::Suppressed);
+    CarbonImmutable::setTestNow('2026-10-29 10:15:00');
+
+    foreach ($rows as $row) {
+        deliveryRun($row);
+        deliveryRun($row);
+    }
+
+    Http::assertSentCount(5);
+    expect(deliveryRows($this->team)->where('kind', NotificationKind::Resolved)->pluck('status')->all())->toBe([DeliveryStatus::Sent, DeliveryStatus::Sent]);
+});
+
+it('cancels an escalation even at its exact due instant when recovery commits first', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->last();
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    deliveryTransition($this->team, $incident, 'resolve');
+    deliveryRun($row);
+
+    expect(deliveryRows($this->team)->pluck('status')->all())->toBe([DeliveryStatus::Suppressed, DeliveryStatus::Suppressed]);
+    Http::assertNothingSent();
+});
+
+it('restarts absolute escalation delays on reopening and rejects old cycle jobs', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $old = deliveryRows($this->team)->last();
+    CarbonImmutable::setTestNow('2026-10-29 10:03:00');
+    deliveryTransition($this->team, $incident, 'resolve');
+    CarbonImmutable::setTestNow('2026-10-29 10:04:00');
+    deliveryTransition($this->team, $incident, 'reopen');
+    $escalation = deliveryRows($this->team)->last();
+
+    expect($escalation->cycle)->toBe(1)
+        ->and($escalation->available_at?->toIso8601String())->toBe('2026-10-29T10:09:00+00:00')
+        ->and($escalation->message()->data['cycle'])->toBe(1);
+    CarbonImmutable::setTestNow('2026-10-29 10:08:59');
+    deliveryRun($old);
+    deliveryRun($escalation);
+    Http::assertNothingSent();
+    CarbonImmutable::setTestNow('2026-10-29 10:09:00');
+    deliveryRun($escalation);
+    Http::assertSentCount(1);
+});
+
+it('retries escalations with stable bytes without delaying the next absolute step', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 6, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    $rows = deliveryRows($this->team);
+    $this->providerResponses = Http::sequence()->pushStatus(503)->pushStatus(204)->pushStatus(204);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    deliveryRun($rows[1]);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:30');
+    deliveryRun($rows[1]);
+    CarbonImmutable::setTestNow('2026-10-29 10:06:00');
+    deliveryRun($rows[2]);
+    $requests = Http::recorded()->map(fn (array $pair): Request => $pair[0]);
+
+    expect($requests)->toHaveCount(3)
+        ->and($requests[0]->body())->toBe($requests[1]->body())
+        ->and($requests[0]->header('X-Signalbox-Id'))->toBe($requests[1]->header('X-Signalbox-Id'))
+        ->and($requests[2]['occurred_at'])->toBe('2026-10-29T10:06:00+00:00')
+        ->and(deliveryRows($this->team)[1]->attempts)->toBe(2);
+});
+
+it('recovers due escalation publications after the original broker submission was lost', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun(deliveryRows($this->team)->firstOrFail());
+    expect(app(PublishNotificationDeliveries::class)->run()['published'])->toBe(0);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    expect(app(PublishNotificationDeliveries::class)->run()['published'])->toBe(1);
+    $row = deliveryRows($this->team)->last();
+    expect($this->publisher->sent[0]['delivery_id'])->toBe($row->id);
+    deliveryRun($row);
+    expect(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Sent);
+});
+
+it('uses half-open maintenance boundaries at admission for openings escalations and summaries', function (string $kind, string $at, bool $suppressed): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->firstOrFail();
+
+    if ($kind === 'escalated') {
+        $row = deliveryRows($this->team)->last();
+    }
+
+    if ($kind === 'resolved') {
+        CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+        deliveryRun($row);
+        deliveryTransition($this->team, $incident, 'resolve');
+        $row = deliveryRows($this->team)->last();
+    }
+
+    deliveryMaintenance($this->team, $this->monitor, '2026-10-29 10:05:01', '2026-10-29 10:06:00');
+    CarbonImmutable::setTestNow($at);
+    deliveryRun($row);
+    $fresh = deliveryRows($this->team)->find($row->id);
+
+    expect($fresh->status)->toBe($suppressed ? DeliveryStatus::Suppressed : DeliveryStatus::Sent)
+        ->and($fresh->attempts)->toBe($suppressed ? 0 : 1);
+    Http::assertSentCount(($kind === 'resolved' ? 1 : 0) + ($suppressed ? 0 : 1));
+})->with(['opened', 'escalated', 'resolved'])->with([
+    'before start' => ['2026-10-29 10:05:00', false],
+    'at start' => ['2026-10-29 10:05:01', true],
+    'inside' => ['2026-10-29 10:05:59', true],
+    'at end' => ['2026-10-29 10:06:00', false],
+]);
+
+it('suppresses an escalation retry if maintenance starts after its failed provider attempt', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->last();
+    $this->providerResponses = Http::sequence()->pushStatus(503)->pushStatus(204);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    deliveryRun($row);
+    deliveryMaintenance($this->team, $this->monitor, '2026-10-29 10:05:10', '2026-10-29 10:06:00');
+    CarbonImmutable::setTestNow('2026-10-29 10:05:30');
+    deliveryRun($row);
+    CarbonImmutable::setTestNow('2026-10-29 10:06:00');
+    deliveryRun($row);
+
+    expect(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Suppressed)
+        ->and(deliveryRows($this->team)->last()->attempts)->toBe(1);
+    Http::assertSentCount(1);
+});
+
+it('does not revive a silenced escalation but still sends future steps outside maintenance', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 10, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    deliveryMaintenance($this->team, $this->monitor, '2026-10-29 10:04:00', '2026-10-29 10:06:00');
+    $rows = deliveryRows($this->team);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    deliveryRun($rows[1]);
+    CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+    deliveryRun($rows[1]);
+    deliveryRun($rows[2]);
+
+    Http::assertSentCount(1);
+    expect(deliveryRows($this->team)[1]->status)->toBe(DeliveryStatus::Suppressed)
+        ->and(deliveryRows($this->team)[2]->status)->toBe(DeliveryStatus::Sent);
+});
+
+it('records real acceptance for an escalation admitted before maintenance and waits before its summary', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->last();
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    $token = (string) Str::uuid();
+    $ledger = app(NotificationDeliveryLedger::class);
+    expect($ledger->acquire($this->team->id, $row->id, $token))->not->toBeNull();
+    deliveryTransition($this->team, $incident, 'resolve');
+    $summary = deliveryRows($this->team)->last();
+    CarbonImmutable::setTestNow('2026-10-29 10:05:05');
+    deliveryRun($summary);
+    Http::assertNothingSent();
+    deliveryMaintenance($this->team, $this->monitor, '2026-10-29 10:05:05', '2026-10-29 10:06:00');
+    expect($ledger->complete($this->team->id, $row->id, $token, new ChannelDeliveryReceipt()))->toBeTrue();
+    deliveryRun($summary);
+
+    expect(deliveryRows($this->team)->find($row->id)->status)->toBe(DeliveryStatus::Sent)
+        ->and(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Suppressed);
+    Http::assertNothingSent();
+});
+
+it('suppresses an expired escalation lease during maintenance and fences its late acknowledgement', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->last();
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    $token = (string) Str::uuid();
+    $ledger = app(NotificationDeliveryLedger::class);
+    expect($ledger->acquire($this->team->id, $row->id, $token))->not->toBeNull();
+    deliveryMaintenance($this->team, $this->monitor, '2026-10-29 10:06:00', '2026-10-29 10:07:00');
+    CarbonImmutable::setTestNow('2026-10-29 10:06:15');
+    deliveryRun($row);
+
+    expect(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Suppressed)
+        ->and(deliveryRows($this->team)->last()->attempts)->toBe(1)
+        ->and($ledger->complete($this->team->id, $row->id, $token, new ChannelDeliveryReceipt()))->toBeFalse();
+    Http::assertNothingSent();
+});
+
+it('keeps maintenance and delayed escalation jobs inside the correct monitor and tenant', function (): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    $other = Team::factory()->create();
+    $foreign = app(TenantContext::class)->run($other->id, fn (): Monitor => Monitor::factory()->create());
+    $local = app(TenantContext::class)->run($this->team->id, fn (): Monitor => Monitor::factory()->create());
+    deliveryMaintenance($other, $foreign, '2026-10-29 10:00:00', '2026-10-29 11:00:00');
+    deliveryMaintenance($this->team, $local, '2026-10-29 10:00:00', '2026-10-29 11:00:00');
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    $row = deliveryRows($this->team)->last();
+    $ledger = app(NotificationDeliveryLedger::class);
+    expect($ledger->acquire($other->id, $row->id, (string) Str::uuid()))->toBeNull();
+    deliveryRun($row);
+
+    expect(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Sent);
+    Http::assertSentCount(1);
 });

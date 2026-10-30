@@ -1,6 +1,6 @@
 # Notification channels, provider adapters, escalation policies and delivery log
 
-M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. M5.03 adds durable incident deliveries with deduplication, coalescing, resolution summaries and retries. Later escalation timing/cancellation (M5.04) and quiet hours (M5.05) build on this model. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
+M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. M5.03 adds durable incident deliveries with deduplication, coalescing, resolution summaries and retries. M5.04 freezes all escalation steps at confirmation/reopening, cancels waiting deliveries at recovery and silences attempts during maintenance; see [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md). Quiet hours remain M5.05. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
 
 ## User decisions
 
@@ -62,7 +62,7 @@ Brute force: five guesses per code and one code per minute limit an admin to abo
 - labels are unique per team ignoring case; at most 10 policies per team;
 - marking a policy as default clears the previous default in the same transaction.
 
-`AssignEscalationPolicy` sets or clears a monitor override after Team → monitor locks and `MonitorPolicy::update`; it refuses a policy outside the team and never touches execution state (`execution_revision`, `next_check_at`). `EscalationPolicyResolver::forMonitor()` returns the override, then the default, then null; M5.03/M5.04 will call it.
+`AssignEscalationPolicy` sets or clears a monitor override after Team → monitor locks and `MonitorPolicy::update`; it refuses a policy outside the team and never touches execution state (`execution_revision`, `next_check_at`). `EscalationPolicyResolver::forMonitor()` returns the override, then the default, then null; incident preparation calls it to freeze every step for the new cycle.
 
 Steps reference channels by identity in JSON, as in the specification. Channel deletion and policy changes share the Team lock, so a policy cannot keep a reference to a channel deleted concurrently.
 
@@ -135,7 +135,7 @@ Receiver verification must check the signature with a constant-time comparison, 
 
 ## Current limits
 
-- Later escalation steps and maintenance silencing remain M5.04; quiet hours remain M5.05. Verifications deliberately do not write `notification_logs`, whose rows require an incident.
+- M5.04 prepares later escalation steps and silences incident attempts during maintenance; quiet hours remain M5.05. Verifications deliberately do not write `notification_logs`, whose rows require an incident.
 - SMS is deliberately unverified and inactive in the running application because it cannot deliver a verification code.
 - Verification is synchronous in the request with bounded HTTP/SMTP I/O. SMTP requires the existing mail settings; its transport is operator-configured and never comes from tenant input. A Mailtrap Email Sandbox configuration captures email in its sandbox inbox.
 - No real provider account, external network delivery or PHP 8.5 CI run is claimed by the adapter tests.

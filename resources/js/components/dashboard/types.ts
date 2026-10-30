@@ -35,11 +35,18 @@ export interface DashboardView {
     selectedMonitor: { id: number; name: string } | null;
     /** Exactly 24 hourly buckets, preserving actual per-region measurements and gaps. */
     latency: { at: string; eu: RegionalLatency; us: RegionalLatency }[];
-    /** Percentages from the future duration-weighted SLA service; currently all null rather than invented ratios. */
+    /** Time-weighted availability of the selected monitor; absent values stay null and never become 0 or 100. */
     uptime: {
         observedPercent: number | null;
         coveragePercent: number | null;
         slaPercent: number | null;
+        /** Whole seconds of the window; null when no monitor is selected or the data cannot be reconstructed. */
+        durations: {
+            upSeconds: number;
+            downSeconds: number;
+            unknownSeconds: number;
+            excludedSeconds: number;
+        } | null;
         series: { at: string; value: number | null }[];
     };
 }

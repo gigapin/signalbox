@@ -1,10 +1,8 @@
-# Private team dashboard (M6.04)
+# Private team dashboard (M6.04, M7.03)
 
 `GET /teams/{team}/dashboard` (`teams.dashboard`) uses the existing verified session, `EstablishTeamContext`, `MonitorPolicy::viewAny` and private/no-store middleware. All four member roles may read it; foreign/revoked membership remains 404. Team management and monitor/incident lists link to the screen. No mutation, migration, dependency, environment setting or worker is added.
 
-## Delivered behavior and remaining dependency
-
-The operational screen, latency chart, nullable availability panel and live recovery are implemented. **M6.04 remains in progress for the final numerical integration with M7's duration-weighted SLA service.** The task is not declared complete while that criterion is unsatisfied. M6.05 can test the delivered UI/channel behavior; final uptime/SLA acceptance and M6 exit remain after M7. No product scope is removed or replaced by check-count percentages.
+## Delivered behavior
 
 | Area | Current behavior |
 |---|---|
@@ -12,7 +10,7 @@ The operational screen, latency chart, nullable availability panel and live reco
 | Incidents | Count all unresolved incidents; show at most five, newest first, with links to full history |
 | Monitor list | Stable name/ID ordering, 20 rows per page, same-team chart selection |
 | Latency | Real hourly means and sample counts, separately for simulated EU/US, over a rolling 24-hour UTC slot window |
-| Availability | Observed uptime, coverage and SLA are null; the graph displays an explicit unavailable state |
+| Availability | Time-weighted observed uptime, coverage, SLA and durations of the selected monitor over the same window, plus hourly observed uptime |
 | Live updates | Existing Echo subscription and bounded partial recovery; no periodic polling |
 
 ## Read boundary and selection
@@ -31,18 +29,19 @@ Only observed results with non-null measured `response_time_ms` contribute. Meas
 
 `TimeSeriesChart` uses repo-native responsive SVG, keyboard-selectable regions, explicit units, UTC labels and an expandable equivalent data table. Missing/non-finite values break lines; isolated observations remain visible as circles. Accessible names and `aria-pressed` describe the chart and controls. No remote library or generated bitmap is required.
 
-## Uptime integration contract
+## Availability
 
-ADR-009 requires duration-weighted eligible intervals, pause/maintenance unions, regional agreement and explicit unknown coverage. Those rules belong to M7.03 and are not implemented here. Production returns:
+`DashboardOverview` asks `MonitorAvailability` for the hours of the rolling window and adds their durations, which needs a single raw-results read. The rules are in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703). Production returns:
 
 ```text
-uptime.observedPercent = null
-uptime.coveragePercent = null
-uptime.slaPercent = null
-uptime.series = [{ at: bucketStart, value: null }, ...]
+uptime.observedPercent = U / (U + D), or null without observed time
+uptime.coveragePercent = (U + D) / (U + D + X), or null with a null eligible denominator
+uptime.slaPercent      = observedPercent when X is 0, otherwise null
+uptime.durations       = { upSeconds, downSeconds, unknownSeconds, excludedSeconds }, or null
+uptime.series          = [{ at: bucketStart, value: hourly observedPercent or null }, ...]
 ```
 
-Available values use percentages in 0–100; missing values never become 0 or 100. The typed projection, metric renderer and graph accept nullable values and gaps. Tests supply synthetic future service output only to verify rendering; production never emits/seeds those examples. Remaining work: call M7's authoritative service and map observed uptime, coverage, SLA and reconstructible series, expose the up/down/unknown durations required by ADR-009, and retain null for insufficient data/retained historical boundaries. Revisit M6.04 and final availability acceptance afterward.
+Percentages are 0–100, rounded down to two decimals. Missing values never become 0 or 100. `durations` is null only when no monitor is selected or the raw results of the window no longer exist; a monitor with nothing to report in the window has zero durations. Seconds are truncated, so they can add up to slightly less than the window. A rolling window rarely has an SLA in practice: it stays null as long as any part of the 24 hours is unknown, including the time before a recent monitor's first observation.
 
 ## Live correction and shared JSON fixture
 

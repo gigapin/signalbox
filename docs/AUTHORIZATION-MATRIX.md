@@ -141,7 +141,7 @@ There is no new HTTP route to catalogue. `LivePageRecoveryTest` repeats the four
 
 ## M6.04 dashboard entrance
 
-`teams.dashboard` is a GET/HEAD private route for owner/admin/member/viewer and joins the complete current/foreign/revoked matrix plus guest/unverified gates. Successful reads assert the route team, local monitor count and identity, and omitted configuration. Foreign/revoked access stays 404 even with forged actor/team query fields and loaded preferences. `DashboardTest` also checks explicit cross-team chart selection, aggregate isolation under mismatched context and the real Inertia partial-read entrance. No selection or read modifies persisted preferences. Details and the remaining SLA dependency are in [DASHBOARD.md](DASHBOARD.md).
+`teams.dashboard` is a GET/HEAD private route for owner/admin/member/viewer and joins the complete current/foreign/revoked matrix plus guest/unverified gates. Successful reads assert the route team, local monitor count and identity, and omitted configuration. Foreign/revoked access stays 404 even with forged actor/team query fields and loaded preferences. `DashboardTest` also checks explicit cross-team chart selection, aggregate isolation under mismatched context and the real Inertia partial-read entrance. No selection or read modifies persisted preferences. Details are in [DASHBOARD.md](DASHBOARD.md).
 
 ## M6.05 native protocol acceptance
 

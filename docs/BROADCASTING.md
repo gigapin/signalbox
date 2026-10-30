@@ -2,7 +2,7 @@
 
 Committed monitoring results and incident transitions now produce minimal private-team updates through the existing Reverb infrastructure. Work state/results are in [TASKS.md](TASKS.md), architectural decision ADR-013 is in [ARCHITECTURE.md](ARCHITECTURE.md), infrastructure configuration is in [SERVICES.md](SERVICES.md).
 
-M6.01 implements producers and delivery; M6.02 adds session-protected private subscription authorization. M6.03 adds Echo/frontend reconciliation and reconnect recovery; M6.04 extends it to the operational dashboard and measured regional latency chart. [REALTIME-CLIENT.md](REALTIME-CLIENT.md) documents lifecycle and bounded recovery; [DASHBOARD.md](DASHBOARD.md) records the remaining M6.04 numerical uptime/SLA dependency on M7.
+M6.01 implements producers and delivery; M6.02 adds session-protected private subscription authorization. M6.03 adds Echo/frontend reconciliation and reconnect recovery; M6.04 extends it to the operational dashboard and measured regional latency chart. [REALTIME-CLIENT.md](REALTIME-CLIENT.md) documents lifecycle and bounded recovery; [DASHBOARD.md](DASHBOARD.md) records the dashboard's availability values.
 
 ## Subscription authorization (M6.02)
 

@@ -241,15 +241,15 @@ Incident transitions now prepare notification intents transactionally; public af
 
 ## Operational team dashboard (M6.04)
 
-[DASHBOARD.md](DASHBOARD.md) documents the new private `/teams/{team}/dashboard` route, bounded operational lists/counts, hourly regional raw-latency chart and existing Echo/partial recovery. Rebuild assets through the normal workflow; no dependency, migration, environment variable, key or worker configuration changes. The frontend execution-ID validation is corrected to match the numeric backend ledger, with a shared PHP/TypeScript fixture. Uptime/coverage/SLA production values remain null until M7's time-weighted service is integrated; M6.04 remains in progress for that criterion. Automated checks use isolated PostgreSQL and simulated browser transports without touching development data/processes.
+[DASHBOARD.md](DASHBOARD.md) documents the new private `/teams/{team}/dashboard` route, bounded operational lists/counts, hourly regional raw-latency chart and existing Echo/partial recovery. Rebuild assets through the normal workflow; no dependency, migration, environment variable, key or worker configuration changes. The frontend execution-ID validation is corrected to match the numeric backend ledger, with a shared PHP/TypeScript fixture. Uptime/coverage/SLA production values came later, from M7.03. Automated checks use isolated PostgreSQL and simulated browser transports without touching development data/processes.
 
 ## Realtime acceptance and reconnect grant cleanup (M6.05)
 
-[REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md) documents native Reverb protocol and committed-database acceptance plus native-Echo DOM tests. The demonstrated reconnect race is fixed by aborting/fencing authorizations tied to an old socket, including late JSON completion. Adopt it through the normal asset rebuild; there is no new dependency, migration, environment/key or worker configuration. Verification uses only dedicated test storage and in-memory transports. Final uptime/SLA integration and M6 exit still depend on M7.
+[REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md) documents native Reverb protocol and committed-database acceptance plus native-Echo DOM tests. The demonstrated reconnect race is fixed by aborting/fencing authorizations tied to an old socket, including late JSON completion. Adopt it through the normal asset rebuild; there is no new dependency, migration, environment/key or worker configuration. Verification uses only dedicated test storage and in-memory transports. Final uptime/SLA integration came later, with M7.03.
 
 ## Session handoff — 2026-10-30
 
-The restart point of this handoff was **M7.01**, now complete; later tasks are tracked in [TASKS.md](TASKS.md). [TASKS.md](TASKS.md#chiusura-di-sessione-e-ripartenza--2026-10-30) records the session closure, latest successful local gate, pending operational confirmations and required references. M6.05 is complete; M6.04 remains in progress until M7.03 supplies the numerical availability/SLA service. Existing production uptime/coverage/SLA fields remain null.
+The restart point of this handoff was **M7.01**, now complete; later tasks are tracked in [TASKS.md](TASKS.md). [TASKS.md](TASKS.md#chiusura-di-sessione-e-ripartenza--2026-10-30) records the session closure, latest successful local gate, pending operational confirmations and required references. M6.04 and M6.05 are complete.
 
 This handoff changes Markdown only and does not migrate development storage, install packages, activate monitoring or restart application processes. Earlier outbox/quiet-hour migrations and the broadcast supervisor remain prerequisites for their respective features; their development deployment is not confirmed by the automated test gate. Follow the relevant sections above for any changes not already applied. Read ADR-008/ADR-009 before designing rollup storage, retention or availability calculations.
 
@@ -258,3 +258,5 @@ This handoff changes Markdown only and does not migrate development storage, ins
 Apply `2026_10_30_000021_create_check_rollups.php` deliberately to the intended database. `metrics:rollups` is available but not scheduled until M7.04, so nothing changes in running processes. No dependency, environment variable or key is added. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md).
 
 M7.02 adds the read-only `metrics:rollup-storage` command; it needs no migration, dependency, environment variable or process change.
+
+[METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703) documents the time-weighted SLA service, now also used by the dashboard. Adopt it through the normal asset rebuild: there is no new dependency, migration, environment variable, key or worker. The dashboard already reads only raw results; older windows answer from rollups only once the rollup migration is applied and `metrics:rollups` has run.

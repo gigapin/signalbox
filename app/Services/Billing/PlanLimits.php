@@ -38,6 +38,15 @@ final readonly class PlanLimits
 
     /**
      * @param Plan $plan Effective plan.
+     * @return int Days of rollup history the team may read.
+     */
+    public function rollupRetentionDays(Plan $plan): int
+    {
+        return $this->get($plan, 'rollup_retention_days');
+    }
+
+    /**
+     * @param Plan $plan Effective plan.
      * @param string $name Entitlement key inside the plan entry.
      * @return int Configured positive value.
      * @throws LogicException When the plan or entitlement is missing or not a positive integer.

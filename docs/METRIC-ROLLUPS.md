@@ -1,6 +1,6 @@
-# Check rollups (M7.01–M7.02)
+# Check rollups and SLA (M7.01–M7.03)
 
-Hourly and daily UTC rollups keep uptime, check counts and latency after the raw monthly result partitions are dropped. They implement the storage side of [ADR-008 and ADR-009](ARCHITECTURE.md#adr-008--retention-rollup-e-percentili-esatti). The SLA service for arbitrary windows is M7.03; nightly scheduling, retention and partition drops are M7.04.
+Hourly and daily UTC rollups keep uptime, check counts and latency after the raw monthly result partitions are dropped. They implement the storage side of [ADR-008 and ADR-009](ARCHITECTURE.md#adr-008--retention-rollup-e-percentili-esatti). The [SLA service](#sla-service-m703) reads them for arbitrary windows. Nightly scheduling, retention and partition drops are M7.04.
 
 ## Tables
 
@@ -25,7 +25,7 @@ Rollups are per monitor, as in the specification schema: frequencies combine bot
 
 ## Availability rules
 
-`AvailabilityTimeline` is a pure calculation that M7.03 can reuse.
+`AvailabilityTimeline` is a pure calculation shared by the rollups and the SLA service.
 
 - A slot's verdict takes effect at its latest regional observation. The number of regions that must agree comes from the executions reserved for that slot, not from the current configuration.
 - Agreed up or down holds until the next verdict, or at most until `slot + 2 × reserved period`: the following expected slot must also have expired. Stopping at the following slot would leave a gap between any two punctual checks, and an SLA could never be determined.
@@ -67,11 +67,11 @@ Exit status 1 reports failed monitors, invalid options or a refused rebuild. A r
 
 ## Tenancy
 
-Discovery reads only identities. All private work runs inside the owning tenant's context. Raw SQL and bulk writes name their team explicitly, and the source selects only timing and outcome columns, never monitor configuration. Models are read-only and fail closed without a tenant context. No route or API exposes rollups yet.
+Discovery reads only identities. All private work runs inside the owning tenant's context. Raw SQL and bulk writes name their team explicitly, and the source selects only timing and outcome columns, never monitor configuration. Models are read-only and fail closed without a tenant context. No route or API exposes rollups directly; the dashboard reads availability through the SLA service.
 
 ## Limits
 
-- Buckets are whole UTC hours. After raw results expire, a window with edges inside an hour (for example a team timezone with a fractional offset) cannot be reconstructed: M7.03 must report it as unavailable.
+- Buckets are whole UTC hours. After raw results expire, a window with edges inside an hour (for example a team timezone with a fractional offset) cannot be reconstructed: the SLA service reports it as unavailable.
 - The frequency map grows with distinct latency values. Its measured cost is under [Percentiles and storage cost](#percentiles-and-storage-cost-m702).
 - Deleting a monitor deletes its rollups.
 
@@ -123,3 +123,43 @@ php artisan metrics:rollup-storage
 ```
 
 The real-data command has only run on synthetic test rows so far, and the estimates should be compared with it once a deployment has real rollups.
+
+## SLA service (M7.03)
+
+`App\Services\Metrics\MonitorAvailability` is the single authority for uptime, coverage and SLA. `between()` answers any half-open UTC window, and `hourly()` splits a recent window for a chart. Calendar windows in a team timezone are converted to UTC by the caller (M7.05).
+
+With U up, D down and X unknown time, after exclusions:
+
+| Value | Formula | Null when |
+| --- | --- | --- |
+| Durations | U, D, X and excluded time, exact microseconds | The window cannot be reconstructed |
+| Observed uptime | `U / (U + D)` | No observed time |
+| Coverage | `(U + D) / (U + D + X)` | Null eligible denominator: nothing monitored, or everything excluded |
+| SLA | `U / (U + D)` | Any unknown time, or a null eligible denominator |
+
+| Situation | Result |
+| --- | --- |
+| No data at all | All time unknown, coverage 0, uptime and SLA null. Never 100% |
+| Whole window excluded, before creation or in the future | Zero eligible time, all ratios null |
+| Overlapping pauses and maintenance | Subtracted once. Excluded time removes a gap, so it can make the SLA determinable |
+| Window partly outside the monitor's life or after now | Clipped to the part inside |
+| Data no longer retained | **Unavailable**: durations and ratios are all null, with no partial answer |
+
+Percentages round down to two decimals, with integers: 99.999% never displays as 100%, and coverage displays 100% only when nothing is unknown.
+
+### Sources
+
+| Part of the window | Source | Unavailable when |
+| --- | --- | --- |
+| Unbroken stored hours inside the window, including a monitor's first partial hour from its creation | `check_rollups_hourly`, summed | Older than the current plan's rollup history (90/365/730 days), which applies at once after a downgrade |
+| Edges inside an hour, hours not rolled up yet, or the whole window if the stored hours have a hole | Raw results | Older than the 30-day readable limit, or its results or the verdicts reaching into it are older than the oldest partition |
+
+A hole is never counted as unknown time, because that would state something the data does not say. Both sources give identical durations, which the tests verify at several window edges. Daily rows are not used for durations: summing hours is exact and cheap enough, and uses a single source.
+
+Slots whose regional work can still finish are left out of raw reads. Otherwise a slot with one region done and one running would look like partial coverage and briefly end the earlier verdict.
+
+### Limits
+
+- A raw edge needs results from up to two maximum intervals (48 hours) before it, whatever the monitor's actual cadence, because past cadences are not assumed. An edge in the first two days of the oldest partition is therefore unavailable. M7.04 must take this into account when deciding when to drop a partition.
+- `metrics:rollups` is not scheduled until M7.04. Until then windows older than 30 days are unavailable unless rollups were built by hand.
+- A live window ending now can change as results arrive, while a closed window can no longer change.

@@ -10,6 +10,7 @@ use App\Models\Monitor;
 use App\Models\Team;
 use App\Services\Dashboard\DashboardLatency;
 use App\Services\Dashboard\DashboardOverview;
+use App\Services\Monitoring\Results\ResultPartitions;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -89,6 +90,7 @@ it('renders honest empty states and nullable uptime without creating a default t
         ->assertJsonPath('props.dashboard.uptime.observedPercent', null)
         ->assertJsonPath('props.dashboard.uptime.coveragePercent', null)
         ->assertJsonPath('props.dashboard.uptime.slaPercent', null)
+        ->assertJsonPath('props.dashboard.uptime.durations', null)
         ->assertJsonCount(24, 'props.dashboard.latency')
         ->assertJsonPath('props.dashboard.latency.0.eu.meanMs', null);
     expect(DB::table('check_results')->count())->toBe(0);
@@ -191,7 +193,57 @@ it('reports malformed GET selections without redirect loops or reflected raw pay
     [['page' => '1000001'], ['page']],
 ]);
 
-it('recovers fresh data at the same private URL and keeps uptime unknown despite observed success', function (): void {
+it('reports time-weighted availability of the selected monitor over the window', function (): void {
+    $monitor = dashboardMonitor($this->team);
+    $foreign = dashboardMonitor($this->foreign);
+
+    foreach ([$monitor, $foreign] as $owned) {
+        DB::table('monitors')->where('id', $owned->id)->update(['created_at' => '2026-10-30T09:00:00Z', 'interval_seconds' => 300]);
+    }
+
+    for ($slot = CarbonImmutable::parse('2026-10-30T10:00:00Z'); $slot->isBefore(CarbonImmutable::now()); $slot = $slot->addMinutes(5)) {
+        dashboardResult($monitor, $slot, 100, status: $slot->hour === 10 ? 'up' : 'down', recorded: $slot);
+        dashboardResult($foreign, $slot, 100, recorded: $slot);
+    }
+
+    DB::table('maintenance_windows')->insert([
+        'team_id' => $this->team->id,
+        'monitor_id' => $monitor->id,
+        'starts_at' => '2026-10-30T11:30:00Z',
+        'ends_at' => '2026-10-30T12:00:00Z',
+        'reason' => 'Synthetic maintenance.',
+    ]);
+
+    $response = $this->actingAs($this->team->owner)->get('/teams/'.$this->team->id.'/dashboard?monitor='.$monitor->id, dashboardHeaders())->assertOk();
+
+    // 09:00-10:00 is unknown, 10:00-11:00 up, 11:00-11:30 down, 11:30-12:00 excluded.
+    $response
+        ->assertJsonPath('props.dashboard.uptime.observedPercent', 66.66)
+        ->assertJsonPath('props.dashboard.uptime.coveragePercent', 60)
+        ->assertJsonPath('props.dashboard.uptime.slaPercent', null)
+        ->assertJsonPath('props.dashboard.uptime.durations', ['upSeconds' => 3600, 'downSeconds' => 1800, 'unknownSeconds' => 3600, 'excludedSeconds' => 1800])
+        ->assertJsonPath('props.dashboard.uptime.series.20.value', null)
+        ->assertJsonPath('props.dashboard.uptime.series.21.value', null)
+        ->assertJsonPath('props.dashboard.uptime.series.22.value', 100)
+        ->assertJsonPath('props.dashboard.uptime.series.23.value', 0);
+
+    $this->actingAs($this->foreign->owner)->get('/teams/'.$this->team->id.'/dashboard?monitor='.$monitor->id, dashboardHeaders())->assertNotFound();
+});
+
+it('declares availability unavailable when the raw results of the window no longer exist', function (): void {
+    $monitor = dashboardMonitor($this->team);
+    $oldest = app(ResultPartitions::class)->oldestMonth();
+
+    DB::table('monitors')->where('id', $monitor->id)->update(['created_at' => $oldest->subMonths(3)]);
+    $this->travelTo($oldest->addHour());
+
+    $this->actingAs($this->team->owner)->get('/teams/'.$this->team->id.'/dashboard?monitor='.$monitor->id, dashboardHeaders())->assertOk()
+        ->assertJsonPath('props.dashboard.uptime.coveragePercent', null)
+        ->assertJsonPath('props.dashboard.uptime.durations', null)
+        ->assertJsonPath('props.dashboard.uptime.series.23.value', null);
+});
+
+it('recovers fresh data at the same private URL without crediting time before the monitor existed', function (): void {
     $monitor = dashboardMonitor($this->team, ['last_status' => 'up']);
     dashboardResult($monitor, CarbonImmutable::now()->subHour(), 123);
     $url = '/teams/'.$this->team->id.'/dashboard?monitor='.$monitor->id;

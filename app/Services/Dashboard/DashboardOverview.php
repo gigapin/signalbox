@@ -2,18 +2,21 @@
 
 declare(strict_types=1);
 
-/** Compose read-only team dashboard projections without loading monitor configuration or calculating provisional SLA. */
+/** Compose read-only team dashboard projections without loading monitor configuration. */
 
 namespace App\Services\Dashboard;
 
+use App\Data\Metrics\AvailabilityReport;
+use App\Data\Metrics\TimeInterval;
 use App\Http\Presenters\Incidents\IncidentPresenter;
 use App\Http\Presenters\Monitoring\MonitorPresenter;
 use App\Models\Incident;
 use App\Models\Monitor;
+use App\Services\Metrics\MonitorAvailability;
 use App\Services\Monitoring\MonitorListing;
 use Carbon\CarbonImmutable;
 
-/** Separate operational summaries, historical measured latency and the unavailable time-weighted SLA projection. */
+/** Separate operational summaries, historical measured latency and the time-weighted availability of the selected monitor. */
 final readonly class DashboardOverview
 {
     /** Maximum open incidents on the overview; the incident list provides the full history. */
@@ -22,12 +25,14 @@ final readonly class DashboardOverview
     /**
      * @param MonitorPresenter $monitorView Whitelisted monitor rows without configuration values.
      * @param IncidentPresenter $incidentView Whitelisted incident summaries without private timeline or cause notes.
-     * @param DashboardLatency $latency Bounded raw-measurement query, separate from future time-weighted SLA rules.
+     * @param DashboardLatency $latency Bounded raw-measurement query, separate from time-weighted SLA rules.
+     * @param MonitorAvailability $availability Authoritative time-weighted uptime, coverage and SLA.
      */
     public function __construct(
         private MonitorPresenter $monitorView,
         private IncidentPresenter $incidentView,
         private DashboardLatency $latency,
+        private MonitorAvailability $availability,
     ) {
     }
 
@@ -42,12 +47,12 @@ final readonly class DashboardOverview
     {
         $now = CarbonImmutable::now('UTC');
         $monitors = Monitor::query()->where('team_id', $teamId)
-            ->select(['id', 'team_id', 'name', 'type', 'last_status', 'is_paused', 'is_plan_suspended', 'interval_seconds', 'regions_json', 'last_checked_at'])
+            ->select(['id', 'team_id', 'name', 'type', 'last_status', 'is_paused', 'is_plan_suspended', 'interval_seconds', 'regions_json', 'last_checked_at', 'created_at'])
             ->orderBy('name')->orderBy('id')
             ->paginate(MonitorListing::PER_PAGE, ['*'], 'page', $page);
         $selected = $monitorId === null ? ($monitors->items()[0] ?? null) : Monitor::query()
             ->where('team_id', $teamId)
-            ->select(['id', 'team_id', 'name'])
+            ->select(['id', 'team_id', 'name', 'created_at'])
             ->findOrFail($monitorId);
         $open = Incident::query()->where('team_id', $teamId)->whereNull('resolved_at');
         $openCount = (clone $open)->count();
@@ -58,6 +63,8 @@ final readonly class DashboardOverview
         }
 
         $latency = $this->latency->series($teamId, $selected?->id, $now);
+        $window = new TimeInterval($now->subHours(DashboardLatency::HOURS), $now);
+        $hours = $selected === null ? [] : $this->availability->hourly($selected, $window);
 
         return [
             'generatedAt' => $now->format('Y-m-d\TH:i:s.u\Z'),
@@ -67,13 +74,36 @@ final readonly class DashboardOverview
             'incidents' => $incidents,
             'selectedMonitor' => $selected === null ? null : ['id' => $selected->id, 'name' => $selected->name],
             'latency' => $latency,
-            // M7 owns duration-weighted exclusions, missing-data coverage and SLA; count ratios cannot substitute for it.
-            'uptime' => [
-                'observedPercent' => null,
-                'coveragePercent' => null,
-                'slaPercent' => null,
-                'series' => array_map(static fn (array $point): array => ['at' => $point['at'], 'value' => null], $latency),
+            'uptime' => $this->uptime($hours, $latency),
+        ];
+    }
+
+    /**
+     * @param list<AvailabilityReport> $hours Hourly availability of the selected monitor; empty when none is selected.
+     * @param list<array{at: string, eu: array{meanMs: float|null, samples: int}, us: array{meanMs: float|null, samples: int}}> $latency Chart buckets sharing the same hours.
+     * @return array{observedPercent: float|null, coveragePercent: float|null, slaPercent: float|null, durations: array{upSeconds: int, downSeconds: int, unknownSeconds: int, excludedSeconds: int}|null, series: list<array{at: string, value: float|null}>} Availability of the window; missing values stay null, never 0 or 100.
+     */
+    private function uptime(array $hours, array $latency): array
+    {
+        $total = $hours === [] ? AvailabilityReport::unavailable() : AvailabilityReport::combined($hours);
+        $durations = $total->durations;
+        $series = [];
+
+        foreach ($latency as $index => $point) {
+            $series[] = ['at' => $point['at'], 'value' => isset($hours[$index]) ? $hours[$index]->observedPercent() : null];
+        }
+
+        return [
+            'observedPercent' => $total->observedPercent(),
+            'coveragePercent' => $total->coveragePercent(),
+            'slaPercent' => $total->slaPercent(),
+            'durations' => $durations === null ? null : [
+                'upSeconds' => intdiv($durations->up, 1_000_000),
+                'downSeconds' => intdiv($durations->down, 1_000_000),
+                'unknownSeconds' => intdiv($durations->unknown, 1_000_000),
+                'excludedSeconds' => intdiv($durations->excluded, 1_000_000),
             ],
+            'series' => $series,
         ];
     }
 

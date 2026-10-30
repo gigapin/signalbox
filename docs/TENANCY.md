@@ -101,7 +101,7 @@ Recovery uses the existing monitor/incident GET routes with Inertia partial head
 
 ## Dashboard reads (M6.04)
 
-The new dashboard uses the same verified membership/context middleware and monitor read policy. It never derives the tenant from selection preferences or query fields. Explicit chart IDs must resolve inside both the route team predicate and TeamScope; aggregate readers also apply both constraints independently of HTTP. Monitor rows select only safe operational columns, latency SQL is tenant/monitor/window bounded, and incident summaries omit private notes/timeline. Existing Echo recovery checks the same private route and response identity. Details and numerical SLA dependency: [DASHBOARD.md](DASHBOARD.md).
+The new dashboard uses the same verified membership/context middleware and monitor read policy. It never derives the tenant from selection preferences or query fields. Explicit chart IDs must resolve inside both the route team predicate and TeamScope; aggregate readers also apply both constraints independently of HTTP. Monitor rows select only safe operational columns, latency SQL is tenant/monitor/window bounded, and incident summaries omit private notes/timeline. Existing Echo recovery checks the same private route and response identity. Details: [DASHBOARD.md](DASHBOARD.md). `MonitorAvailability` names the team explicitly in every rollup and raw read, and its model reads fail closed without a tenant context.
 
 ## Realtime acceptance boundary (M6.05)
 

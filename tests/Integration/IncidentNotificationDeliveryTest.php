@@ -1128,6 +1128,19 @@ it('keeps quiet-hour settings local to the selected recipient and tenant', funct
     Http::assertSentCount(1);
 });
 
+it('prepares the deliveries of one step in channel order whatever scan the planner chooses', function (): void {
+    $extra = app(TenantContext::class)->run($this->team->id, fn () => NotificationChannel::factory()->webhook()->active()->create());
+
+    // Updating the older channel moves its row version after the newer one in the table.
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('09:00', '11:00', 'UTC'));
+    deliverySteps($this->team, [['after_minutes' => 0, 'channel_ids' => [$this->channel->id, $extra->id]]]);
+    DB::statement('SET LOCAL enable_indexscan = off');
+    DB::statement('SET LOCAL enable_bitmapscan = off');
+    deliveryOpen($this->team, $this->monitor);
+
+    expect(deliveryRows($this->team)->pluck('channel_id')->all())->toBe([$this->channel->id, $extra->id]);
+});
+
 it('fails closed for an unsupported stored timezone without leaking it or retrying forever', function (): void {
     deliveryOpen($this->team, $this->monitor);
     deliveryQuietHours($this->team, $this->channel, new QuietHours('09:00', '11:00', 'UTC'));

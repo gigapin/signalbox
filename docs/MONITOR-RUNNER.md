@@ -69,3 +69,7 @@ The [engine acceptance matrix](TESTING.md#integrated-engine-acceptance-m308) con
 ## After-commit UI facts (M6.01)
 
 Every terminal result recorded by the ledger now emits an immutable internal `CheckCompleted` after the transaction commits. Its private-team frame selects result identity/slot/revision/region, regional status/kind and measured/null latency and instants. It never copies monitor configuration or infers target success from infrastructure outcomes. Broadcast publication/delivery failures are isolated from result persistence and check retry semantics. The frontend must distinguish regional observations from the monitor's agreed aggregate and reconcile historical revisions. See [BROADCASTING.md](BROADCASTING.md).
+
+## Rollups (M7.01)
+
+Rollups read terminal results and their ledger rows without changing runner semantics; see [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md). Retention and partition drops remain M7.04.

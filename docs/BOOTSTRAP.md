@@ -246,3 +246,13 @@ Incident transitions now prepare notification intents transactionally; public af
 ## Realtime acceptance and reconnect grant cleanup (M6.05)
 
 [REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md) documents native Reverb protocol and committed-database acceptance plus native-Echo DOM tests. The demonstrated reconnect race is fixed by aborting/fencing authorizations tied to an old socket, including late JSON completion. Adopt it through the normal asset rebuild; there is no new dependency, migration, environment/key or worker configuration. Verification uses only dedicated test storage and in-memory transports. Final uptime/SLA integration and M6 exit still depend on M7.
+
+## Session handoff — 2026-10-30
+
+The restart point of this handoff was **M7.01**, now complete; the current one is **M7.02** (see [TASKS.md](TASKS.md)). [TASKS.md](TASKS.md#chiusura-di-sessione-e-ripartenza--2026-10-30) records the session closure, latest successful local gate, pending operational confirmations and required references. M6.05 is complete; M6.04 remains in progress until M7.03 supplies the numerical availability/SLA service. Existing production uptime/coverage/SLA fields remain null.
+
+This handoff changes Markdown only and does not migrate development storage, install packages, activate monitoring or restart application processes. Earlier outbox/quiet-hour migrations and the broadcast supervisor remain prerequisites for their respective features; their development deployment is not confirmed by the automated test gate. Follow the relevant sections above for any changes not already applied. Read ADR-008/ADR-009 before designing rollup storage, retention or availability calculations.
+
+## Check rollups (M7.01)
+
+Apply `2026_10_30_000021_create_check_rollups.php` deliberately to the intended database. `metrics:rollups` is available but not scheduled until M7.04, so nothing changes in running processes. No dependency, environment variable or key is added. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md).

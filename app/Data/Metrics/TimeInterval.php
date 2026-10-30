@@ -51,6 +51,18 @@ final readonly class TimeInterval
         return (int) $this->start->diffInSeconds($this->end);
     }
 
+    /** @return int Inclusive start in microseconds since the epoch, the exact unit of duration arithmetic. */
+    public function startMicroseconds(): int
+    {
+        return (int) $this->start->format('Uu');
+    }
+
+    /** @return int Exclusive end in microseconds since the epoch. */
+    public function endMicroseconds(): int
+    {
+        return (int) $this->end->format('Uu');
+    }
+
     /**
      * Overlapping and adjacent intervals are merged, so excluded time is never counted twice.
      *

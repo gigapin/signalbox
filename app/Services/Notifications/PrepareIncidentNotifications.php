@@ -95,7 +95,8 @@ final readonly class PrepareIncidentNotifications
                     $kind = $index === 0 ? NotificationKind::Opened : NotificationKind::Escalated;
                     $name = $index === 0 ? $event->event : 'incident.escalated';
 
-                    foreach (NotificationChannel::query()->whereIn('id', $step->channelIds)->get() as $channel) {
+                    // Without an explicit order the planner's scan decides, and an updated channel can move behind newer ones.
+                    foreach (NotificationChannel::query()->whereIn('id', $step->channelIds)->orderBy('id')->get() as $channel) {
                         $this->prepare($incident, $monitor, $channel, $kind, $name, $availableAt, stepIndex: $index, scheduledAt: $scheduledAt);
                     }
                 }

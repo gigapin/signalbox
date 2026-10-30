@@ -106,3 +106,7 @@ The new dashboard uses the same verified membership/context middleware and monit
 ## Realtime acceptance boundary (M6.05)
 
 Native protocol tests now prove that a private publication cannot reach a public lookalike or another valid private subscription; invalid grants and signed-publish tampering are rejected. Origin/client-event/message-budget policies are exercised by the installed Reverb classes. A committed PostgreSQL flow connects the HTTP membership grant to actual native delivery and dashboard recovery; DOM tests connect native Echo to the application hook/page across duplicate messages and identity changes. Pending authorizations are aborted/fenced on connection transitions so an old socket callback cannot interfere with its replacement. Admission remains distinct from server-side membership eviction, which is not implemented; the negative capability limit is asserted explicitly. See [REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md).
+
+## Check rollups (M7.01)
+
+Rollup models use `BelongsToTeam` and fail closed without a context. `BuildCheckRollups` discovers only identities and works inside the owning tenant; a forged team/monitor pair finds nothing. Raw SQL and bulk writes name the team explicitly. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md).

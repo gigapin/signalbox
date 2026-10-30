@@ -351,3 +351,19 @@ The first complete M5.06 gate was interrupted by Composer's default 300-second c
 Four cases feed the actual endpoint response to Reverb's native `PrivateChannel` verifier: accepted grant and rejected socket/channel/signature tampering. These use a real `Reverb\Connection`, synthetic application configuration and a mocked `WebSocketConnection` interface with in-memory channel storage; no listener is opened. Mocking the abstract Reverb connection directly is unsuitable because its inherited frame default is incompatible with generated Mockery signatures. An empty Guzzle MockHandler fails any accidental authorization network call. The tests prove admission/reauthorization, not eviction of an existing socket after membership revocation; that protocol limit is explicit in [BROADCASTING.md](BROADCASTING.md).
 
 Initial test errors were limited to expecting `channels` instead of the installed SDK's single-destination `channel`, and passing a cast DTO to a bulk update instead of saving it through the model. Both expectations/fixtures were corrected; no dependency or lockfile changed. Run the targeted suites with the commands in [BROADCASTING.md](BROADCASTING.md); the full gate remains `./scripts/verify.sh`. Actual results belong in TASKS. Real worker/Reverb/browser delivery and subscription authorization are not implied.
+
+## Echo and live-page recovery (M6.03)
+
+`LivePageSession.test.ts` adds 21 controlled-clock cases for initial private admission, reconnect/wake recovery, exact filtered URL/version/partial keys, duplicates and out-of-order facts, one active read with one coalesced follow-up, disabled mode, malformed/foreign responses, authorization denials, late JSON, StrictMode restart, bounded deduplication and ten-second deadlines. `TeamStream.test.ts` adds 11 cases using **real Echo** with an in-memory Pusher double for private names, short events, browser TLS coordinates, session/CSRF request options, authorization errors/timeouts, late grants and native cleanup. `RealtimePages.test.tsx` adds 5 real-Inertia DOM cases for actual monitor table updates, preserved drafts, same-component team/account changes, retry and logout. Existing pages remain covered by their earlier interaction suites. Total added frontend cases: **37**. No real WebSocket/network request is made.
+
+`LivePageRecoveryTest` adds **28 PostgreSQL cases**: public-only runtime metadata, internal/public host separation, secure/blank-host handling, disabled/invalid configuration, guest/unverified/mixed-content denial, 16 page × role scenarios with current/foreign/revoked membership, and filtered pagination after missed deletion. The fixture sends the actual Inertia asset version because a built manifest legitimately returns 409 without it. Request host expectations use an explicit synthetic browser URL. Ordinary frontend mocks return a fresh Response body per read rather than reusing a consumed stream. jsdom scrollTo is intercepted only in the lifecycle-navigation tests.
+
+Run the targeted checks with the standard isolated services:
+
+```sh
+docker compose run --rm node npm test -- tests/frontend/LivePageSession.test.ts tests/frontend/TeamStream.test.ts tests/frontend/RealtimePages.test.tsx
+docker compose run --rm php-test vendor/bin/pest tests/Integration/LivePageRecoveryTest.php --fail-on-skipped --fail-on-warning
+./scripts/verify.sh
+```
+
+The new lock includes Echo/Pusher and the targeted existing undici advisory fix documented in DEPENDENCIES. Runtime configuration/lifecycle/cost limits are in [REALTIME-CLIENT.md](REALTIME-CLIENT.md). A live Reverb/browser session, remote CI/PHP 8.5 and load measurements remain unexecuted by these transport simulations; actual outcomes are in TASKS.

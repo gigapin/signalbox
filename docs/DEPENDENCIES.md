@@ -102,7 +102,7 @@ Package keys and their individual purposes are listed in the frontend table abov
 | `engines.node` | Restrict runtime to Node 22, at least 22.22.2 after M0.06 jsdom (initial floor 22.12.0, M0.05 floor 22.13.0). |
 | `engines.npm` | Restrict the initial package manager major to npm 10. |
 | `packageManager` | Record npm 10.9.8 used to create the baseline; this field alone does not install or enforce npm. |
-| `dependencies` | Inertia and React browser runtime dependencies. |
+| `dependencies` | Inertia, React and Echo/Pusher browser runtime dependencies. |
 | `devDependencies` | Build, styling and type-check tooling. |
 
 Build/dev/type-check scripts were added with the entry points in M0.02 and are documented in [BOOTSTRAP.md](BOOTSTRAP.md). Frontend test and lint tools will be added in M0.05/M0.06 with their configuration.
@@ -219,3 +219,16 @@ The adapters compose cancellable operations on private loops; DNS uses explicit 
 ## M3.05 heartbeat compatibility
 
 Heartbeat uses the existing Laravel/PostgreSQL/React stack and PHP random_bytes/hash primitives. No manifest, lockfile, package version or runtime extension changes. `config/heartbeat.php` is PHP configuration, with mandatory positive IP/credential requests-per-minute limits documented in [HEARTBEATS.md](HEARTBEATS.md).
+
+## M6.03 browser broadcasting dependencies
+
+On 2026-10-30 the official npm registry metadata (`npm view <package> version engines dependencies peerDependencies --json`) and installed package declarations were checked before installation. [Laravel's Reverb client documentation](https://laravel.com/docs/13.x/broadcasting#client-side-installation) specifies Echo with Pusher JS. The custom `useLivePage` hook owns native Echo's lifecycle and authorized recovery; no React adapter package, framework major or global singleton is introduced.
+
+| Added runtime dependency | Exact version | Compatibility/responsibility |
+|---|---|---|
+| `laravel-echo` | `2.6.3` | Native Reverb/Pusher private subscriptions; Node `^20.19.0 || >=22.12.0` is compatible with this project's existing Node 22 floor. |
+| `pusher-js` | `8.6.0` | WebSocket transport and custom session authorizer; Echo's optional Pusher peer is satisfied without installing Socket.IO. |
+
+`npm install --save-exact laravel-echo@2.6.3 pusher-js@8.6.0 --strict-peer-deps --ignore-scripts` added three packages (including Pusher's `tweetnacl` dependency). Other existing direct versions remain unchanged. `package.json` documents these runtime requirements; `package-lock.json` records the generated graph/integrity metadata as usual. Public runtime connection fields and optional environment settings are documented in [REALTIME-CLIENT.md](REALTIME-CLIENT.md), without JSON comments or browser-exposed secrets.
+
+The install surfaced one high-severity audited package: the **pre-existing development dependency** `undici` 8.12.1 used by jsdom. `npm audit --json` identified advisories affecting releases before 8.12.2, including [redirect cache poisoning/disclosure](https://github.com/advisories/GHSA-4w7w-5xrc-9h26). A targeted `npm update undici --ignore-scripts --strict-peer-deps` changed only that package to **8.12.3** within the existing dependency range. Its Node `>=22.19.0` requirement is below this project's existing `>=22.22.2` floor. The command then reported **zero vulnerabilities** at that check. No broad audit fix, direct override, Node version change or Composer update was performed. Actual gate results and limits are in TASKS.

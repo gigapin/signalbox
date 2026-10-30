@@ -1,5 +1,7 @@
 /** List one team's incidents, open first, with state and severity filters and explicit empty and error states. */
 import { Link, router, usePage } from '@inertiajs/react';
+import LiveUpdates from '../../components/LiveUpdates';
+import { useLivePage } from '../../hooks/useLivePage';
 import { useState, type FormEvent } from 'react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import IncidentTable from '../../components/incidents/IncidentTable';
@@ -34,8 +36,9 @@ const INPUT =
 
 /** Filter through GET navigation so results stay bookmarkable and keyboard-operable. */
 export default function Index() {
-    const { team, incidents, filters, filtered, rejectedFilters, options } =
-        usePage<IndexProps>().props;
+    const { team } = usePage<IndexProps>().props;
+    const live = useLivePage<IndexProps>(team.id, 'Incidents/Index');
+    const { incidents, filters, filtered, rejectedFilters, options } = live.props;
     const [draft, setDraft] = useState<IncidentFilters>(filters);
     const [loading, setLoading] = useState(false);
 
@@ -64,6 +67,7 @@ export default function Index() {
 
     return (
         <AuthLayout title="Incidents" description={`Incidents of ${team.name}.`} wide>
+            <LiveUpdates phase={live.phase} retry={live.retry} />
             <nav aria-label="Team navigation" className="mb-6 flex gap-4 text-sm text-emerald-300">
                 <Link href={monitorsPath(team.id)}>Monitors</Link>
                 <Link href={`/teams/${team.id}`}>Team members</Link>

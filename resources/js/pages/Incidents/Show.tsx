@@ -1,5 +1,7 @@
 /** Show one incident with its timeline and let managers take responsibility, post, classify and publish. */
 import { Link, useForm, usePage } from '@inertiajs/react';
+import LiveUpdates from '../../components/LiveUpdates';
+import { useLivePage } from '../../hooks/useLivePage';
 import type { FormEvent, ReactNode } from 'react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { IncidentStatusBadge, SeverityBadge } from '../../components/incidents/IncidentBadges';
@@ -317,8 +319,14 @@ function Entry({ path, entry, canPublish }: EntryProps) {
 
 /** Responsibility is offered only while open; forms re-render from the server after every change. */
 export default function Show() {
+    const initial = usePage<ShowProps>().props;
+    const live = useLivePage<ShowProps>(
+        initial.team.id,
+        'Incidents/Show',
+        initial.incident.monitor.id,
+    );
     const { team, incident, deliveries, postableStatuses, options, textMaxLength, can, errors } =
-        usePage<ShowProps>().props;
+        live.props;
     const acknowledge = useForm<Record<string, never>>({});
     const path = incidentPath(team.id, incident.id);
     const open = incident.status !== 'resolved';
@@ -333,6 +341,7 @@ export default function Show() {
             description={`${incident.monitor.name} · ${causeLabel(incident.cause)}`}
             wide
         >
+            <LiveUpdates phase={live.phase} retry={live.retry} />
             <nav
                 aria-label="Incident navigation"
                 className="mb-6 flex gap-4 text-sm text-emerald-300"

@@ -6,6 +6,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -26,6 +27,7 @@ final class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'appName' => config('app.name'),
+            'realtime' => $this->realtime($request),
             // Serialize a deliberate identity projection rather than the Eloquent user or its relationships.
             'auth' => ['user' => $request->user() === null ? null : [
                 'name' => $request->user()->name,
@@ -78,5 +80,45 @@ final class HandleInertiaRequests extends Middleware
                 default => $request->session()->get('status'),
             },
         ];
+    }
+
+    /**
+     * @param Request $request Current browser request; its hostname is the default public WebSocket host.
+     * @return array{key: string, host: string, port: int, scheme: string}|null Public connection coordinates for verified sessions only.
+     */
+    private function realtime(Request $request): ?array
+    {
+        $actor = $request->user('web');
+
+        if (!$actor instanceof User || !$actor->hasVerifiedEmail() || config('broadcasting.default') !== 'reverb') {
+            return null;
+        }
+
+        foreach (['key', 'secret', 'app_id'] as $field) {
+            $value = config('broadcasting.connections.reverb.'.$field);
+
+            if (!is_string($value) || trim($value) === '') {
+                return null;
+            }
+        }
+
+        $key = config('broadcasting.connections.reverb.key');
+        $host = config('broadcasting.browser.host');
+
+        if ($host === null || $host === '') {
+            $host = $request->getHost();
+        }
+
+        $port = config('broadcasting.browser.port');
+        $scheme = config('broadcasting.browser.scheme');
+
+        if (!is_string($key) || !is_string($host) || $host === ''
+            || !is_int($port) || $port < 1 || $port > 65535
+            || !in_array($scheme, ['http', 'https'], true)
+            || ($request->isSecure() && $scheme !== 'https')) {
+            return null;
+        }
+
+        return ['key' => $key, 'host' => $host, 'port' => $port, 'scheme' => $scheme];
     }
 }

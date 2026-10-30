@@ -1,4 +1,4 @@
-# Check rollups (M7.01)
+# Check rollups (M7.01–M7.02)
 
 Hourly and daily UTC rollups keep uptime, check counts and latency after the raw monthly result partitions are dropped. They implement the storage side of [ADR-008 and ADR-009](ARCHITECTURE.md#adr-008--retention-rollup-e-percentili-esatti). The SLA service for arbitrary windows is M7.03; nightly scheduling, retention and partition drops are M7.04.
 
@@ -72,5 +72,54 @@ Discovery reads only identities. All private work runs inside the owning tenant'
 ## Limits
 
 - Buckets are whole UTC hours. After raw results expire, a window with edges inside an hour (for example a team timezone with a fractional offset) cannot be reconstructed: M7.03 must report it as unavailable.
-- The frequency map grows with distinct latency values. Its cost has not been measured; ADR-008 assigns that to M7.
+- The frequency map grows with distinct latency values. Its measured cost is under [Percentiles and storage cost](#percentiles-and-storage-cost-m702).
 - Deleting a monitor deletes its rollups.
+
+## Percentiles and storage cost (M7.02)
+
+**Decision: percentiles stay exact.** Each bucket keeps the sample count, the sum and the frequency of each whole-millisecond value. The measurements below give no reason to switch to an approximate sketch, which would have to be an explicit recorded decision.
+
+| Rule | Definition |
+| --- | --- |
+| Latency unit | Whole milliseconds, half rounded up, when the result is recorded |
+| Sample | An observation with a measured latency, up or down. Null latency and missing work are not samples; zero is a value |
+| Percentile | Value at position `ceil(p * n)` of the sorted samples, calculated with integers. No samples yield null |
+| Daily percentile | Calculated on the merged hourly frequencies, never from hourly percentiles |
+| Mean | `sum / samples`, never a mean of means |
+
+The definition equals PostgreSQL's `percentile_disc`, which the tests use as an independent reference on the raw results.
+
+### Measurements
+
+Measured on 2026-10-30 on the local PostgreSQL 16 test service, one synthetic day per scenario through the production `RollupStore`, with seeded lognormal latencies (median 120 ms, limited to the 10-second maximum timeout). Each scenario assumes two regions at the fastest cadence of its plan. "All distinct" is the worst possible day: every sample has a different value.
+
+| Scenario | Avg distinct/hour | Distinct/day | Hour row B | Day row B | Day map B | KiB/day | MiB/monitor at retention | GiB/full plan | Day merge ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Free 300 s stable | 21.1 | 138 | 543 | 816 | 678 | 13.5 | 1.2 | 0.0 | 2.2 |
+| Free 300 s volatile | 23.5 | 302 | 584 | 1384 | 1244 | 15.0 | 1.3 | 0.0 | 2.2 |
+| Pro 60 s stable | 73.7 | 176 | 1530 | 1048 | 911 | 36.9 | 13.1 | 0.6 | 2.5 |
+| Pro 60 s volatile | 101.3 | 638 | 1278 | 2776 | 2634 | 32.7 | 11.6 | 0.6 | 3.7 |
+| Business 30 s stable | 103.3 | 192 | 989 | 1160 | 1021 | 24.3 | 17.3 | 3.4 | 3.0 |
+| Business 30 s volatile | 173.7 | 779 | 857 | 3400 | 3259 | 23.4 | 16.7 | 3.3 | 4.9 |
+| Business 30 s all distinct | 240.0 | 5760 | 1262 | 21456 | 21310 | 50.5 | 36.0 | 7.0 | 12.5 |
+
+How to read it:
+
+- Only the bytes and distinct counts are repeatable, because the seed is fixed. Merge times are one run on a development machine, not a performance claim.
+- Row sizes are logical stored bytes: they exclude indexes and page overhead, so real disk use is higher.
+- "MiB/monitor" and "GiB/full plan" are linear **estimates** from one day: retention of 90/365/730 days, and for the full plan 5/50/200 monitors all at the fastest cadence. They are not measurements of a real team.
+- Larger maps can take less space than smaller ones. PostgreSQL compresses a value only when the row approaches its roughly 2 KB TOAST threshold, which explains Pro stable rows being larger than Business stable rows.
+
+Distinct values stay bounded by the samples in a bucket: 240 per hour and 5760 per day at the fastest cadence with two regions. They cannot exceed 10001 values in any bucket, given the maximum timeout.
+
+### Reproducing and measuring real data
+
+```sh
+# Synthetic scenarios above; prints the table and changes nothing permanently.
+docker compose run --rm -e RUN_ROLLUP_STORAGE_BENCHMARK=1 php-test vendor/bin/pest tests/Integration/RollupStorageBenchmarkTest.php --fail-on-skipped
+
+# Actual stored rollups: aggregates only, read-only, scans both tables, never scheduled.
+php artisan metrics:rollup-storage
+```
+
+The real-data command has only run on synthetic test rows so far, and the estimates should be compared with it once a deployment has real rollups.

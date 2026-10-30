@@ -397,3 +397,7 @@ docker compose run --rm php-test vendor/bin/pest tests/Unit/LatencyDistributionT
 ```
 
 The acceptance gate remains `./scripts/verify.sh`. Results are recorded in TASKS.
+
+## Percentiles and storage cost (M7.02)
+
+`CheckRollupsTest` compares hourly and daily percentiles, sample counts and sums with PostgreSQL's `percentile_disc` on the raw results, for three seeds with unequal hours, repeated values, zeros and null latency. It also checks frequency-map consistency, the difference from averaged percentiles and `metrics:rollup-storage`. `LatencyDistributionTest` adds merge order independence. `RollupStorageBenchmarkTest` runs in the ordinary suite with structural assertions only: sizes and times are never asserted. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#percentiles-and-storage-cost-m702).

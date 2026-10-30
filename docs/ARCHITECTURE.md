@@ -493,3 +493,7 @@ Test con payload esatti, HTTP Reverb firmato simulato e PostgreSQL isolato: comm
 ## Attuazione M7.01 — Rollup orari e giornalieri
 
 [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md) descrive tabelle, regole temporali e limiti. Strategia di calcolo puro (`AvailabilityTimeline`, `HourlyRollupCalculator`) separata da lettura (`RollupSource`), scrittura (`RollupStore`) e orchestrazione (`BuildCheckRollups`), senza contratti aggiuntivi perché non esistono varianti reali. ADR-009 è precisato: un verdetto vale al massimo fino a `slot + 2 × periodo prenotato`. Il calcolo avviene senza lock perché le ore chiuse sono immutabili.
+
+## Attuazione M7.02 — Percentili esatti e costo misurato
+
+ADR-008 resta in vigore senza modifiche: percentili esatti su frequenze al millisecondo. La misura richiesta dall'ADR è in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#percentiles-and-storage-cost-m702): stima lineare di circa 3,4 GiB per un team Business con 200 monitor a 30 s su 730 giorni, 7 GiB nel caso peggiore, indici esclusi. Nessuno sketch introdotto.

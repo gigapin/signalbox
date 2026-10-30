@@ -11,6 +11,7 @@ use App\Models\CheckRollupHourly;
 use App\Models\Monitor;
 use App\Models\Team;
 use App\Services\Metrics\Rollups\BuildCheckRollups;
+use App\Services\Metrics\Rollups\RollupStorageReport;
 use App\Services\Monitoring\Results\ResultPartitions;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
@@ -550,4 +551,131 @@ it('runs from the command line and validates rebuild options', function (): void
 
 it('does not expose rollups through any route added here', function (): void {
     expect(collect(app('router')->getRoutes()->getRoutes())->map(fn ($route) => $route->uri())->filter(fn (string $uri) => str_contains($uri, 'rollup'))->all())->toBe([]);
+});
+
+/**
+ * Fills one UTC day with deterministic data: unequal hours, repeated values, zeros and unmeasured failures.
+ *
+ * @param Monitor $monitor Monitor receiving the results.
+ * @param int $seed Generator seed, so a failure can be reproduced.
+ */
+function rollupSeededDay(Monitor $monitor, int $seed): void
+{
+    mt_srand($seed);
+
+    foreach (range(0, 23) as $hour) {
+        foreach (range(0, mt_rand(0, 8)) as $step) {
+            $eu = mt_rand(0, 4) === 0 ? null : mt_rand(0, 5) * mt_rand(0, 400);
+            $us = mt_rand(0, 3) === 0 ? mt_rand(5000, 9000) : mt_rand(0, 300);
+
+            rollupSlot(
+                $monitor,
+                sprintf('2026-10-02T%02d:%02d:00Z', $hour, $step * 5),
+                ['eu' => [$eu === null ? 'down' : 'up', 1, $eu], 'us' => ['up', 2, $us]],
+            );
+        }
+    }
+
+    mt_srand();
+}
+
+it('matches the percentiles PostgreSQL calculates independently from the raw results', function (int $seed): void {
+    $monitor = rollupMonitor($this->team, '2026-10-02T00:00:00Z');
+
+    rollupSeededDay($monitor, $seed);
+    rollupAdvance($monitor);
+
+    $day = rollupDay($monitor, '2026-10-02');
+
+    // percentile_disc returns the first value whose cumulative share reaches p, which is position ceil(p * n).
+    $raw = DB::selectOne(<<<'SQL'
+        SELECT
+            percentile_disc(0.5) WITHIN GROUP (ORDER BY response_time_ms) AS p50,
+            percentile_disc(0.95) WITHIN GROUP (ORDER BY response_time_ms) AS p95,
+            count(response_time_ms) AS samples,
+            sum(response_time_ms) AS total
+        FROM check_results
+        WHERE monitor_id = ? AND slot_at >= '2026-10-02T00:00:00Z' AND slot_at < '2026-10-03T00:00:00Z'
+        SQL, [$monitor->id]);
+
+    expect($day->p50_ms)->toBe((int) $raw->p50)
+        ->and($day->p95_ms)->toBe((int) $raw->p95)
+        ->and($day->latency_samples)->toBe((int) $raw->samples)
+        ->and($day->latency_sum_ms)->toBe((int) $raw->total)
+        ->and($day->avg_ms)->toBe((int) $raw->total / (int) $raw->samples);
+
+    $hours = DB::select(<<<'SQL'
+        SELECT
+            date_trunc('hour', slot_at, 'UTC') AS hour,
+            percentile_disc(0.5) WITHIN GROUP (ORDER BY response_time_ms) AS p50,
+            percentile_disc(0.95) WITHIN GROUP (ORDER BY response_time_ms) AS p95
+        FROM check_results
+        WHERE monitor_id = ? AND slot_at >= '2026-10-02T00:00:00Z' AND slot_at < '2026-10-03T00:00:00Z'
+        GROUP BY 1
+        SQL, [$monitor->id]);
+
+    expect($hours)->toHaveCount(24);
+
+    foreach ($hours as $hour) {
+        $rollup = rollupHour($monitor, (string) $hour->hour);
+
+        expect($rollup->p50_ms)->toBe((int) $hour->p50)
+            ->and($rollup->p95_ms)->toBe((int) $hour->p95);
+    }
+})->with([11, 2026, 90210]);
+
+it('keeps stored frequencies consistent with the stored sample count and sum', function (): void {
+    $monitor = rollupMonitor($this->team, '2026-10-02T00:00:00Z');
+
+    rollupSeededDay($monitor, 7);
+    rollupAdvance($monitor);
+
+    $day = rollupDay($monitor, '2026-10-02');
+    $total = 0;
+
+    foreach ($day->latency_counts as $milliseconds => $count) {
+        $total += $milliseconds * $count;
+    }
+
+    expect(array_sum($day->latency_counts))->toBe($day->latency_samples)
+        ->and($total)->toBe($day->latency_sum_ms);
+});
+
+it('differs from an average of hourly percentiles, which the daily rollup never uses', function (): void {
+    $monitor = rollupMonitor($this->team, '2026-10-02T00:00:00Z');
+
+    rollupSeededDay($monitor, 11);
+    rollupAdvance($monitor);
+
+    $averaged = (float) DB::table('check_rollups_hourly')
+        ->where('monitor_id', $monitor->id)
+        ->where('hour', '>=', '2026-10-02T00:00:00Z')
+        ->where('hour', '<', '2026-10-03T00:00:00Z')
+        ->avg('p95_ms');
+
+    expect((float) rollupDay($monitor, '2026-10-02')->p95_ms)->not->toBe($averaged);
+});
+
+it('reports measured storage as aggregates only', function (): void {
+    expect(app(RollupStorageReport::class)->measure()[0]->rows)->toBe(0);
+
+    $monitor = rollupMonitor($this->team, '2026-10-02T00:00:00Z');
+
+    rollupSeededDay($monitor, 7);
+    rollupAdvance($monitor);
+
+    [$hourly, $daily] = app(RollupStorageReport::class)->measure();
+
+    expect($hourly->level)->toBe('hourly')
+        ->and($hourly->rows)->toBe(35)
+        ->and($hourly->maximumDistinctValues)->toBeGreaterThan(0)
+        ->and($hourly->averageFrequencyBytes)->toBeGreaterThan(0.0)
+        ->and($hourly->averageRowBytes)->toBeGreaterThan($hourly->averageFrequencyBytes)
+        ->and($daily->level)->toBe('daily')
+        ->and($daily->rows)->toBe(1)
+        ->and($daily->maximumDistinctValues)->toBeGreaterThanOrEqual($hourly->maximumDistinctValues)
+        ->and($daily->tableBytes)->toBeGreaterThan(0);
+
+    expect(Artisan::call('metrics:rollup-storage'))->toBe(0)
+        ->and(Artisan::output())->toContain('hourly', 'daily', 'Avg map bytes')->not->toContain((string) $monitor->name);
 });

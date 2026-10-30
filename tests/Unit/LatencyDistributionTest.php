@@ -54,3 +54,14 @@ it('discards zero counts and rejects negative frequencies or invalid percentiles
         ->and(fn () => (new LatencyDistribution())->percentile(0))->toThrow(InvalidArgumentException::class)
         ->and(fn () => (new LatencyDistribution())->percentile(101))->toThrow(InvalidArgumentException::class);
 });
+
+it('merges to the same distribution in any order and grouping', function (): void {
+    $first = LatencyDistribution::fromSamples([1, 2, 2]);
+    $second = LatencyDistribution::fromSamples([2, 900]);
+    $third = LatencyDistribution::fromSamples([0, 1]);
+    $expected = LatencyDistribution::fromSamples([1, 2, 2, 2, 900, 0, 1])->counts;
+
+    expect($first->merge($second)->merge($third)->counts)->toBe($expected)
+        ->and($third->merge($second->merge($first))->counts)->toBe($expected)
+        ->and($first->merge(new LatencyDistribution())->counts)->toBe($first->counts);
+});

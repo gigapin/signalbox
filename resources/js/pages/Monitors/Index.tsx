@@ -1,5 +1,7 @@
 /** List, search and filter one team's monitors with pagination and explicit empty and error states. */
 import { Link, router, usePage } from '@inertiajs/react';
+import LiveUpdates from '../../components/LiveUpdates';
+import { useLivePage } from '../../hooks/useLivePage';
 import { useState, type FormEvent } from 'react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
@@ -126,8 +128,9 @@ function CreateControl({ teamId, usage, canCreate }: CreateControlProps) {
 
 /** Search and filter through GET navigation so results stay bookmarkable and keyboard-operable. */
 export default function Index() {
-    const { team, monitors, filters, filtered, rejectedFilters, options, usage, can } =
-        usePage<IndexProps>().props;
+    const { team } = usePage<IndexProps>().props;
+    const live = useLivePage<IndexProps>(team.id, 'Monitors/Index');
+    const { monitors, filters, filtered, rejectedFilters, options, usage, can } = live.props;
     const [draft, setDraft] = useState<MonitorFilters>(filters);
     const [loading, setLoading] = useState(false);
 
@@ -156,6 +159,7 @@ export default function Index() {
 
     return (
         <AuthLayout title="Monitors" description={`Monitors of ${team.name}.`} wide>
+            <LiveUpdates phase={live.phase} retry={live.retry} />
             <nav aria-label="Team navigation" className="mb-6 flex gap-4 text-sm text-emerald-300">
                 <Link href={`/teams/${team.id}`}>Team members</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>

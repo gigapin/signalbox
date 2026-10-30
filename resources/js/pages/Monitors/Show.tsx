@@ -1,5 +1,7 @@
 /** Show one monitor's safe configuration, recent incidents and maintenance; offer management when permitted. */
 import { Link, useForm, usePage } from '@inertiajs/react';
+import LiveUpdates from '../../components/LiveUpdates';
+import { useLivePage } from '../../hooks/useLivePage';
 import type { ReactNode } from 'react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import IncidentTable from '../../components/incidents/IncidentTable';
@@ -136,8 +138,9 @@ function Configuration({ configuration }: ConfigurationProps) {
 
 /** Keep actions in one form so their shared processing state prevents concurrent submissions. */
 export default function Show() {
-    const { team, monitor, recentIncidents, maintenance, escalation, can } =
-        usePage<ShowProps>().props;
+    const initial = usePage<ShowProps>().props;
+    const live = useLivePage<ShowProps>(initial.team.id, 'Monitors/Show', initial.monitor.id);
+    const { team, monitor, recentIncidents, maintenance, escalation, can } = live.props;
     const form = useForm<Record<string, never>>({});
     const path = monitorPath(team.id, monitor.id);
 
@@ -159,6 +162,7 @@ export default function Show() {
 
     return (
         <AuthLayout title={monitor.name} description={`${typeLabel(monitor.type)} monitor`} wide>
+            <LiveUpdates phase={live.phase} retry={live.retry} />
             <nav
                 aria-label="Monitor navigation"
                 className="mb-6 flex gap-4 text-sm text-emerald-300"

@@ -5,6 +5,12 @@
 return [
     // Keep infrastructure-free bootstrap available; selecting reverb requires configured credentials.
     'default' => env('BROADCAST_CONNECTION', 'log'),
+    // Runtime browser coordinates never inherit the Compose-only publishing hostname.
+    'browser' => [
+        'host' => env('REVERB_BROWSER_HOST'),
+        'port' => (int) env('REVERB_BROWSER_PORT', env('REVERB_FORWARD_PORT', 8080)),
+        'scheme' => env('REVERB_BROWSER_SCHEME', 'http'),
+    ],
     'connections' => [
         'reverb' => [
             'driver' => 'reverb',

@@ -11,6 +11,8 @@
   "packageManager": "npm@10.9.8",
   "dependencies": {
     "@inertiajs/react": "^2.0.0",
+    "laravel-echo": "2.6.3",
+    "pusher-js": "8.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

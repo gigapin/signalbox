@@ -1,8 +1,8 @@
-# Private team broadcasts (M6.01–M6.02)
+# Private team broadcasts (M6.01–M6.03)
 
 Committed monitoring results and incident transitions now produce minimal private-team updates through the existing Reverb infrastructure. Work state/results are in [TASKS.md](TASKS.md), architectural decision ADR-013 is in [ARCHITECTURE.md](ARCHITECTURE.md), infrastructure configuration is in [SERVICES.md](SERVICES.md).
 
-M6.01 implements producers and delivery; M6.02 adds session-protected private subscription authorization. M6.03 adds Echo/frontend reconciliation and reconnect recovery. No dashboard or definitive uptime/SLA metric is introduced here.
+M6.01 implements producers and delivery; M6.02 adds session-protected private subscription authorization. M6.03 adds Echo/frontend reconciliation and reconnect recovery on the four existing monitor/incident pages; see [REALTIME-CLIENT.md](REALTIME-CLIENT.md) for runtime configuration, lifecycle, bounded event-driven partial reads and tests. Dashboard/charts remain M6.04 and definitive uptime/SLA remains M7.
 
 ## Subscription authorization (M6.02)
 
@@ -14,7 +14,7 @@ M6.01 implements producers and delivery; M6.02 adds session-protected private su
 
 `BroadcastAuthorizationController` lazily registers only `team.{teamId}` on the explicit native Reverb connection with the `web` guard. This avoids resolving credentials during unrelated application bootstrap and works independently of the publishing driver's null/log setting. Missing/blank application ID, key or secret, or a non-Reverb driver configuration, yields 503. The installed Pusher broadcaster generates the local HMAC over `socket_id:channel_name`; the response contains only `auth: "public-key:signature"`. No network request, presence data, model, secret or notification dispatch is involved. A signature for another socket/channel fails the real Reverb private-channel verifier.
 
-This is an admission/reauthorization boundary. Standard private-channel grants are checked by Reverb when subscribing, not on each delivered message; removing a membership does not forcibly disconnect an already subscribed socket or expire an already issued grant. The endpoint denies new grants after revocation but implements no server-side eviction. M6.03 must manage subscription cleanup and recovery through the client lifecycle; channel hardening remains part of M6.05. No claim of immediate revocation for an existing live connection is made.
+This is an admission/reauthorization boundary. Standard private-channel grants are checked by Reverb when subscribing, not on each delivered message; removing a membership does not forcibly disconnect an already subscribed socket or expire an already issued grant. The endpoint denies new grants after revocation but implements no server-side eviction. M6.03 disposes sockets on page/team/account changes and closes them when recovery reads deny access; channel hardening remains part of M6.05. No claim of immediate server-side revocation for an existing live connection is made.
 
 ## Transaction and tenant boundary
 
@@ -28,7 +28,7 @@ After commit the listener constructs `TeamUpdate`, which retains only scalar whi
 
 ## Wire contract
 
-All frames target exactly one `PrivateChannel('team.{id}')`; its protocol name is `private-team.{id}`. No public or presence channel is emitted. `team_id` is routing metadata and is not duplicated in the wire payload. Short event names are explicit `broadcastAs()` values; future Echo listeners use leading-dot names such as `.CheckCompleted`.
+All frames target exactly one `PrivateChannel('team.{id}')`; its protocol name is `private-team.{id}`. No public or presence channel is emitted. `team_id` is routing metadata and is not duplicated in the wire payload. Short event names are explicit `broadcastAs()` values; Echo listeners use leading-dot names such as `.CheckCompleted`.
 
 Every payload includes integer `schema_version: 1` and `monitor_id`.
 
@@ -41,7 +41,7 @@ Every payload includes integer `schema_version: 1` and `monitor_id`.
 
 `region`, `kind` and `status` use the existing enum values. Instants are ISO-8601 UTC with second precision. Latency is an integer number of milliseconds or null when not measured; `checked_at` is null when there was no observation. `recorded_at` is the recording instant, not an invented check time or an exact database commit timestamp. Non-observations retain `status: unknown`; observed failures remain data and do not receive a check retry.
 
-Regional `status` is **not** the monitor's agreed `last_status`: a first regional success or regional disagreement can leave that aggregate unknown. Historical/out-of-order results retain their original slot/revision/region. Future consumers must deduplicate by execution identity and reconcile ordering/current revision before updating local projections, preserving the existing regional aggregation semantics. Incident frames are invalidations precisely because an older queued transition can arrive after newer state; clients must not infer the current incident state solely from the event name. Reconciliation and batching are M6.03.
+Regional `status` is **not** the monitor's agreed `last_status`: a first regional success or regional disagreement can leave that aggregate unknown. Historical/out-of-order results retain their original slot/revision/region. M6.03 validates/deduplicates check identities and batches authoritative partial page reads instead of assigning regional status directly to the aggregate. Incident frames are invalidations precisely because an older queued transition can arrive after newer state; clients do not infer current incident state solely from the event name. Future chart consumers must preserve these semantics.
 
 Payloads omit monitor names, URLs, headers, request/response bodies, HTTP/error details, TLS/DNS configuration, heartbeat credentials, incident cause notes, timeline text, user details and notification recipients/secrets. `broadcastWith()` always selects the complete payload explicitly; framework reflection never chooses public model properties. The native job adds an internal nullable socket field, which the Reverb broadcaster removes before transmission when unused. The installed Pusher SDK encodes a single destination with its singular `channel` field.
 
@@ -60,11 +60,11 @@ Payloads omit monitor names, URLs, headers, request/response bodies, HTTP/error 
 
 Only the UI transport retries. Check retries and durable notification retry budgets are unchanged. Reverb failure is handled by the native bounded broadcast job and never revisits check/incident persistence. A failure to enqueue is caught and logs only fixed text with team/monitor IDs; it cannot turn a persisted check into a failed check job or stop the independent notification listener. With `broadcasting.default` null or the literal `null`, the listener skips publication without contacting Redis. Other configured broadcasters, including local log, use the same queued frame contract.
 
-UI broadcasts are **best-effort**, with no new durable outbox. A crash between domain commit and event publication or an unavailable broker can lose an update; retries or event replays can duplicate it, and queue delays can reorder updates. The database remains authoritative. M6.03 must recover current state on initial connection/reconnection instead of assuming a complete event stream. No exactly-once or guaranteed live-delivery claim is made. The existing durable monitoring and notification outboxes retain their separate guarantees.
+UI broadcasts are **best-effort**, with no new durable outbox. A crash between domain commit and event publication or an unavailable broker can lose an update; retries or event replays can duplicate it, and queue delays can reorder updates. The database remains authoritative. M6.03 recovers current state after every private subscription/reconnection, browser wake and accepted event without a polling interval. Lost frames on an otherwise connected socket wait for the next recovery trigger. No exactly-once or guaranteed live-delivery claim is made. The existing durable monitoring and notification outboxes retain their separate guarantees.
 
 ## Operations and verification
 
-No migration, dependency, lockfile, environment variable or key changes. Existing schema migrations and configured Reverb credentials remain prerequisites. Recreate long-lived workers after adopting the new code/supervisor:
+M6.01–M6.02 introduce no migration, dependency, lockfile, environment variable or key changes. M6.03 adds the locked Echo/Pusher browser dependencies and optional public browser coordinates documented in [REALTIME-CLIENT.md](REALTIME-CLIENT.md); install the npm lock and rebuild assets. Existing schema migrations and configured Reverb credentials remain prerequisites. Recreate long-lived workers after adopting M6.01's code/supervisor:
 
 ```sh
 docker compose up -d --no-deps --force-recreate queue scheduler
@@ -79,4 +79,4 @@ docker compose run --rm php-test vendor/bin/pest tests/Feature/TeamBroadcastPayl
 ./scripts/verify.sh
 ```
 
-Actual counts/results are recorded in TASKS. Remote CI/PHP 8.5, real browser/Echo subscriptions and live Reverb worker delivery are not implied by these tests. M6.03–M6.05 and M7 remain open.
+Client/configuration test coverage is in [REALTIME-CLIENT.md](REALTIME-CLIENT.md). Actual counts/results are recorded in TASKS. Remote CI/PHP 8.5, real browser/Echo subscriptions and live Reverb worker delivery are not implied by these tests. M6.04–M6.05 and M7 remain open.

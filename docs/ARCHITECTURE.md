@@ -20,6 +20,7 @@ Questi record stabiliscono come implementare le milestone successive. Stato di t
 | ADR-010 | Piani, trial e riconciliazione | M1–M2, M7–M10 |
 | ADR-011 | Operatore di piattaforma e override di entitlement | MA, rispettato da M9 |
 | ADR-012 | Consegne notifiche persistenti e deduplicazione | M5.03, esteso in M5.04–M5.05 |
+| ADR-013 | Broadcast privati dopo commit e proiezioni UI riconciliabili | M6.01–M6.03 |
 
 ## ADR-001 — Monolite modulare e responsabilità del dominio
 
@@ -460,3 +461,24 @@ Esclusi listener accodati come unica fonte di verità, invio dentro la transazio
 PostgreSQL e provider non possono confermare atomicamente. Le garanzie di deduplica, ammissione e fencing sono locali; dopo una conferma remota persa un retry può duplicare email/Slack/Telegram. È un limite esplicito di consegna at-least-once. Il webhook conserva UUID/body e consente al ricevente di deduplicare gli effetti firmati. Non si dichiara exactly-once remoto.
 
 I test usano fake Mail/HTTP, tempo controllato e PostgreSQL reale; due processi separati provano eventi duplicati e un solo invio mentre il primo provider è bloccato su una barriera PostgreSQL, anche per le escalation. Un test di commit usa il transaction manager di produzione sulla connessione indipendente, evitando la scorciatoia di RefreshDatabase. M5.04 aggiunge confini dei ritardi/manutenzioni, riepiloghi dopo più step, riaperture, retry e recupero. M5.05 aggiunge DST/mezzanotte, configurazione e ammissione, matrice HTTP e un worker che attende il lock mentre la fascia viene modificata. I cicli già preparati in M5.03 conservano il pubblico originale: niente backfill da policy correnti, perché lo storico non è ricostruibile. Dettagli in [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md), [QUIET-HOURS.md](QUIET-HOURS.md) e [TESTING.md](TESTING.md#daily-quiet-hours-midnight-and-dst-m505). M5.06 aggiunge la matrice integrata lifecycle → coda fake serializzata → job/middleware → adapter, con provider simulati e copertura delle interazioni fra soppressioni. Criteri/evidenze in [NOTIFICATION-ACCEPTANCE.md](NOTIFICATION-ACCEPTANCE.md); esiti effettivi in TASKS, senza riduzioni di scope.
+
+## ADR-013 — Broadcast privati dopo commit e recupero delle proiezioni UI
+
+Data/task: 2026-10-30, M6.01. Stato: adottato; produttori/trasporto in M6.01, autorizzazione in M6.02 e recupero frontend in M6.03. Attua ADR-001/003/004/007 senza modificare gli outbox durevoli di check/notifiche.
+
+### Contesto e decisione
+
+Il risultato e le transizioni degli incidenti devono rimanere coerenti anche quando Redis/Reverb non sono disponibili. Gli eventi WebSocket non possono serializzare modelli, segreti o snapshot incidenti ricostruiti dopo transizioni successive; lo stato regionale non equivale allo stato aggregato del monitor.
+
+- `CheckCompleted` è un fatto interno immutabile `ShouldDispatchAfterCommit`, registrato dopo risultato, summary e observer transazionale. Include solo identità/slot/revisione/regione, kind/stato, latenza misurata e istanti pertinenti. Annullamento e mancata osservazione mantengono unknown/null; completamenti duplicati del ledger non emettono un nuovo risultato/evento.
+- I tre eventi incidenti già dopo commit mantengono sole identità; per la UI sono invalidazioni della proiezione corrente. Nessuna modifica al listener delle notifiche e nessun effetto esterno dentro la transazione.
+- Il listener esplicito `PublishTeamUpdates` entra nel tenant e controlla correlazioni monitor/risultato/incidente. `TeamUpdate` converte i fatti in payload scalar whitelist e un solo `PrivateChannel('team.{id}')`, con nomi brevi espliciti e versione schema 1. Nessun modello o testo privato in coda o sul filo; nessuna query privata nel job di trasporto.
+- Job Laravel `BroadcastEvent`, Redis esplicito e coda/supervisor `broadcasts` dedicati. Solo trasporto UI con 3 tentativi, backoff 1/5 s, timeout 10 s (HTTP Reverb già 3/5 s, Redis retry_after 90 s). Un errore di enqueue non si propaga al dominio; null disabilita l’invio. I retry dei check e quelli persistenti delle notifiche restano distinti.
+- Broadcast best-effort: niente nuovo outbox UI, possibili perdite/duplicati/riordino. Identità execution e slot/revisione/regione consentono la riconciliazione; non applicare lo stato regionale come stato concordato del monitor e non assumere corrente lo stato dedotto dal nome di un vecchio evento incidente. M6.03 recupera lo stato autorevole alla connessione/riconnessione.
+- Nessuna rotta di autorizzazione introdotta in M6.01: le sottoscrizioni private restano chiuse fino a M6.02. Nessuna variante pubblica/presence o frontend anticipato.
+
+### Alternative, conseguenze e verifica
+
+Esclusi invio sincrono sotto lock e broadcast automatico direttamente sugli eventi di dominio: un errore del broker potrebbe interrompere i listener di notifiche o apparire come fallimento di un check già salvato. Esclusa la serializzazione Eloquent, che espone dati superflui e può ricaricare risorse prima del confine tenant. Un outbox aggiuntivo non è necessario per una proiezione UI riconciliabile; il limite di perdita resta esplicito e richiede il recupero di M6.03.
+
+Test con payload esatti, HTTP Reverb firmato simulato e PostgreSQL isolato: commit/rollback effettivi su connessione indipendente con transaction manager di produzione, dati osservati/non osservati, revisioni storiche, regioni discordanti, correlazioni esterne, guasti broker/worker e indipendenza degli intenti di notifica. Contratto e limiti in [BROADCASTING.md](BROADCASTING.md); esiti effettivi in TASKS.

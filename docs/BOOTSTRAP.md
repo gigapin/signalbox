@@ -226,3 +226,7 @@ Incident transitions now prepare notification intents transactionally; public af
 ## Notification acceptance matrix (M5.06)
 
 [NOTIFICATION-ACCEPTANCE.md](NOTIFICATION-ACCEPTANCE.md) maps notification exit criteria to the automated suites. M5.06 adds tests/documentation and raises Composer's finite child-process timeout from 300 to 900 seconds after the full PostgreSQL suite exceeded the default. No migration, dependency, environment variable, application key, queue timeout or application-process change. Existing channel/outbox/quiet-hour migrations remain prerequisites for their application features. Full verification still uses isolated test storage and fake recipient services; no development migration or worker restart is performed.
+
+## Committed private team broadcasts (M6.01)
+
+[BROADCASTING.md](BROADCASTING.md) documents the new result event, after-commit listener and scalar `TeamUpdate` frame. Horizon adds a dedicated Redis `broadcasts` supervisor with three transport attempts and a 10-second timeout. No migration, dependency, lockfile, environment variable or key change. Recreate queue/scheduler deliberately to load the new code/supervisor; verification touches only test services. Null broadcasting disables publication. Private subscription endpoints remain unavailable until M6.02; Echo/frontend reconciliation remains M6.03.

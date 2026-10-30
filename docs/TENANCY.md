@@ -84,3 +84,7 @@ Scout's database engine builds its query from `Monitor::newQuery()`, so TeamScop
 ## Heartbeat ingress (M3.05)
 
 The dedicated public Bearer route resolves only state/team/monitor identities by a one-way digest before establishing TenantContext. It then locks Team → Monitor → state and revalidates ownership, credential, type and central eligibility. MonitorHeartbeat uses TeamScope; receipt queries always include explicit owner, state and generation predicates, with composite PostgreSQL foreign keys enforcing ownership. Credential management uses existing route-team binding and MonitorPolicy update, including a fresh check under lock. No public caller-supplied tenant identity is trusted. See [HEARTBEATS.md](HEARTBEATS.md).
+
+## Private broadcast producers (M6.01)
+
+`PublishTeamUpdates` reloads monitor/result/incident correlations under the event's explicit TenantContext and restores the caller's identity on every exit path. `TeamUpdate` retains only selected scalar facts and targets one private owner channel; native queued broadcasts rehydrate no model and perform no tenant database reads. Foreign/deleted correlations publish nothing, and no public/presence channel exists. Authorization endpoints remain unavailable until M6.02. See [BROADCASTING.md](BROADCASTING.md) for contract and limits.

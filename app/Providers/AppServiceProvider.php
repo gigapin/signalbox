@@ -21,6 +21,8 @@ use App\Events\Incidents\IncidentNotificationRequested;
 use App\Events\Incidents\IncidentOpened;
 use App\Events\Incidents\IncidentReopened;
 use App\Events\Incidents\IncidentResolved;
+use App\Events\Monitoring\CheckCompleted;
+use App\Services\Broadcasting\PublishTeamUpdates;
 use App\Services\Incidents\IncidentDetection;
 use App\Services\Monitoring\Checks\MonotonicCheckClock;
 use App\Services\Monitoring\Checks\ReactDnsTransport;
@@ -74,6 +76,9 @@ class AppServiceProvider extends ServiceProvider
 
         foreach ([IncidentOpened::class, IncidentReopened::class, IncidentResolved::class] as $event) {
             $events->listen($event, [PublishNotificationDeliveries::class, 'publish']);
+            $events->listen($event, [PublishTeamUpdates::class, 'publish']);
         }
+
+        $events->listen(CheckCompleted::class, [PublishTeamUpdates::class, 'publish']);
     }
 }

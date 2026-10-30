@@ -13,11 +13,13 @@ use App\Enums\Monitoring\CheckResultKind;
 use App\Enums\Monitoring\MonitorRegion;
 use App\Enums\Monitoring\MonitorStatus;
 use App\Enums\Monitoring\MonitorType;
+use App\Events\Monitoring\CheckCompleted;
 use App\Models\CheckExecution;
 use App\Models\CheckResult;
 use App\Models\Monitor;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -27,8 +29,9 @@ final readonly class ExecutionResults
     /**
      * @param TenantContext $tenants Active private write boundary.
      * @param ResultObserver $observer Consumer of each recorded result inside the same transaction.
+     * @param Dispatcher $events Register immutable result announcements for dispatch after the real commit.
      */
-    public function __construct(private TenantContext $tenants, private ResultObserver $observer)
+    public function __construct(private TenantContext $tenants, private ResultObserver $observer, private Dispatcher $events)
     {
     }
 
@@ -63,6 +66,7 @@ final readonly class ExecutionResults
             CheckResultKind::Infrastructure => 'The worker did not durably complete an observation.',
         };
         $status = $outcome === null ? MonitorStatus::Unknown : $outcome->status;
+        $latency = $outcome?->latencyMs === null ? null : (int) round($outcome->latencyMs, 0, PHP_ROUND_HALF_UP);
 
         DB::table('check_results')->insert([
             'team_id' => $work->team_id,
@@ -75,7 +79,7 @@ final readonly class ExecutionResults
             'status' => $status->value,
             'checked_at' => $outcome?->observedAt->utc()->format('Y-m-d H:i:s.uP'),
             'recorded_at' => $recordedAt->utc()->format('Y-m-d H:i:s.uP'),
-            'response_time_ms' => $outcome?->latencyMs === null ? null : (int) round($outcome->latencyMs, 0, PHP_ROUND_HALF_UP),
+            'response_time_ms' => $latency,
             'status_code' => $outcome?->statusCode,
             'error_code' => $code,
             'error_message' => $message,
@@ -91,6 +95,19 @@ final readonly class ExecutionResults
             $kind,
             $status,
             $outcome?->error,
+            $recordedAt,
+        ));
+        $this->events->dispatch(new CheckCompleted(
+            $work->team_id,
+            $work->monitor_id,
+            $work->id,
+            MonitorRegion::from($work->region),
+            $work->slot_at,
+            $work->monitor_revision,
+            $kind,
+            $status,
+            $latency,
+            $outcome?->observedAt,
             $recordedAt,
         ));
     }

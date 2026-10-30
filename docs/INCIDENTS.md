@@ -1,6 +1,6 @@
 # Incidents, regional confirmation and timeline
 
-The incident model, its append-only timeline, the status graph and severity derivation were introduced first (M4.01). Regional confirmation, automatic opening/resolution/reopening and the manual incident actions follow (M4.02–M4.03, see [Regional confirmation](#regional-confirmation) and [Manual actions](#manual-actions)). Maintenance windows and pause history are described in [MAINTENANCE.md](MAINTENANCE.md). Routes, pages and Form Requests (M4.05) are described in [INCIDENT-UI.md](INCIDENT-UI.md); notifications (M5) remain later work.
+The incident model, its append-only timeline, the status graph and severity derivation were introduced first (M4.01). Regional confirmation, automatic opening/resolution/reopening and the manual incident actions follow (M4.02–M4.03, see [Regional confirmation](#regional-confirmation) and [Manual actions](#manual-actions)). Maintenance windows and pause history are described in [MAINTENANCE.md](MAINTENANCE.md). Routes, pages and Form Requests (M4.05) are described in [INCIDENT-UI.md](INCIDENT-UI.md); durable notifications (M5) are described in [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md), and private broadcast producers (M6.01) in [BROADCASTING.md](BROADCASTING.md). Subscription authorization and the frontend remain M6.02–M6.03.
 
 ## Lifecycle
 
@@ -137,3 +137,7 @@ Out-of-order semantics follow ADR-007: a newer slot that does not follow a proce
 ## Transactional notification preparation (M5.03)
 
 Before each public after-commit lifecycle event, `IncidentLifecycle` emits the internal synchronous `IncidentNotificationRequested` event with tenant/incident/monitor identities, cycle and controlled event name. Its notification listener prepares the frozen audience and encrypted outbox inside the same transaction, without network I/O. Failure rolls back the incident and timeline together with notification preparation; repeated requests keep the original audience, including an empty one. These changes do not alter regional confirmation, status transitions or the public event payloads. Apply the incremental `000019` migration before using the updated lifecycle. See [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md).
+
+## Private UI invalidations (M6.01)
+
+The existing after-commit lifecycle events additionally queue identity-only private-team broadcasts through `PublishTeamUpdates`. Their names invalidate current authorized incident/monitor projections; they are not mutable status snapshots or public incident publication. Timeline text, root-cause notes, user details and monitor network targets never enter these frames. The durable notification listener remains independent and a broadcast broker error cannot undo the incident or stop notification intent/publication. Subscription authorization remains M6.02; see [BROADCASTING.md](BROADCASTING.md).

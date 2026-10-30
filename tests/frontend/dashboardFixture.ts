@@ -43,6 +43,7 @@ export const dashboard: DashboardView = {
         observedPercent: null,
         coveragePercent: null,
         slaPercent: null,
+        durations: null,
         series: timestamps.map((at) => ({ at, value: null })),
     },
 };

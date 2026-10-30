@@ -1,6 +1,6 @@
 # Private live pages (M6.03)
 
-The monitor/incident list/detail screens and M6.04's operational dashboard use native Laravel Echo through `useLivePage`. [BROADCASTING.md](BROADCASTING.md) owns the scalar event contract and subscription authorization; this document owns browser lifecycle and recovery. [DASHBOARD.md](DASHBOARD.md) records the delivered UI/latency chart and remaining M6.04 dependency on definitive uptime/SLA from M7. Integrated acceptance/hardening remains M6.05.
+The monitor/incident list/detail screens and M6.04's operational dashboard use native Laravel Echo through `useLivePage`. [BROADCASTING.md](BROADCASTING.md) owns the scalar event contract and subscription authorization; this document owns browser lifecycle and recovery. [DASHBOARD.md](DASHBOARD.md) records the delivered UI, latency chart and availability values. Integrated acceptance is M6.05.
 
 ## Configuration and installation
 

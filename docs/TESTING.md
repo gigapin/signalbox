@@ -401,3 +401,7 @@ The acceptance gate remains `./scripts/verify.sh`. Results are recorded in TASKS
 ## Percentiles and storage cost (M7.02)
 
 `CheckRollupsTest` compares hourly and daily percentiles, sample counts and sums with PostgreSQL's `percentile_disc` on the raw results, for three seeds with unequal hours, repeated values, zeros and null latency. It also checks frequency-map consistency, the difference from averaged percentiles and `metrics:rollup-storage`. `LatencyDistributionTest` adds merge order independence. `RollupStorageBenchmarkTest` runs in the ordinary suite with structural assertions only: sizes and times are never asserted. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#percentiles-and-storage-cost-m702).
+
+## Time-weighted SLA (M7.03)
+
+`AvailabilityReportTest` covers the ADR-009 formulas and every null case without infrastructure. `MonitorAvailabilityTest` runs on PostgreSQL with real ledger rows: time weighting against check counts, gaps, overlapping exclusions, null denominators, clipping, equal durations from raw results and rollups at seven window edges, rollups read as the actual source, expired raw results, stored holes, the oldest partition, plan history after a downgrade, slots still running, hourly splits and tenant isolation. `DashboardTest` and `RealtimeDeliveryTest` verify the production values through the private route, and `Dashboard.test.tsx` their display. Timezone and DST windows are M7.06.

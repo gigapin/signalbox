@@ -12,6 +12,12 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M7.03, 2026-10-30
+
+- **M7.03 completato e M6.04 chiuso, quindi M6 completata**: nuovo servizio `MonitorAvailability` con durate, uptime osservato, copertura e SLA pesati sul tempo; la dashboard mostra ora valori reali. Regole e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703).
+- Gate `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run **529 file**, Larastan livello 8, **2572 test Pest/17421 asserzioni**, 5 qualità, DOM e build.
+- **Prossimo task pronto: M7.04**, job notturno, schedulazione di `metrics:rollups`, drop partizioni e retention. Vincolo nuovo: un bordo letto dai grezzi richiede risultati fino a 48 ore precedenti. Restano da applicare la migration dei rollup e `metrics:rollups`: fino ad allora le finestre oltre 30 giorni risultano non disponibili.
+
 ## Consegna di sessione — M7.02, 2026-10-30
 
 - **M7.02 completato**: percentili esatti confermati e costo misurato, senza modifiche a schema o scrittura dei rollup. Valori verificati contro `percentile_disc` di PostgreSQL sui grezzi. Misure, definizioni e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#percentiles-and-storage-cost-m702). Nuovo comando di sola lettura `metrics:rollup-storage`.
@@ -414,10 +420,10 @@ Dipendenze: M3–M5.
 - [x] M6.01 Trasmettere CheckCompleted ed eventi incidenti dopo commit con payload minimo su canali privati `team.{id}`.
 - [x] M6.02 Autorizzare sottoscrizioni e testare il rifiuto degli utenti di altri team.
 - [x] M6.03 Integrare Reverb/Echo e hook React per aggiornamento locale, riconnessione e recupero dello stato dopo disconnessione senza polling periodico.
-- [/] M6.04 Creare dashboard con stato monitor, incidenti, latenza e uptime; usare il servizio SLA di M7 per i valori definitivi.
+- [x] M6.04 Creare dashboard con stato monitor, incidenti, latenza e uptime; usare il servizio SLA di M7 per i valori definitivi.
 - [x] M6.05 Testare payload, aggiornamenti UI, assenza di duplicati e sicurezza dei canali.
 
-Uscita: dashboard aggiornata via WebSocket e grafici coerenti; chiusura definitiva dopo M7 per le metriche SLA. Accettazione operativa/payload/canali completata con M6.05 il 2026-10-30; M6.04 e uscita numerica restano aperte fino all'integrazione M7.03. Prossimo lavoro pronto M7.03.
+Uscita soddisfatta il 2026-10-30: dashboard aggiornata via WebSocket e grafici coerenti. Accettazione operativa/payload/canali completata con M6.05; valori numerici integrati con M7.03.
 
 ## M7 — Aggregazioni, retention e SLA (12 h)
 
@@ -425,7 +431,7 @@ Dipendenze: M3–M4; completa le metriche di M6.
 
 - [x] M7.01 Implementare rollup orari/giornalieri idempotenti con uptime, conteggi, media, p50 e p95; estendere lo schema esemplificativo dove necessario.
 - [x] M7.02 Definire percentili esatti o approssimati e dati aggregabili da conservare: non mediare i percentili orari per ottenere quelli giornalieri.
-- [ ] M7.03 Implementare servizio SLA pesato sul tempo con esclusione di manutenzioni/pause, intersezioni e intervalli parziali; definire assenza dati e denominatore nullo.
+- [x] M7.03 Implementare servizio SLA pesato sul tempo con esclusione di manutenzioni/pause, intersezioni e intervalli parziali; definire assenza dati e denominatore nullo.
 - [ ] M7.04 Implementare job notturno, creazione/drop partizioni, retention per piano e verifica dei rollup prima della rimozione; rispettare la politica concordata sui 30 giorni. Integrare la pulizia delle ricezioni heartbeat introdotte in M3.05 preservando quelle necessarie agli slot ancora validi.
 - [ ] M7.05 Implementare report mensile PDF con autorizzazione tenant e timezone corretta.
 - [ ] M7.06 Testare confini mese/anno, timezone/DST, finestre sovrapposte, pause storiche, periodi senza check, percentili e riesecuzione dei job su PostgreSQL.
@@ -501,7 +507,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 UI operativa verificata, in corso per integrazione numerica M7.03; M7.01–M7.02 completati il 2026-10-30; prossimo task pronto M7.03. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; prossimo task pronto M7.04. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -1386,3 +1392,12 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Benchmark eseguito due volte: byte e valori distinti identici, tempi di unione leggermente diversi e quindi non assunti come garanzia. Le righe più grandi di Pro stabile rispetto a Business stabile dipendono dalla compressione TOAST.
 - Gate finale `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run **525 file**, Larastan livello 8, **2530 Pest/17263 asserzioni**, lint/formato/TypeScript, **5 qualità / 148 DOM** e build. Log locali temporanei `m702-verify.log` e `m702-bench2.log` nello scratchpad di sessione. Dopo il gate modificato soltanto questo piano.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, migration o comandi sul database di sviluppo, misura su rollup reali (il comando ha girato solo su righe di test), carico prolungato. **M7.02 completato; prossimo task pronto M7.03; M6.04 resta [/].**
+
+### 2026-10-30 — M7.03: servizio SLA pesato sul tempo (completato)
+
+- Richiesta dell'utente di implementare il task; dipendenze M7.01–M7.02 soddisfatte, task segnato in corso prima delle modifiche. Git/gh non eseguiti.
+- File: `app/Data/Metrics/AvailabilityReport.php`, `app/Services/Metrics/MonitorAvailability.php`; modificati `AvailabilityDurations`, `PlanLimits`, `RollupSource` (parametro `settledAt`), `DashboardOverview`, `types.ts`, `Dashboard/Show.tsx`. Test: `tests/Unit/AvailabilityReportTest.php`, `tests/Integration/MonitorAvailabilityTest.php`; aggiornati `DashboardTest`, `RealtimeDeliveryTest`, `Dashboard.test.tsx`, `dashboardFixture.ts`. Documenti: METRIC-ROLLUPS, DASHBOARD, ARCHITECTURE, BOOTSTRAP, MAINTENANCE, TESTING, TENANCY, AUTHORIZATION-MATRIX, BROADCASTING, REALTIME-ACCEPTANCE, REALTIME-CLIENT.
+- Decisioni: (1) ore intere dai rollup orari, bordi e ore non ancora aggregate dai grezzi; i giornalieri non servono per le durate; (2) una finestra non ricostruibile è non disponibile per intero: nessuna risposta parziale e nessun buco contato come tempo sconosciuto; (3) limite logico di 30 giorni sui grezzi e cronologia del piano corrente applicata subito alla lettura, anche dopo un downgrade; (4) gli slot con lavoro regionale ancora concludibile sono esclusi dalle letture dei grezzi, altrimenti una finestra che termina adesso risulterebbe per un attimo a copertura parziale; (5) percentuali arrotondate per difetto a due decimali con interi; (6) la dashboard somma le ore della finestra, con una sola lettura dei grezzi; (7) `durations` aggiunto al contratto della dashboard perché ADR-009 chiede di esporre le durate.
+- Limiti: un bordo dai grezzi richiede risultati fino a 48 ore prima (due intervalli massimi), quindi è non disponibile nei primi due giorni della partizione più vecchia: da considerare in M7.04. Finestre in fuso orario e DST: conversione a carico del chiamante, test in M7.05–M7.06. Lo SLA di una finestra mobile resta spesso null: basta un tratto sconosciuto nelle 24 ore.
+- Verifiche: gate `./scripts/verify.sh` **exit 0**, PHP 8.4.27: formatter dry-run 529 file, Larastan livello 8, 2572 test Pest/17421 asserzioni, 5 test qualità, DOM, build. Il primo gate si era fermato solo su Prettier in `Show.tsx`, corretto e rieseguito per intero. Nei test iniziali i fallimenti venivano dalle fixture e dalle vecchie aspettative null, non dal servizio. Dopo il gate modificato soltanto `docs/TASKS.md`.
+- Non eseguiti: Git/gh, CI remota/PHP 8.5, migration o comandi sul database di sviluppo, browser/Reverb/worker live, carico su finestre lunghe. **M7.03 e M6.04 completati; M6 completata; prossimo task pronto M7.04.**

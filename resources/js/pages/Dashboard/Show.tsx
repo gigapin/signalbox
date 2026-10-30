@@ -15,6 +15,19 @@ function percentage(value: number | null): string {
     return value === null ? 'Unavailable' : `${value.toFixed(2)}%`;
 }
 
+/** Display whole seconds as hours, minutes and seconds, leaving out leading zero units. */
+function duration(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const rest = seconds % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m ${rest}s`;
+    }
+
+    return minutes > 0 ? `${minutes}m ${rest}s` : `${rest}s`;
+}
+
 /** Render one route team's dashboard; URL selection is carried unchanged into event-driven recovery. */
 export default function Show() {
     const { team } = usePage<DashboardProps>().props;
@@ -219,6 +232,26 @@ export default function Show() {
                     <dd>{percentage(uptime.slaPercent)}</dd>
                 </div>
             </dl>
+            {uptime.durations !== null && (
+                <dl aria-label="Availability durations" className="mt-3 grid gap-3 sm:grid-cols-4">
+                    <div>
+                        <dt className="text-sm text-slate-400">Time up</dt>
+                        <dd>{duration(uptime.durations.upSeconds)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-slate-400">Time down</dt>
+                        <dd>{duration(uptime.durations.downSeconds)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-slate-400">Time unknown</dt>
+                        <dd>{duration(uptime.durations.unknownSeconds)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-slate-400">Time excluded</dt>
+                        <dd>{duration(uptime.durations.excludedSeconds)}</dd>
+                    </div>
+                </dl>
+            )}
         </AuthLayout>
     );
 }

@@ -102,18 +102,28 @@ test('offers usable empty page and no-monitor states and reports invalid filter 
     );
 });
 
-test('renders future service percentages and an uptime series through the same nullable contract', () => {
+test('renders service percentages, durations and an uptime series through the same nullable contract', () => {
     renderDashboard({
         ...dashboard,
         uptime: {
             observedPercent: 99.5,
             coveragePercent: 100,
             slaPercent: 99.5,
+            durations: {
+                upSeconds: 3661,
+                downSeconds: 61,
+                unknownSeconds: 0,
+                excludedSeconds: 7200,
+            },
             series: timestamps.map((at, index) => ({ at, value: index === 1 ? null : 99.5 })),
         },
     });
     expect(screen.getAllByText('99.50%')).toHaveLength(2);
     expect(screen.getByText('100.00%')).toBeInTheDocument();
+    expect(screen.getByText('1h 1m 1s')).toBeInTheDocument();
+    expect(screen.getByText('1m 1s')).toBeInTheDocument();
+    expect(screen.getByText('0s')).toBeInTheDocument();
+    expect(screen.getByText('2h 0m 0s')).toBeInTheDocument();
     expect(
         screen
             .getByRole('img', { name: 'Observed uptime: Observed uptime' })

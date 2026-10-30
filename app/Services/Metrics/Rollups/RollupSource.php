@@ -19,10 +19,13 @@ final class RollupSource
      * @param int $monitorId Monitor being rolled up.
      * @param CarbonImmutable $start Inclusive range start.
      * @param CarbonImmutable $end Exclusive range end.
+     * @param CarbonImmutable|null $settledAt When given, slots with work that can still finish at this instant are left out, because their regional verdict is not final; closed hours never need it.
      * @return list<SlotRecord> Slots of the range plus earlier slots whose validity reaches into it, ordered by slot.
      */
-    public function slots(int $teamId, int $monitorId, CarbonImmutable $start, CarbonImmutable $end): array
+    public function slots(int $teamId, int $monitorId, CarbonImmutable $start, CarbonImmutable $end, ?CarbonImmutable $settledAt = null): array
     {
+        $settled = $settledAt === null ? null : $this->instant($settledAt);
+
         $rows = DB::select(<<<'SQL'
             SELECT
                 (EXTRACT(EPOCH FROM execution.slot_at) * 1000000)::bigint AS slot_at,
@@ -48,6 +51,20 @@ final class RollupSource
                         AND execution.expires_at + (execution.expires_at - execution.slot_at) > :valid_after
                     )
                 )
+                AND (
+                    :settled_check::timestamptz IS NULL
+                    OR NOT EXISTS (
+                        SELECT 1
+                        FROM check_executions sibling
+                        WHERE sibling.team_id = execution.team_id
+                            AND sibling.monitor_id = execution.monitor_id
+                            AND sibling.slot_at = execution.slot_at
+                            AND (
+                                (sibling.state = 'pending' AND sibling.expires_at > :settled_pending)
+                                OR (sibling.state = 'running' AND sibling.deadline_at > :settled_running)
+                            )
+                    )
+                )
             ORDER BY execution.slot_at
             SQL, [
             'result_from' => $this->instant($start->subSeconds($this->lookbackSeconds())),
@@ -58,6 +75,9 @@ final class RollupSource
             'slot_from' => $this->instant($start),
             'lookback_from' => $this->instant($start->subSeconds($this->lookbackSeconds())),
             'valid_after' => $this->instant($start),
+            'settled_check' => $settled,
+            'settled_pending' => $settled,
+            'settled_running' => $settled,
         ]);
 
         return $this->grouped($rows);

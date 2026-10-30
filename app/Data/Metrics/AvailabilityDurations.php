@@ -22,4 +22,24 @@ final readonly class AvailabilityDurations
         public int $excluded,
     ) {
     }
+
+    /** @return int Time the monitor was expected to be watched: everything except exclusions. */
+    public function eligible(): int
+    {
+        return $this->up + $this->down + $this->unknown;
+    }
+
+    /**
+     * @param self $other Durations of a period disjoint from this one.
+     * @return self Durations of both periods together.
+     */
+    public function plus(self $other): self
+    {
+        return new self(
+            $this->up + $other->up,
+            $this->down + $other->down,
+            $this->unknown + $other->unknown,
+            $this->excluded + $other->excluded,
+        );
+    }
 }

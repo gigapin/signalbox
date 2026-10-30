@@ -1,6 +1,6 @@
 # Maintenance windows and pause history (M4.04)
 
-Planned maintenance and historical pauses are the excluded time of ADR-009: the SLA denominator removes the union of voluntary pauses, plan suspensions and maintenance windows, all as half-open UTC intervals `[start, end)`. Maintenance also prevents incidents from opening. Routes and the monitor page section are described in [INCIDENT-UI.md](INCIDENT-UI.md) (M4.05); notification silencing is implemented in M5.04 and the SLA computation remains M7.
+Planned maintenance and historical pauses are the excluded time of ADR-009: the SLA denominator removes the union of voluntary pauses, plan suspensions and maintenance windows, all as half-open UTC intervals `[start, end)`. Maintenance also prevents incidents from opening. Routes and the monitor page section are described in [INCIDENT-UI.md](INCIDENT-UI.md) (M4.05); notification silencing is implemented in M5.04 and the SLA computation is in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703).
 
 ## Maintenance windows
 
@@ -40,7 +40,7 @@ Tests that fix the application clock see pause instants at the real database tra
 
 ## Excluded time for SLA
 
-`App\Services\Metrics\ExclusionPeriods::between()` returns, for one monitor of the active team, the merged excluded intervals clipped to a requested window; still-open pauses end at the window end. `App\Data\Metrics\TimeInterval::union()` merges overlapping and adjacent intervals so excluded time is never subtracted twice. The SLA service (M7) combines this with observed up/down/unknown time.
+`App\Services\Metrics\ExclusionPeriods::between()` returns, for one monitor of the active team, the merged excluded intervals clipped to a requested window; still-open pauses end at the window end. `App\Data\Metrics\TimeInterval::union()` merges overlapping and adjacent intervals so excluded time is never subtracted twice. `MonitorAvailability` combines this with observed up/down/unknown time.
 
 ## Tests
 

@@ -2,7 +2,7 @@
 
 This records the concrete evidence for payloads, operational UI recovery, duplicate handling and private-channel boundaries. [BROADCASTING.md](BROADCASTING.md) owns producer/admission contracts, [REALTIME-CLIENT.md](REALTIME-CLIENT.md) owns browser lifecycle, and [DASHBOARD.md](DASHBOARD.md) owns operational/latency projections. Actual commands/results are recorded in [TASKS.md](TASKS.md).
 
-M6.05 covers the implemented realtime behavior. **M6.04 and the overall M6 exit remain open for M7's numerical availability/SLA integration.** Null uptime/coverage/SLA is tested as the current truthful contract; this document does not certify a future time-weighted calculation.
+M6.05 covers the implemented realtime behavior. M7.03 later added the numerical availability/SLA values, which close M6.04 and the M6 exit; their rules and evidence are in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703).
 
 ## Criterion → evidence
 
@@ -24,7 +24,7 @@ M6.05 covers the implemented realtime behavior. **M6.04 and the overall M6 exit 
 | Native publisher integrity/freshness | `ReverbProtocolSecurityTest` | Installed Reverb rejects changed bodies/destinations, missing signatures and a correctly re-signed expired timestamp before delivery |
 | Native browser restrictions | `ReverbProtocolSecurityTest` | Origin allowlist accepts localhost/127.0.0.1 and refuses foreign/lookalike/opaque/empty origins; private admission requires a grant; browser client events are refused even for channel members |
 | Native message budget | `ReverbProtocolSecurityTest` | The configured 60-message budget is enforced and the next message terminates the transport, without sleeping |
-| Configuration/payload secrecy and operational graphs | `LivePageRecoveryTest`, `DashboardTest`, `RealtimeDeliveryTest`, `Dashboard.test.tsx` | No private network configuration in frame/dashboard projections; bounded lists/latency, real gaps/zero values, accessible region controls and explicit unavailable SLA |
+| Configuration/payload secrecy and operational graphs | `LivePageRecoveryTest`, `DashboardTest`, `RealtimeDeliveryTest`, `Dashboard.test.tsx` | No private network configuration in frame/dashboard projections; bounded lists/latency, real gaps/zero values, accessible region controls and explicit unavailable values |
 
 ## What runs for real
 
@@ -51,7 +51,6 @@ The initial pending-grant regression failed: changing the connection to disconne
 - Public channels can exist in Reverb, but the product publisher emits only private destinations. Origin checks are browser defenses and do not replace signed application publishing or the HTTP membership gate.
 - Snapshots use existing read-committed queries and are reconciled by later triggers; they are not one transactional database watermark. The current no-polling/bounded-read cost remains documented in REALTIME-CLIENT.
 - A real browser, live Reverb/Pusher network reconnection, queue-worker delivery, remote PHP 8.5 CI and a load benchmark are not executed by these tests. The normal gate runs PHP 8.4 and controlled transports; live deployment/benchmark evidence remains separate.
-- M7 must supply time-weighted uptime, coverage, durations and SLA before M6.04 and final M6 availability acceptance can close. Synthetic future-service DOM fixtures demonstrate rendering only.
 
 ## Reproduce
 

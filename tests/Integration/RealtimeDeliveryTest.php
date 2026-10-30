@@ -131,7 +131,8 @@ it('delivers committed check and incident transitions only to a freshly authoriz
         $this->get($url, realtimeDashboardHeaders())->assertOk()
             ->assertJsonPath('props.dashboard.counts.'.$status->value, 1)
             ->assertJsonPath('props.dashboard.counts.openIncidents', $status === MonitorStatus::Down ? 1 : 0)
-            ->assertJsonPath('props.dashboard.uptime.observedPercent', null)
+            // Down for five minutes, then up for five: no observed time yet, then 0%, then 50%.
+            ->assertJsonPath('props.dashboard.uptime.observedPercent', [null, 0, 50][$index])
             ->assertDontSee('canary-', false);
 
         if ($index < 2) {

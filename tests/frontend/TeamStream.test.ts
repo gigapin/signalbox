@@ -227,3 +227,83 @@ test('bounds pending grant acquisition to ten seconds and clears all timers on d
     f.close();
     expect(vi.getTimerCount()).toBe(0);
 });
+
+test('cancels an old socket grant on disconnect without poisoning the replacement subscription', async () => {
+    let finishOld: (response: Response) => void = () => {
+        throw new Error('Old request did not start');
+    };
+    const read = vi
+        .fn<typeof fetch>()
+        .mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    finishOld = resolve;
+                }),
+        )
+        .mockResolvedValueOnce(new Response(JSON.stringify({ auth: 'new-socket-grant' })));
+    vi.stubGlobal('fetch', read);
+    const f = fixture();
+    const oldDone = vi.fn();
+    const newDone = vi.fn();
+    f.authorize({ socketId: '111.222', channelName: 'private-team.7' }, oldDone);
+    const oldSignal = read.mock.calls[0]?.[1]?.signal;
+    socket.states.get('state_change')?.({ current: 'disconnected' });
+    expect(oldSignal?.aborted).toBe(true);
+    socket.states.get('state_change')?.({ current: 'connected' });
+    f.authorize({ socketId: '333.444', channelName: 'private-team.7' }, newDone);
+    await vi.waitFor(() =>
+        expect(newDone).toHaveBeenCalledWith(null, { auth: 'new-socket-grant' }),
+    );
+    finishOld(new Response(JSON.stringify({ auth: 'old-socket-grant' })));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(oldDone).not.toHaveBeenCalled();
+    expect(f.signals.state).not.toHaveBeenCalledWith('error');
+});
+
+test.each(['resolve', 'reject'])(
+    'ignores an old grant body that finishes with %s after a replacement socket is ready',
+    async (completion) => {
+        vi.useFakeTimers();
+        let resolveBody: (value: unknown) => void = () => {
+            throw new Error('Body did not start');
+        };
+        let rejectBody: (reason: Error) => void = () => {
+            throw new Error('Body did not start');
+        };
+        const oldResponse = new Response('{}');
+        const json = vi.spyOn(oldResponse, 'json').mockImplementation(
+            () =>
+                new Promise((resolve, reject) => {
+                    resolveBody = resolve;
+                    rejectBody = reject;
+                }),
+        );
+        vi.stubGlobal(
+            'fetch',
+            vi
+                .fn<typeof fetch>()
+                .mockResolvedValueOnce(oldResponse)
+                .mockResolvedValueOnce(new Response(JSON.stringify({ auth: 'replacement-grant' }))),
+        );
+        const f = fixture();
+        const oldDone = vi.fn();
+        const newDone = vi.fn();
+        f.authorize({ socketId: '111.222', channelName: 'private-team.7' }, oldDone);
+        await vi.waitFor(() => expect(json).toHaveBeenCalledOnce());
+        socket.states.get('state_change')?.({ current: 'disconnected' });
+        socket.states.get('state_change')?.({ current: 'connected' });
+        f.authorize({ socketId: '333.444', channelName: 'private-team.7' }, newDone);
+        await vi.waitFor(() =>
+            expect(newDone).toHaveBeenCalledWith(null, { auth: 'replacement-grant' }),
+        );
+        socket.bindings.get('pusher:subscription_succeeded')?.({});
+        if (completion === 'resolve') resolveBody({ auth: 'stale-grant' });
+        else rejectBody(new TypeError('Stale body failed'));
+        await vi.advanceTimersByTimeAsync(0);
+        expect(oldDone).not.toHaveBeenCalled();
+        expect(f.signals.state).not.toHaveBeenCalledWith('error');
+        expect(f.signals.subscribed).toHaveBeenCalledOnce();
+        expect(vi.getTimerCount()).toBe(0);
+    },
+);

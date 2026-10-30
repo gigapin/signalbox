@@ -310,3 +310,20 @@ docker compose run --rm php-test vendor/bin/pest tests/Feature/NotificationDeliv
 ```
 
 Actual counts and results are recorded in TASKS. Quiet-hours/DST coverage remains M5.05/M5.06.
+
+## Daily quiet hours, midnight and DST (M5.05)
+
+`QuietHoursTest` covers strict local-time/IANA validation, inclusive/exclusive minute boundaries, midnight wrapping, unchanged input instants, Rome's repeated/missing hours, ranges spanning the spring jump, New York's rollback and fractional offsets. It is a pure unit suite without a Laravel/database bootstrap.
+
+`NotificationQuietHoursTest` exercises the real route/action and PostgreSQL checks: optional configuration, repeated updates/removal, rejected omitted/empty/partial/equal-boundary/unknown-zone inputs, unchanged encrypted recipient/verification/fingerprint, owner/viewer projections and verification-code availability during silencing. The full route inventory, actor/access/authentication matrix and foreign-child scenarios include the new quiet-hours route. Rollback tests of `MonitorModelTest` and `TeamIdentityTest` reverse and restore the incremental migration.
+
+`IncidentNotificationDeliveryTest` adds a 12-case boundary matrix across opening/escalation/resolution, rule changes after preparation, retry suppression, expired leases/late acknowledgements, already-admitted acceptance, future steps, no summary for wholly silenced incidents, independent recipients/tenants, real DST admission and safe terminal failure for corrupt stored zones. `NotificationConcurrencyTest` holds the Team lock in the parent session, observes the child worker waiting, commits a quiet-hours change, then proves no provider receipt and no acquired attempt. HTTP/Mail remain fake and subprocesses use only guarded test storage.
+
+`Notifications.test.tsx` adds read-only display, enabling and submitting an overnight interval, prefill/explicit removal and announced per-field errors with retained values. Run the suites through the isolated runtimes; the acceptance gate remains `./scripts/verify.sh`:
+
+```sh
+docker compose run --rm php-test vendor/bin/pest tests/Unit/QuietHoursTest.php tests/Integration/NotificationQuietHoursTest.php tests/Integration/IncidentNotificationDeliveryTest.php tests/Integration/NotificationConcurrencyTest.php tests/Integration/TeamAuthorizationMatrixTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npx vitest run tests/frontend/Notifications.test.tsx
+```
+
+The first targeted run found only a test expectation comparing a factory timestamp string with PostgreSQL's timezone-qualified representation; it now compares the same persisted representation. No provider or application regression was found in that run. Final counts/results are recorded in TASKS; complete notification acceptance remains M5.06.

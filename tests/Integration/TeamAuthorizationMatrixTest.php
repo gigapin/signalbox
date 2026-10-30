@@ -283,6 +283,12 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.notification-channels.activation':
             expect($fixture->loadChannel()?->is_active)->toBeFalse();
             break;
+        case 'teams.notification-channels.quiet-hours':
+            expect($fixture->loadChannel()?->quiet_hours_start)->toBe('22:00')
+                ->and($fixture->loadChannel()?->quiet_hours_end)->toBe('07:00')
+                ->and($fixture->loadChannel()?->quiet_hours_timezone)->toBe('Europe/Rome')
+                ->and($fixture->loadChannel()?->is_active)->toBeTrue();
+            break;
         case 'teams.notification-channels.signing-secret':
             expect($fixture->loadChannel()?->config_json['signing_secret'])->toBe($response->json('secret'))
                 ->and($response->headers->get('Cache-Control'))->toContain('no-store');
@@ -368,6 +374,7 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
     'teams.notification-channels.verification.store',
     'teams.notification-channels.verification.confirm',
     'teams.notification-channels.activation',
+    'teams.notification-channels.quiet-hours',
     'teams.notification-channels.signing-secret',
     'teams.escalation-policies.update',
     'teams.escalation-policies.destroy',

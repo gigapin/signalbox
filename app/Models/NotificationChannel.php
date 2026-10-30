@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Contracts\Notifications\ChannelConfiguration;
+use App\Data\Notifications\QuietHours;
 use App\Enums\Notifications\ChannelType;
 use App\Models\Concerns\BelongsToTeam;
 use App\Services\Notifications\ChannelConfigurationParser;
@@ -14,6 +15,7 @@ use Carbon\CarbonImmutable;
 use Database\Factories\NotificationChannelFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use LogicException;
 
 /**
  * Written by ManageNotificationChannels. The configuration and the code digest are hidden from serialization;
@@ -23,6 +25,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $team_id Immutable owning tenant.
  * @property ChannelType $type Immutable channel family.
  * @property string $name Nonblank label of at most 100 characters.
+ * @property string|null $quiet_hours_start Inclusive daily local HH:mm, null when silencing is disabled.
+ * @property string|null $quiet_hours_end Exclusive daily local HH:mm, distinct from start; null when disabled.
+ * @property string|null $quiet_hours_timezone IANA timezone of the daily interval; null when disabled.
  * @property array<string, string> $config_json Decrypted configuration, secrets included.
  * @property bool $is_active Whether deliveries use the channel; requires a verification.
  * @property CarbonImmutable|null $verified_at UTC instant the current destination was verified; reset when it changes.
@@ -91,6 +96,24 @@ final class NotificationChannel extends Model
     public function configuration(): ChannelConfiguration
     {
         return app(ChannelConfigurationParser::class)->hydrate($this->type, $this->config_json);
+    }
+
+    /**
+     * @return QuietHours|null Current daily silencing rule, independently of the provider destination.
+     * @throws LogicException When stored configuration is incomplete.
+     * @throws \InvalidArgumentException When stored times or timezone are invalid.
+     */
+    public function quietHours(): ?QuietHours
+    {
+        if ($this->quiet_hours_start === null && $this->quiet_hours_end === null && $this->quiet_hours_timezone === null) {
+            return null;
+        }
+
+        if ($this->quiet_hours_start === null || $this->quiet_hours_end === null || $this->quiet_hours_timezone === null) {
+            throw new LogicException('Stored quiet hours are incomplete.');
+        }
+
+        return new QuietHours($this->quiet_hours_start, $this->quiet_hours_end, $this->quiet_hours_timezone);
     }
 
     /**

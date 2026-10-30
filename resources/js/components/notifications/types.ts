@@ -1,6 +1,16 @@
 /** Describe the channel, policy, delivery and escalation projections sent by NotificationPresenter. */
 import type { MonitorPageProps } from '../monitors/types';
 
+/** Daily half-open local interval; a later start wraps through midnight. */
+export interface QuietHoursView {
+    /** Inclusive local time in HH:mm. */
+    start: string;
+    /** Exclusive local time in HH:mm, distinct from start. */
+    end: string;
+    /** Explicit IANA timezone used at delivery admission. */
+    timezone: string;
+}
+
 /** One notification channel; secrets never reach the browser. */
 export interface ChannelView {
     /** Team-local channel identifier. */
@@ -25,6 +35,8 @@ export interface ChannelView {
     editable: Record<string, string> | null;
     /** Names of the escalation policies notifying the channel. */
     usedBy: string[];
+    /** Current daily silence interval, or null when disabled. */
+    quietHours: QuietHoursView | null;
 }
 
 /** One channel family offered by the creation form. */

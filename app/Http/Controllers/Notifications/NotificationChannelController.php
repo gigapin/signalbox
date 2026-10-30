@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Notifications\ChannelActivationRequest;
 use App\Http\Requests\Notifications\ConfirmChannelVerificationRequest;
 use App\Http\Requests\Notifications\StoreNotificationChannelRequest;
+use App\Http\Requests\Notifications\UpdateChannelQuietHoursRequest;
 use App\Http\Requests\Notifications\UpdateNotificationChannelRequest;
 use App\Models\NotificationChannel;
 use Closure;
@@ -114,6 +115,20 @@ final class NotificationChannelController extends Controller
         $this->rejectable(fn (): NotificationChannel => $this->channels->setActive($actor, $team, $channel->id, $active));
 
         return back()->with('status', $active ? 'channel-activated' : 'channel-deactivated');
+    }
+
+    /**
+     * @param UpdateChannelQuietHoursRequest $request Authorized daily interval or explicit removal.
+     * @param int $team Route team.
+     * @param NotificationChannel $channel Channel bound inside that team.
+     * @return RedirectResponse Previous page with a safe confirmation, without destination changes.
+     */
+    public function quietHours(UpdateChannelQuietHoursRequest $request, int $team, NotificationChannel $channel): RedirectResponse
+    {
+        $actor = $this->authenticatedUser($request);
+        $this->channels->setQuietHours($actor, $team, $channel->id, $request->quietHours());
+
+        return back()->with('status', 'channel-quiet-hours-updated');
     }
 
     /**

@@ -1,10 +1,11 @@
 /** Exercise the notification settings page, monitor escalation choice and delivery log through actual Inertia components. */
 import { router } from '@inertiajs/react';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import EscalationPanel from '../../resources/js/components/notifications/EscalationPanel';
 import DeliveryLog from '../../resources/js/components/notifications/DeliveryLog';
+import QuietHoursForm from '../../resources/js/components/notifications/QuietHoursForm';
 import { delayLabel } from '../../resources/js/components/notifications/labels';
 import type { ChannelView, PolicyView } from '../../resources/js/components/notifications/types';
 import Index from '../../resources/js/pages/Notifications/Index';
@@ -55,6 +56,7 @@ function channel(id: number, extra: Partial<ChannelView> = {}): ChannelView {
         verificationExpiresAt: null,
         editable: { address: 'oncall@example.test' },
         usedBy: [],
+        quietHours: null,
         ...extra,
     };
 }
@@ -398,4 +400,86 @@ test('formats step delays in minutes and hours', () => {
     expect(delayLabel(45)).toBe('After 45 min');
     expect(delayLabel(120)).toBe('After 2 h');
     expect(delayLabel(90)).toBe('After 1 h 30 min');
+});
+
+test('shows quiet hours to members with no editing controls', () => {
+    renderInertia(
+        'Signalbox',
+        Index,
+        pageProps(false, {
+            channels: [
+                channel(1, {
+                    quietHours: { start: '22:00', end: '07:00', timezone: 'Europe/Rome' },
+                }),
+            ],
+        }),
+    );
+    expect(screen.getByText('Quiet hours daily: 22:00–07:00 (Europe/Rome).')).toBeInTheDocument();
+    expect(screen.queryByText('Configure quiet hours')).not.toBeInTheDocument();
+});
+
+test('enables and saves an overnight interval with an explicit timezone', async () => {
+    const user = userEvent.setup();
+    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    renderInertia('Signalbox', () => (
+        <QuietHoursForm
+            path="/teams/7/notification-channels/1"
+            idPrefix="quiet-test"
+            hours={null}
+        />
+    ));
+    expect(screen.getByLabelText('Quiet hours start')).toBeDisabled();
+    await user.click(screen.getByLabelText('Enable daily quiet hours'));
+    fireEvent.change(screen.getByLabelText('Quiet hours start'), { target: { value: '23:00' } });
+    fireEvent.change(screen.getByLabelText('Quiet hours end'), { target: { value: '06:30' } });
+    await user.clear(screen.getByLabelText('Quiet hours timezone'));
+    await user.type(screen.getByLabelText('Quiet hours timezone'), 'Europe/Rome');
+    await user.click(screen.getByRole('button', { name: 'Save quiet hours' }));
+    expect(patch).toHaveBeenCalledWith(
+        '/teams/7/notification-channels/1/quiet-hours',
+        {
+            quiet_hours: { start: '23:00', end: '06:30', timezone: 'Europe/Rome' },
+        },
+        expect.any(Object),
+    );
+});
+
+test('prefills the saved interval and disables it with an explicit null', async () => {
+    const user = userEvent.setup();
+    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    renderInertia('Signalbox', () => (
+        <QuietHoursForm
+            path="/teams/7/notification-channels/1"
+            idPrefix="quiet-test"
+            hours={{ start: '22:00', end: '07:00', timezone: 'America/New_York' }}
+        />
+    ));
+    expect(screen.getByLabelText('Quiet hours timezone')).toHaveValue('America/New_York');
+    expect(screen.getByLabelText('Quiet hours start')).toHaveValue('22:00');
+    await user.click(screen.getByLabelText('Enable daily quiet hours'));
+    await user.click(screen.getByRole('button', { name: 'Save quiet hours' }));
+    expect(patch).toHaveBeenCalledWith(
+        '/teams/7/notification-channels/1/quiet-hours',
+        { quiet_hours: null },
+        expect.any(Object),
+    );
+});
+
+test('announces per-field quiet-hours errors and retains the submitted interval', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(router, 'patch').mockImplementation((_url, _data, options) => {
+        options?.onError?.({ 'quiet_hours.timezone': 'Choose a supported IANA timezone.' });
+    });
+    renderInertia('Signalbox', () => (
+        <QuietHoursForm
+            path="/teams/7/notification-channels/1"
+            idPrefix="quiet-test"
+            hours={{ start: '22:00', end: '07:00', timezone: 'Mars/Olympus' }}
+        />
+    ));
+    await user.click(screen.getByRole('button', { name: 'Save quiet hours' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose a supported IANA timezone.');
+    expect(screen.getByLabelText('Quiet hours timezone')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Quiet hours timezone')).toHaveValue('Mars/Olympus');
+    expect(screen.getByLabelText('Quiet hours start')).toHaveValue('22:00');
 });

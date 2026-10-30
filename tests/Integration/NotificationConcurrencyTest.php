@@ -264,3 +264,47 @@ it('makes one provider call when duplicate deliveries race while the accepted pr
         $fixture->cleanup();
     }
 })->with([false, true]);
+
+it('observes a quiet-hours change committed while a delivery waits on the team admission lock', function (): void {
+    $fixture = CommittedTeamFixture::freeTeam(1);
+    $child = null;
+    $receipts = sys_get_temp_dir().'/signalbox-quiet-hours-receipts-'.bin2hex(random_bytes(8));
+
+    try {
+        $ids = notificationRaceFixture($fixture, true);
+        $row = $fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])->first();
+        CarbonImmutable::setTestNow(CarbonImmutable::now()->addSeconds(5));
+        $fixture->connection->beginTransaction();
+        $fixture->connection->table('teams')->where('id', $fixture->teamId)->lockForUpdate()->first();
+        $child = notificationProbe('deliver', $fixture->teamId, (int) $row->id, $receipts);
+        $child->start();
+        awaitNotificationParticipants($fixture, [$child]);
+        $fixture->connection->table('notification_channels')->where('id', $row->channel_id)->update([
+            'quiet_hours_start' => '10:00',
+            'quiet_hours_end' => '11:00',
+            'quiet_hours_timezone' => 'UTC',
+        ]);
+        $fixture->connection->commit();
+        $child->wait();
+        expect($child->isSuccessful())->toBeTrue($child->getErrorOutput());
+        $fresh = $fixture->connection->table('notification_logs')->where('id', $row->id)->first();
+
+        expect($fresh->status)->toBe('suppressed')
+            ->and($fresh->attempts)->toBe(0)
+            ->and(is_file($receipts))->toBeFalse();
+    } finally {
+        if ($fixture->connection->transactionLevel() > 0) {
+            $fixture->connection->rollBack();
+        }
+
+        if ($child !== null && $child->isRunning()) {
+            $child->stop();
+        }
+
+        if (is_file($receipts)) {
+            unlink($receipts);
+        }
+
+        $fixture->cleanup();
+    }
+});

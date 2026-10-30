@@ -1,6 +1,6 @@
 # Notification channels, provider adapters, escalation policies and delivery log
 
-M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. M5.03 adds durable incident deliveries with deduplication, coalescing, resolution summaries and retries. M5.04 freezes all escalation steps at confirmation/reopening, cancels waiting deliveries at recovery and silences attempts during maintenance; see [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md). Quiet hours remain M5.05. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
+M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. M5.03 adds durable incident deliveries with deduplication, coalescing, resolution summaries and retries. M5.04 freezes all escalation steps at confirmation/reopening, cancels waiting deliveries at recovery and silences attempts during maintenance; see [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md). M5.05 adds [daily per-channel quiet hours](QUIET-HOURS.md) with explicit timezone, midnight and DST handling. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
 
 ## User decisions
 
@@ -20,6 +20,8 @@ Migrations `2026_10_29_000017_create_notification_tables.php` and `2026_10_29_00
 | `monitors.escalation_policy_id` | Optional override | Composite key to a policy of the same team; deleting the policy clears only the override |
 
 Delivery logs are written by M5.03 and shown on the incident page. Migration `2026_10_29_000019_add_notification_delivery_outbox.php` adds encrypted message snapshots, attempt leases and the internal processed-event marker; see [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md). `kind` is `opened`, `escalated` or `resolved`; `status` is `pending`, `sent`, `failed` or `suppressed` (`NotificationKind`, `DeliveryStatus`).
+
+Migration `2026_10_30_000020_add_channel_quiet_hours.php` adds optional daily local start/end times and an explicit IANA timezone, all null by default. `ManageNotificationChannels::setQuietHours()` changes them without changing credentials, verification or activation. The dedicated owner/admin `PATCH …/quiet-hours` route and per-channel editor accept a complete interval or explicit null. All members see the saved rule. See [QUIET-HOURS.md](QUIET-HOURS.md) for persistence and suppression semantics.
 
 ## Channel configurations
 
@@ -135,7 +137,7 @@ Receiver verification must check the signature with a constant-time comparison, 
 
 ## Current limits
 
-- M5.04 prepares later escalation steps and silences incident attempts during maintenance; quiet hours remain M5.05. Verifications deliberately do not write `notification_logs`, whose rows require an incident.
+- M5.04 prepares later escalation steps and silences incident attempts during maintenance; M5.05 additionally checks current channel quiet hours at every attempt. Verifications remain available during either kind of silencing and deliberately do not write `notification_logs`, whose rows require an incident.
 - SMS is deliberately unverified and inactive in the running application because it cannot deliver a verification code.
 - Verification is synchronous in the request with bounded HTTP/SMTP I/O. SMTP requires the existing mail settings; its transport is operator-configured and never comes from tenant input. A Mailtrap Email Sandbox configuration captures email in its sandbox inbox.
 - No real provider account, external network delivery or PHP 8.5 CI run is claimed by the adapter tests.

@@ -280,6 +280,10 @@ final readonly class TeamAuthorizationFixture
             return ['active' => false];
         }
 
+        if ($route === 'teams.notification-channels.quiet-hours') {
+            return ['quiet_hours' => ['start' => '22:00', 'end' => '07:00', 'timezone' => 'Europe/Rome']];
+        }
+
         if (in_array($route, ['teams.escalation-policies.store', 'teams.escalation-policies.update'], true)) {
             return [
                 'name' => $route === 'teams.escalation-policies.store' ? 'Matrix created policy' : 'Matrix renamed policy',

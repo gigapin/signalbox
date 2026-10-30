@@ -43,6 +43,7 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 | teams.notification-channels.verification.store | POST | 302 | 302 | 403 | 403 |
 | teams.notification-channels.verification.confirm | POST | 302 | 302 | 403 | 403 |
 | teams.notification-channels.activation | PATCH | 302 | 302 | 403 | 403 |
+| teams.notification-channels.quiet-hours | PATCH | 302 | 302 | 403 | 403 |
 | teams.notification-channels.signing-secret | POST | 200 | 200 | 403 | 403 |
 | teams.escalation-policies.store | POST | 302 | 302 | 403 | 403 |
 | teams.escalation-policies.update | PATCH | 302 | 302 | 403 | 403 |

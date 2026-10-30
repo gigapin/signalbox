@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace App\Actions\Notifications;
 
 use App\Contracts\Notifications\ChannelVerificationSender;
+use App\Data\Notifications\QuietHours;
 use App\Data\Notifications\WebhookChannelConfiguration;
 use App\Enums\Notifications\ChannelType;
 use App\Exceptions\ChannelConfigurationInvalid;
@@ -241,6 +242,26 @@ final readonly class ManageNotificationChannels
             }
 
             $channel->forceFill(['is_active' => $active])->save();
+
+            return $channel;
+        });
+    }
+
+    /**
+     * @param User $actor Owner or admin changing the channel's current delivery admission rule.
+     * @param int $teamId Active team.
+     * @param int $channelId Channel of that team.
+     * @param QuietHours|null $hours Validated daily interval, or null to disable silencing.
+     * @return NotificationChannel Updated channel; destination, verification, pending codes and activation are preserved.
+     */
+    public function setQuietHours(User $actor, int $teamId, int $channelId, ?QuietHours $hours): NotificationChannel
+    {
+        return $this->locked($actor, $teamId, $channelId, function (NotificationChannel $channel) use ($hours): NotificationChannel {
+            $channel->forceFill([
+                'quiet_hours_start' => $hours?->start,
+                'quiet_hours_end' => $hours?->end,
+                'quiet_hours_timezone' => $hours?->timezone,
+            ])->save();
 
             return $channel;
         });

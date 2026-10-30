@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { formatInstant } from '../incidents/time';
 import ChannelForm from './ChannelForm';
+import QuietHoursForm from './QuietHoursForm';
 import SigningSecret from './SigningSecret';
 import type { ChannelTypeOption, ChannelView } from './types';
 
@@ -87,6 +88,11 @@ export default function ChannelRow({
                 <p className="text-sm">{channelStateLabel(channel)}</p>
             </div>
             <p className="text-sm text-slate-300">{channel.hint}</p>
+            <p className="text-xs text-slate-400">
+                {channel.quietHours === null
+                    ? 'No quiet hours.'
+                    : `Quiet hours daily: ${channel.quietHours.start}–${channel.quietHours.end} (${channel.quietHours.timezone}).`}
+            </p>
             {channel.verifiedAt !== null && (
                 <p className="text-xs text-slate-400">
                     Verified {formatInstant(channel.verifiedAt, '')}
@@ -183,6 +189,17 @@ export default function ChannelRow({
             )}
 
             {canManage && channel.type === 'webhook' && <SigningSecret path={path} />}
+
+            {canManage && (
+                <details className="mt-3 rounded border border-slate-700 p-3">
+                    <summary className="cursor-pointer text-sm">Configure quiet hours</summary>
+                    <QuietHoursForm
+                        path={path}
+                        idPrefix={`channel-${channel.id}`}
+                        hours={channel.quietHours}
+                    />
+                </details>
+            )}
 
             {editing && type !== undefined && (
                 <div className="mt-3 rounded border border-slate-700 p-3">

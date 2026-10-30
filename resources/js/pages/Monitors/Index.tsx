@@ -161,6 +161,7 @@ export default function Index() {
         <AuthLayout title="Monitors" description={`Monitors of ${team.name}.`} wide>
             <LiveUpdates phase={live.phase} retry={live.retry} />
             <nav aria-label="Team navigation" className="mb-6 flex gap-4 text-sm text-emerald-300">
+                <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
                 <Link href={`/teams/${team.id}`}>Team members</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
                 <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>

@@ -143,3 +143,15 @@ it('selects Redis explicitly even when the application default queue is synchron
     Queue::shouldReceive('connection')->once()->with('redis')->andReturn($connection);
     app(BroadcastManager::class)->queue(new TeamUpdate(broadcastObservation()));
 });
+
+it('matches the shared client contract with numeric execution identities for every event', function (): void {
+    $payloads = [
+        'CheckCompleted' => (new TeamUpdate(broadcastObservation()))->broadcastWith(),
+        'IncidentOpened' => (new TeamUpdate(new IncidentOpened(7, 31, 11)))->broadcastWith(),
+        'IncidentReopened' => (new TeamUpdate(new IncidentReopened(7, 31, 11)))->broadcastWith(),
+        'IncidentResolved' => (new TeamUpdate(new IncidentResolved(7, 31, 11)))->broadcastWith(),
+    ];
+    $fixture = file_get_contents(base_path('tests/Fixtures/team-broadcast-payloads.json'));
+    expect($fixture)->not->toBeFalse();
+    expect($payloads)->toBe(json_decode($fixture, true, 512, JSON_THROW_ON_ERROR));
+});

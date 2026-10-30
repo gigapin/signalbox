@@ -125,6 +125,14 @@ it('enforces route role and membership boundaries without hidden cross-team effe
     $response->assertSessionHasNoErrors();
 
     switch ($name) {
+        case 'teams.dashboard':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Dashboard/Show')
+                ->where('team.id', $fixture->team->id)
+                ->where('dashboard.counts.total', 1)
+                ->where('dashboard.monitors.data.0.id', $fixture->monitor->id)
+                ->missing('dashboard.monitors.data.0.configuration'));
+            break;
         case 'teams.show':
             $response->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('team.id', $fixture->team->id)

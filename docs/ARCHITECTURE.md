@@ -20,7 +20,7 @@ Questi record stabiliscono come implementare le milestone successive. Stato di t
 | ADR-010 | Piani, trial e riconciliazione | M1–M2, M7–M10 |
 | ADR-011 | Operatore di piattaforma e override di entitlement | MA, rispettato da M9 |
 | ADR-012 | Consegne notifiche persistenti e deduplicazione | M5.03, esteso in M5.04–M5.05 |
-| ADR-013 | Broadcast privati dopo commit e proiezioni UI riconciliabili | M6.01–M6.03 |
+| ADR-013 | Broadcast privati dopo commit e proiezioni UI riconciliabili | M6.01–M6.04 |
 
 ## ADR-001 — Monolite modulare e responsabilità del dominio
 
@@ -464,7 +464,7 @@ I test usano fake Mail/HTTP, tempo controllato e PostgreSQL reale; due processi 
 
 ## ADR-013 — Broadcast privati dopo commit e recupero delle proiezioni UI
 
-Data/task: 2026-10-30, M6.01–M6.03. Stato: adottato; produttori/trasporto, autorizzazione e recupero frontend implementati. Dashboard/grafici e accettazione integrata restano M6.04–M6.05. Attua ADR-001/003/004/007 senza modificare gli outbox durevoli di check/notifiche.
+Data/task: 2026-10-30, M6.01–M6.04. Stato: adottato; produttori/trasporto, autorizzazione, recupero frontend e dashboard operativa/latenza implementati. M6.04 resta in corso per i valori definitivi da M7; accettazione integrata M6.05. Attua ADR-001/003/004/007/009 senza modificare gli outbox durevoli di check/notifiche.
 
 ### Contesto e decisione
 
@@ -480,6 +480,8 @@ Il risultato e le transizioni degli incidenti devono rimanere coerenti anche qua
 - M6.03 usa Echo nativo tramite adapter e hook React dedicato: socket/store per pagina, URL, team e account, senza singleton globale. Configurazione pubblica a runtime separata dall'host Docker; solo key/host/port/scheme per sessioni verificate e driver reverb. Autorizzazione con cookie CSRF corrente, deadline 10 s e cleanup esplicito. Props, filtri e form restano coerenti con Inertia 2/React 19.
 - Il riferimento `useEcho` della specifica è concretizzato nell'hook applicativo `useLivePage` su Echo nativo: il suo perimetro include anche snapshot autorizzati, generazioni di pagina/account e stato di recupero. La scelta mantiene il client ufficiale ed evita di distribuire queste regole tra i componenti; nessuna riduzione funzionale o cambio di stack.
 - Gli eventi validi invalidano le proiezioni locali delle quattro pagine esistenti. Snapshot parziali sulle stesse rotte autorizzate, versione asset e controllo componente/team/attore, whitelist dei soli dati mutabili; nessuna nuova rotta. Coalescing 250 ms dal primo evento, una richiesta alla volta con un eventuale seguito, deduplica FIFO di 512 execution e deadline 10 s. Recupero a ogni sottoscrizione/riconnessione e su online/visibilità, senza polling. Eventi regionali/nomi incidenti non diventano mai stato aggregato diretto; il database resta autorevole. Risposte tardive non superano le barriere di lifecycle; errori espliciti, retry/reload accessibili, chiusura su diniego di accesso. Dettagli in [REALTIME-CLIENT.md](REALTIME-CLIENT.md).
+- M6.04 aggiunge la dashboard privata agli stessi root di recupero, con conteggi operativi disgiunti, liste limitate e latenza media osservata per regione in 24 bucket UTC. SQL su partizioni grezze con vincoli espliciti team/monitor/intervallo, timestamp microsecondi, null preservati, nessuna media degli stati regionali. Grafici SVG accessibili con tabella equivalente. Uptime/copertura/SLA rimangono null finché M7 implementa ADR-009: il contratto grafico è predisposto, il criterio numerico resta aperto e M6.04 non viene marcato completo. Letture read-committed senza lock o promessa di snapshot atomico. Contratto, limiti e dipendenza in [DASHBOARD.md](DASHBOARD.md).
+- Corretto il validatore introdotto in M6.03: `execution_id` era erroneamente richiesto come UUID nel client, mentre il produttore e il ledger emettono interi. Fixture JSON comune verificata dal `TeamUpdate` reale e dal validatore TypeScript; nessun cambio di versione schema o formato backend. Anche le fixture dei test del coordinatore usano ora identità numeriche.
 
 ### Alternative, conseguenze e verifica
 

@@ -1,6 +1,6 @@
 # Private live pages (M6.03)
 
-The existing monitor and incident list/detail screens now use native Laravel Echo through `useLivePage`. [BROADCASTING.md](BROADCASTING.md) owns the scalar event contract and subscription authorization; this document owns browser lifecycle and recovery. Dashboard layout/charts remain M6.04, integrated acceptance/hardening M6.05 and definitive uptime/SLA M7.
+The monitor/incident list/detail screens and M6.04's operational dashboard use native Laravel Echo through `useLivePage`. [BROADCASTING.md](BROADCASTING.md) owns the scalar event contract and subscription authorization; this document owns browser lifecycle and recovery. [DASHBOARD.md](DASHBOARD.md) records the delivered UI/latency chart and remaining M6.04 dependency on definitive uptime/SLA from M7. Integrated acceptance/hardening remains M6.05.
 
 ## Configuration and installation
 
@@ -29,12 +29,13 @@ The hook creates a new store whenever the Inertia props, page URL/component, rou
 
 ## Local state and authoritative recovery
 
-Frames are validated against schema version 1 before invalidation. Check execution IDs have a bounded FIFO duplicate fence of 512 entries; detail pages ignore other monitors, while lists accept events for currently filtered-out monitors so membership in the list can change. Incident frames are always invalidations: their names cannot establish current incident state after queue reordering or repeated reopenings.
+Frames are validated against schema version 1 before invalidation. Check execution IDs are positive integers and have a bounded FIFO duplicate fence of 512 entries; detail pages ignore other monitors, while lists and the dashboard accept team events so counts/list membership can change. M6.04 fixes the earlier mistaken UUID validation and pins the contract through a shared PHP/TypeScript JSON fixture. Incident frames are always invalidations: their names cannot establish current incident state after queue reordering or repeated reopenings.
 
 The local React projection is refreshed through a partial Inertia JSON read of the **exact existing page URL**, including filters and pagination. No new snapshot endpoint or authorization bypass exists. Regional facts are never assigned directly to aggregate `lastStatus`, and no provisional uptime/SLA calculation is introduced. The server's existing regional aggregation, policy and tenant scope remain authoritative.
 
 | Screen | Mutable roots recovered together |
 |---|---|
+| `Dashboard/Show` | `dashboard` |
 | `Monitors/Index` | `monitors`, `usage`, `can` |
 | `Monitors/Show` | `monitor`, `recentIncidents`, `maintenance`, `escalation`, `can` |
 | `Incidents/Index` | `incidents` |

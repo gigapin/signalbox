@@ -242,3 +242,7 @@ Incident transitions now prepare notification intents transactionally; public af
 ## Operational team dashboard (M6.04)
 
 [DASHBOARD.md](DASHBOARD.md) documents the new private `/teams/{team}/dashboard` route, bounded operational lists/counts, hourly regional raw-latency chart and existing Echo/partial recovery. Rebuild assets through the normal workflow; no dependency, migration, environment variable, key or worker configuration changes. The frontend execution-ID validation is corrected to match the numeric backend ledger, with a shared PHP/TypeScript fixture. Uptime/coverage/SLA production values remain null until M7's time-weighted service is integrated; M6.04 remains in progress for that criterion. Automated checks use isolated PostgreSQL and simulated browser transports without touching development data/processes.
+
+## Realtime acceptance and reconnect grant cleanup (M6.05)
+
+[REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md) documents native Reverb protocol and committed-database acceptance plus native-Echo DOM tests. The demonstrated reconnect race is fixed by aborting/fencing authorizations tied to an old socket, including late JSON completion. Adopt it through the normal asset rebuild; there is no new dependency, migration, environment/key or worker configuration. Verification uses only dedicated test storage and in-memory transports. Final uptime/SLA integration and M6 exit still depend on M7.

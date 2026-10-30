@@ -1,4 +1,4 @@
-# Private team broadcasts (M6.01–M6.03)
+# Private team broadcasts (M6.01–M6.05)
 
 Committed monitoring results and incident transitions now produce minimal private-team updates through the existing Reverb infrastructure. Work state/results are in [TASKS.md](TASKS.md), architectural decision ADR-013 is in [ARCHITECTURE.md](ARCHITECTURE.md), infrastructure configuration is in [SERVICES.md](SERVICES.md).
 
@@ -81,4 +81,4 @@ docker compose run --rm php-test vendor/bin/pest tests/Feature/TeamBroadcastPayl
 ./scripts/verify.sh
 ```
 
-Client/configuration test coverage is in [REALTIME-CLIENT.md](REALTIME-CLIENT.md). Actual counts/results are recorded in TASKS. Remote CI/PHP 8.5, real browser/Echo subscriptions and live Reverb worker delivery are not implied by these tests. M6.04–M6.05 and M7 remain open.
+Client/configuration behavior is in [REALTIME-CLIENT.md](REALTIME-CLIENT.md); M6.05's criterion-to-evidence matrix and native protocol/DOM acceptance are in [REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md). Actual counts/results are recorded in TASKS. Remote CI/PHP 8.5, real browser/Echo subscriptions and live Reverb worker delivery are not implied by these tests. M6.04's numerical availability criterion and final M6 exit still depend on M7.

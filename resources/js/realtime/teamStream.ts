@@ -7,7 +7,18 @@ import { isRecord, TEAM_EVENTS, type TeamStreamFactory } from './types';
 /** Own every socket, binding and pending grant within one page/team/account lifetime. */
 export const openTeamStream: TeamStreamFactory = (configuration, teamId, callbacks) => {
     let closed = false;
+    // Every connection transition invalidates grants bound to the previous socket lifetime.
+    let authorizationGeneration = 0;
     const pending = new Map<AbortController, ReturnType<typeof setTimeout>>();
+
+    /** Abort old socket grants and their deadlines without completing stale Pusher callbacks. */
+    function cancelAuthorizations(): void {
+        for (const [controller, timeout] of pending) {
+            clearTimeout(timeout);
+            controller.abort();
+        }
+        pending.clear();
+    }
     const client = new Pusher(configuration.key, {
         cluster: 'mt1',
         wsHost: configuration.host,
@@ -25,6 +36,8 @@ export const openTeamStream: TeamStreamFactory = (configuration, teamId, callbac
                 }
 
                 const controller = new AbortController();
+                const generation = authorizationGeneration;
+                const active = (): boolean => !closed && generation === authorizationGeneration;
                 pending.set(
                     controller,
                     setTimeout(() => controller.abort(), 10_000),
@@ -52,7 +65,7 @@ export const openTeamStream: TeamStreamFactory = (configuration, teamId, callbac
                             }),
                         });
 
-                        if (closed) return;
+                        if (!active()) return;
                         if ([401, 403, 419].includes(response.status)) {
                             callback(new Error('Live updates authorization refused.'), null);
                             callbacks.denied();
@@ -63,9 +76,9 @@ export const openTeamStream: TeamStreamFactory = (configuration, teamId, callbac
                         const data: unknown = await response.json();
                         if (!isRecord(data) || typeof data.auth !== 'string')
                             throw new Error('Invalid live updates grant.');
-                        if (!closed) callback(null, { auth: data.auth });
+                        if (active()) callback(null, { auth: data.auth });
                     } catch {
-                        if (!closed) {
+                        if (active()) {
                             callback(new Error('Live updates authorization unavailable.'), null);
                             callbacks.state('error');
                         }
@@ -85,6 +98,8 @@ export const openTeamStream: TeamStreamFactory = (configuration, teamId, callbac
     /** Mirror connection loss without confusing a transport handshake with private admission. */
     function changed(change: { current: string }): void {
         if (closed) return;
+        ++authorizationGeneration;
+        cancelAuthorizations();
         const state = change.current;
         if (state === 'connecting' || state === 'connected') callbacks.state('connecting');
         else if (state === 'failed') callbacks.state('error');
@@ -107,11 +122,8 @@ export const openTeamStream: TeamStreamFactory = (configuration, teamId, callbac
     return () => {
         if (closed) return;
         closed = true;
-        for (const [controller, timeout] of pending) {
-            clearTimeout(timeout);
-            controller.abort();
-        }
-        pending.clear();
+        ++authorizationGeneration;
+        cancelAuthorizations();
         client.connection.unbind('state_change', changed);
         echo.leave(`team.${teamId}`);
         echo.disconnect();

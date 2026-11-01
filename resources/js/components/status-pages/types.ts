@@ -93,6 +93,50 @@ export interface StatusPagesPageProps extends MonitorPageProps {
     errors: Record<string, string | undefined>;
 }
 
+/** One whole UTC day of a component's public history. */
+export interface PublicHistoryDay {
+    /** ISO date. */
+    date: string;
+    /** `up`, `down` with any down time, `none` without observed time. */
+    state: string;
+    /** Observed uptime, rounded down; null without observed time. */
+    uptimePercent: number | null;
+    /** Share of the day with a known state; null when none of it was watched. */
+    coveragePercent: number | null;
+}
+
+/** One component as visitors see it. */
+export interface PublicComponent {
+    /** Public label. */
+    name: string;
+    /** Current state. */
+    status: string;
+    /** Observed uptime over the history; null without observed time. */
+    uptimePercent: number | null;
+    /** Days of the history, oldest first. */
+    days: PublicHistoryDay[];
+}
+
+/** One explicitly published entry of an incident. */
+export interface PublicIncidentUpdate {
+    /** Incident status stated by this entry. */
+    status: string;
+    /** Published text. */
+    message: string;
+    /** UTC publication instant. */
+    publishedAt: string;
+}
+
+/** One incident with at least one published entry. */
+export interface PublicIncident {
+    /** Name of the affected component. */
+    component: string;
+    /** Status of the latest published entry. */
+    status: string;
+    /** Published entries, newest first. */
+    updates: PublicIncidentUpdate[];
+}
+
 /** What a visitor may read: no identity and no monitor name. */
 export interface PublicStatusPage {
     /** Page heading. */
@@ -101,6 +145,10 @@ export interface PublicStatusPage {
     description: string | null;
     /** Appearance. */
     theme: StatusPageTheme;
+    /** Overall current state. */
+    status: string;
     /** Components in display order. */
-    components: { name: string }[];
+    components: PublicComponent[];
+    /** Published incidents, newest first. */
+    incidents: PublicIncident[];
 }

@@ -200,19 +200,82 @@ test('renders the public page with the chosen appearance and an empty state', ()
             title: 'Acme status',
             description: 'Current state of Acme.',
             theme: { mode: 'dark', accent: 'blue' },
-            components: [{ name: 'Public API' }, { name: 'Website' }],
+            status: 'partial_outage',
+            components: [
+                {
+                    name: 'Public API',
+                    status: 'outage',
+                    uptimePercent: 99.5,
+                    days: [
+                        {
+                            date: '2026-10-30',
+                            state: 'none',
+                            uptimePercent: null,
+                            coveragePercent: null,
+                        },
+                        {
+                            date: '2026-10-31',
+                            state: 'down',
+                            uptimePercent: 99.5,
+                            coveragePercent: 100,
+                        },
+                    ],
+                },
+                { name: 'Website', status: 'operational', uptimePercent: null, days: [] },
+            ],
+            incidents: [
+                {
+                    component: 'Public API',
+                    status: 'monitoring',
+                    updates: [
+                        {
+                            status: 'monitoring',
+                            message: 'Fix applied.',
+                            publishedAt: '2026-10-31T10:05:00Z',
+                        },
+                        {
+                            status: 'investigating',
+                            message: 'Looking into it.',
+                            publishedAt: '2026-10-31T09:00:00Z',
+                        },
+                    ],
+                },
+            ],
         },
     });
 
     expect(screen.getByRole('heading', { name: 'Acme status' })).toBeInTheDocument();
     expect(screen.getByText('Current state of Acme.')).toBeInTheDocument();
-    expect(
-        within(screen.getByRole('list', { name: 'Components' }))
-            .getAllByRole('listitem')
-            .map((item) => item.textContent),
-    ).toEqual(['Public API', 'Website']);
+    expect(screen.getByRole('status')).toHaveTextContent('Some systems are having problems');
     expect(screen.getByRole('main')).toHaveClass('bg-slate-950');
     expect(screen.getByTestId('accent')).toHaveClass('bg-blue-500');
+
+    const [api, website] = within(screen.getByRole('list', { name: 'Components' })).getAllByRole(
+        'listitem',
+    ) as [HTMLElement, HTMLElement];
+
+    expect(within(api).getByText('Outage')).toBeInTheDocument();
+    expect(within(api).getByText(/99.5% observed uptime in the last 90 days/)).toBeInTheDocument();
+    expect(
+        within(api).getByRole('img', { name: 'Last 2 days: 1 with downtime, 1 without data.' }),
+    ).toBeInTheDocument();
+    expect(within(api).getByTitle('2026-10-30: no data')).toHaveClass('bg-slate-400');
+    expect(
+        within(api).getByTitle('2026-10-31: 99.5% uptime, 100% of the day observed'),
+    ).toHaveClass('bg-red-600');
+    expect(within(website).getByText('Operational')).toBeInTheDocument();
+    expect(within(website).getByText('No uptime data in the last 90 days.')).toBeInTheDocument();
+
+    const feed = screen.getByRole('list', { name: 'Published incidents' });
+
+    expect(
+        within(feed).getByRole('heading', { name: 'Public API: Monitoring' }),
+    ).toBeInTheDocument();
+    expect(within(feed).getByText('Fix applied.')).toBeInTheDocument();
+    expect(within(feed).getByText('2026-10-31 10:05 UTC')).toHaveAttribute(
+        'datetime',
+        '2026-10-31T10:05:00Z',
+    );
 
     unmount();
     renderInertia('Signalbox', Public, {
@@ -220,11 +283,15 @@ test('renders the public page with the chosen appearance and an empty state', ()
             title: 'Acme status',
             description: null,
             theme: { mode: 'light', accent: 'emerald' },
+            status: 'unknown',
             components: [],
+            incidents: [],
         },
     });
 
     expect(screen.getByText('This page has no components yet.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Current status not fully known');
+    expect(screen.getByText('Nothing published in the last 90 days.')).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveClass('bg-white');
 });
 

@@ -1,6 +1,6 @@
 # Status pages
 
-A status page is a public page of a team: address, title, description, appearance, visibility, optional password and ordered components. M8.01 delivers management and the public surface with component names only. Current status and history come with M8.02, public cache with M8.03.
+A status page is a public page of a team: address, title, description, appearance, visibility, optional password and ordered components. Visitors read the current state, 90 days of history and explicitly published incident entries. Public cache comes with M8.03.
 
 ## Data
 
@@ -41,16 +41,46 @@ Owners and admins manage pages; every member reads the settings page. The page p
 | `GET /status/{slug}` | A draft, an unknown address and an invalid one all answer 404, for members of the team too: there is no preview yet. A protected page answers with the password form, whose only data is the address. Otherwise it answers with the page. |
 | `POST /status/{slug}/unlock` | 5 attempts a minute per address and visitor. A draft answers 404 even with the right password. |
 
-`PublicStatusPages` is the only code that reads a page without a tenant, apart from the boolean address check in the action. Its projection lists the fields: title, description, theme and component names. Monitor names, identities and the team stay out, because a monitor name can be internal.
+`PublicStatusPages` is the only code that reads a page without a tenant, apart from the boolean address check in the action. Its projection lists the fields. Monitor names, identities, the team and the maintenance reason stay out, because they can be internal.
 
 Unlocking is per session and per page. The session holds a keyed fingerprint of the current hash, so a new password locks out whoever entered the old one, while removing the password opens the page for everyone. The session identity rotates on unlock.
 
 Responses use `Cache-Control: no-store, private`. M8.03 must change this for unprotected pages, and must keep in mind that Inertia adds shared props to every response, including `auth.user` for a logged-in visitor: those cannot end up in a shared cache.
 
+## What visitors read
+
+### Current state
+
+`PublicHealthRules` decides it, for each monitor and then for each group.
+
+| Monitor | State |
+|---|---|
+| Paused or suspended by the plan | Not counted: it is not being watched. |
+| Unresolved incident | `outage`, also during maintenance. |
+| Maintenance window running, end excluded | `maintenance`. The reason stays private. |
+| Never observed, or last check older than 2 intervals plus the heartbeat grace | `unknown`. An observation does not hold forever (ADR-009). |
+| Otherwise | `operational`, also after a first failed check: only a confirmed incident is an outage, because the threshold exists to avoid false alarms. |
+
+A component or a page takes `outage` when all its parts are in outage, then `partial_outage` when any is, then `maintenance`, `unknown` and `operational`. With nothing being watched the answer is `unknown`, so "All systems operational" appears only when it is true.
+
+The state follows monitoring even when nobody has published anything: a visitor can see an outage before any text about it.
+
+### History
+
+`PublicStatusHistory` reads the daily rollups: the 90 whole UTC days before today, on every plan (ADR-008). Today is left out because its rollup does not exist until the day closes, and the current state covers it.
+
+The durations of the monitors of a component are added together, so percentages are time-weighted, following ADR-009: uptime is `U / (U + D)` and coverage is `(U + D) / (U + D + X)`. A day without observed time has null uptime and is shown as no data, never as available. A monitor joining a component brings its past days with it.
+
+Days are UTC for every visitor and team, as the rollups are, and the page says so. The period uptime excludes time without data, and the page says that too.
+
+### Incidents
+
+`PublicIncidentFeed` lists the entries published in the last 90 days, for the monitors on the page, at most 25 incidents, newest publication first. An incident appears only once an entry is published. Its status is the one of its latest published entry, so a private change reveals nothing. The author, declared cause, error class and monitor name stay out; the affected component is named instead.
+
 ## Verification
 
 ```sh
-docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusPageManagementTest.php tests/Integration/PublicStatusPageTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm php-test vendor/bin/pest tests/Feature/PublicHealthRulesTest.php tests/Integration/StatusPageManagementTest.php tests/Integration/PublicStatusPageTest.php tests/Integration/PublicStatusContentTest.php --fail-on-skipped --fail-on-warning
 docker compose run --rm node npx vitest run tests/frontend/StatusPages.test.tsx
 ```
 

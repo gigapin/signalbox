@@ -25,6 +25,8 @@ beforeEach(function (): void {
     }
 
     $this->travelTo(CarbonImmutable::parse('2026-10-03T12:00:00Z'));
+    // The schema only creates partitions from the real current month onward, while this clock is fixed.
+    app(ResultPartitions::class)->ensure(CarbonImmutable::parse('2026-10-03T12:00:00Z'));
     $this->team = Team::factory()->business()->create();
     $this->monitor = slaMonitor($this->team, '2026-10-02T09:00:00Z');
 });

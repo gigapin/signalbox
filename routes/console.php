@@ -1,6 +1,6 @@
 <?php
 
-/** Schedule queue observability and the explicitly gated recoverable monitoring pipeline. */
+/** Schedule queue observability, the explicitly gated recoverable monitoring pipeline and nightly metric maintenance. */
 
 use Illuminate\Support\Facades\Schedule;
 
@@ -23,3 +23,6 @@ Schedule::command('monitors:partitions')->daily()->onOneServer()->withoutOverlap
 
 // Recover committed notifications after publication gaps, expired attempts and provider backoff.
 Schedule::command('notifications:dispatch')->everyTenSeconds()->onOneServer()->withoutOverlapping(1);
+
+// Long-running by design: in the background it cannot delay the second-level commands above in the same scheduler.
+Schedule::command('metrics:nightly')->dailyAt('02:00')->timezone('UTC')->onOneServer()->withoutOverlapping(720)->runInBackground();

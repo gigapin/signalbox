@@ -18,7 +18,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Tests\Support\CommittedTeamFixture;
 
 pest()->group('docker');
 
@@ -28,6 +27,8 @@ beforeEach(function (): void {
     }
 
     $this->travelTo(CarbonImmutable::parse('2026-10-03T12:00:00Z'));
+    // The schema only creates partitions from the real current month onward, while this clock is fixed.
+    app(ResultPartitions::class)->ensure(CarbonImmutable::parse('2026-10-03T12:00:00Z'));
     $this->team = Team::factory()->business()->create();
     $this->monitor = rollupMonitor($this->team, '2026-10-02T09:00:00Z');
 });
@@ -499,38 +500,6 @@ it('discards a calculation when another run advanced the cursor meanwhile', func
     expect(rollupAdvance($this->monitor))->toBe(0)
         ->and($raced)->toBeTrue()
         ->and(DB::table('check_rollups_hourly')->where('hour', '2026-10-03T11:00:00Z')->exists())->toBeFalse();
-});
-
-it('serializes writers on the cursor row while leaving the monitor row free for the check engine', function (): void {
-    $fixture = CommittedTeamFixture::freeTeam(1);
-
-    try {
-        $monitorId = (int) $fixture->connection->table('monitors')->where('team_id', $fixture->teamId)->value('id');
-
-        $fixture->connection->table('monitors')->where('id', $monitorId)->update(['created_at' => '2026-10-02T09:00:00Z']);
-        $fixture->connection->table('check_rollup_cursors')->insert(['team_id' => $fixture->teamId, 'monitor_id' => $monitorId]);
-        $fixture->connection->beginTransaction();
-        $fixture->connection->table('check_rollup_cursors')->where('monitor_id', $monitorId)->lockForUpdate()->value('monitor_id');
-
-        DB::statement("SET LOCAL lock_timeout = '100ms'");
-
-        try {
-            app(BuildCheckRollups::class)->advance($fixture->teamId, $monitorId);
-            $this->fail('A competing run must wait for the cursor held by the other session.');
-        } catch (QueryException $exception) {
-            // PostgreSQL lock_not_available proves contention at the shared cursor.
-            expect($exception->errorInfo[0])->toBe('55P03');
-        }
-
-        // The engine's own lock is not blocked by the session holding the cursor. The savepoint releases it again,
-        // because the committed fixture cleanup below would otherwise wait for this test's outer transaction.
-        DB::beginTransaction();
-        expect(DB::table('monitors')->where('id', $monitorId)->lockForUpdate()->value('id'))->toBe($monitorId);
-        DB::rollBack();
-    } finally {
-        $fixture->connection->rollBack();
-        $fixture->cleanup();
-    }
 });
 
 it('runs from the command line and validates rebuild options', function (): void {

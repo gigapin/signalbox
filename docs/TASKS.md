@@ -12,6 +12,14 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M7.04, 2026-11-01
+
+- **M7.04 completato**: comando `metrics:nightly`, schedulato alle 02:00 UTC, che avanza i rollup, applica la retention per piano, pulisce ricezioni heartbeat e ledger e rimuove i mesi scaduti solo dopo la verifica dei rollup. Regole e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#nightly-maintenance-m704).
+- **Deviazione da ADR-008, registrata**: il drop attende 48 ore oltre i 30 giorni, per i verdetti del bordo più vecchio ancora leggibile; permanenza fisica fino a circa 63 giorni.
+- Gate `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run **540 file**, Larastan livello 8, **2601 test Pest/17517 asserzioni**, 5 qualità, 148 DOM e build.
+- **Effetto operativo**: lo scheduler di sviluppo è attivo e, se carica questo codice, esegue il comando alle 02:00 UTC anche in locale.
+- **Prossimo task pronto: M7.05**, report mensile PDF.
+
 ## Consegna di sessione — M7.03, 2026-10-30
 
 - **M7.03 completato e M6.04 chiuso, quindi M6 completata**: nuovo servizio `MonitorAvailability` con durate, uptime osservato, copertura e SLA pesati sul tempo; la dashboard mostra ora valori reali. Regole e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703).
@@ -432,7 +440,7 @@ Dipendenze: M3–M4; completa le metriche di M6.
 - [x] M7.01 Implementare rollup orari/giornalieri idempotenti con uptime, conteggi, media, p50 e p95; estendere lo schema esemplificativo dove necessario.
 - [x] M7.02 Definire percentili esatti o approssimati e dati aggregabili da conservare: non mediare i percentili orari per ottenere quelli giornalieri.
 - [x] M7.03 Implementare servizio SLA pesato sul tempo con esclusione di manutenzioni/pause, intersezioni e intervalli parziali; definire assenza dati e denominatore nullo.
-- [ ] M7.04 Implementare job notturno, creazione/drop partizioni, retention per piano e verifica dei rollup prima della rimozione; rispettare la politica concordata sui 30 giorni. Integrare la pulizia delle ricezioni heartbeat introdotte in M3.05 preservando quelle necessarie agli slot ancora validi.
+- [x] M7.04 Implementare job notturno, creazione/drop partizioni, retention per piano e verifica dei rollup prima della rimozione; rispettare la politica concordata sui 30 giorni. Integrare la pulizia delle ricezioni heartbeat introdotte in M3.05 preservando quelle necessarie agli slot ancora validi.
 - [ ] M7.05 Implementare report mensile PDF con autorizzazione tenant e timezone corretta.
 - [ ] M7.06 Testare confini mese/anno, timezone/DST, finestre sovrapposte, pause storiche, periodi senza check, percentili e riesecuzione dei job su PostgreSQL.
 
@@ -507,7 +515,7 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; prossimo task pronto M7.04. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04 completato il 2026-11-01; prossimo task pronto M7.05. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -567,6 +575,8 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-10-29 | M5.01: `config` nella lista globale `dontFlash` | Difetto trovato dai test: i rifiuti di dominio rilanciati dai controller rimettevano in sessione l’input, segreti inclusi. La lista globale di `bootstrap/app.php` copre ora `config` (il codice `code` era già incluso). |
 | 2026-10-29 | M4.06: un risultato tardivo di uno slot precedente è storia | Attuazione di ADR-007 resa esplicita dai test: lo slot più recente che non segue uno slot processato avvia una nuova sequenza, lo slot tardivo non estende la sequenza né risolve; la conferma può quindi slittare degli slot interrotti. Nessun riordino a posteriori dei risultati. |
 | 2026-10-29 | M4.05: rifiuti di dominio come errori di sessione | `IncidentChangeRejected` → chiave `incident`, `MaintenanceWindowRejected` → chiave `maintenance`; le regole restano nelle azioni, le Form Request verificano solo la sintassi e autorizzano prima di validare. |
+| 2026-11-01 | M7.04: drop delle partizioni 48 ore oltre il cutoff di ADR-008 | Il bordo più vecchio leggibile può usare verdetti fino a due intervalli massimi prima; senza margine, i primi due giorni dei 30 leggibili diventerebbero non disponibili. Permanenza fisica fino a circa 63 giorni. Annotato in ADR-008. |
+| 2026-11-01 | M7.04: un mese trattenuto trattiene anche i successivi | La partizione più vecchia segna l'inizio dello storico grezzo; un buco lo falserebbe. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
 ## Registro sessioni
@@ -1401,3 +1411,13 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Limiti: un bordo dai grezzi richiede risultati fino a 48 ore prima (due intervalli massimi), quindi è non disponibile nei primi due giorni della partizione più vecchia: da considerare in M7.04. Finestre in fuso orario e DST: conversione a carico del chiamante, test in M7.05–M7.06. Lo SLA di una finestra mobile resta spesso null: basta un tratto sconosciuto nelle 24 ore.
 - Verifiche: gate `./scripts/verify.sh` **exit 0**, PHP 8.4.27: formatter dry-run 529 file, Larastan livello 8, 2572 test Pest/17421 asserzioni, 5 test qualità, DOM, build. Il primo gate si era fermato solo su Prettier in `Show.tsx`, corretto e rieseguito per intero. Nei test iniziali i fallimenti venivano dalle fixture e dalle vecchie aspettative null, non dal servizio. Dopo il gate modificato soltanto `docs/TASKS.md`.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, migration o comandi sul database di sviluppo, browser/Reverb/worker live, carico su finestre lunghe. **M7.03 e M6.04 completati; M6 completata; prossimo task pronto M7.04.**
+
+### 2026-11-01 — M7.04: manutenzione notturna e retention (completato)
+
+- Ripresa del lavoro lasciato non verificato il 2026-10-30, con Docker attivo. Git/gh non eseguiti.
+- File: `app/Console/Commands/RunNightlyMetricMaintenance.php`, `app/Data/Metrics/NightlyMaintenanceReport.php`, `app/Data/Metrics/PartitionDropOutcome.php`, `app/Services/Metrics/Retention/` (sei classi); modificati `ResultPartitions.php`, `routes/console.php`. Test: `tests/Integration/NightlyMetricMaintenanceTest.php`, `tests/Integration/CheckRollupConcurrencyTest.php`; aggiornati `MonitorSchedulingConfigurationTest`, `CheckRollupsTest`, `MonitorAvailabilityTest`, `DashboardTest`. Documenti: `METRIC-ROLLUPS.md`, `ARCHITECTURE.md`, `TESTING.md`, `BOOTSTRAP.md`.
+- Prima esecuzione: 14 fallimenti su 28, tutti dovuti ai test e nessuno al codice applicativo, che non è stato modificato: closure di dataset non invocate (il danno non veniva applicato), `trial_started_at` successivo alla fine del trial, `$this` in closure statica, mock di classe `final`, mese di aprile mancante nella fixture, rollup non avanzati fino alla data del test.
+- **Difetto preesistente emerso dal cambio di mese**: 18 test con orologio fisso a ottobre 2026 (`CheckRollupsTest`, `MonitorAvailabilityTest`, `DashboardTest`) fallivano dal 2026-11-01, perché lo schema crea le partizioni a partire dal mese reale. Ora preparano i propri mesi. Il test di concorrenza sul cursore è passato in un file separato: una partizione creata nella transazione del test bloccava all'infinito la pulizia del fixture committed.
+- **Rischio residuo**: altri test con date fisse di novembre 2026 o successive potrebbero rompersi allo stesso modo a un cambio di mese futuro; non è stato simulato un orologio di sistema diverso. Oggi superano tutti il gate.
+- Verifiche: gate `./scripts/verify.sh` **exit 0**, PHP 8.4.27: formatter dry-run 540 file, Larastan livello 8, 2601 test Pest/17517 asserzioni, lint/formato/TypeScript, 5 test qualità, 148 DOM, build. Log temporaneo fuori dal repository.
+- Non eseguiti: Git/gh, CI remota/PHP 8.5, `metrics:nightly` sul database di sviluppo, misura del costo della verifica su volumi reali. Sul database di sviluppo solo una lettura di controllo: `check_rollups_hourly` esiste, quindi la migration dei rollup risulta applicata. **M7.04 completato; prossimo task pronto M7.05.**

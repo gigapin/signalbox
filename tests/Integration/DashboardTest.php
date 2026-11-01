@@ -25,6 +25,9 @@ beforeEach(function (): void {
 
     $this->withoutVite();
     $this->travelTo(CarbonImmutable::parse('2026-10-30T12:00:00Z'));
+    // The schema only creates partitions from the real current month onward, while this clock is fixed.
+    app(ResultPartitions::class)->ensure(CarbonImmutable::parse('2026-10-30T12:00:00Z'));
+    app(ResultPartitions::class)->ensure(CarbonImmutable::parse('2026-11-01T00:30:00Z'));
     $this->withHeader('X-Inertia-Version', app(HandleInertiaRequests::class)->version(request()) ?? '');
     Queue::fake();
     $this->team = Team::factory()->business()->create();

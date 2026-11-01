@@ -59,3 +59,15 @@ it('binds the real broker adapter and the real transactional checker', function 
         ->and(config('monitor-scheduling.publication_lease_seconds'))->toBe(10)
         ->and(config('monitor-scheduling.redelivery_seconds'))->toBe(5);
 });
+
+it('schedules nightly metric maintenance in the background, so it cannot delay second-level commands', function (): void {
+    $event = collect(app(Schedule::class)->events())->first(fn ($event): bool => str_contains((string) $event->command, 'metrics:nightly'));
+
+    expect($event)->not->toBeNull()
+        ->and($event->expression)->toBe('0 2 * * *')
+        ->and($event->timezone)->toBe('UTC')
+        ->and($event->runInBackground)->toBeTrue()
+        ->and($event->onOneServer)->toBeTrue()
+        ->and($event->withoutOverlapping)->toBeTrue()
+        ->and($event->expiresAt)->toBe(720);
+});

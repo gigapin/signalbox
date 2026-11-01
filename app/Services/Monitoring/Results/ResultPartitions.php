@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Create deterministic UTC monthly partitions before taking any execution or monitor row locks. */
+/** Create deterministic UTC monthly partitions before taking any execution or monitor row locks, and remove expired ones on request. */
 
 namespace App\Services\Monitoring\Results;
 
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
 
-/** PostgreSQL advisory coordination serializes concurrent creators; no retention or dropping is performed here. */
+/** PostgreSQL advisory coordination serializes concurrent creators; deciding when a month may be dropped belongs to the retention services. */
 final class ResultPartitions
 {
     /** @return int Number of current and future months ensured, including already-existing partitions. */
@@ -29,19 +29,53 @@ final class ResultPartitions
     /** @return CarbonImmutable|null Start of the oldest retained partition month; null when none exists. */
     public function oldestMonth(): ?CarbonImmutable
     {
+        return $this->months()[0] ?? null;
+    }
+
+    /** @return list<CarbonImmutable> Start of every existing partition month, oldest first. */
+    public function months(): array
+    {
         // Generated names are zero-padded, so their text order is chronological.
-        $name = DB::scalar(<<<'SQL'
-            SELECT min(child.relname::text)
+        $names = DB::select(<<<'SQL'
+            SELECT child.relname::text AS name
             FROM pg_inherits inheritance
             JOIN pg_class child ON child.oid = inheritance.inhrelid
             WHERE inheritance.inhparent = 'check_results'::regclass
+            ORDER BY 1
             SQL);
+        $months = [];
 
-        if (!is_string($name)) {
-            return null;
+        foreach ($names as $row) {
+            $month = CarbonImmutable::createFromFormat('Y_m_d H:i:s', substr((string) $row->name, strlen('check_results_')).'_01 00:00:00', 'UTC');
+
+            if ($month !== null) {
+                $months[] = $month;
+            }
         }
 
-        return CarbonImmutable::createFromFormat('Y_m_d H:i:s', substr($name, strlen('check_results_')).'_01 00:00:00', 'UTC') ?: null;
+        return $months;
+    }
+
+    /**
+     * Dropping takes an exclusive lock on the results parent and on the referenced ledger, so the lock wait is short and a busy moment fails instead of stalling every check; the next run retries.
+     *
+     * @param CarbonImmutable $month Any instant of the month to remove, already verified by the caller.
+     * @return string Internally generated identifier of the removed partition.
+     * @throws \Illuminate\Database\QueryException When the lock cannot be obtained in time.
+     */
+    public function drop(CarbonImmutable $month): string
+    {
+        $name = 'check_results_'.$month->utc()->format('Y_m');
+
+        DB::transaction(function () use ($name): void {
+            $previous = (string) DB::scalar("SELECT current_setting('lock_timeout')");
+            DB::statement("SET LOCAL lock_timeout = '2s'");
+            // The identifier is derived solely from a UTC month, never from request text.
+            DB::statement("DROP TABLE IF EXISTS {$name}");
+            DB::select("SELECT set_config('lock_timeout', ?, true)", [$previous]);
+        });
+
+        return $name;
     }
 
     /**

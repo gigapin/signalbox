@@ -16,7 +16,7 @@ Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task su
 
 - **M7.05 completato**: report mensile PDF per team su `/teams/{team}/reports/{YYYY-MM}`, con mese nel fuso del team e download dalla dashboard. Regole e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#monthly-pdf-report-m705). Nuova dipendenza `dompdf/dompdf`, dettagli in [DEPENDENCIES.md](DEPENDENCIES.md#m705-pdf-report-dependency-update).
 - Gate `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run **553 file**, Larastan livello 8, **2662 test Pest/17795 asserzioni**, 5 qualità, **151 DOM** e build. Documento reale di esempio controllato a vista.
-- **Da chiarire**: la nota sulle date fisse (sezione TD e sezione di TESTING.md) non è presente in questa copia di lavoro; va ritrovata o riscritta, perché la sua scadenza è il 2026-12-01.
+- **Date fisse nei test**: la nota era rimasta fuori da staging su un altro branch ed è stata riportata in questo con un cherry-pick. **TD.01–TD.02** restano da fare prima del 2026-12-01; analisi in [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
 - **Prossimo task pronto: M7.06**, matrice di test su confini temporali e riesecuzione dei job.
 
 ## Consegna di sessione — M7.04, 2026-11-01

@@ -1,6 +1,6 @@
-# Check rollups and SLA (M7.01–M7.03)
+# Check rollups, SLA and retention (M7.01–M7.04)
 
-Hourly and daily UTC rollups keep uptime, check counts and latency after the raw monthly result partitions are dropped. They implement the storage side of [ADR-008 and ADR-009](ARCHITECTURE.md#adr-008--retention-rollup-e-percentili-esatti). The [SLA service](#sla-service-m703) reads them for arbitrary windows. Nightly scheduling, retention and partition drops are M7.04.
+Hourly and daily UTC rollups keep uptime, check counts and latency after the raw monthly result partitions are dropped. They implement the storage side of [ADR-008 and ADR-009](ARCHITECTURE.md#adr-008--retention-rollup-e-percentili-esatti). The [SLA service](#sla-service-m703) reads them for arbitrary windows. Nightly scheduling, retention and partition drops are described under [Nightly maintenance](#nightly-maintenance-m704).
 
 ## Tables
 
@@ -63,7 +63,7 @@ php artisan metrics:rollups --monitor=ID --from=2026-10-02T09:00:00Z --to=2026-1
 
 Exit status 1 reports failed monitors, invalid options or a refused rebuild. A rebuild never goes past the cursor. It is refused when its start, less two maximum intervals, precedes the oldest retained partition: calculating from missing results would wrongly replace good time with unknown.
 
-**The command is not scheduled yet**: the nightly job belongs to M7.04. Apply the migration deliberately to the intended database before running it. A monitor older than the oldest partition starts at that partition.
+`metrics:nightly` advances rollups automatically; this command remains for on-demand runs and rebuilds. Apply the migration deliberately to the intended database before running either. A monitor older than the oldest partition starts at that partition.
 
 ## Tenancy
 
@@ -160,6 +160,48 @@ Slots whose regional work can still finish are left out of raw reads. Otherwise 
 
 ### Limits
 
-- A raw edge needs results from up to two maximum intervals (48 hours) before it, whatever the monitor's actual cadence, because past cadences are not assumed. An edge in the first two days of the oldest partition is therefore unavailable. M7.04 must take this into account when deciding when to drop a partition.
-- `metrics:rollups` is not scheduled until M7.04. Until then windows older than 30 days are unavailable unless rollups were built by hand.
+- A raw edge needs results from up to two maximum intervals (48 hours) before it, whatever the monitor's actual cadence, because past cadences are not assumed. An edge in the first two days of the oldest partition is therefore unavailable; [partition removal](#nightly-maintenance-m704) waits those 48 hours so that this never affects the readable 30 days.
+- Windows older than 30 days stay unavailable until `metrics:nightly` or `metrics:rollups` has built their rollups.
 - A live window ending now can change as results arrive, while a closed window can no longer change.
+
+## Nightly maintenance (M7.04)
+
+`metrics:nightly` runs daily at 02:00 UTC, on one server, in the background so that it cannot delay the second-level commands of the same scheduler. The overlap lock lasts 12 hours. Partition creation stays in the separate daily `monitors:partitions`, which the check engine depends on.
+
+Steps run in this order; each is idempotent, and one failing is logged while the others still run:
+
+| Step | Effect |
+|---|---|
+| `rollups` | Advances every monitor to its last closed hour. |
+| `rollup_retention` | Removes rollups beyond the current plan history (90/365/730 days). An upgrade recovers nothing. |
+| `heartbeat_receipts` | Removes receipts older than 30 days, keeping the newest older receipt of the current generation, which later slots can still read. Earlier generations are never read again. |
+| `partitions` | Drops expired result months whose rollups are verified. |
+| `execution_ledger` | Removes terminal ledger rows older than the oldest partition, in batches of 5000 per statement. Open work stays with recovery. |
+
+The exit status is 1 when a step fails, a monitor's rollups fail or an expired month is kept, so scheduled-command monitoring sees the delay. Output and logs hold counts and month identifiers only, never tenant data.
+
+### When a month is dropped
+
+A month may go once `month end + 30 days + 48 hours <= now`. The 48 hours are one maximum verdict lookback: the oldest readable instant can still rely on verdicts up to two maximum intervals earlier. This refines ADR-008, whose cutoff has no such margin. Physical permanence therefore reaches about 63 days, plus any cleanup delay.
+
+Months are considered oldest first. A kept month also keeps every later expired month (`older_month_kept`), because the oldest partition marks where raw history begins. Raw results are never deleted row by row.
+
+A month is kept, and retried on the next run, while any of these holds:
+
+| Reported problem | Meaning |
+|---|---|
+| `open_work` | Executions of the month are still pending or running; recovery could write into the month or recreate it. |
+| `rollups_behind` | A monitor alive in the month has rollups that have not reached the month end plus 48 hours. |
+| `hours_missing_or_incomplete` | A monitored hour has no row, or its durations do not add up to the monitored time. |
+| `hours_differ_from_raw` | Counts or latency totals differ from the ledger and raw results, in either direction. |
+| `days_differ_from_hours` | A stored day is absent or differs from the sum of its hours, in either direction. |
+| `verification_failed` | The verification itself raised an error. |
+| `drop_failed` | The exclusive lock on the results parent or the ledger was not obtained within 2 seconds, so checks are not stalled. |
+
+Durations cannot be rebuilt cheaply in SQL, so they are checked for adding up rather than recalculated. Verification reads across tenants and returns counts only. Rollups of a month that still holds raw results are never pruned, because they are the proof its removal waits for, even when they exceed the plan history.
+
+### Limits
+
+- Verification scans one month of ledger and results for all tenants in a single run; its cost at scale has not been measured.
+- A verification failure holds raw data indefinitely until an operator intervenes. No alerting exists beyond the exit status and logs until M11.
+- Month, leap-year and DST boundaries get their dedicated matrix in M7.06.

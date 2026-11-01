@@ -405,3 +405,15 @@ The acceptance gate remains `./scripts/verify.sh`. Results are recorded in TASKS
 ## Time-weighted SLA (M7.03)
 
 `AvailabilityReportTest` covers the ADR-009 formulas and every null case without infrastructure. `MonitorAvailabilityTest` runs on PostgreSQL with real ledger rows: time weighting against check counts, gaps, overlapping exclusions, null denominators, clipping, equal durations from raw results and rollups at seven window edges, rollups read as the actual source, expired raw results, stored holes, the oldest partition, plan history after a downgrade, slots still running, hourly splits and tenant isolation. `DashboardTest` and `RealtimeDeliveryTest` verify the production values through the private route, and `Dashboard.test.tsx` their display. Timezone and DST windows are M7.06.
+
+## Nightly maintenance (M7.04)
+
+`NightlyMetricMaintenanceTest` runs on PostgreSQL with real ledger and result rows and a fixed clock: the exact drop limit, verified drops that keep rollups and availability, idempotent reruns, every verification problem through damaged rollups, open work, later months behind a kept one, other tenants' rollups, the lock timeout against a second session, plan history per team, receipts by generation, ledger cleanup and a failing step that does not stop the others. `MonitorSchedulingConfigurationTest` covers the schedule.
+
+Maintenance services are final, so the failing-step test throws from a `Team::retrieved` listener instead of mocking; only rollup retention reads teams through the model during a run. Pest passes a dataset closure unresolved when the test parameter is typed `Closure`, so such values must be the callback itself.
+
+```sh
+docker compose run --rm php-test vendor/bin/pest tests/Integration/NightlyMetricMaintenanceTest.php tests/Feature/MonitorSchedulingConfigurationTest.php --fail-on-skipped --fail-on-warning
+```
+
+The acceptance gate remains `./scripts/verify.sh`. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#nightly-maintenance-m704).

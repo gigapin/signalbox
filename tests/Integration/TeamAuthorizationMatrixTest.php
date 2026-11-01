@@ -316,6 +316,25 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.escalation-policies.destroy':
             expect($fixture->loadPolicies())->toBe([]);
             break;
+        case 'teams.status-pages.index':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('StatusPages/Index')
+                ->where('team.id', $fixture->team->id)
+                ->has('pages', 1)
+                ->where('pages.0.id', $fixture->statusPage->id)
+                ->where('can.manage', in_array($role, ['owner', 'admin'], true)));
+            $response->assertDontSee('Foreign matrix page', false);
+            break;
+        case 'teams.status-pages.store':
+            expect(array_map(static fn ($page): array => [$page->title, $page->team_id], $fixture->loadStatusPages()))
+                ->toBe([['Matrix page', $fixture->team->id], ['Matrix created page', $fixture->team->id]]);
+            break;
+        case 'teams.status-pages.update':
+            expect($fixture->loadStatusPages()[0]->title)->toBe('Matrix renamed page');
+            break;
+        case 'teams.status-pages.destroy':
+            expect($fixture->loadStatusPages())->toBe([]);
+            break;
         case 'teams.monitors.escalation-policy':
             expect($fixture->loadMonitor()?->escalation_policy_id)->toBe($fixture->policy->id);
             break;
@@ -391,6 +410,8 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
     'teams.escalation-policies.update',
     'teams.escalation-policies.destroy',
     'teams.monitors.escalation-policy',
+    'teams.status-pages.update',
+    'teams.status-pages.destroy',
 ]);
 
 it('rejects a foreign ownership successor despite a forged selected team and fresh password', function (): void {

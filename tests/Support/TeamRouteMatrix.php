@@ -54,6 +54,10 @@ final class TeamRouteMatrix
         'teams.escalation-policies.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.escalation-policies.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.monitors.escalation-policy' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.status-pages.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.status-pages.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.status-pages.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.status-pages.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
     ];
 
     /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */
@@ -69,6 +73,8 @@ final class TeamRouteMatrix
         'account.security' => 'GET',
         'heartbeats.receive' => 'POST',
         'broadcasting.auth' => 'POST',
+        'status-pages.public' => 'GET',
+        'status-pages.unlock' => 'POST',
     ];
 
     /** @return array<string, array{string, string, string}> Route/role/access scenarios with readable Pest dataset names. */

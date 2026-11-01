@@ -49,6 +49,10 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 | teams.escalation-policies.update | PATCH | 302 | 302 | 403 | 403 |
 | teams.escalation-policies.destroy | DELETE | 302 | 302 | 403 | 403 |
 | teams.monitors.escalation-policy | PATCH | 302 | 302 | 302 | 403 |
+| teams.status-pages.index | GET | 200 | 200 | 200 | 200 |
+| teams.status-pages.store | POST | 302 | 302 | 403 | 403 |
+| teams.status-pages.update | PATCH | 302 | 302 | 403 | 403 |
+| teams.status-pages.destroy | DELETE | 302 | 302 | 403 | 403 |
 
 Every route is tested with each actor role in three states: current membership, a disjoint target team and revoked membership with a stale selected team and preloaded membership collection. The last two states must return 404. Separate guest and unverified scenarios must redirect to login and email verification respectively. GET routes retain Laravel's HEAD alias; the inventory checks exact verbs excluding that implicit alias.
 
@@ -80,6 +84,8 @@ The inventory explicitly classifies the remaining routes without forcing them in
 | invitations.register.store | POST | Matching pending capability, no implicit team; positive/invalid/expired cases in M1.03 |
 | invitations.switch-account | POST | Authenticated account, including unverified invitee; logout preserves only proved continuation |
 | invitations.accept | POST | Verified matching identity and server-owned continuation; posted credentials cannot establish authority |
+| status-pages.public | GET | Anonymous; published pages only, explicit projection, password in the session; [STATUS-PAGES.md](STATUS-PAGES.md) |
+| status-pages.unlock | POST | Anonymous; rate limited per address and visitor; a draft answers 404 even with the right password |
 
 A valid capability may reveal its intended preview but does not authorize the team directory. Only explicit acceptance grants membership. Posting invitation ID/hash/token fields without opening the bearer link does not manufacture server-side continuation, for guests, unverified or verified accounts. Existing M1.03 tests retain coverage for expiry, revocation, rotation, replay, wrong email, invited registration, account switching through 2FA, primary/last-owner invariants and real PostgreSQL lock contention.
 

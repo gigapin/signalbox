@@ -247,6 +247,8 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_10_30_000020_add_channel_quiet_hours.php',
         // Rollups reference monitors and are reversed before them.
         'database/migrations/2026_10_30_000021_create_check_rollups.php',
+        // Status page components reference monitors and are reversed before them.
+        'database/migrations/2026_11_01_000022_create_status_pages.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

@@ -272,7 +272,9 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $deliveryOutbox = require base_path('database/migrations/2026_10_29_000019_add_notification_delivery_outbox.php');
     $quietHours = require base_path('database/migrations/2026_10_30_000020_add_channel_quiet_hours.php');
     $rollups = require base_path('database/migrations/2026_10_30_000021_create_check_rollups.php');
-    // Roll back rollup, escalation, notification, pause, maintenance, sequence, incident, result, heartbeat and execution dependents in reverse order.
+    $statusPages = require base_path('database/migrations/2026_11_01_000022_create_status_pages.php');
+    // Roll back status page, rollup, escalation, notification, pause, maintenance, sequence, incident, result, heartbeat and execution dependents in reverse order.
+    $statusPages->down();
     $rollups->down();
     $quietHours->down();
     $deliveryOutbox->down();
@@ -300,6 +302,7 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $deliveryOutbox->up();
     $quietHours->up();
     $rollups->up();
+    $statusPages->up();
     app(TenantContext::class)->run($team->id, function () use ($team): void {
         expect(Monitor::query()->count())->toBe(0);
         Monitor::factory()->create();

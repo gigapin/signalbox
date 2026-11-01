@@ -38,6 +38,15 @@ final readonly class PlanLimits
 
     /**
      * @param Plan $plan Effective plan.
+     * @return int Maximum status pages a team may hold, drafts included.
+     */
+    public function statusPages(Plan $plan): int
+    {
+        return $this->get($plan, 'status_pages');
+    }
+
+    /**
+     * @param Plan $plan Effective plan.
      * @return int Days of rollup history the team may read.
      */
     public function rollupRetentionDays(Plan $plan): int

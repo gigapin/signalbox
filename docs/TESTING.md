@@ -471,3 +471,29 @@ Detection is needed whichever is chosen. Options are a scheduled workflow, which
 ### Acceptance
 
 The backend suite passes under simulated system dates for at least the first day of a month, the December to January change, February of a leap and a non-leap year, and one year after the fixed dates, with no change to the tests between runs.
+
+## Metric boundary matrix (M7.06)
+
+`MetricBoundaryMatrixTest` runs on PostgreSQL with real ledger and result rows and a fixed clock. It combines what the other metric tests cover one at a time:
+
+| Area | Cases |
+|---|---|
+| Whole calendar months | 28, 29, 30 and 31 days, DST months of 743, 745 and 721 hours, and a year crossing in a team timezone, read from rollups after raw results are out of reach. |
+| Local days | 23, 24 and 25 hours and a half-hour offset, identical from raw results and rollups, with `hourly()` giving the same number of hours. |
+| Year change | A verdict and samples split into the right partition, hour and day; two adjacent months add up to the window covering both. |
+| Exclusions | Maintenance and pauses spanning a month end, nested, adjacent and already over, subtracted once in each month and overall. |
+| No checks | A whole month and a gap inside a day are unknown, never available. |
+| Percentiles | Exact `ceil(p * n)` positions for 1, 20 and 21 samples, repeated values, zero, unmeasured checks, nothing measured, and the next day kept out. |
+| Reruns | Advancing every night equals advancing at once; `metrics:nightly` keeps, then drops once, on consecutive nights; `monitors:partitions` does not bring a month back. |
+| Drop limit | The exact second for months of 28, 29, 30 and 31 days, before a short and a leap February, and in December. |
+
+Dates precede every partition the schema commits, so these results do not depend on the real month of the run ([Fixed dates and result partitions](#fixed-dates-and-result-partitions)). A cadence of one day keeps a month of contiguous verdicts to about 30 slots.
+
+The matrix was checked against deliberate defects, each reverted afterwards: no 48-hour margin before a drop, a percentile position rounded down, and a month end calculated in UTC. Each one made tests fail.
+
+```sh
+docker compose run --rm php-test vendor/bin/pest tests/Integration/MetricBoundaryMatrixTest.php --fail-on-skipped --fail-on-warning
+```
+
+The acceptance gate remains `./scripts/verify.sh`.
+

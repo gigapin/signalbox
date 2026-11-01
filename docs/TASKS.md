@@ -12,6 +12,13 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M7.06, 2026-11-01
+
+- **M7.06 completato, quindi M7 completata**: nuova matrice `tests/Integration/MetricBoundaryMatrixTest.php` di 33 casi, dettagli in [TESTING.md](TESTING.md#metric-boundary-matrix-m706). **Nessun difetto trovato nel codice applicativo**, che non è stato modificato.
+- Tre difetti introdotti di proposito e poi ripristinati (nessun margine di 48 ore, posizione del percentile arrotondata per difetto, fine mese calcolata in UTC) vengono tutti rilevati dalla matrice.
+- Gate `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run **554 file**, Larastan livello 8, **2695 test Pest/17941 asserzioni**, 5 qualità, 151 DOM e build.
+- **Prossimo lavoro proposto: TD.01–TD.02**, prima di M8 e del 2026-12-01; poi **M8.01**.
+
 ## Consegna di sessione — M7.05, 2026-11-01
 
 - **M7.05 completato**: report mensile PDF per team su `/teams/{team}/reports/{YYYY-MM}`, con mese nel fuso del team e download dalla dashboard. Regole e limiti in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#monthly-pdf-report-m705). Nuova dipendenza `dompdf/dompdf`, dettagli in [DEPENDENCIES.md](DEPENDENCIES.md#m705-pdf-report-dependency-update).
@@ -449,9 +456,11 @@ Dipendenze: M3–M4; completa le metriche di M6.
 - [x] M7.03 Implementare servizio SLA pesato sul tempo con esclusione di manutenzioni/pause, intersezioni e intervalli parziali; definire assenza dati e denominatore nullo.
 - [x] M7.04 Implementare job notturno, creazione/drop partizioni, retention per piano e verifica dei rollup prima della rimozione; rispettare la politica concordata sui 30 giorni. Integrare la pulizia delle ricezioni heartbeat introdotte in M3.05 preservando quelle necessarie agli slot ancora validi.
 - [x] M7.05 Implementare report mensile PDF con autorizzazione tenant e timezone corretta.
-- [ ] M7.06 Testare confini mese/anno, timezone/DST, finestre sovrapposte, pause storiche, periodi senza check, percentili e riesecuzione dei job su PostgreSQL.
+- [x] M7.06 Testare confini mese/anno, timezone/DST, finestre sovrapposte, pause storiche, periodi senza check, percentili e riesecuzione dei job su PostgreSQL.
 
 Uscita: SLA documentato e testato, storico utilizzabile dopo eliminazione dei grezzi e manutenzione partizioni verificata.
+
+Uscita soddisfatta il 2026-11-01 con M7.06: matrice su confini di calendario, riesecuzioni e limite esatto del drop in [TESTING.md](TESTING.md#metric-boundary-matrix-m706). Report mensile e notturno verificati su PostgreSQL; non ancora eseguiti su volumi reali. M7 completata; prossimo lavoro proposto TD.01, prima di M8.
 
 ## M8 — Status page pubblica (14 h)
 
@@ -531,7 +540,7 @@ Uscita: suite verde con le date simulate del criterio in TESTING.md, senza inter
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04 e M7.05 completati il 2026-11-01; prossimo task pronto M7.06. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; prossimo lavoro proposto TD.01, poi M8.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -1448,3 +1457,12 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Difetto evitato durante il lavoro: `throttle:10,1` condivide il contatore per utente con le altre rotte limitate allo stesso modo; sostituito con il limiter dedicato `reports`.
 - Verifiche: gate `./scripts/verify.sh` **exit 0**, PHP 8.4.27: formatter dry-run 553 file, Larastan livello 8, 2662 test Pest/17795 asserzioni, lint/formato/TypeScript, 5 test qualità, 151 DOM, build. PDF di esempio con dati sintetici generato con il renderer reale e controllato a vista: tabella, accenti, testo con `<` e nomi lunghi a capo corretti. Dopo il gate modificato solo questo documento.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, download dal browser sull'applicazione in esecuzione, misura del costo con centinaia di monitor. I container di sviluppo non sono stati riavviati né il database toccato. **M7.05 completato; prossimo task pronto M7.06.**
+
+### 2026-11-01 — M7.06: matrice dei confini delle metriche (completato)
+
+- Richiesta dell'utente di proseguire con il task successivo; dipendenze M7.01–M7.05 soddisfatte, task segnato in corso prima delle modifiche. Git/gh non eseguiti.
+- File: `tests/Integration/MetricBoundaryMatrixTest.php`; documenti `TESTING.md` e questo piano. Nessun file applicativo modificato: le tre mutazioni sono state ripristinate e confrontate con la copia salvata.
+- Prima esecuzione: 1 fallimento su 33, dovuto al test (un giorno non ancora chiuso non ha riga giornaliera). La prima prova della mutazione sul percentile aveva cambiato solo un commento e risultava sopravvissuta; ripetuta sul codice, fa fallire 3 casi.
+- Scelta: date anteriori a ogni partizione creata dallo schema, così la matrice non dipende dal mese reale e non aggrava TD.01.
+- Verifiche: gate `./scripts/verify.sh` **exit 0**, PHP 8.4.27: formatter dry-run 554 file, Larastan livello 8, 2695 test Pest/17941 asserzioni, lint/formato/TypeScript, 5 test qualità, 151 DOM, build. Dopo il gate modificato solo questo documento.
+- Non eseguiti: Git/gh, CI remota/PHP 8.5, carico su volumi reali. Fusi con cambio dell'ora a mezzanotte esattamente al primo del mese non coperti. **M7.06 e M7 completati; prossimo lavoro proposto TD.01.**

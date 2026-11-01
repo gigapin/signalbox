@@ -12,6 +12,15 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — TD.01–TD.02, 2026-11-01
+
+- **TD chiuso**: la suite non dipende dal mese reale. Backend verde su 7 date simulate (2695 test ciascuna), frontend su 3. Dettagli in [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
+- **La previsione del piano era sbagliata**: al 2026-12-01 il guasto non si ripresenta. Le correzioni ai tre file di stamattina bastavano già; togliendole, la simulazione fa fallire 17 test, quindi è in grado di vederlo.
+- **Soluzione ipotizzata non adottata**: nessun orologio fisso sulle migrazioni. Si adottano una convenzione per i nuovi test e il rilevamento: `scripts/verify-dates.sh` e il workflow mensile `date-independence.yml`.
+- **Limiti**: il workflow non è ancora girato su GitHub. Con PostgreSQL spostato, `lock_timeout` non scatta, quindi 13 casi sono esclusi da quella prova (2682 passati) e i controlli ricorrenti spostano solo l'orologio PHP.
+- Gate `./scripts/verify.sh` **exit 0**: formatter dry-run **554 file**, Larastan livello 8, **2695 test Pest/17941 asserzioni**, 5 qualità, 151 DOM e build.
+- **Prossimo task pronto: M8.01**.
+
 ## Consegna di sessione — M7.06, 2026-11-01
 
 - **M7.06 completato, quindi M7 completata**: nuova matrice `tests/Integration/MetricBoundaryMatrixTest.php` di 33 casi, dettagli in [TESTING.md](TESTING.md#metric-boundary-matrix-m706). **Nessun difetto trovato nel codice applicativo**, che non è stato modificato.
@@ -529,18 +538,18 @@ Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consult
 
 ## TD — Debito tecnico dei test
 
-Dipendenze: nessuna. Fuori specifica, aggiunta su richiesta dell'utente il 2026-11-01. Da affrontare nel prossimo futuro: proposta dopo M7 e prima di M8, comunque prima del cambio di mese del **2026-12-01**, primo momento in cui il problema può ripresentarsi. Analisi e candidati in [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
+Dipendenze: nessuna. Fuori specifica, aggiunta su richiesta dell'utente il 2026-11-01. Il rischio previsto per il 2026-12-01 è stato smentito dalla simulazione. Risultati e decisione in [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
 
-- [ ] TD.01 Studiare e scegliere una soluzione al problema delle date fisse nei test: la suite non deve dipendere dal mese reale in cui viene eseguita. Registrare la decisione nel registro.
-- [ ] TD.02 Applicare la soluzione scelta e aggiungere un modo per rilevare il problema prima che si manifesti, provando la suite con date di sistema diverse (primo del mese, cambio d'anno, febbraio).
+- [x] TD.01 Studiare e scegliere una soluzione al problema delle date fisse nei test: la suite non deve dipendere dal mese reale in cui viene eseguita. Registrare la decisione nel registro.
+- [x] TD.02 Applicare la soluzione scelta e aggiungere un modo per rilevare il problema prima che si manifesti, provando la suite con date di sistema diverse (primo del mese, cambio d'anno, febbraio).
 
-Uscita: suite verde con le date simulate del criterio in TESTING.md, senza interventi a ogni cambio di mese.
+Uscita soddisfatta il 2026-11-01: suite verde con le date simulate del criterio, senza modifiche ai test tra un'esecuzione e l'altra. Il workflow mensile è validato con actionlint ma non ancora eseguito su GitHub.
 
 ## Ordine operativo e decisioni aperte
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; prossimo lavoro proposto TD.01, poi M8.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 completati il 2026-11-01; prossimo task pronto M8.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -604,6 +613,7 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-11-01 | M7.04: un mese trattenuto trattiene anche i successivi | La partizione più vecchia segna l'inizio dello storico grezzo; un buco lo falserebbe. |
 | 2026-11-01 | M7.05: Dompdf diretto dietro adapter | La specifica non indica una libreria. Solo PHP, nessun browser nelle immagini Docker. Scartato il wrapper Laravel, inizialmente annunciato all'utente: lascia JavaScript attivo di default e non serve con opzioni esplicite. Rete, PHP e JavaScript disattivati. |
 | 2026-11-01 | M7.05: report per team con tutti i ruoli in lettura | Una riga per monitor, stessa autorizzazione della dashboard. Mese in corso ammesso e dichiarato parziale; mese non iniziato nel fuso del team 404. Percentili di latenza esclusi: i bucket UTC non sono esatti per un mese in un altro fuso. |
+| 2026-11-01 | TD.01: convenzione e rilevamento per le date fisse, nessun orologio fisso sulle migrazioni | Ipotesi iniziale smentita: il backend è verde su 7 date simulate senza soluzioni sistemiche, e un controllo con le correzioni tolte mostra che la simulazione vede il guasto. I nuovi test con orologio fisso preparano i propri mesi o usano date anteriori alle partizioni. I controlli ricorrenti spostano solo l'orologio PHP, perché su un server sotto libfaketime `lock_timeout` non scatta. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
 ## Registro sessioni
@@ -1466,3 +1476,13 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Scelta: date anteriori a ogni partizione creata dallo schema, così la matrice non dipende dal mese reale e non aggrava TD.01.
 - Verifiche: gate `./scripts/verify.sh` **exit 0**, PHP 8.4.27: formatter dry-run 554 file, Larastan livello 8, 2695 test Pest/17941 asserzioni, lint/formato/TypeScript, 5 test qualità, 151 DOM, build. Dopo il gate modificato solo questo documento.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, carico su volumi reali. Fusi con cambio dell'ora a mezzanotte esattamente al primo del mese non coperti. **M7.06 e M7 completati; prossimo lavoro proposto TD.01.**
+
+### 2026-11-01 — TD.01–TD.02: indipendenza della suite dal mese reale (completato)
+
+- Richiesta dell'utente di proseguire con il task successivo; dipendenze assenti, TD.01 segnato in corso prima delle modifiche. Git/gh non eseguiti.
+- File: nuovi `scripts/verify-dates.sh` e `.github/workflows/date-independence.yml`; documenti `TESTING.md`, `CI.md` e questo piano. Nessun file applicativo né test modificato; le rimozioni temporanee per il controllo di validità sono state ripristinate e confrontate.
+- Backend con solo l'orologio PHP spostato (libfaketime in container usa e getta): **2695 passati/17941 asserzioni** a 2026-12-01, 2026-12-31 23:55, 2027-01-01, 2027-01-31, 2027-02-28, 2027-12-01, 2028-02-29. Controllo di validità senza le correzioni: **17 falliti, 54 passati** a 2026-11-15 e a 2027-12-01 sui tre file. Frontend: **151 passati** a 2026-12-01, 2027-01-01, 2028-02-29.
+- Backend con anche PostgreSQL spostato a 2027-12-01: **2682 passati/17909 asserzioni**, orologio del database controllato prima e dopo, 13 casi esclusi perché attendono `lock_timeout`.
+- Errori di processo: la previsione del rischio al 2026-12-01 e l'ipotesi dell'orologio fisso non hanno retto. Un primo giro con PostgreSQL spostato è rimasto bloccato 1 ora e 41 minuti senza limite di tempo, da cui il limite di 20 minuti a data nello script. Un secondo giro è risultato non valido perché `docker compose run` senza override aveva riportato il servizio all'orologio normale; rifatto. Una prima prova frontend non aveva prodotto risultati ed è stata ripetuta.
+- Verifiche finali: `./scripts/verify-dates.sh '2026-12-01'` **exit 0** (2695 passati); actionlint sul workflow **exit 0**; gate `./scripts/verify.sh` **exit 0**: formatter dry-run 554 file, Larastan livello 8, 2695 test Pest/17941 asserzioni, lint/formato/TypeScript, 5 test qualità, 151 DOM, build. Dopo il gate modificato solo questo documento.
+- Non eseguiti: workflow su GitHub (la pianificazione parte solo dal branch predefinito), scadenza del limite di 20 minuti con un test davvero bloccato, un cambio di mese reale. I 13 casi esclusi non sono provati con il database spostato; passano con l'orologio reale. **TD.01–TD.02 completati; prossimo task pronto M8.01.**

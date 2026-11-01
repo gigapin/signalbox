@@ -432,45 +432,62 @@ The acceptance gate remains `./scripts/verify.sh`.
 
 ## Fixed dates and result partitions
 
-**Open problem, planned as TD.01–TD.02 in [TASKS.md](TASKS.md).** The suite's outcome can depend on the real month in which it runs.
+Closed by TD.01–TD.02 in [TASKS.md](TASKS.md). The suite no longer depends on the real month in which it runs, and a monthly workflow checks that it stays so.
 
 ### Cause
 
-Migrations call `ResultPartitions::prepare()`, which commits partitions for the real current month and the next two. Tests fix the application clock with `travelTo` or `setTestNow`, but that clock does not exist yet when the schema is migrated. Once the real month moves past a fixed date, its partition no longer exists:
+Migrations call `ResultPartitions::prepare()`, which commits partitions for the real current month and the next two. Tests fix the application clock with `travelTo` or `setTestNow`, but that clock does not exist yet when the schema is migrated. A test with a clock fixed before those months, which assumes the month exists and inserts a result or reads `oldestMonth()`, then breaks:
 
 - inserting a result fails with `no partition of relation "check_results" found for row`;
 - `oldestMonth()` is later than the fixed clock, so rollups have no hours to write and availability reports unavailable data.
 
-### What happened
+On 2026-11-01 this happened to 18 tests with a clock fixed in October 2026, with no code change, in `CheckRollupsTest`, `MonitorAvailabilityTest` and `DashboardTest`. Those three files now prepare their own months.
 
-On 2026-11-01, 18 tests with a clock fixed in October 2026 started failing with no code change, in `CheckRollupsTest`, `MonitorAvailabilityTest` and `DashboardTest`. Those three files now prepare their own months. CI would have failed the same way, on any branch.
+### Findings
 
-Preparing a partition inside a test has a trap: `CREATE TABLE ... PARTITION OF` holds a lock on `check_results` until the test transaction ends, so a second session touching that parent waits forever. A `CommittedTeamFixture` cleanup does, because its delete cascades to the results. This is why `CheckRollupConcurrencyTest` is a separate file with a clock relative to the oldest partition.
+The expected repeat on 2026-12-01 was checked and is not real. The suite was run with libfaketime on the PHP process, with no change to the tests between runs:
 
-### Exposure
-
-42 PHP test files contain fixed dates. As of 2026-11-01, 13 of them both fix the clock in code and touch results or the ledger; these are the first to check, not known failures, since all of them pass today:
-
-`TeamIdentityTest`, `MonitorAvailabilityTest`, `MonitorEngineTest`, `MonitorSchedulingTest`, `IncidentDetectionTest`, `TeamBroadcastTest`, `MonitorWorkerIsolationTest`, `CheckRollupsTest`, `DashboardTest`, `IncidentLifecycleMatrixTest`, `MonitorRunnerTest`, `RealtimeDeliveryTest`, `NightlyMetricMaintenanceTest`.
-
-That list comes from a text search, so it may miss clocks fixed through helpers. No run with a simulated system date has been made. The workflow only runs on pull requests and pushes, so a break appears on the first push after the month changes.
-
-### Candidate solutions, to evaluate in TD.01
-
-| Candidate | Idea | Open points |
+| Simulated date | Why | Backend result |
 |---|---|---|
-| Fixed migration clock | Fix the clock around the test `migrate:fresh` (for example through `beforeRefreshingDatabase`), so the committed months are always the same, then also prepare the real current months for tests using the real clock. | Must run once per process. Tests and child processes on the real clock must still find their partitions. |
-| Committed range at bootstrap | After migrating, commit partitions for a fixed range covering every date used by tests. | The range needs maintaining. Moves `oldestMonth()` for tests relying on it. |
-| Relative dates | Express fixtures relative to the clock or to the oldest partition, as `CheckRollupConcurrencyTest` does. | Touches many files and makes boundary cases harder to read; exact calendar dates remain necessary for DST and leap years. |
-| Per-test preparation | Keep preparing months inside tests, as the three corrected files do. | Repeats on each break and hits the lock trap above. It is the current stopgap, not a solution. |
+| 2026-12-01 | First day of the next month | 2695 passed |
+| 2026-12-31 23:55 | Year change during the run | 2695 passed |
+| 2027-01-01 | First day of a year | 2695 passed |
+| 2027-01-31 | Month end before a short February | 2695 passed |
+| 2027-02-28 | End of a non-leap February | 2695 passed |
+| 2027-12-01 | More than a year after the fixed dates | 2695 passed |
+| 2028-02-29 | Leap day | 2695 passed |
 
-First hypothesis, not yet verified: the fixed migration clock, because it reproduces the state these tests were written against, with no DDL inside test transactions and no fixture rewrite.
+The simulation can detect the problem: with the preparation temporarily removed from the three files, 17 tests fail both at 2026-11-15 and at 2027-12-01. The eighteenth had already moved to `CheckRollupConcurrencyTest.php`, which uses relative dates. The other files with fixed dates do not depend on the month, because the ledger creates the partitions they write to.
 
-Detection is needed whichever is chosen. Options are a scheduled workflow, which would also catch breaks with no push, and running the PHP container under a simulated date such as `libfaketime`. PostgreSQL keeps its own clock unless it is simulated too, and `now()` in triggers such as the pause history depends on it.
+The frontend suite passes at 2026-12-01, 2027-01-01 and 2028-02-29 (151 tests each).
 
-### Acceptance
+With PostgreSQL moved too, to 2027-12-01, 2682 tests pass and 13 cases were excluded. Under libfaketime `lock_timeout` never fires on the server: a statement waited 7 seconds for a lock with a 100 ms limit, while the same probe on the real clock was cancelled at once. Keeping real monotonic time with `FAKETIME_DONT_FAKE_MONOTONIC` does not change this. The excluded cases expect that timeout, so with it broken they block forever. A first run stayed blocked for 1 hour 41 minutes before being stopped. This comes from the simulation, not from the application or the tests; those 13 cases pass on a real server clock.
 
-The backend suite passes under simulated system dates for at least the first day of a month, the December to January change, February of a leap and a non-leap year, and one year after the fixed dates, with no change to the tests between runs.
+### Decision
+
+No systemic change. Fixing the clock around `migrate:fresh`, the first hypothesis, is not needed: it would add a mechanism to prevent a failure the simulation does not show. The decision is a convention plus detection.
+
+A new test with a fixed clock that writes results or reads `oldestMonth()` either prepares its own months or uses dates earlier than every committed partition, as `MetricBoundaryMatrixTest` does.
+
+Preparing a partition inside a test has a trap: `CREATE TABLE ... PARTITION OF` holds a lock on `check_results` until the test transaction ends, so a second session touching that parent waits forever. A `CommittedTeamFixture` cleanup does, so tests using it must not run that DDL in the test transaction.
+
+### Detection
+
+```sh
+./scripts/verify-dates.sh
+./scripts/verify-dates.sh '2027-03-31' '2027-06-01 23:59:00'
+```
+
+The script runs the backend suite once per date, about 7 minutes each, in a disposable container that needs network access to install libfaketime. Each date stops after 20 minutes, so a blocked test is a failure and not a hang.
+
+[`date-independence.yml`](CI.md#date-independence) does the same on the 25th of each month, for the first day of next month and for one year ahead, so a break shows about a week early and with no push.
+
+### Limits
+
+- Future dates are simulated, not lived: only a real month change on real infrastructure confirms them.
+- The routine checks move only the PHP clock. PostgreSQL's `now()`, used for example by the pause history trigger, stays real in them. The run with the moved server clock was done once by hand and leaves out the 13 cases above.
+- The frontend is not part of the script or the workflow; it was checked by hand on the three dates above.
+- The workflow has been linted with actionlint but has not run on GitHub yet.
 
 ## Metric boundary matrix (M7.06)
 

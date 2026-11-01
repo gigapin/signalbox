@@ -2,6 +2,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import LiveUpdates from '../../components/LiveUpdates';
+import MonthlyReportDownload from '../../components/dashboard/MonthlyReportDownload';
 import TimeSeriesChart from '../../components/dashboard/TimeSeriesChart';
 import { dashboardUrl, type DashboardProps } from '../../components/dashboard/types';
 import IncidentTable from '../../components/incidents/IncidentTable';
@@ -30,7 +31,7 @@ function duration(seconds: number): string {
 
 /** Render one route team's dashboard; URL selection is carried unchanged into event-driven recovery. */
 export default function Show() {
-    const { team } = usePage<DashboardProps>().props;
+    const { team, reportTimezone } = usePage<DashboardProps>().props;
     const live = useLivePage<DashboardProps>(team.id, 'Dashboard/Show');
     const { dashboard, rejectedFilters } = live.props;
     const { counts, monitors, selectedMonitor, latency, uptime } = dashboard;
@@ -47,6 +48,9 @@ export default function Show() {
                 <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
                 <Link href={`/teams/${team.id}`}>Team members</Link>
             </nav>
+            <section aria-label="Reports" className="mb-6 text-sm text-emerald-300">
+                <MonthlyReportDownload teamId={team.id} timezone={reportTimezone} />
+            </section>
             {rejectedFilters.length > 0 && (
                 <p role="alert" className="mb-5 text-amber-200">
                     Some filters were invalid and ignored: {rejectedFilters.join(', ')}.

@@ -146,3 +146,8 @@ There is no new HTTP route to catalogue. `LivePageRecoveryTest` repeats the four
 ## M6.05 native protocol acceptance
 
 No HTTP route/permission changes. `RealtimeDeliveryTest` obtains a real session grant, feeds it to native Reverb admission and connects committed checks/incidents to the actual private dashboard read. `ReverbProtocolSecurityTest` verifies native signed publication, destination separation, origin/client-event/message-budget policy and tampering rejection using transport-only doubles. `RealtimeAcceptance.test.tsx` connects native Echo to the application authorizer/hook/DOM across denial and identity changes. Protocol-only handcrafted HMACs are not counted as proof of membership; current-role/revocation checks remain at the real HTTP gate. Existing subscribed capabilities are not evicted server-side after revocation; the client closes after denied recovery. The acceptance matrix and this explicit protocol limit are in [REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md).
+
+## M7.05 monthly report
+
+`teams.reports.monthly` is a GET/HEAD private route for owner/admin/member/viewer and joins the complete current/foreign/revoked matrix plus guest/unverified gates. Allowed reads assert a real PDF from the real renderer; foreign teams get 404 without revealing anything. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#monthly-pdf-report-m705).
+

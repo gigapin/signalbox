@@ -55,6 +55,8 @@ export interface DashboardView {
 export interface DashboardProps extends AuthProps {
     /** Authorized route identity. */
     team: TeamSummary;
+    /** IANA timezone in which the team's monthly reports are calculated. */
+    reportTimezone: string;
     /** Operational projection and nullable metric contract. */
     dashboard: DashboardView;
     /** Names of malformed GET filters ignored by the server. */

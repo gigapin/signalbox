@@ -16,6 +16,7 @@ use App\Contracts\Monitoring\ResultObserver;
 use App\Contracts\Monitoring\TlsTransport;
 use App\Contracts\Notifications\ChannelVerificationSender;
 use App\Contracts\Notifications\NotificationWorkPublisher;
+use App\Contracts\Reports\PdfRenderer;
 use App\Contracts\Security\HostResolver;
 use App\Events\Incidents\IncidentNotificationRequested;
 use App\Events\Incidents\IncidentOpened;
@@ -33,9 +34,13 @@ use App\Services\Notifications\AdapterChannelVerificationSender;
 use App\Services\Notifications\PrepareIncidentNotifications;
 use App\Services\Notifications\PublishNotificationDeliveries;
 use App\Services\Notifications\RedisNotificationWorkPublisher;
+use App\Services\Reports\DompdfRenderer;
 use App\Services\Security\SystemHostResolver;
 use App\Services\Tenancy\TenantContext;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
 
@@ -58,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ResultObserver::class, IncidentDetection::class);
         $this->app->bind(DnsTransport::class, ReactDnsTransport::class);
         $this->app->bind(TlsTransport::class, ReactTlsTransport::class);
+        $this->app->bind(PdfRenderer::class, DompdfRenderer::class);
         $this->app->bind(ChannelVerificationSender::class, AdapterChannelVerificationSender::class);
         $this->app->bind(NotificationWorkPublisher::class, RedisNotificationWorkPublisher::class);
     }
@@ -72,6 +78,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(EnsureStripeTestCredentials $ensureStripeTestCredentials, Dispatcher $events): void
     {
         $ensureStripeTestCredentials((string) config('cashier.key'), (string) config('cashier.secret'));
+
+        // A named limiter keeps this counter apart from other routes throttled per user.
+        RateLimiter::for('reports', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->user()?->getAuthIdentifier()));
+
         $events->listen(IncidentNotificationRequested::class, [PrepareIncidentNotifications::class, 'record']);
 
         foreach ([IncidentOpened::class, IncidentReopened::class, IncidentResolved::class] as $event) {

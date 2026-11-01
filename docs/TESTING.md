@@ -417,3 +417,15 @@ docker compose run --rm php-test vendor/bin/pest tests/Integration/NightlyMetric
 ```
 
 The acceptance gate remains `./scripts/verify.sh`. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#nightly-maintenance-m704).
+
+## Monthly PDF report (M7.05)
+
+`ReportMonthTest`, `MonthlyReportRowTest` and `DompdfRendererTest` need no infrastructure: DST, year and February boundaries, fractional offsets, the display of absent values, and the renderer's restrictions. `MonthlyReportTest` runs on PostgreSQL with real ledger rows and a fixed clock: local month against UTC month, equal values from raw results and rollups, unavailable months, month in progress, tenancy, escaping, headers and the rate limit. `tests/Support/RecordingPdfRenderer.php` captures the markup, because text inside a real PDF is compressed; `TeamAuthorizationMatrixTest` covers the real renderer for all roles. `tests/frontend/MonthlyReportDownload.test.tsx` covers the month choice.
+
+```sh
+docker compose run --rm php-test vendor/bin/pest tests/Unit/ReportMonthTest.php tests/Unit/MonthlyReportRowTest.php tests/Unit/DompdfRendererTest.php tests/Integration/MonthlyReportTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npx vitest run tests/frontend/MonthlyReportDownload.test.tsx
+```
+
+The acceptance gate remains `./scripts/verify.sh`.
+

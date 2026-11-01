@@ -29,6 +29,7 @@ beforeEach(function (): void {
         $this->markTestSkipped('Requires isolated php-test PostgreSQL.');
     }
 
+    $this->withoutVite();
     $this->actions = app(ManageStatusPages::class);
 });
 

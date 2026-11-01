@@ -54,4 +54,8 @@ docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusPageMan
 docker compose run --rm node npx vitest run tests/frontend/StatusPages.test.tsx
 ```
 
-The acceptance gate remains `./scripts/verify.sh`.
+The acceptance gate remains `./scripts/verify.sh`. It builds the assets, while CI runs the backend without them, so a test rendering HTML must call `withoutVite()`. To reproduce CI's condition:
+
+```sh
+docker compose run --rm -v /var/www/html/public/build php-test vendor/bin/pest --fail-on-skipped
+```

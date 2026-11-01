@@ -22,6 +22,7 @@ beforeEach(function (): void {
         $this->markTestSkipped('Requires isolated php-test PostgreSQL.');
     }
 
+    $this->withoutVite();
     Cache::flush();
     $this->team = Team::factory()->create(['name' => 'Private team name']);
     $this->monitor = app(TenantContext::class)->run($this->team->id, fn (): Monitor => Monitor::factory()->create(['name' => 'db-primary-internal']));

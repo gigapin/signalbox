@@ -266,6 +266,7 @@ export default function Team() {
                 <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
                 <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
+                <Link href={`/teams/${team.id}/status-pages`}>Status pages</Link>
                 {team.ownerId === actorId ? (
                     <Link href={`/teams/${team.id}/ownership`}>Transfer primary ownership</Link>
                 ) : (

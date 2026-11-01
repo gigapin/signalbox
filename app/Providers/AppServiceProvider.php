@@ -82,6 +82,11 @@ class AppServiceProvider extends ServiceProvider
         // A named limiter keeps this counter apart from other routes throttled per user.
         RateLimiter::for('reports', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->user()?->getAuthIdentifier()));
 
+        // Per address and visitor, so guessing one page's password cannot lock visitors out of another.
+        RateLimiter::for('status-page-unlock', static fn (Request $request): Limit => Limit::perMinute(5)->by(
+            (string) $request->route('slug').'|'.$request->ip()
+        ));
+
         $events->listen(IncidentNotificationRequested::class, [PrepareIncidentNotifications::class, 'record']);
 
         foreach ([IncidentOpened::class, IncidentReopened::class, IncidentResolved::class] as $event) {

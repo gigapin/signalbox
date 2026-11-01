@@ -31,6 +31,7 @@ export default function Index() {
                 <Link href={`/teams/${team.id}`}>Team members</Link>
                 <Link href={`/teams/${team.id}/monitors`}>Monitors</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
+                <Link href={`/teams/${team.id}/status-pages`}>Status pages</Link>
             </nav>
 
             {unnotifiedMonitors > 0 && (

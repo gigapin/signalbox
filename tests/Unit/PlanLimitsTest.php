@@ -21,6 +21,17 @@ it('reads the ADR-010 monitor quotas and minimum intervals', function (Plan $pla
     'internal' => [Plan::Internal, 1000, 30],
 ]);
 
+it('reads the status page limit of each plan', function (Plan $plan, int $pages): void {
+    $limits = new PlanLimits(new Repository(['plans' => require __DIR__.'/../../config/plans.php']));
+
+    expect($limits->statusPages($plan))->toBe($pages);
+})->with([
+    'free' => [Plan::Free, 1],
+    'pro' => [Plan::Pro, 3],
+    'business' => [Plan::Business, 10],
+    'internal' => [Plan::Internal, 100],
+]);
+
 it('declares every adopted entitlement for every plan', function (): void {
     $plans = require __DIR__.'/../../config/plans.php';
 

@@ -11,6 +11,7 @@ use App\Models\IncidentUpdate;
 use App\Models\MaintenanceWindow;
 use App\Models\Monitor;
 use App\Models\NotificationChannel;
+use App\Models\StatusPage;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -47,6 +48,8 @@ final readonly class TeamAuthorizationFixture
      * @param NotificationChannel $foreignChannel Equivalent channel of the foreign team.
      * @param EscalationPolicy $policy Local policy notifying its own separate channel.
      * @param EscalationPolicy $foreignPolicy Policy of the foreign team.
+     * @param StatusPage $statusPage Local draft page.
+     * @param StatusPage $foreignStatusPage Draft page of the foreign team.
      */
     private function __construct(
         public Team $team,
@@ -70,6 +73,8 @@ final readonly class TeamAuthorizationFixture
         public NotificationChannel $foreignChannel,
         public EscalationPolicy $policy,
         public EscalationPolicy $foreignPolicy,
+        public StatusPage $statusPage,
+        public StatusPage $foreignStatusPage,
     ) {
     }
 
@@ -132,6 +137,8 @@ final readonly class TeamAuthorizationFixture
             $foreignChannel,
             $policy,
             $foreignPolicy,
+            app(TenantContext::class)->run($team->id, fn (): StatusPage => StatusPage::factory()->create(['title' => 'Matrix page'])),
+            app(TenantContext::class)->run($foreign->id, fn (): StatusPage => StatusPage::factory()->create(['title' => 'Foreign matrix page'])),
         );
     }
 
@@ -220,6 +227,10 @@ final readonly class TeamAuthorizationFixture
             $parameters['policy'] = $foreignTeam || $foreignChild ? $this->foreignPolicy->id : $this->policy->id;
         }
 
+        if (in_array($route, ['teams.status-pages.update', 'teams.status-pages.destroy'], true)) {
+            $parameters['statusPage'] = $foreignTeam || $foreignChild ? $this->foreignStatusPage->id : $this->statusPage->id;
+        }
+
         if (str_starts_with($route, 'teams.incidents.') && $route !== 'teams.incidents.index') {
             $parameters['incident'] = $foreignTeam || $foreignChild ? $this->foreignIncident->id : $this->incident->id;
         }
@@ -298,6 +309,18 @@ final readonly class TeamAuthorizationFixture
             ];
         }
 
+        if (in_array($route, ['teams.status-pages.store', 'teams.status-pages.update'], true)) {
+            return [
+                'slug' => $route === 'teams.status-pages.store' ? 'matrix-created' : 'matrix-renamed',
+                'title' => $route === 'teams.status-pages.store' ? 'Matrix created page' : 'Matrix renamed page',
+                'theme_mode' => 'dark',
+                'theme_accent' => 'blue',
+                'is_public' => true,
+                'components' => [['name' => 'API', 'monitor_ids' => [$this->monitor->id]]],
+                'team_id' => $this->foreign->id,
+            ];
+        }
+
         if ($route === 'teams.monitors.escalation-policy') {
             return ['escalation_policy_id' => $this->policy->id];
         }
@@ -307,6 +330,7 @@ final readonly class TeamAuthorizationFixture
             || str_starts_with($route, 'teams.incidents.')
             || str_starts_with($route, 'teams.notification')
             || str_starts_with($route, 'teams.escalation-policies.')
+            || str_starts_with($route, 'teams.status-pages.')
         ) {
             return [];
         }
@@ -318,6 +342,12 @@ final readonly class TeamAuthorizationFixture
             'team_id' => $this->foreign->id,
             'actor_id' => $this->foreign->owner_id,
         ];
+    }
+
+    /** @return list<StatusPage> Local status pages loaded inside their tenant context, in ID order. */
+    public function loadStatusPages(): array
+    {
+        return app(TenantContext::class)->run($this->team->id, fn (): array => StatusPage::query()->orderBy('id')->get()->all());
     }
 
     /** @return Monitor|null Current local monitor loaded inside its tenant context, null once deleted. */

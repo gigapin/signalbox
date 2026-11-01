@@ -12,6 +12,15 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M8.01, 2026-11-01
+
+- **M8.01 completato**: gestione delle status page per team (indirizzo, titolo, descrizione, tema, visibilità, password, componenti ordinati) e superficie pubblica `/status/{slug}` con sblocco a password. Dettagli in [STATUS-PAGES.md](STATUS-PAGES.md).
+- **La pagina pubblica mostra per ora solo i nomi dei componenti**: stato attuale e storico arrivano con M8.02.
+- **Deviazione dalla specifica**: tabella di collegamento al posto di `monitor_ids_json`, così un monitor di un altro team è impossibile anche a livello di database. `custom_domain` arriva con M8.05.
+- **Per M8.03**: oggi le risposte pubbliche sono `no-store`, e Inertia aggiunge a ogni risposta `auth.user` del visitatore autenticato: non deve finire in una cache condivisa.
+- Gate `./scripts/verify.sh` **exit 0**: formatter dry-run **575 file**, Larastan livello 8, **2800 test Pest/18882 asserzioni**, 5 qualità, **158 DOM** e build. Non provato su un browser reale; in sviluppo serve `php artisan migrate`.
+- **Prossimo task pronto: M8.02**.
+
 ## Consegna di sessione — TD.01–TD.02, 2026-11-01
 
 - **TD chiuso**: la suite non dipende dal mese reale. Backend verde su 7 date simulate (2695 test ciascuna), frontend su 3. Dettagli in [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
@@ -475,7 +484,7 @@ Uscita soddisfatta il 2026-11-01 con M7.06: matrice su confini di calendario, ri
 
 Dipendenze: M4–M5, M7.
 
-- [ ] M8.01 Implementare status page, componenti ordinati, selezione monitor dello stesso team, tema, visibilità e protezione password.
+- [x] M8.01 Implementare status page, componenti ordinati, selezione monitor dello stesso team, tema, visibilità e protezione password.
 - [ ] M8.02 Pubblicare stato, storico di 90 giorni e soli aggiornamenti incidenti esplicitamente pubblici.
 - [ ] M8.03 Configurare cache con chiavi tenant/pagina, invalidazione su modifiche e protezione delle pagine riservate.
 - [ ] M8.04 Implementare iscrizione email verificata, disiscrizione e invio degli aggiornamenti pubblici.
@@ -549,7 +558,7 @@ Uscita soddisfatta il 2026-11-01: suite verde con le date simulate del criterio,
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 completati il 2026-11-01; prossimo task pronto M8.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 e M8.01 completati il 2026-11-01; prossimo task pronto M8.02. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -614,6 +623,11 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-11-01 | M7.05: Dompdf diretto dietro adapter | La specifica non indica una libreria. Solo PHP, nessun browser nelle immagini Docker. Scartato il wrapper Laravel, inizialmente annunciato all'utente: lascia JavaScript attivo di default e non serve con opzioni esplicite. Rete, PHP e JavaScript disattivati. |
 | 2026-11-01 | M7.05: report per team con tutti i ruoli in lettura | Una riga per monitor, stessa autorizzazione della dashboard. Mese in corso ammesso e dichiarato parziale; mese non iniziato nel fuso del team 404. Percentili di latenza esclusi: i bucket UTC non sono esatti per un mese in un altro fuso. |
 | 2026-11-01 | TD.01: convenzione e rilevamento per le date fisse, nessun orologio fisso sulle migrazioni | Ipotesi iniziale smentita: il backend è verde su 7 date simulate senza soluzioni sistemiche, e un controllo con le correzioni tolte mostra che la simulazione vede il guasto. I nuovi test con orologio fisso preparano i propri mesi o usano date anteriori alle partizioni. I controlli ricorrenti spostano solo l'orologio PHP, perché su un server sotto libfaketime `lock_timeout` non scatta. |
+| 2026-11-01 | M8.01: tabella di collegamento invece di `monitor_ids_json` | Deviazione dalla specifica. Le chiavi composite impediscono nel database un monitor di un altro team, l'eliminazione di un monitor lo toglie dalle pagine, e un monitor non può comparire due volte in una pagina. |
+| 2026-11-01 | M8.01: gestione riservata a owner e admin | La specifica non lo indica. La pagina pubblica informazioni fuori dal team, quindi segue la regola dei canali di notifica; tutti i membri leggono. |
+| 2026-11-01 | M8.01: ai visitatori solo i nomi dei componenti | Il nome di un monitor può essere interno. Una bozza risponde 404 anche ai membri del team, quindi per ora non c'è anteprima. |
+| 2026-11-01 | M8.01: tema a valori preimpostati | Schema `system`/`light`/`dark` e cinque accenti, invece di colori liberi: nessun valore inviato raggiunge gli stili e il contrasto del testo non dipende dalla scelta. |
+| 2026-11-01 | M8.01: sblocco per sessione legato all'hash corrente | La sessione conserva un'impronta con chiave dell'hash, quindi una nuova password esclude chi aveva inserito la vecchia. Massimo 5 tentativi al minuto per indirizzo e visitatore. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
 ## Registro sessioni
@@ -1486,3 +1500,13 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Errori di processo: la previsione del rischio al 2026-12-01 e l'ipotesi dell'orologio fisso non hanno retto. Un primo giro con PostgreSQL spostato è rimasto bloccato 1 ora e 41 minuti senza limite di tempo, da cui il limite di 20 minuti a data nello script. Un secondo giro è risultato non valido perché `docker compose run` senza override aveva riportato il servizio all'orologio normale; rifatto. Una prima prova frontend non aveva prodotto risultati ed è stata ripetuta.
 - Verifiche finali: `./scripts/verify-dates.sh '2026-12-01'` **exit 0** (2695 passati); actionlint sul workflow **exit 0**; gate `./scripts/verify.sh` **exit 0**: formatter dry-run 554 file, Larastan livello 8, 2695 test Pest/17941 asserzioni, lint/formato/TypeScript, 5 test qualità, 151 DOM, build. Dopo il gate modificato solo questo documento.
 - Non eseguiti: workflow su GitHub (la pianificazione parte solo dal branch predefinito), scadenza del limite di 20 minuti con un test davvero bloccato, un cambio di mese reale. I 13 casi esclusi non sono provati con il database spostato; passano con l'orologio reale. **TD.01–TD.02 completati; prossimo task pronto M8.01.**
+
+### 2026-11-01 — M8.01: status page, componenti, tema, visibilità e password (completato)
+
+- Richiesta dell'utente di proseguire; dipendenze M4–M5 e M7 soddisfatte, task segnato in corso prima delle modifiche. Git/gh non eseguiti.
+- File applicativi: migration `2026_11_01_000022_create_status_pages.php`; `app/Models/StatusPage.php`, `StatusPageComponent.php`; `app/Actions/StatusPages/ManageStatusPages.php`; `app/Services/StatusPages/PublicStatusPages.php`, `StatusPageUnlocks.php`; `app/Policies/StatusPagePolicy.php`; controller, request e presenter in `StatusPages/`; `app/Data/StatusPages/`, `app/Enums/StatusPages/`, `StatusPageRejected`, `PlanLimits::statusPages()`, `routes/status-pages.php`, limiter e messaggi di stato. Frontend: `resources/js/pages/StatusPages/` (`Index`, `Public`, `Unlock`), `resources/js/components/status-pages/`, link nella navigazione di team, monitor e notifiche.
+- Test: nuovi `StatusPageManagementTest.php`, `PublicStatusPageTest.php`, `tests/frontend/StatusPages.test.tsx`; estesi matrice delle autorizzazioni, `PlanLimitsTest` e i due test che ripercorrono le migrazioni. Documenti: nuovo `STATUS-PAGES.md`, `AUTHORIZATION-MATRIX.md` e questo piano.
+- Durante il lavoro: Larastan ha rifiutato due forme del `catch` sulla corsa dell'indirizzo; due test di rollback fallivano perché la nuova chiave verso `monitors` non era nella loro lista. Corretti entrambi.
+- Verifiche: gate `./scripts/verify.sh` **exit 0**: formatter dry-run 575 file, Larastan livello 8, 2800 test Pest/18882 asserzioni, lint/formato/TypeScript, 5 test qualità, 158 DOM, build. Dopo il gate modificato solo questo documento.
+- Non eseguiti: Git/gh, CI remota/PHP 8.5, prova su browser reale e aspetto effettivo dei temi, migrazione del database di sviluppo. Concorrenza tra team sull'indirizzo provata con una riga inserita tra controllo e scrittura, non con due processi. **M8.01 completato; prossimo task pronto M8.02.**
+- Correzione dopo la chiusura, segnalata dall'utente dalla CI: 8 test falliti con `Vite manifest not found`. I due nuovi file di test rendono l'HTML senza `withoutVite()`; in locale passavano perché esisteva `public/build`, assente in CI. Riprodotti gli stessi 8 fallimenti nascondendo la cartella in un container (`docker compose run --rm -v /var/www/html/public/build php-test ...`). Dopo la correzione, suite backend senza la cartella: **2800 passati/18882 asserzioni**; Larastan senza errori. Modificati solo i due file di test e questo documento; CI remota da confermare.

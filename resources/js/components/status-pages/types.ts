@@ -1,0 +1,106 @@
+/** Describe the status page projections sent by StatusPageController and PublicStatusPageController. */
+import type { MonitorPageProps } from '../monitors/types';
+
+/** Appearance of a page, with values from closed server enums. */
+export interface StatusPageTheme {
+    /** Color scheme: `system`, `light` or `dark`. */
+    mode: string;
+    /** Decorative accent preset. */
+    accent: string;
+}
+
+/** A monitor a component can group. */
+export interface SelectableMonitor {
+    /** Team-local monitor identity. */
+    id: number;
+    /** Internal monitor name, never shown to visitors. */
+    name: string;
+}
+
+/** One component of a page as managers see it. */
+export interface ManagedComponent {
+    /** Public label. */
+    name: string;
+    /** Grouped monitors by name. */
+    monitors: SelectableMonitor[];
+}
+
+/** One page row of the settings screen; the password itself is never sent. */
+export interface ManagedStatusPage {
+    /** Team-local page identity. */
+    id: number;
+    /** Public address segment. */
+    slug: string;
+    /** Public path of the page. */
+    path: string;
+    /** Page heading. */
+    title: string;
+    /** Optional introduction. */
+    description: string | null;
+    /** Appearance. */
+    theme: StatusPageTheme;
+    /** Whether the public address answers; false is a draft. */
+    isPublic: boolean;
+    /** Whether visitors must enter a password. */
+    hasPassword: boolean;
+    /** Components in display order. */
+    components: ManagedComponent[];
+}
+
+/** Form bounds and plan usage. */
+export interface StatusPageLimits {
+    /** Maximum pages of the effective plan. */
+    pages: number;
+    /** Pages the team holds, drafts included. */
+    used: number;
+    /** Longest title in characters. */
+    titleMaxLength: number;
+    /** Longest description in characters. */
+    descriptionMaxLength: number;
+    /** Longest component name in characters. */
+    componentNameMaxLength: number;
+    /** Most components on one page. */
+    componentsPerPage: number;
+    /** Most monitors in one component. */
+    monitorsPerComponent: number;
+    /** Shortest password in characters. */
+    passwordMinLength: number;
+}
+
+/** Appearance choices offered by the forms. */
+export interface ThemeChoices {
+    /** Color schemes. */
+    modes: string[];
+    /** Accent presets. */
+    accents: string[];
+}
+
+/** Props of the settings page. */
+export interface StatusPagesPageProps extends MonitorPageProps {
+    /** Route team. */
+    team: { id: number; name: string };
+    /** Pages of the team. */
+    pages: ManagedStatusPage[];
+    /** Monitors of the team. */
+    monitors: SelectableMonitor[];
+    /** Appearance choices. */
+    themeChoices: ThemeChoices;
+    /** Form bounds and usage. */
+    limits: StatusPageLimits;
+    /** Whether management controls are offered; the server decides again. */
+    can: { manage: boolean };
+    /** Validation messages by field. */
+    errors: Record<string, string | undefined>;
+}
+
+/** What a visitor may read: no identity and no monitor name. */
+export interface PublicStatusPage {
+    /** Page heading. */
+    title: string;
+    /** Optional introduction. */
+    description: string | null;
+    /** Appearance. */
+    theme: StatusPageTheme;
+    /** Components in display order. */
+    components: { name: string }[];
+}

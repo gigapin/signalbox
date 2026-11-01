@@ -165,6 +165,7 @@ export default function Index() {
                 <Link href={`/teams/${team.id}`}>Team members</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
                 <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
+                <Link href={`/teams/${team.id}/status-pages`}>Status pages</Link>
             </nav>
 
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">

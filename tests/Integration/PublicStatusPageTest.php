@@ -80,12 +80,12 @@ it('shows a published page to anonymous visitors with only the explicit projecti
 
     $response->assertInertia(fn (AssertableInertia $inertia) => $inertia
         ->component('StatusPages/Public')
-        ->where('page', [
-            'title' => 'Acme status',
-            'description' => 'Current state of Acme.',
-            'theme' => ['mode' => 'dark', 'accent' => 'blue'],
-            'components' => [['name' => 'Public API']],
-        ]));
+        ->where('page.title', 'Acme status')
+        ->where('page.description', 'Current state of Acme.')
+        ->where('page.theme', ['mode' => 'dark', 'accent' => 'blue'])
+        ->where('page.components.0.name', 'Public API')
+        ->has('page', 6)
+        ->has('page.components.0', 4));
 
     $response->assertDontSee('db-primary-internal', false)
         ->assertDontSee('Private team name', false)
@@ -101,7 +101,8 @@ it('keeps components in their chosen order on the public page', function (): voi
     ]]);
 
     $this->get('/status/acme-status')->assertInertia(fn (AssertableInertia $inertia) => $inertia
-        ->where('page.components', [['name' => 'Zeta'], ['name' => 'Alpha']]));
+        ->where('page.components.0.name', 'Zeta')
+        ->where('page.components.1.name', 'Alpha'));
 });
 
 it('answers drafts and unknown addresses identically, for members too', function (): void {

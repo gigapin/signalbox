@@ -25,7 +25,7 @@ Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task su
 - **Deviazione da ADR-008, registrata**: il drop attende 48 ore oltre i 30 giorni, per i verdetti del bordo più vecchio ancora leggibile; permanenza fisica fino a circa 63 giorni.
 - Gate `./scripts/verify.sh` **exit 0**, PHP **8.4.27**: formatter dry-run **540 file**, Larastan livello 8, **2601 test Pest/17517 asserzioni**, 5 qualità, 148 DOM e build.
 - **Effetto operativo**: lo scheduler di sviluppo è attivo e, se carica questo codice, esegue il comando alle 02:00 UTC anche in locale.
-- **Prossimo task pronto: M7.05**, report mensile PDF.
+- **Prossimo task pronto: M7.05**, report mensile PDF. Annotato il debito **TD.01–TD.02** sulle date fisse nei test, da affrontare prima del 2026-12-01.
 
 ## Consegna di sessione — M7.03, 2026-10-30
 
@@ -517,6 +517,15 @@ Dipendenze: M0–M11.
 - [ ] M12.07 Eseguire verifica finale da checkout pulito, suite completa, CI PHP 8.4/8.5 e smoke test dei flussi essenziali sulla demo.
 
 Uscita: demo raggiungibile, deploy riproducibile, documentazione e prove consultabili.
+
+## TD — Debito tecnico dei test
+
+Dipendenze: nessuna. Fuori specifica, aggiunta su richiesta dell'utente il 2026-11-01. Da affrontare nel prossimo futuro: proposta dopo M7 e prima di M8, comunque prima del cambio di mese del **2026-12-01**, primo momento in cui il problema può ripresentarsi. Analisi e candidati in [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
+
+- [ ] TD.01 Studiare e scegliere una soluzione al problema delle date fisse nei test: la suite non deve dipendere dal mese reale in cui viene eseguita. Registrare la decisione nel registro.
+- [ ] TD.02 Applicare la soluzione scelta e aggiungere un modo per rilevare il problema prima che si manifesti, provando la suite con date di sistema diverse (primo del mese, cambio d'anno, febbraio).
+
+Uscita: suite verde con le date simulate del criterio in TESTING.md, senza interventi a ogni cambio di mese.
 
 ## Ordine operativo e decisioni aperte
 
@@ -1427,7 +1436,7 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - File: `app/Console/Commands/RunNightlyMetricMaintenance.php`, `app/Data/Metrics/NightlyMaintenanceReport.php`, `app/Data/Metrics/PartitionDropOutcome.php`, `app/Services/Metrics/Retention/` (sei classi); modificati `ResultPartitions.php`, `routes/console.php`. Test: `tests/Integration/NightlyMetricMaintenanceTest.php`, `tests/Integration/CheckRollupConcurrencyTest.php`; aggiornati `MonitorSchedulingConfigurationTest`, `CheckRollupsTest`, `MonitorAvailabilityTest`, `DashboardTest`. Documenti: `METRIC-ROLLUPS.md`, `ARCHITECTURE.md`, `TESTING.md`, `BOOTSTRAP.md`.
 - Prima esecuzione: 14 fallimenti su 28, tutti dovuti ai test e nessuno al codice applicativo, che non è stato modificato: closure di dataset non invocate (il danno non veniva applicato), `trial_started_at` successivo alla fine del trial, `$this` in closure statica, mock di classe `final`, mese di aprile mancante nella fixture, rollup non avanzati fino alla data del test.
 - **Difetto preesistente emerso dal cambio di mese**: 18 test con orologio fisso a ottobre 2026 (`CheckRollupsTest`, `MonitorAvailabilityTest`, `DashboardTest`) fallivano dal 2026-11-01, perché lo schema crea le partizioni a partire dal mese reale. Ora preparano i propri mesi. Il test di concorrenza sul cursore è passato in un file separato: una partizione creata nella transazione del test bloccava all'infinito la pulizia del fixture committed.
-- **Rischio residuo**: altri test con date fisse di novembre 2026 o successive potrebbero rompersi allo stesso modo a un cambio di mese futuro; non è stato simulato un orologio di sistema diverso. Oggi superano tutti il gate.
+- **Rischio residuo**: altri test con date fisse potrebbero rompersi allo stesso modo a un cambio di mese futuro; non è stato simulato un orologio di sistema diverso. Oggi superano tutti il gate. Pianificati TD.01–TD.02.
 - Verifiche: gate `./scripts/verify.sh` **exit 0**, PHP 8.4.27: formatter dry-run 540 file, Larastan livello 8, 2601 test Pest/17517 asserzioni, lint/formato/TypeScript, 5 test qualità, 148 DOM, build. Log temporaneo fuori dal repository.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, `metrics:nightly` sul database di sviluppo, misura del costo della verifica su volumi reali. Sul database di sviluppo solo una lettura di controllo: `check_rollups_hourly` esiste, quindi la migration dei rollup risulta applicata. **M7.04 completato; prossimo task pronto M7.05.**
 

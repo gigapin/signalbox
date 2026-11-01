@@ -429,3 +429,45 @@ docker compose run --rm node npx vitest run tests/frontend/MonthlyReportDownload
 
 The acceptance gate remains `./scripts/verify.sh`.
 
+
+## Fixed dates and result partitions
+
+**Open problem, planned as TD.01–TD.02 in [TASKS.md](TASKS.md).** The suite's outcome can depend on the real month in which it runs.
+
+### Cause
+
+Migrations call `ResultPartitions::prepare()`, which commits partitions for the real current month and the next two. Tests fix the application clock with `travelTo` or `setTestNow`, but that clock does not exist yet when the schema is migrated. Once the real month moves past a fixed date, its partition no longer exists:
+
+- inserting a result fails with `no partition of relation "check_results" found for row`;
+- `oldestMonth()` is later than the fixed clock, so rollups have no hours to write and availability reports unavailable data.
+
+### What happened
+
+On 2026-11-01, 18 tests with a clock fixed in October 2026 started failing with no code change, in `CheckRollupsTest`, `MonitorAvailabilityTest` and `DashboardTest`. Those three files now prepare their own months. CI would have failed the same way, on any branch.
+
+Preparing a partition inside a test has a trap: `CREATE TABLE ... PARTITION OF` holds a lock on `check_results` until the test transaction ends, so a second session touching that parent waits forever. A `CommittedTeamFixture` cleanup does, because its delete cascades to the results. This is why `CheckRollupConcurrencyTest` is a separate file with a clock relative to the oldest partition.
+
+### Exposure
+
+42 PHP test files contain fixed dates. As of 2026-11-01, 13 of them both fix the clock in code and touch results or the ledger; these are the first to check, not known failures, since all of them pass today:
+
+`TeamIdentityTest`, `MonitorAvailabilityTest`, `MonitorEngineTest`, `MonitorSchedulingTest`, `IncidentDetectionTest`, `TeamBroadcastTest`, `MonitorWorkerIsolationTest`, `CheckRollupsTest`, `DashboardTest`, `IncidentLifecycleMatrixTest`, `MonitorRunnerTest`, `RealtimeDeliveryTest`, `NightlyMetricMaintenanceTest`.
+
+That list comes from a text search, so it may miss clocks fixed through helpers. No run with a simulated system date has been made. The workflow only runs on pull requests and pushes, so a break appears on the first push after the month changes.
+
+### Candidate solutions, to evaluate in TD.01
+
+| Candidate | Idea | Open points |
+|---|---|---|
+| Fixed migration clock | Fix the clock around the test `migrate:fresh` (for example through `beforeRefreshingDatabase`), so the committed months are always the same, then also prepare the real current months for tests using the real clock. | Must run once per process. Tests and child processes on the real clock must still find their partitions. |
+| Committed range at bootstrap | After migrating, commit partitions for a fixed range covering every date used by tests. | The range needs maintaining. Moves `oldestMonth()` for tests relying on it. |
+| Relative dates | Express fixtures relative to the clock or to the oldest partition, as `CheckRollupConcurrencyTest` does. | Touches many files and makes boundary cases harder to read; exact calendar dates remain necessary for DST and leap years. |
+| Per-test preparation | Keep preparing months inside tests, as the three corrected files do. | Repeats on each break and hits the lock trap above. It is the current stopgap, not a solution. |
+
+First hypothesis, not yet verified: the fixed migration clock, because it reproduces the state these tests were written against, with no DDL inside test transactions and no fixture rewrite.
+
+Detection is needed whichever is chosen. Options are a scheduled workflow, which would also catch breaks with no push, and running the PHP container under a simulated date such as `libfaketime`. PostgreSQL keeps its own clock unless it is simulated too, and `now()` in triggers such as the pause history depends on it.
+
+### Acceptance
+
+The backend suite passes under simulated system dates for at least the first day of a month, the December to January change, February of a leap and a non-leap year, and one year after the fixed dates, with no change to the tests between runs.

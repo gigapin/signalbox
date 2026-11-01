@@ -57,6 +57,10 @@ Node 22.23.2 satisfies the project's minimum 22.22.2. npm is explicitly selected
 
 These are the commands aggregated by `npm run verify`. Backend gates likewise match `composer verify`, with the additional CI requirement that skipped tests fail. The frontend job does not need PHP, PostgreSQL, Redis or a running application server. Build output is disposable verification output, not a deployment artifact.
 
+## Date independence
+
+`.github/workflows/date-independence.yml` runs the backend suite with the PHP clock moved to the first day of next month and to one year ahead. It runs on the 25th of each month and on manual dispatch, not on pull requests, because each date takes as long as a full suite. A failure is an early warning, not a merge gate. Findings and limits are in [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
+
 ## Execution policy and validation
 
 - Every job has a 20-minute timeout. New runs cancel obsolete runs for the same event and PR/ref; a PR does not cancel the push workflow for its target branch.

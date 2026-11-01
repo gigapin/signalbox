@@ -1,0 +1,85 @@
+# Run the backend suite under simulated future dates, so a test depending on the real month fails before that month.
+name: Date independence
+
+on:
+  schedule:
+    # Late in each month, leaving about a week before the first date simulated below becomes real. GitHub runs schedules
+    # on the default branch only.
+    - cron: '0 5 25 * *'
+  workflow_dispatch:
+
+# Verification requires repository read access and no application secrets.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend — ${{ matrix.label }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      # Every date is independent evidence, so one failure must not cancel the others.
+      fail-fast: false
+      matrix:
+        include:
+          # GNU date expressions evaluated at run time; the runner clock itself is never changed.
+          - label: first day of next month
+            date: $(date -u +%Y-%m-01) +1 month
+          - label: one year ahead
+            date: +1 year
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      # Opt in to guarded real-service tests; never silently skip integrations.
+      RUN_DOCKER_TESTS: '1'
+      DB_HOST: 127.0.0.1
+      REDIS_HOST: 127.0.0.1
+    # Same image pins as the main workflow. PostgreSQL keeps the real clock: lock_timeout never fires under libfaketime.
+    services:
+      postgres-test:
+        image: postgres:16-bookworm@sha256:0ea6700a3b4f0ae6ce746519073558aed4d88a79d8d07622a9a644946c7319c4
+        env:
+          POSTGRES_DB: signalbox_test
+          POSTGRES_USER: signalbox_test
+          POSTGRES_PASSWORD: signalbox_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U signalbox_test -d signalbox_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+      redis-test:
+        image: redis:7-bookworm@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Set up PHP and Composer
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, pcntl, pdo_pgsql, posix, intl, zip, mbstring
+          tools: composer:2.10.2
+          coverage: none
+      - name: Prepare empty testing environment file
+        # Runtime values come from the job and PHPUnit; no developer environment is copied.
+        run: ': > .env.testing'
+      - name: Install locked PHP dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+      - name: Install libfaketime
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq faketime
+      - name: Run all Pest suites under the simulated date
+        # The limit reports a blocked test as a failure while the job can still print its output.
+        run: |
+          simulated="$(date -u -d "${{ matrix.date }}" +%F)"
+          echo "Simulated date: $simulated"
+          timeout 1200 faketime -f "@$simulated 10:00:00" vendor/bin/pest --fail-on-skipped --fail-on-warning --compact

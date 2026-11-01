@@ -12,6 +12,13 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M8.03, 2026-11-01
+
+- **M8.03 completato**: il contenuto delle pagine pubbliche è in cache per 60 secondi, con chiavi per team e pagina. Modifiche a pagina, incidenti, manutenzioni e monitor lo invalidano subito; risultati dei controlli entro 60 secondi. Dettagli in [STATUS-PAGES.md](STATUS-PAGES.md#cache).
+- **Nessuna cache HTTP condivisa**: le risposte restano `no-store`, perché portano la sessione e `auth.user`. Bozza, indirizzo e password sono letti dal vivo a ogni richiesta.
+- Gate `./scripts/verify.sh` **exit 0**: formatter dry-run **583 file**, Larastan livello 8, **2853 test Pest/19085 asserzioni**, 5 qualità, **158 DOM** e build. Suite backend senza `public/build`: 2853 passati.
+- **Prossimo task pronto: M8.04**.
+
 ## Consegna di sessione — M8.02, 2026-11-01
 
 - **M8.02 completato**: la pagina pubblica mostra stato attuale di pagina e componenti, 90 giorni di storico dai rollup giornalieri e i soli aggiornamenti di incidente pubblicati esplicitamente. Dettagli in [STATUS-PAGES.md](STATUS-PAGES.md#what-visitors-read).
@@ -493,7 +500,7 @@ Dipendenze: M4–M5, M7.
 
 - [x] M8.01 Implementare status page, componenti ordinati, selezione monitor dello stesso team, tema, visibilità e protezione password.
 - [x] M8.02 Pubblicare stato, storico di 90 giorni e soli aggiornamenti incidenti esplicitamente pubblici.
-- [ ] M8.03 Configurare cache con chiavi tenant/pagina, invalidazione su modifiche e protezione delle pagine riservate.
+- [x] M8.03 Configurare cache con chiavi tenant/pagina, invalidazione su modifiche e protezione delle pagine riservate.
 - [ ] M8.04 Implementare iscrizione email verificata, disiscrizione e invio degli aggiornamenti pubblici.
 - [ ] M8.05 Implementare dominio personalizzato con verifica di proprietà e routing sicuro; definire gestione TLS nel deploy.
 - [ ] M8.06 Curare SEO e metadati; valutare SSR opzionale in base alla resa pubblica richiesta.
@@ -565,7 +572,7 @@ Uscita soddisfatta il 2026-11-01: suite verde con le date simulate del criterio,
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 e M8.01–M8.02 completati il 2026-11-01; prossimo task pronto M8.03. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 e M8.01–M8.03 completati il 2026-11-01; prossimo task pronto M8.04. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -639,6 +646,9 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-11-01 | M8.02: un'osservazione scade dopo 2 intervalli più la tolleranza heartbeat | Dopo diventa `unknown`, come richiede ADR-009. Un solo controllo mancato è tollerato, come nel lookback delle disponibilità. |
 | 2026-11-01 | M8.02: storico in giorni UTC interi, escluso oggi | È ciò che i rollup giornalieri conservano; il giorno in corso è coperto dallo stato attuale. La pagina dichiara UTC. Giorni nel fuso del team richiederebbero di ricalcolare dai rollup orari. |
 | 2026-11-01 | M8.02: lo stato di un incidente pubblico è quello dell'ultima voce pubblicata | Un cambio di stato privato non rivela nulla. Autore, causa dichiarata, classe di errore, nome del monitor e motivo della manutenzione restano fuori. |
+| 2026-11-01 | M8.03: cache applicativa del solo contenuto, nessuna cache HTTP | Ogni risposta porta il cookie di sessione e, per chi è autenticato, `auth.user`: non può stare in una cache condivisa. Bozza, indirizzo e password restano letti dal vivo, quindi una pagina si chiude subito. |
+| 2026-11-01 | M8.03: i risultati dei controlli non invalidano la cache | Un monitor ogni 30 secondi la svuoterebbe di continuo; un'interruzione reale arriva comunque dall'evento di incidente. Ritardo massimo 60 secondi. |
+| 2026-11-01 | M8.03: invalidazione con generazione nella chiave, dopo il commit | Un calcolo in corso durante la modifica scrive sotto la vecchia generazione e non viene più letto. Se la cache fallisce, le pagine si calcolano a ogni visita. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
 ## Registro sessioni
@@ -1531,3 +1541,13 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Timeout non spiegato: `links only published pages and hides forms from readers` ha superato i 5000 ms in un gate durato 140 s lato frontend invece di circa 30. Normalmente dura circa 20 ms; tre esecuzioni complete successive e il gate seguente sono passati. Non modificato. Causa non accertata.
 - Verifiche: gate `./scripts/verify.sh` **exit 0**: formatter dry-run 581 file, Larastan livello 8, 2833 test Pest/18966 asserzioni, lint/formato/TypeScript, 5 test qualità, 158 DOM, build. Suite backend con `public/build` nascosta: 2833 passati. Dopo il gate modificato solo questo documento.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, prova su browser reale e aspetto effettivo delle barre, misura del costo con molti monitor (query dello storico raggruppata per componente). Le risposte pubbliche restano `no-store` fino a M8.03. **M8.02 completato; prossimo task pronto M8.03.**
+
+### 2026-11-01 — M8.03: cache delle pagine pubbliche e invalidazione (completato)
+
+- Richiesta dell'utente di proseguire; dipendenze M8.01–M8.02 soddisfatte, task segnato in corso prima delle modifiche. Git/gh non eseguiti.
+- File applicativi: nuovo `app/Services/StatusPages/StatusPageCache.php`; modificati `PublicStatusPages.php`, `ManageStatusPages.php`, `ManageIncidents.php`, `ManageMaintenanceWindows.php`, `ManageMonitors.php`, `AppServiceProvider.php`.
+- Test: nuovo `tests/Integration/StatusPageCacheTest.php`; `PublicStatusContentTest.php` ora usa lo store `array`. Documenti: `STATUS-PAGES.md` e questo piano.
+- Scoperta durante il lavoro: in `php-test` la cache è Redis, che misura il tempo reale, quindi i viaggi nel tempo non fanno scadere le voci; inoltre con `migrate:fresh` gli ID si ripetono tra esecuzioni. I test che controllano il tempo usano lo store `array`; un caso dedicato prova Redis. `PublicStatusPageTest` svuota la cache a ogni test.
+- Mutazioni, ripristinate e confrontate: invalidazione senza attendere il commit, 2 test falliscono; ricerca pubblica senza il filtro `is_public`, 3 test falliscono.
+- Verifiche: gate `./scripts/verify.sh` **exit 0**: formatter dry-run 583 file, Larastan livello 8, 2853 test Pest/19085 asserzioni, lint/formato/TypeScript, 5 test qualità, 158 DOM, build. Suite backend con `public/build` nascosta: 2853 passati. Dopo il gate modificato solo questo documento.
+- Non eseguiti: Git/gh, CI remota/PHP 8.5, misure di carico e concorrenza tra lettori alla scadenza (nessun lock contro i ricalcoli simultanei), prova su browser reale. La sospensione dei monitor per piano (M9.05) dovrà invalidare, oppure resta il ritardo di 60 secondi. **M8.03 completato; prossimo task pronto M8.04.**

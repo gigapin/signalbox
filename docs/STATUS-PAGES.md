@@ -1,6 +1,6 @@
 # Status pages
 
-A status page is a public page of a team: address, title, description, appearance, visibility, optional password and ordered components. Visitors read the current state, 90 days of history and explicitly published incident entries. Public cache comes with M8.03.
+A status page is a public page of a team: address, title, description, appearance, visibility, optional password and ordered components. Visitors read the current state, 90 days of history and explicitly published incident entries, through a short application cache.
 
 ## Data
 
@@ -45,7 +45,7 @@ Owners and admins manage pages; every member reads the settings page. The page p
 
 Unlocking is per session and per page. The session holds a keyed fingerprint of the current hash, so a new password locks out whoever entered the old one, while removing the password opens the page for everyone. The session identity rotates on unlock.
 
-Responses use `Cache-Control: no-store, private`. M8.03 must change this for unprotected pages, and must keep in mind that Inertia adds shared props to every response, including `auth.user` for a logged-in visitor: those cannot end up in a shared cache.
+Responses use `Cache-Control: no-store, private`, also for pages without a password. Inertia adds shared props to every response, including `auth.user` for a logged-in visitor, and each response sets a session cookie, so none of them can go into a shared HTTP cache.
 
 ## What visitors read
 
@@ -77,10 +77,31 @@ Days are UTC for every visitor and team, as the rollups are, and the page says s
 
 `PublicIncidentFeed` lists the entries published in the last 90 days, for the monitors on the page, at most 25 incidents, newest publication first. An incident appears only once an entry is published. Its status is the one of its latest published entry, so a private change reveals nothing. The author, declared cause, error class and monitor name stay out; the affected component is named instead.
 
+## Cache
+
+`StatusPageCache` stores only the visitor projection, in the application cache, under `status-pages:{team}:{page}:content:{generation}`. HTTP responses are never stored by intermediaries.
+
+Every request still reads the page row. Draft state, address and password are always live, so a page closes at once and a locked visitor never reaches the stored content. The content does not depend on the visitor.
+
+| Change | Effect |
+|---|---|
+| Page edit or deletion | Immediate, for that page only |
+| Entry published, incident opened, reopened or resolved | Immediate, for the pages showing the monitor |
+| Maintenance window scheduled, changed or cancelled | Immediate |
+| Monitor edited, paused, resumed or deleted | Immediate |
+| Check results, a window starting or ending by itself, expiry of an observation, a new daily rollup | Within 60 seconds |
+| Plan suspension of monitors | Within 60 seconds, as the action does not exist yet (M9.05) |
+
+Check results do not invalidate: a monitor checked every 30 seconds would empty the cache all the time, and a real outage appears through the incident event anyway.
+
+Invalidating raises a generation that is part of the key, after the transaction commits, so a calculation running during the change cannot store old content where it would be read. A rollback changes nothing. If the cache fails, pages are calculated on each visit and the failure is logged by class only; a missed invalidation lasts at most 60 seconds.
+
+Several visitors can calculate the same page at once when an entry expires; there is no lock to prevent it. No load measurement has been made.
+
 ## Verification
 
 ```sh
-docker compose run --rm php-test vendor/bin/pest tests/Feature/PublicHealthRulesTest.php tests/Integration/StatusPageManagementTest.php tests/Integration/PublicStatusPageTest.php tests/Integration/PublicStatusContentTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm php-test vendor/bin/pest tests/Feature/PublicHealthRulesTest.php tests/Integration/StatusPageManagementTest.php tests/Integration/PublicStatusPageTest.php tests/Integration/PublicStatusContentTest.php tests/Integration/StatusPageCacheTest.php --fail-on-skipped --fail-on-warning
 docker compose run --rm node npx vitest run tests/frontend/StatusPages.test.tsx
 ```
 

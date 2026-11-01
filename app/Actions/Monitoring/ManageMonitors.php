@@ -15,6 +15,7 @@ use App\Services\Monitoring\HeartbeatLifecycle;
 use App\Services\Monitoring\MonitorConfigurationMapper;
 use App\Services\Monitoring\MonitorInputValidator;
 use App\Services\Monitoring\MonitorLimits;
+use App\Services\StatusPages\StatusPageCache;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -33,12 +34,14 @@ final readonly class ManageMonitors
      * @param MonitorLimits $limits Central plan quota and cadence rules.
      * @param TenantContext $context Tenant unit of work for the explicit team.
      * @param HeartbeatLifecycle $heartbeats Heartbeat arming and type transitions under the same locks.
+     * @param StatusPageCache $statusPages Published content to drop when a monitor changes.
      */
     public function __construct(
         private MonitorInputValidator $validator,
         private MonitorLimits $limits,
         private TenantContext $context,
         private HeartbeatLifecycle $heartbeats,
+        private StatusPageCache $statusPages,
     ) {
     }
 
@@ -121,6 +124,7 @@ final readonly class ManageMonitors
             $restartHeartbeat = $before->intervalSeconds !== $after->intervalSeconds
                 || $monitor->heartbeat_grace_seconds !== ($before->candidate()['heartbeat_grace_seconds'] ?? null);
             $this->heartbeats->synchronize($monitor, $restartHeartbeat);
+            $this->statusPages->forgetForMonitor($team->id, $monitor->id);
 
             return $monitor;
         });
@@ -138,6 +142,7 @@ final readonly class ManageMonitors
             $monitor = $this->lockMonitor($team, $monitorId);
             Gate::forUser($actor)->authorize('delete', $monitor);
 
+            $this->statusPages->forgetForMonitor($team->id, $monitor->id);
             $monitor->delete();
         });
     }
@@ -163,6 +168,7 @@ final readonly class ManageMonitors
                     'next_check_at' => null,
                     'execution_revision' => $monitor->execution_revision + 1,
                 ])->save();
+                $this->statusPages->forgetForMonitor($team->id, $monitor->id);
             }
 
             return $monitor;
@@ -200,6 +206,7 @@ final readonly class ManageMonitors
 
             $monitor->forceFill(['is_paused' => false, 'next_check_at' => null])->save();
             $this->heartbeats->synchronize($monitor, true);
+            $this->statusPages->forgetForMonitor($team->id, $monitor->id);
 
             return $monitor;
         });

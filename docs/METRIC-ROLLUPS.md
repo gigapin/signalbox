@@ -1,4 +1,4 @@
-# Check rollups, SLA and retention (M7.01–M7.04)
+# Check rollups, SLA, retention and reports (M7.01–M7.05)
 
 Hourly and daily UTC rollups keep uptime, check counts and latency after the raw monthly result partitions are dropped. They implement the storage side of [ADR-008 and ADR-009](ARCHITECTURE.md#adr-008--retention-rollup-e-percentili-esatti). The [SLA service](#sla-service-m703) reads them for arbitrary windows. Nightly scheduling, retention and partition drops are described under [Nightly maintenance](#nightly-maintenance-m704).
 
@@ -126,7 +126,7 @@ The real-data command has only run on synthetic test rows so far, and the estima
 
 ## SLA service (M7.03)
 
-`App\Services\Metrics\MonitorAvailability` is the single authority for uptime, coverage and SLA. `between()` answers any half-open UTC window, and `hourly()` splits a recent window for a chart. Calendar windows in a team timezone are converted to UTC by the caller (M7.05).
+`App\Services\Metrics\MonitorAvailability` is the single authority for uptime, coverage and SLA. `between()` answers any half-open UTC window, and `hourly()` splits a recent window for a chart. Calendar windows in a team timezone are converted to UTC by the caller; the [monthly report](#monthly-pdf-report-m705) does so.
 
 With U up, D down and X unknown time, after exclusions:
 
@@ -205,3 +205,29 @@ Durations cannot be rebuilt cheaply in SQL, so they are checked for adding up ra
 - Verification scans one month of ledger and results for all tenants in a single run; its cost at scale has not been measured.
 - A verification failure holds raw data indefinitely until an operator intervenes. No alerting exists beyond the exit status and logs until M11.
 - Month, leap-year and DST boundaries get their dedicated matrix in M7.06.
+
+## Monthly PDF report (M7.05)
+
+`GET /teams/{team}/reports/{YYYY-MM}` downloads one team's report, chosen from the dashboard. Each monitor has SLA, observed uptime, coverage, down, unknown and excluded time, and the incidents that started in the period. Values come only from `MonitorAvailability`, which the report does not duplicate.
+
+| Rule | Behaviour |
+|---|---|
+| Access | Every team role that can read monitors. Other teams get 404, and the membership, verification and tenant context are those of the dashboard. |
+| Month | Calendar month in the team's IANA timezone, converted to UTC, so March in `Europe/Rome` lasts 743 hours and October 745. The document states the period with its offsets. |
+| Current month | Allowed, up to the generation instant, and declared in progress. A month not yet begun in the team's timezone is a 404. |
+| Absent values | `n/a`: the data exists but the value cannot be determined. `Unavailable`: the retained data cannot reconstruct the period. Never 0 or 100. |
+| Contents | Names and metrics only. Monitor configuration, which may hold secrets, is never read. |
+| Rate | 10 downloads per user per minute, on a limiter of its own, because rendering is expensive. |
+| File name | Built from identifiers only, so a team name cannot inject headers. |
+
+`PdfRenderer` keeps Dompdf behind an adapter. Remote resources, embedded PHP and PDF JavaScript are off and only the `file://` protocol is allowed, so a name cannot become a request; Blade also escapes every value.
+
+### Limits
+
+- A timezone with a fractional offset, such as `Asia/Kolkata`, has month edges inside an hour. Once raw results are past the 30 readable days, its months are `Unavailable`, as stated under [Limits](#limits).
+- Months older than the plan's rollup history are `Unavailable`, whole-month or not.
+- Deleted monitors do not appear, because deleting a monitor deletes its history.
+- The document is rendered during the request. Its cost with hundreds of monitors has not been measured.
+- The bundled DejaVu Sans font does not cover CJK text, which renders as empty boxes.
+- Latency percentiles are not included: rollup buckets are UTC, so they are not exact for a month in another timezone.
+

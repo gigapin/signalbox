@@ -29,6 +29,7 @@ final class DashboardController extends Controller
 
         return Inertia::render('Dashboard/Show', [
             'team' => ['id' => $identity->id, 'name' => $identity->name],
+            'reportTimezone' => $identity->timezone,
             'dashboard' => $overview->read($team, $selection['monitorId'], $selection['page']),
             'rejectedFilters' => $selection['rejected'],
         ]);

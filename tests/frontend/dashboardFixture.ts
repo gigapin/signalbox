@@ -50,5 +50,6 @@ export const dashboard: DashboardView = {
 /** Current route identity and actor metadata used by authoritative recovery checks. */
 export const identity = {
     team: { id: 7, name: 'Synthetic team' },
+    reportTimezone: 'Europe/Rome',
     auth: { user: { name: 'Actor', email: 'actor@example.test' } },
 };

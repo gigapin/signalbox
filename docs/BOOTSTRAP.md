@@ -262,3 +262,6 @@ M7.02 adds the read-only `metrics:rollup-storage` command; it needs no migration
 [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703) documents the time-weighted SLA service, now also used by the dashboard. Adopt it through the normal asset rebuild: there is no new dependency, migration, environment variable, key or worker. The dashboard already reads only raw results; older windows answer from rollups only once the rollup migration is applied and `metrics:rollups` has run.
 
 `metrics:nightly` is now scheduled daily at 02:00 UTC and removes expired data: raw result months, ledger rows, heartbeat receipts and rollups beyond plan history. It starts as soon as the scheduler loads the new code, so apply `2026_10_30_000021_create_check_rollups.php` first; without that table the rollup and partition steps fail and no partition is dropped. There is no new migration, dependency, environment variable or key. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#nightly-maintenance-m704).
+
+The monthly PDF report adds the Composer dependency `dompdf/dompdf`: run `composer install` and rebuild the assets. There is no new migration, environment variable, key or worker. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#monthly-pdf-report-m705).
+

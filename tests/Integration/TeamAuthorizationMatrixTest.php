@@ -133,6 +133,10 @@ it('enforces route role and membership boundaries without hidden cross-team effe
                 ->where('dashboard.monitors.data.0.id', $fixture->monitor->id)
                 ->missing('dashboard.monitors.data.0.configuration'));
             break;
+        case 'teams.reports.monthly':
+            expect($response->headers->get('Content-Type'))->toBe('application/pdf')
+                ->and(str_starts_with((string) $response->getContent(), '%PDF-'))->toBeTrue();
+            break;
         case 'teams.show':
             $response->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('team.id', $fixture->team->id)

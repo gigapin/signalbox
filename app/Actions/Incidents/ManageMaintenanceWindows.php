@@ -11,6 +11,7 @@ use App\Models\MaintenanceWindow;
 use App\Models\Monitor;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\StatusPages\StatusPageCache;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -27,8 +28,11 @@ final readonly class ManageMaintenanceWindows
     /** @var int Maximum characters of a maintenance reason, shared with future request validation. */
     public const int REASON_MAX_LENGTH = 1000;
 
-    /** @param TenantContext $context Explicit tenant boundary for each change. */
-    public function __construct(private TenantContext $context)
+    /**
+     * @param TenantContext $context Explicit tenant boundary for each change.
+     * @param StatusPageCache $statusPages Published content to drop when a window changes.
+     */
+    public function __construct(private TenantContext $context, private StatusPageCache $statusPages)
     {
     }
 
@@ -57,6 +61,7 @@ final readonly class ManageMaintenanceWindows
                 'reason' => $text,
                 'created_by' => $actor->id,
             ])->save();
+            $this->statusPages->forgetForMonitor($window->team_id, $window->monitor_id);
 
             return $window;
         });
@@ -83,6 +88,7 @@ final readonly class ManageMaintenanceWindows
 
             [$start, $end] = $this->interval($startsAt, $endsAt, $now);
             $window->forceFill(['starts_at' => $start, 'ends_at' => $end, 'reason' => $text])->save();
+            $this->statusPages->forgetForMonitor($window->team_id, $window->monitor_id);
 
             return $window;
         });
@@ -99,6 +105,8 @@ final readonly class ManageMaintenanceWindows
     public function cancel(User $actor, int $teamId, int $windowId): ?MaintenanceWindow
     {
         return $this->lockedWindow($teamId, $windowId, $actor, function (MaintenanceWindow $window, CarbonImmutable $now): ?MaintenanceWindow {
+            $this->statusPages->forgetForMonitor($window->team_id, $window->monitor_id);
+
             if ($window->starts_at->isAfter($now)) {
                 $window->delete();
 

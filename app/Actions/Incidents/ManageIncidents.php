@@ -15,6 +15,7 @@ use App\Models\Monitor;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Incidents\IncidentLifecycle;
+use App\Services\StatusPages\StatusPageCache;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -33,8 +34,9 @@ final readonly class ManageIncidents
     /**
      * @param TenantContext $context Explicit tenant boundary for each change.
      * @param IncidentLifecycle $lifecycle Shared state changes, entries and events.
+     * @param StatusPageCache $statusPages Published content to drop when an entry becomes public.
      */
-    public function __construct(private TenantContext $context, private IncidentLifecycle $lifecycle)
+    public function __construct(private TenantContext $context, private IncidentLifecycle $lifecycle, private StatusPageCache $statusPages)
     {
     }
 
@@ -167,6 +169,7 @@ final readonly class ManageIncidents
 
                 if (!$update->is_public) {
                     $update->forceFill(['is_public' => true, 'published_at' => $now])->save();
+                    $this->statusPages->forgetForMonitor($incident->team_id, $incident->monitor_id);
                 }
 
                 return $update;

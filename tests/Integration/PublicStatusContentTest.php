@@ -14,8 +14,10 @@ use App\Models\StatusPage;
 use App\Models\StatusPageComponent;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\StatusPages\StatusPageCache;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 
@@ -26,6 +28,8 @@ beforeEach(function (): void {
     }
 
     $this->withoutVite();
+    // Redis measures real time, and entries from an earlier run could share these identities.
+    $this->app->instance(StatusPageCache::class, new StatusPageCache(Cache::store('array')));
     $this->travelTo(CarbonImmutable::parse('2026-11-15T12:00:00Z'));
     $this->team = Team::factory()->create(['name' => 'Private team name']);
 });

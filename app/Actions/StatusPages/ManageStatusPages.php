@@ -16,6 +16,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\Billing\PlanLimits;
 use App\Services\Billing\TeamEntitlement;
+use App\Services\StatusPages\StatusPageCache;
 use App\Services\Tenancy\TenantContext;
 use Closure;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -55,11 +56,13 @@ final readonly class ManageStatusPages
      * @param TenantContext $context Explicit tenant boundary for each change.
      * @param PlanLimits $limits Single plan definition.
      * @param TeamEntitlement $entitlement Effective plan resolution.
+     * @param StatusPageCache $cache Published content to drop on each change.
      */
     public function __construct(
         private TenantContext $context,
         private PlanLimits $limits,
         private TeamEntitlement $entitlement,
+        private StatusPageCache $cache,
     ) {
     }
 
@@ -112,10 +115,11 @@ final readonly class ManageStatusPages
      */
     public function delete(User $actor, int $teamId, int $pageId): void
     {
-        $this->locked($teamId, function () use ($actor, $pageId): void {
+        $this->locked($teamId, function () use ($actor, $teamId, $pageId): void {
             $page = StatusPage::query()->lockForUpdate()->findOrFail($pageId);
             Gate::forUser($actor)->authorize('delete', $page);
             $page->delete();
+            $this->cache->forgetPage($teamId, $pageId);
         });
     }
 
@@ -143,6 +147,7 @@ final readonly class ManageStatusPages
         ])->save();
 
         $this->replaceComponents($page, $teamId, $components);
+        $this->cache->forgetPage($teamId, $page->id);
 
         return $page;
     }

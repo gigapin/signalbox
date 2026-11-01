@@ -28,12 +28,14 @@ final readonly class PublicStatusPages
      * @param PublicHealthRules $health Current state rules.
      * @param PublicStatusHistory $history Daily availability from rollups.
      * @param PublicIncidentFeed $incidents Explicitly published incident entries.
+     * @param StatusPageCache $cache Shared store of the projection.
      */
     public function __construct(
         private TenantContext $context,
         private PublicHealthRules $health,
         private PublicStatusHistory $history,
         private PublicIncidentFeed $incidents,
+        private StatusPageCache $cache,
     ) {
     }
 
@@ -50,10 +52,21 @@ final readonly class PublicStatusPages
     }
 
     /**
+     * Callers check visibility and the password on the live page first: the stored content does not depend on the visitor.
+     *
      * @param StatusPage $page Published page the visitor may read.
      * @return array<string, mixed> Visitor projection: texts, theme, overall state, components with their history, and published incidents.
      */
     public function present(StatusPage $page): array
+    {
+        return $this->cache->remember($page->team_id, $page->id, fn (): array => $this->calculate($page));
+    }
+
+    /**
+     * @param StatusPage $page Published page.
+     * @return array<string, mixed> Visitor projection calculated now.
+     */
+    private function calculate(StatusPage $page): array
     {
         return $this->context->run($page->team_id, function () use ($page): array {
             $now = CarbonImmutable::now('UTC');

@@ -36,6 +36,7 @@ use App\Services\Notifications\PublishNotificationDeliveries;
 use App\Services\Notifications\RedisNotificationWorkPublisher;
 use App\Services\Reports\DompdfRenderer;
 use App\Services\Security\SystemHostResolver;
+use App\Services\StatusPages\StatusPageCache;
 use App\Services\Tenancy\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -92,6 +93,7 @@ class AppServiceProvider extends ServiceProvider
         foreach ([IncidentOpened::class, IncidentReopened::class, IncidentResolved::class] as $event) {
             $events->listen($event, [PublishNotificationDeliveries::class, 'publish']);
             $events->listen($event, [PublishTeamUpdates::class, 'publish']);
+            $events->listen($event, [StatusPageCache::class, 'onIncident']);
         }
 
         $events->listen(CheckCompleted::class, [PublishTeamUpdates::class, 'publish']);

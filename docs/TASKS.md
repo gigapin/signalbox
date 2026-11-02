@@ -12,6 +12,12 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — Task UI e prove browser, 2026-11-02
+
+- **Pianificazione**: decisione di scope registrata e nuova sezione UI con i task UI.01–UI.07, tra M11 e M12. Riferimento UptimeRobot, osservato sulle immagini del loro sito. UI.07 è bloccato: l'utente può cambiare nome per mancanza di domini liberi, quindi per ora niente logo.
+- **Documento**: nuovo [BROWSER-TESTS.md](BROWSER-TESTS.md) con preparazione, comandi, casi e registro delle prove manuali fino a M8. [MANUAL-BROWSER-TESTS.md](MANUAL-BROWSER-TESTS.md) resta per i casi di dettaglio sui monitor.
+- **Stato prove**: nessun caso eseguito, compilazione a cura dell'utente. Trial in sviluppo: Tester Team fino al 2026-11-03 15:58 UTC, GiGa Team fino al 2026-11-06 12:33 UTC; dopo valgono i limiti Free. Solo Markdown modificato, nessun test necessario, nessun Git/gh. **Prossimo passo: prove dell'utente, correzione dei difetti funzionali, poi M9.01.**
+
 ## Consegna di sessione — M8.07, 2026-11-02
 
 - **M8.07 completato e M8 completata**: dipendenze M8.01–M8.06 soddisfatte, task segnato in corso prima delle modifiche. Nuova matrice `tests/Integration/StatusPageIsolationMatrixTest.php`, **47 casi/742 asserzioni** su PostgreSQL e Redis, con due tenant attivi insieme: selezione cross-tenant, dati privati su ogni origine e protocollo, password con cache calda, subscriber e domini senza prova valida. Dettagli: [TESTING.md](TESTING.md#isolation-matrix-m807).
@@ -602,6 +608,31 @@ Dipendenze: M3–M10; sicurezza e logging di base iniziano nelle milestone prece
 
 Uscita: guasti diagnosticabili e controlli di sicurezza verificati sui percorsi sensibili.
 
+## UI — Interfaccia da pubblicare (fuori specifica, decisione di scope del 2026-11-02)
+
+Dipendenze: M9 e M10, che aggiungono le ultime pagine. M11 può procedere in parallelo. Prima di M12: demo, README e video devono mostrare la versione finale. Stima da definire dopo UI.01. L'interfaccia attuale è funzionale ma provvisoria: pagine interne su `AuthLayout`, nessuna navigazione comune, nessuno stile condiviso, home segnaposto.
+
+**Riferimento: [UptimeRobot](https://uptimerobot.com/)**, per struttura e modi d'uso. Osservato il 2026-11-02 sulle immagini del loro sito, che mostrano solo il dettaglio di un monitor e di un incidente:
+
+- **Pannello**: tema scuro, menu laterale fisso (Monitoring, Incidents, Status pages, Maintenance, Team members, Integrations & API), accento verde per lo stato positivo e rosso per i guasti, schede con angoli arrotondati.
+- **Dettaglio monitor**: indicatore grande dello stato con nome, tipo e URL; azioni in alto a destra; schede per stato attuale, ultimo controllo e barre delle ultime 24 ore; statistiche di uptime per periodo con incidenti e tempo di fermo; grafico dei tempi di risposta con media, minimo e massimo; colonna laterale con scadenza del certificato, prossima manutenzione e destinatari.
+- **Dettaglio incidente**: causa, stato e durata in schede, poi registro delle attività con controlli e notifiche in un'unica sequenza.
+- **Sito pubblico**: home con esempio del prodotto, tipi di monitor, funzioni e FAQ; prezzi con piani a colonne e confronto delle funzioni.
+
+**Limiti del riferimento**: ci ispiriamo a struttura e gerarchia delle informazioni. Non si copiano logo, immagini, testi o palette esatta: Signalbox deve restare un prodotto distinguibile. Una funzione vista da loro e assente dalla specifica (traceroute, commenti, tag, gruppi di monitor, modalità TV, app mobile, invio di una notifica di prova) non entra da questi task: richiede una decisione di scope separata. Ogni valore mostrato viene da dati reali; se manca lo si dichiara, come stabilito da ADR-009. La lista monitor e la loro status page non sono state osservate: vanno viste in UI.01.
+
+- [ ] UI.01 Definire il sistema grafico in `resources/css/app.css` e in componenti React condivisi: colori propri con tema scuro principale e contrasto AA, scala tipografica, pulsanti, campi, schede, tabelle, badge, avvisi, stati vuoto/caricamento/errore. Prima osservare lista monitor e status page del riferimento dal vivo (`status.uptimerobot.com`). Documentare regole e motivazioni in un nuovo `docs/UI-GUIDELINES.md`.
+- [ ] UI.02 Creare il layout dell'applicazione, separato da `AuthLayout`: menu laterale, cambio team, menu account, pagina corrente evidenziata, versione mobile, navigazione da tastiera. Migrare le pagine interne, togliere le navigazioni per pagina e l'opzione `wide`; `AuthLayout` resta alle sole pagine di accesso.
+- [ ] UI.03 Ridisegnare dashboard, lista e dettaglio monitor secondo il riferimento: stato evidente, schede riepilogative, uptime per periodo, grafico dei tempi di risposta, certificato, manutenzione e destinatari. Riusare `MonitorAvailability` e i rollup, rispettando la retention del piano; misurare le query aggiunte. Nessun segreto nuovo nelle props.
+- [ ] UI.04 Applicare il sistema a incidenti (causa, stato, durata e sequenza unica di timeline e consegne), manutenzioni, notifiche, gestione status page, team, account, pannello admin e pagine dei piani di M9.
+- [ ] UI.05 Rifare le pagine pubbliche: home definitiva senza il testo provvisorio, pagina prezzi letta da `config/plans.php`, pagine di accesso e status page con temi attuali. Tenere allineato il riepilogo Blade di M8.06 alla proiezione pubblica. Nessun dato inventato: niente recensioni, loghi di clienti o numeri di utenti non reali.
+- [ ] UI.06 Verificare in browser reali, su mobile e con zoom al 200%: accessibilità, tastiera, contrasto, temi della status page. Aggiornare i test DOM e [BROWSER-TESTS.md](BROWSER-TESTS.md).
+- [!] UI.07 Nome definitivo e logo. **Bloccato sulla decisione dell'utente**: la ricerca sui domini liberi non ha trovato soluzioni con "signalbox", quindi il nome può cambiare. Fino ad allora nessun logo: solo il nome come testo, letto da `APP_NAME`. Vedere le note sotto.
+
+**Note su UI.07.** Il nome compare anche in punti che diventano contratti con l'esterno: il record DNS `_signalbox.` e il valore `signalbox-verification=`, gli header dei webhook `X-Signalbox-*`, il prefisso dei token heartbeat `signalbox_`, il cookie `signalbox_status_`, il comando `signalbox:platform-admin`, oltre ai testi di email e notifiche. Finché non ci sono clienti si cambia senza migrazioni. Dopo, il cambio invaliderebbe domini verificati e integrazioni. **Decidere entro M10.04**, che documenta l'API, e al più tardi prima di M12.01, perché il dominio serve anche al deploy.
+
+Uscita: tutte le pagine usano il sistema grafico e il layout comune, nessun testo provvisorio resta visibile, verifica in browser registrata. Il nome e il logo definitivi sono presenti oppure il loro rinvio è registrato esplicitamente.
+
 ## M12 — Deploy e presentazione (10 h)
 
 Dipendenze: M0–M11.
@@ -629,7 +660,7 @@ Uscita soddisfatta il 2026-11-01: suite verde con le date simulate del criterio,
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 e M8.01–M8.03 completati il 2026-11-01; M8.04–M8.07 completati il 2026-11-02: M8 completata; prossimo task pronto M9.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 e M8.01–M8.03 completati il 2026-11-01; M8.04–M8.07 completati il 2026-11-02: M8 completata; prossimo task pronto M9.01, dopo le prove manuali di [BROWSER-TESTS.md](BROWSER-TESTS.md). Task UI da svolgere dopo M9–M10 e prima di M12; UI.07 (nome e logo) bloccato sulla decisione dell'utente. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -708,6 +739,9 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-11-01 | M8.03: invalidazione con generazione nella chiave, dopo il commit | Un calcolo in corso durante la modifica scrive sotto la vecchia generazione e non viene più letto. Se la cache fallisce, le pagine si calcolano a ogni visita. |
 | 2026-11-02 | M8.06: head e riepilogo pubblico in Blade; React SSR opzionale disabilitato | La proiezione pubblica esistente basta per titolo, stato, disponibilità e voci pubblicate leggibili senza JS. React rimuove il riepilogo al mount; grafici e moduli richiedono JS. Nessuna variante crawler o processo Node aggiunto. Rivedere SSR per esigenze misurate di layout completo/performance. |
 | 2026-11-02 | M8.06: canonical sul primario anche per domini personalizzati | `APP_URL` più percorso corrente, senza query né Host della richiesta. La prova DNS non garantisce TLS e l'indirizzo primario resta dopo revoca dell'alias. Password anche sbloccate e link email: noindex, metadati generici, nessun canonical/social o riepilogo server protetto. |
+| 2026-11-02 | Aggiunti i task UI.01–UI.07, dopo M9–M10 e prima di M12 | Decisione di scope dell'utente: specifica e piano non prevedevano una grafica da pubblicare e l'interfaccia attuale è provvisoria. Fatti dopo M9–M10 perché quelle milestone aggiungono ancora pagine; prima di M12 perché demo e video devono mostrare la versione finale. |
+| 2026-11-02 | UI: riferimento UptimeRobot per struttura, non per identità | Scelta dell'utente. Si riprendono menu, gerarchia delle informazioni e modi d'uso; non logo, immagini, testi o palette esatta. Le loro funzioni assenti dalla specifica non entrano senza una decisione separata. |
+| 2026-11-02 | Logo rinviato e nome non definitivo | Scelta dell'utente: nessun dominio libero trovato con "signalbox". UI.07 resta bloccato; il nome va deciso entro M10.04 e al più tardi prima di M12.01, perché compare in DNS, webhook e token. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
 ## Registro sessioni
@@ -1619,3 +1653,10 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Mutazioni su container usa e getta: 21 di una riga, 19 rilevate; le 2 sopravvissute erano mal costruite e, riscritte, sono state rilevate.
 - Verifiche: matrice 47 passati/742 asserzioni; suite backend con `public/build` nascosta 3067 passati/20989 asserzioni in 444,05 s; PHP-CS-Fixer dry-run 618 file; Larastan livello 8 senza errori. Dopo la suite modificato solo Markdown.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, `./scripts/verify.sh` integrale, frontend (nessun file cambiato), browser/DNS/TLS/SMTP reali, carico. **M8.07 completato, M8 completata; prossimo task pronto M9.01.**
+
+### 2026-11-02 — Pianificazione UI e checklist browser
+
+- Richiesta dell'utente: registrare decisione e task UI con riferimento UptimeRobot, rinviare il logo per il possibile cambio di nome, preparare i controlli da browser. Git/gh non eseguiti.
+- Fonti: testo e immagini pubbliche di `uptimerobot.com` e `uptimerobot.com/pricing`; le immagini sono state scaricate solo in una cartella temporanea, non nel repository. Lista monitor e status page non osservate: rinviate a UI.01.
+- Controlli in sola lettura per il documento: migration tutte applicate, Horizon attivo, gate di scheduling spento, Reverb fermo, `mail.default` = `smtp`. Dal container rispondono `https://example.com` (200) e `https://httpbin.org/status/503` (503), e `one.one.one.one` risolve in `1.1.1.1` e `1.0.0.1`. Host sconosciuto 404; ammissione TLS 403 dall'host e 404 dal container per un nome sconosciuto.
+- Non eseguiti: i casi del documento e il flusso completo dei suoi comandi di preparazione, che modificano l'ambiente e sono lasciati all'utente. Credenziali Mailtrap presenti ma invio non provato. File: `TASKS.md`, nuovo `BROWSER-TESTS.md`, rimando in `MANUAL-BROWSER-TESTS.md`.

@@ -4,6 +4,7 @@
 
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
 use App\Http\Controllers\StatusPages\StatusPageController;
+use App\Http\Controllers\StatusPages\StatusSubscriptionController;
 use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\NoStoreAuthentication;
 use App\Models\StatusPage;
@@ -39,4 +40,16 @@ Route::middleware(NoStoreAuthentication::class)
             ->where('slug', StatusPage::SLUG_PATTERN)
             ->middleware('throttle:status-page-unlock')
             ->name('status-pages.unlock');
+
+        Route::post('/status/{slug}/subscribe', [StatusSubscriptionController::class, 'store'])
+            ->where('slug', StatusPage::SLUG_PATTERN)
+            ->middleware('throttle:status-page-subscribe')
+            ->name('status-pages.subscribe');
+
+        Route::match(['GET', 'POST'], '/status/subscriptions/{teamId}/{pageId}/{subscriberId}/{generation}/{action}', [StatusSubscriptionController::class, 'action'])
+            ->whereNumber(['teamId', 'pageId', 'subscriberId'])
+            ->whereUuid('generation')
+            ->whereIn('action', ['verify', 'unsubscribe'])
+            ->middleware(['signed:relative', 'throttle:60,1'])
+            ->name('status-subscriptions.action');
     });

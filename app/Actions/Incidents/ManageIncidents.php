@@ -15,6 +15,7 @@ use App\Models\Monitor;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Incidents\IncidentLifecycle;
+use App\Services\StatusPages\PreparePublicUpdateEmails;
 use App\Services\StatusPages\StatusPageCache;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
@@ -35,9 +36,14 @@ final readonly class ManageIncidents
      * @param TenantContext $context Explicit tenant boundary for each change.
      * @param IncidentLifecycle $lifecycle Shared state changes, entries and events.
      * @param StatusPageCache $statusPages Published content to drop when an entry becomes public.
+     * @param PreparePublicUpdateEmails $publicEmails Freeze consenting recipients atomically with publication.
      */
-    public function __construct(private TenantContext $context, private IncidentLifecycle $lifecycle, private StatusPageCache $statusPages)
-    {
+    public function __construct(
+        private TenantContext $context,
+        private IncidentLifecycle $lifecycle,
+        private StatusPageCache $statusPages,
+        private PreparePublicUpdateEmails $publicEmails,
+    ) {
     }
 
     /**
@@ -169,6 +175,7 @@ final readonly class ManageIncidents
 
                 if (!$update->is_public) {
                     $update->forceFill(['is_public' => true, 'published_at' => $now])->save();
+                    $this->publicEmails->record($incident, $update);
                     $this->statusPages->forgetForMonitor($incident->team_id, $incident->monitor_id);
                 }
 

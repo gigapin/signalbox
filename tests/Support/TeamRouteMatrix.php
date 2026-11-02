@@ -75,6 +75,8 @@ final class TeamRouteMatrix
         'broadcasting.auth' => 'POST',
         'status-pages.public' => 'GET',
         'status-pages.unlock' => 'POST',
+        'status-pages.subscribe' => 'POST',
+        'status-subscriptions.action' => 'GET',
     ];
 
     /** @return array<string, array{string, string, string}> Route/role/access scenarios with readable Pest dataset names. */

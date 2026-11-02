@@ -41,7 +41,10 @@ final class PublicStatusPageController extends Controller
             return Inertia::render('StatusPages/Unlock', ['slug' => $page->slug]);
         }
 
-        return Inertia::render('StatusPages/Public', ['page' => $this->pages->present($page)]);
+        return Inertia::render('StatusPages/Public', [
+            'page' => $this->pages->present($page),
+            'subscribePath' => route('status-pages.subscribe', ['slug' => $page->slug], absolute: false),
+        ]);
     }
 
     /**

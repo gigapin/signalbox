@@ -249,6 +249,8 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_10_30_000021_create_check_rollups.php',
         // Status page components reference monitors and are reversed before them.
         'database/migrations/2026_11_01_000022_create_status_pages.php',
+        // Email recipients and their outbox reference pages and incident entries and are reversed first.
+        'database/migrations/2026_11_02_000023_create_status_page_subscriptions.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

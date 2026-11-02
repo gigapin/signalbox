@@ -265,3 +265,8 @@ M7.02 adds the read-only `metrics:rollup-storage` command; it needs no migration
 
 The monthly PDF report adds the Composer dependency `dompdf/dompdf`: run `composer install` and rebuild the assets. There is no new migration, environment variable, key or worker. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#monthly-pdf-report-m705).
 
+M8.01 adds the migration `2026_11_01_000022_create_status_pages.php` and `routes/status-pages.php`, included by `routes/web.php`. Run `php artisan migrate` and rebuild the assets. There is no new dependency, environment variable or worker. M8.03 uses the application cache already configured; pages keep working without it. See [STATUS-PAGES.md](STATUS-PAGES.md).
+
+M8.04 adds `2026_11_02_000023_create_status_page_subscriptions.php`, encrypted subscriber/outbox tables and a tenant-bound key for incident entries. Apply the migration deliberately, rebuild assets and reload queue/scheduler code before using email subscriptions. The existing `notifications` supervisor handles the scalar jobs recovered by `status-pages:dispatch-emails` every ten seconds. Configure existing SMTP settings and the externally reachable `APP_URL`; no dependency, lockfile, new variable or supervisor changes. Tests use only isolated storage and fake mail. Consent, password changes, revocation and delivery limits are documented in [STATUS-PAGES.md](STATUS-PAGES.md#email-subscriptions).
+
+`scripts/verify-dates.sh` needs network access, because it installs libfaketime in a disposable container. See [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).

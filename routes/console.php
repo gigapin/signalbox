@@ -24,5 +24,8 @@ Schedule::command('monitors:partitions')->daily()->onOneServer()->withoutOverlap
 // Recover committed notifications after publication gaps, expired attempts and provider backoff.
 Schedule::command('notifications:dispatch')->everyTenSeconds()->onOneServer()->withoutOverlapping(1);
 
+// Recover verified public updates and double opt-in messages through the existing notifications workers.
+Schedule::command('status-pages:dispatch-emails')->everyTenSeconds()->onOneServer()->withoutOverlapping(1);
+
 // Long-running by design: in the background it cannot delay the second-level commands above in the same scheduler.
 Schedule::command('metrics:nightly')->dailyAt('02:00')->timezone('UTC')->onOneServer()->withoutOverlapping(720)->runInBackground();

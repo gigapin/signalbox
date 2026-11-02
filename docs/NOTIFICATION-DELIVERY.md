@@ -2,6 +2,8 @@
 
 M5.03 connects incident transitions to the provider adapters described in [NOTIFICATIONS.md](NOTIFICATIONS.md). M5.04 adds all escalation steps and maintenance silencing; M5.05 adds [daily channel quiet hours](QUIET-HOURS.md) with timezone/DST handling. Decision and tradeoffs: ADR-012 in [ARCHITECTURE.md](ARCHITECTURE.md). Work state and measured verification results: [TASKS.md](TASKS.md).
 
+Public status page subscriptions use a separate consent/outbox ledger described in [STATUS-PAGES.md](STATUS-PAGES.md#email-subscriptions). They share the existing `notifications` workers, bounded SMTP mailer and retry settings, but send only explicitly published timeline entries to verified page subscribers; internal incident messages and escalation audiences are never reused for them.
+
 ## Transaction and publication boundary
 
 `IncidentLifecycle` emits `IncidentNotificationRequested` synchronously after recording each opening, reopening or resolution and **inside the existing incident transaction**. Its explicit listener, `PrepareIncidentNotifications::record()`, uses the same Team → Monitor → Incident lock order and does no network I/O. A preparation failure rolls back the incident, timeline and notification intent together.

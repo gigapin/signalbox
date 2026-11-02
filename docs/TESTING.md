@@ -489,6 +489,15 @@ The script runs the backend suite once per date, about 7 minutes each, in a disp
 - The frontend is not part of the script or the workflow; it was checked by hand on the three dates above.
 - The workflow has been linted with actionlint but has not run on GitHub yet.
 
+## Status pages (M8)
+
+Commands and coverage are in [STATUS-PAGES.md](STATUS-PAGES.md#verification). Two conditions of the test environment matter for any new test that resembles these:
+
+- **Built assets.** `./scripts/verify.sh` builds them and the CI backend job does not, so a test rendering HTML must call `withoutVite()`, or it passes locally and fails in CI. To reproduce CI's condition, hide the directory in a disposable container: `docker compose run --rm -v /var/www/html/public/build php-test vendor/bin/pest --fail-on-skipped`.
+- **Cache store.** In `php-test` the cache is Redis, which measures real time: `travelTo` does not expire entries, and identities repeat after `migrate:fresh`, so a run can read entries left by a run less than a minute earlier. A test that controls the clock or reads cached public content either binds `StatusPageCache` to the `array` store or flushes the cache first.
+
+`StatusSubscriptionsTest` adds the public email consent and delivery matrix: RFC input, anonymous abuse limits, encrypted mailboxes/messages, signature tampering, inert GETs, explicit/idempotent POSTs, real CSRF enforcement outside the test bypass, exact one-hour expiry and ten-minute resend boundary, password/visibility changes, unsubscribe/resubscribe, frozen publication audiences, rollback on preparation failure, independent per-page consent, tenant context and composite PostgreSQL keys. Delivery cases exercise SMTP selection with fake mail, real plain-text mailable rendering and stable Message-ID, bounded failures, expired leases, stale fences, corrupt ciphertext, broker failure isolation and in-flight acceptance after revocation. Three real child-process races, gated by a PostgreSQL Team-row barrier, prove one subscription, one publication audience and one admitted provider call; no real SMTP service is contacted. `StatusSubscriptions.test.tsx` exercises loading, validation, generic acknowledgement and explicit confirmation with signed URLs. These tests freeze November 15 without writing partitioned check results and disable Vite when rendering HTML.
+
 ## Metric boundary matrix (M7.06)
 
 `MetricBoundaryMatrixTest` runs on PostgreSQL with real ledger and result rows and a fixed clock. It combines what the other metric tests cover one at a time:

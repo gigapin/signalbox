@@ -273,7 +273,9 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $quietHours = require base_path('database/migrations/2026_10_30_000020_add_channel_quiet_hours.php');
     $rollups = require base_path('database/migrations/2026_10_30_000021_create_check_rollups.php');
     $statusPages = require base_path('database/migrations/2026_11_01_000022_create_status_pages.php');
-    // Roll back status page, rollup, escalation, notification, pause, maintenance, sequence, incident, result, heartbeat and execution dependents in reverse order.
+    $statusSubscriptions = require base_path('database/migrations/2026_11_02_000023_create_status_page_subscriptions.php');
+    // Roll back subscriber, status page, rollup, escalation, notification, pause, maintenance, sequence, incident, result, heartbeat and execution dependents in reverse order.
+    $statusSubscriptions->down();
     $statusPages->down();
     $rollups->down();
     $quietHours->down();
@@ -303,6 +305,7 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $quietHours->up();
     $rollups->up();
     $statusPages->up();
+    $statusSubscriptions->up();
     app(TenantContext::class)->run($team->id, function () use ($team): void {
         expect(Monitor::query()->count())->toBe(0);
         Monitor::factory()->create();

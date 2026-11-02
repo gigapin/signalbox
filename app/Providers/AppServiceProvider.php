@@ -88,6 +88,9 @@ class AppServiceProvider extends ServiceProvider
             (string) $request->route('slug').'|'.$request->ip()
         ));
 
+        // A global per-IP cap also bounds requests spread across different pages; mailbox cooldown is transactional.
+        RateLimiter::for('status-page-subscribe', static fn (Request $request): Limit => Limit::perMinute(5)->by((string) $request->ip()));
+
         $events->listen(IncidentNotificationRequested::class, [PrepareIncidentNotifications::class, 'record']);
 
         foreach ([IncidentOpened::class, IncidentReopened::class, IncidentResolved::class] as $event) {

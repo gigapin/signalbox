@@ -157,3 +157,7 @@ No HTTP route/permission changes. `RealtimeDeliveryTest` obtains a real session 
 
 `teams.reports.monthly` is a GET/HEAD private route for owner/admin/member/viewer and joins the complete current/foreign/revoked matrix plus guest/unverified gates. Allowed reads assert a real PDF from the real renderer; foreign teams get 404 without revealing anything. See [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#monthly-pdf-report-m705).
 
+## M8.04 public mailbox consent
+
+`status-pages.subscribe` and `status-subscriptions.action` are anonymous entries outside the membership matrix. Team membership grants no shortcut around the current page password or mailbox confirmation. Subscription requires a live public page and its current session unlock; a missing/draft page returns 404 and a locked page returns 403. Verification/unsubscribe require a signed, current generation and an exact tenant/page/recipient match. Tampered signatures return 403; expired or revoked consent and validly signed foreign identities cannot mutate another recipient. GET never mutates consent, and POST uses web CSRF. Unsubscribe remains available after visibility/password changes. Scalar email jobs reestablish tenant context and check current consent at each attempt. `StatusSubscriptionsTest` covers these entrances, encrypted data, database ownership constraints and independent-session deduplication. See [STATUS-PAGES.md](STATUS-PAGES.md#email-subscriptions).
+

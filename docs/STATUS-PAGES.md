@@ -9,6 +9,8 @@ A status page is a public page of a team: address, title, description, appearanc
 | `status_pages` | `slug` unique across all teams, `title`, `description`, `theme_json`, `is_public`, `password_hash`, `created_by`. |
 | `status_page_components` | `name`, `position`, unique per page. Replaced entirely on each save, so identities are not stable. |
 | `status_page_component_monitors` | Which monitors a component groups. |
+| `status_page_subscribers` | Encrypted mailbox, keyed uniqueness digest, consent generation, password fingerprint, verification deadline and opt-in/revocation times. |
+| `status_page_deliveries` | Encrypted verification/publication content, frozen recipient generation, stable message UUID, deduplication key, attempt budget and fenced lease. |
 
 **Deviation from the specification:** the join table replaces `monitor_ids_json`. Composite keys make a monitor of another team impossible at the database level, a deleted monitor leaves every page on its own, and a monitor cannot appear twice on a page. `custom_domain` is not created yet: it arrives with M8.05.
 
@@ -40,6 +42,8 @@ Owners and admins manage pages; every member reads the settings page. The page p
 |---|---|
 | `GET /status/{slug}` | A draft, an unknown address and an invalid one all answer 404, for members of the team too: there is no preview yet. A protected page answers with the password form, whose only data is the address. Otherwise it answers with the page. |
 | `POST /status/{slug}/unlock` | 5 attempts a minute per address and visitor. A draft answers 404 even with the right password. |
+| `POST /status/{slug}/subscribe` | Live public page and session unlock required. Bounded RFC email, no DNS call. Five requests per minute per visitor IP across all pages. Generic acknowledgement for new, pending and active addresses. |
+| `GET/POST /status/subscriptions/{teamId}/{pageId}/{subscriberId}/{generation}/{action}` | Relative signed capability for `verify` or `unsubscribe`, with CSRF on POST. GET shows a generic confirmation form; only POST changes consent. No mailbox, title or page content is projected. |
 
 `PublicStatusPages` is the only code that reads a page without a tenant, apart from the boolean address check in the action. Its projection lists the fields. Monitor names, identities, the team and the maintenance reason stay out, because they can be internal.
 
@@ -98,11 +102,56 @@ Invalidating raises a generation that is part of the key, after the transaction 
 
 Several visitors can calculate the same page at once when an entry expires; there is no lock to prevent it. No load measurement has been made.
 
+## Email subscriptions
+
+`StatusSubscriptions` serializes requests under the Team lock used by page edits and incident publication. A lowercase, trimmed RFC mailbox is encrypted at rest; an HMAC under the application key supplies the per-page uniqueness key. The same address can subscribe independently to several pages, including pages of different teams. Subscriber and delivery models require `TenantContext`; composite PostgreSQL keys additionally bind deliveries to their page, recipient and published entry.
+
+Consent, publication snapshots and attempt admission are separate services. A separate transactional outbox keeps anonymous mailbox consent out of team notification channels and escalation rules, while reusing their queue, bounded SMTP configuration and delivery policy. Laravel's mailer supplies the provider boundary; there is no additional transport abstraction for this single email path.
+
+### Consent and capabilities
+
+- New recipients receive a generic confirmation email through the durable outbox. It reveals no protected page title or incident content. Its verification capability lasts one hour, with the exact deadline excluded. A pending address can request another email after ten minutes; rotating the generation revokes previous verification and unsubscribe capabilities. Already verified addresses produce the same acknowledgement and no extra mail.
+- A visitor must enter the current password before subscribing to a protected page. Consent is bound to a keyed fingerprint of that password, including the absence of one. Adding, replacing or removing the password stops old consent from confirming or receiving further emails; subscribing again after unlocking requires new mailbox confirmation. A draft does not accept requests, confirmations or delivery attempts. Returning to public with the same password permits existing consent again.
+- Signed links contain identities and a random generation, never the address. Outgoing links use `APP_URL`, independently of the request Host. The signature covers the path and query; tampering with any coordinate fails before lookup. Lookup then establishes the signed tenant and checks page, recipient and current generation together. `APP_URL` must be the externally reachable origin; changing the application signing key invalidates capabilities and consent fingerprints.
+- GET is inert, so an email security scanner cannot confirm or cancel consent. The user presses a button to send a CSRF-protected POST. Responses are private/no-store with `Referrer-Policy: no-referrer`. Verification and unsubscribe POSTs are idempotent within the current generation. The unsubscribe link has no time expiry and still works after a page becomes a draft or changes password. Resubscribing rotates it and requires fresh opt-in.
+
+### Publication and recipients
+
+`ManageIncidents::publish` calls `PreparePublicUpdateEmails` only when an entry first becomes public, inside its existing transaction. It snapshots verified, non-revoked subscribers whose consent matches the password of a currently public page selecting the incident's monitor. Pages sharing a monitor send independently. Private notes, automatic incident transitions and publication replays send nothing. New subscribers get future publications only; there is no backfill.
+
+The encrypted email snapshot contains the public page title, public component label, published entry status/time/text, page URL and a revocable unsubscribe link. It excludes monitor names, team information, author identities, private cause notes and private timeline entries. Text is rendered literally in a plain-text email. Publication and every recipient intent commit or roll back together. Preparation does no network I/O and iterates recipients in batches of 100.
+
+Public subscriber emails follow explicit publication, independently of the internal escalation channels, maintenance silencing and quiet hours. A manager can publish a maintenance message intentionally; it is delivered to consenting subscribers.
+
+### Delivery and recovery
+
+`status-pages:dispatch-emails` runs every ten seconds with existing Redis scheduler coordination. Its global scan reads only due identities, then publishes scalar jobs to Redis's `notifications` queue. There is no immediate HTTP/after-commit broker submission: the periodic scan is the publication path, so a crash after the database commit cannot lose an email intent. One broker failure does not prevent the rest of the pass and produces a nonzero command result. Duplicate broker envelopes are harmless.
+
+`StatusEmailLedger` admits one attempt under Team → Page → Subscriber → Delivery locks, rechecking the current generation, consent, password, public visibility and monitor selection on every attempt. Old verification emails are suppressed after confirmation, generation rotation or expiry. Unsubscribe suppresses unclaimed waiting rows immediately. A changed page or revoked consent suppresses an update at its next admission. A corrupt encrypted payload becomes terminal `failed` without logging its contents.
+
+The worker calls the explicitly configured `smtp` mailer after committing its lease, so the default `log` mailer cannot record capability links. It shares the existing notification policy: three acquired attempts, 30/120-second backoff, 60-second worker timeout, 75-second lease and Redis's 90-second reservation. `tries=1` prevents hidden broker retries. A timeout's `failed()` hook or later expired-lease scan accounts for failure; recovery starts backoff when it observes expiry. Fenced completion rejects stale workers. No provider exception text is persisted or logged.
+
+`sent` means SMTP acceptance, not inbox delivery. The UUID, Message-ID and body stay stable across retries, but SMTP cannot commit atomically with PostgreSQL: acceptance followed by worker failure can produce a repeated email. Already admitted sends can complete after unsubscribe or a visibility/password change; future admission is stopped. Email ordering across separate published entries is not guaranteed, and no throughput benchmark or real SMTP delivery is claimed.
+
+### Adoption
+
+Apply `2026_11_02_000023_create_status_page_subscriptions.php` to the intended development database before loading this code in workers, rebuild assets, and reload the queue/scheduler code:
+
+```sh
+docker compose exec web php artisan migrate
+docker compose run --rm node npm run build
+docker compose up -d --no-deps --force-recreate queue scheduler
+```
+
+Configure the existing SMTP settings and `APP_URL`; no new dependency, environment variable or supervisor is required. Verification migrates only disposable test storage and does not perform these development operations. Recipient rows remain until their page or team is deleted; delivery history also cascades with its referenced incident entry. No independent email retention cleanup is introduced here.
+
 ## Verification
 
 ```sh
 docker compose run --rm php-test vendor/bin/pest tests/Feature/PublicHealthRulesTest.php tests/Integration/StatusPageManagementTest.php tests/Integration/PublicStatusPageTest.php tests/Integration/PublicStatusContentTest.php tests/Integration/StatusPageCacheTest.php --fail-on-skipped --fail-on-warning
 docker compose run --rm node npx vitest run tests/frontend/StatusPages.test.tsx
+docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusSubscriptionsTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npx vitest run tests/frontend/StatusSubscriptions.test.tsx
 ```
 
 The acceptance gate remains `./scripts/verify.sh`. It builds the assets, while CI runs the backend without them, so a test rendering HTML must call `withoutVite()`. To reproduce CI's condition:

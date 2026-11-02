@@ -1,5 +1,6 @@
 /** Show a published status page to anonymous visitors, in the appearance its team chose. */
 import { Head, usePage } from '@inertiajs/react';
+import SubscribeForm from '../../components/status-pages/SubscribeForm';
 import type {
     PublicComponent,
     PublicHistoryDay,
@@ -10,6 +11,10 @@ import type {
 interface PublicProps {
     /** Visitor projection. */
     page: PublicStatusPage;
+    /** Live relative endpoint, outside the visitor content cache. */
+    subscribePath?: string;
+    /** Generic request acknowledgement from the session. */
+    status?: string;
     /** Inertia page props are an open record. */
     [key: string]: unknown;
 }
@@ -96,7 +101,7 @@ function historySummary(component: PublicComponent): string {
 
 /** The current state comes from monitoring; incident details appear only where someone published them. */
 export default function Public() {
-    const { page } = usePage<PublicProps>().props;
+    const { page, subscribePath, status } = usePage<PublicProps>().props;
 
     return (
         <>
@@ -149,6 +154,7 @@ export default function Public() {
                             ))}
                         </ul>
                     )}
+                    {subscribePath && <SubscribeForm path={subscribePath} status={status} />}
                     <section aria-labelledby="incidents-heading" className="mt-10">
                         <h2 id="incidents-heading" className="text-xl font-semibold">
                             Published incidents

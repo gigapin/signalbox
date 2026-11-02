@@ -72,6 +72,7 @@ final class HandleInertiaRequests extends Middleware
                 'status-page-created' => 'Status page created.',
                 'status-page-updated' => 'Status page saved.',
                 'status-page-deleted' => 'Status page deleted.',
+                'status-subscription-requested' => 'If confirmation is needed, an email will arrive shortly. Check your inbox to confirm updates.',
                 'plan-override-saved' => 'Plan override saved.',
                 'plan-override-cleared' => 'Plan override removed.',
                 'platform-admin-two-factor-required' => 'Enable two-factor authentication to use the admin panel.',

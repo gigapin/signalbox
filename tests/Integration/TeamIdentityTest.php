@@ -251,6 +251,8 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_11_01_000022_create_status_pages.php',
         // Email recipients and their outbox reference pages and incident entries and are reversed first.
         'database/migrations/2026_11_02_000023_create_status_page_subscriptions.php',
+        // Verified hostname associations reference the page's pending claim generation.
+        'database/migrations/2026_11_02_000024_create_status_domain_bindings.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

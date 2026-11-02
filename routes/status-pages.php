@@ -3,6 +3,7 @@
 /** Declare status page management inside an authorized route team, and the public pages outside any team. */
 
 use App\Http\Controllers\StatusPages\PublicStatusPageController;
+use App\Http\Controllers\StatusPages\StatusDomainController;
 use App\Http\Controllers\StatusPages\StatusPageController;
 use App\Http\Controllers\StatusPages\StatusSubscriptionController;
 use App\Http\Middleware\EstablishTeamContext;
@@ -27,6 +28,13 @@ Route::middleware(['auth', 'verified', EstablishTeamContext::class])
         Route::delete('/teams/{team}/status-pages/{statusPage}', [StatusPageController::class, 'destroy'])
             ->whereNumber(['team', 'statusPage'])
             ->name('teams.status-pages.destroy');
+
+        Route::put('/teams/{team}/status-pages/{statusPage}/domain', [StatusDomainController::class, 'update'])
+            ->whereNumber(['team', 'statusPage'])->name('teams.status-pages.domain.update');
+        Route::post('/teams/{team}/status-pages/{statusPage}/domain/verify', [StatusDomainController::class, 'verify'])
+            ->whereNumber(['team', 'statusPage'])->middleware('throttle:status-domain-verify')->name('teams.status-pages.domain.verify');
+        Route::delete('/teams/{team}/status-pages/{statusPage}/domain', [StatusDomainController::class, 'destroy'])
+            ->whereNumber(['team', 'statusPage'])->name('teams.status-pages.domain.destroy');
     });
 
 // A protected page's content must never be stored by a browser or an intermediary.

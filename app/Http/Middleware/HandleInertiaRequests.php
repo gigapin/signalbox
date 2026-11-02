@@ -24,16 +24,18 @@ final class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $actor = $request->attributes->has('status_domain_page') ? null : $request->user();
+
         return [
             ...parent::share($request),
             'appName' => config('app.name'),
             'realtime' => $this->realtime($request),
             // Serialize a deliberate identity projection rather than the Eloquent user or its relationships.
-            'auth' => ['user' => $request->user() === null ? null : [
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
+            'auth' => ['user' => $actor === null ? null : [
+                'name' => $actor->name,
+                'email' => $actor->email,
                 // Only the viewer's own flag, to show the admin link; the panel re-checks on every request.
-                'isPlatformAdmin' => $request->user()->is_platform_admin === true,
+                'isPlatformAdmin' => $actor->is_platform_admin === true,
             ]],
             'status' => match ($request->session()->get('status')) {
                 'team-switched' => 'Current team updated.',
@@ -73,6 +75,9 @@ final class HandleInertiaRequests extends Middleware
                 'status-page-updated' => 'Status page saved.',
                 'status-page-deleted' => 'Status page deleted.',
                 'status-subscription-requested' => 'If confirmation is needed, an email will arrive shortly. Check your inbox to confirm updates.',
+                'status-domain-saved' => 'Domain saved. Publish its DNS TXT proof, then verify ownership.',
+                'status-domain-verified' => 'Domain ownership verified. Keep its DNS TXT proof for periodic revalidation.',
+                'status-domain-removed' => 'Custom domain removed.',
                 'plan-override-saved' => 'Plan override saved.',
                 'plan-override-cleared' => 'Plan override removed.',
                 'platform-admin-two-factor-required' => 'Enable two-factor authentication to use the admin panel.',
@@ -92,6 +97,10 @@ final class HandleInertiaRequests extends Middleware
      */
     private function realtime(Request $request): ?array
     {
+        if ($request->attributes->has('status_domain_page')) {
+            return null;
+        }
+
         $actor = $request->user('web');
 
         if (!$actor instanceof User || !$actor->hasVerifiedEmail() || config('broadcasting.default') !== 'reverb') {

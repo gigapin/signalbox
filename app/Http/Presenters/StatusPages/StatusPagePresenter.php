@@ -12,10 +12,16 @@ use App\Enums\StatusPages\StatusPageThemeMode;
 use App\Models\Monitor;
 use App\Models\StatusPage;
 use App\Models\StatusPageComponent;
+use App\Services\StatusPages\StatusDomainRegistry;
 
 /** The password hash never appears: members only learn whether a password exists. */
 final readonly class StatusPagePresenter
 {
+    /** @param StatusDomainRegistry $domains Tenant-bound management projection of DNS proof and live lease. */
+    public function __construct(private StatusDomainRegistry $domains)
+    {
+    }
+
     /**
      * @param StatusPage $page Page with components and their monitors loaded.
      * @return array<string, mixed> Row with editable values and its public path.
@@ -31,6 +37,7 @@ final readonly class StatusPagePresenter
             'theme' => $page->theme()->toArray(),
             'isPublic' => $page->is_public,
             'hasPassword' => $page->password_hash !== null,
+            'domain' => $this->domains->present($page),
             'components' => $page->components->map(static fn (StatusPageComponent $component): array => [
                 'name' => $component->name,
                 'monitors' => $component->monitors

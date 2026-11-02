@@ -2,6 +2,8 @@
 
 /** Exercise every private team route across persisted roles, foreign teams and revoked membership. */
 
+use App\Actions\StatusPages\ManageStatusDomains;
+use App\Contracts\Monitoring\DnsTransport;
 use App\Enums\Identity\TeamRole;
 use App\Exceptions\MissingTenantContext;
 use App\Http\Middleware\EstablishTeamContext;
@@ -18,6 +20,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia;
+use React\Dns\Model\Message;
+use React\Dns\Model\Record;
+use React\Dns\Query\Query;
+use Tests\Support\FakeDnsTransport;
 use Tests\Support\RecordingVerificationSender;
 use Tests\Support\TeamAuthorizationFixture;
 use Tests\Support\TeamRouteMatrix;
@@ -33,6 +39,8 @@ beforeEach(function (): void {
     Cache::flush();
     Notification::fake();
     $this->sender = RecordingVerificationSender::bind();
+    $this->domainDns = new FakeDnsTransport();
+    $this->app->instance(DnsTransport::class, $this->domainDns);
 });
 
 it('keeps the route catalogue complete and each private verb behind its declared gates', function (): void {
@@ -75,6 +83,15 @@ it('keeps the route catalogue complete and each private verb behind its declared
 
 it('enforces route role and membership boundaries without hidden cross-team effects', function (string $name, string $role, string $access): void {
     $fixture = TeamAuthorizationFixture::create($role, heartbeat: str_contains($name, 'heartbeat-credential'));
+    if (in_array($name, ['teams.status-pages.domain.verify', 'teams.status-pages.domain.destroy'], true)) {
+        app(ManageStatusDomains::class)->save($fixture->team->owner, $fixture->team->id, $fixture->statusPage->id, 'status.matrix-example.com');
+        $claim = app(TenantContext::class)->run($fixture->team->id, fn () => $fixture->statusPage->fresh());
+        $nameInDns = '_signalbox.status.matrix-example.com.';
+        $this->domainDns->answers[$nameInDns.'|'.Message::TYPE_TXT] = Message::createResponseWithAnswersForQuery(
+            new Query($nameInDns, Message::TYPE_TXT, Message::CLASS_IN),
+            [new Record($nameInDns, Message::TYPE_TXT, Message::CLASS_IN, 60, ['signalbox-verification='.$claim->domain_challenge])],
+        );
+    }
 
     if ($access === 'revoked') {
         $fixture->team->users()->detach($fixture->actor->id);
@@ -335,6 +352,15 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.status-pages.destroy':
             expect($fixture->loadStatusPages())->toBe([]);
             break;
+        case 'teams.status-pages.domain.update':
+            expect($fixture->loadStatusPages()[0]->custom_domain)->toBe('status.matrix-example.com');
+            break;
+        case 'teams.status-pages.domain.verify':
+            expect(DB::table('status_domain_bindings')->where('team_id', $fixture->team->id)->where('status_page_id', $fixture->statusPage->id)->exists())->toBeTrue();
+            break;
+        case 'teams.status-pages.domain.destroy':
+            expect($fixture->loadStatusPages()[0]->custom_domain)->toBeNull();
+            break;
         case 'teams.monitors.escalation-policy':
             expect($fixture->loadMonitor()?->escalation_policy_id)->toBe($fixture->policy->id);
             break;
@@ -412,6 +438,9 @@ it('rejects foreign child identifiers inside a team the actor owns without chang
     'teams.monitors.escalation-policy',
     'teams.status-pages.update',
     'teams.status-pages.destroy',
+    'teams.status-pages.domain.update',
+    'teams.status-pages.domain.verify',
+    'teams.status-pages.domain.destroy',
 ]);
 
 it('rejects a foreign ownership successor despite a forged selected team and fresh password', function (): void {

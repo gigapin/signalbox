@@ -58,6 +58,9 @@ final class TeamRouteMatrix
         'teams.status-pages.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.status-pages.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.status-pages.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.status-pages.domain.update' => ['method' => 'PUT', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.status-pages.domain.verify' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
+        'teams.status-pages.domain.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin']],
     ];
 
     /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */
@@ -77,6 +80,7 @@ final class TeamRouteMatrix
         'status-pages.unlock' => 'POST',
         'status-pages.subscribe' => 'POST',
         'status-subscriptions.action' => 'GET',
+        'status-domains.allow' => 'GET',
     ];
 
     /** @return array<string, array{string, string, string}> Route/role/access scenarios with readable Pest dataset names. */

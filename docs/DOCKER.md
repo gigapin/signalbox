@@ -2,6 +2,8 @@
 
 M0.03 uses Docker Compose directly, without adding Sail or changing Composer/npm dependencies. This is a development environment, not the M12 production image. All application processes share a PHP 8.4 CLI image and a source bind mount. See [TASKS.md](TASKS.md) for implementation status.
 
+[STATUS-DOMAINS.md](STATUS-DOMAINS.md) defines M8.05's custom-host routing, private Caddy TLS admission endpoint and deployment template. It adds no running proxy to this local Compose stack. Production must preserve Host, trust only explicit proxy peers, keep the backend/admission path private and persist ACME storage; certificate issuance and public deployment remain M12. `APP_URL` now determines the primary application hostname, with explicit loopback aliases only in local/testing.
+
 ## First setup
 
 Requirements: Docker Engine/Desktop running and Docker Compose v2 or later. Host PHP, Composer and Node are not required. From the repository root:

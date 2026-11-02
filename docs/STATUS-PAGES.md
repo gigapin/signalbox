@@ -163,7 +163,10 @@ docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusDomains
 docker compose run --rm node npx vitest run tests/frontend/StatusDomains.test.tsx
 docker compose run --rm -v /var/www/html/public/build php-test vendor/bin/pest tests/Feature/StatusPageDocumentsTest.php tests/Integration/StatusPageSeoTest.php --fail-on-skipped --fail-on-warning
 docker compose run --rm node npx vitest run tests/frontend/StatusPageMetadata.test.tsx
+docker compose run --rm -v /var/www/html/public/build php-test vendor/bin/pest tests/Integration/StatusPageIsolationMatrixTest.php --compact --fail-on-skipped --fail-on-warning
 ```
+
+The last command is the acceptance matrix across tenants, origins, passwords, cache, subscribers and hostnames without a live proof: [TESTING.md](TESTING.md#isolation-matrix-m807).
 
 The acceptance gate remains `./scripts/verify.sh`. It builds the assets, while CI runs the backend without them, so a test rendering HTML must call `withoutVite()`. To reproduce CI's condition:
 

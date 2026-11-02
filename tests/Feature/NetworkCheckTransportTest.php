@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 /** Exercise real TLS verification, concurrent sockets and bounded DNS UDP/TCP on synthetic loopback servers. */
 
+use App\Contracts\Monitoring\CheckClock;
 use App\Contracts\Monitoring\TlsTransport;
 use App\Data\Monitoring\TlsMonitorConfiguration;
 use App\Data\Security\AuthorizedDestination;
 use App\Enums\Monitoring\CheckError;
+use App\Enums\Monitoring\DnsRecordType;
 use App\Enums\Monitoring\MonitorStatus;
 use App\Exceptions\CheckTransportFailed;
 use App\Services\Monitoring\Checks\AsyncCheckRuntime;
+use App\Services\Monitoring\Checks\DnsLookup;
 use App\Services\Monitoring\Checks\NetworkCheckCoordinator;
 use App\Services\Monitoring\Checks\ReactDnsTransport;
 use App\Services\Monitoring\Checks\ReactTlsTransport;
+use App\Services\Monitoring\MonitorInputSyntax;
 use App\Services\Tenancy\TenantContext;
 use React\Dns\Model\Message;
 use React\EventLoop\LoopInterface;
@@ -126,6 +130,23 @@ it('continues truncated UDP answers over TCP within one DNS observation', functi
     expect($response->answers[0]->data)->toBe('8.8.8.8')
         ->and(file($this->hits, FILE_IGNORE_NEW_LINES))->toBe(['udp tcp.example.test', 'tcp tcp.example.test']);
 });
+
+it('sends well-formed questions for absolute names so the real lookup accepts the answer', function (string $name): void {
+    [$this->process, $endpoint] = startNetworkTransportProbe('DnsLoopbackServer.php', [$this->hits]);
+    $lookup = new DnsLookup(new ReactDnsTransport(), app(MonitorInputSyntax::class), app(CheckClock::class));
+    $deadline = app(CheckClock::class)->milliseconds() + 1000;
+
+    $records = app(AsyncCheckRuntime::class)->await(fn (LoopInterface $loop): PromiseInterface => $lookup->records($name, DnsRecordType::A, $endpoint, $deadline, $loop));
+    $response = app(AsyncCheckRuntime::class)->await(fn (LoopInterface $loop): PromiseInterface => app(ReactDnsTransport::class)->query($name.'.', Message::TYPE_A, $endpoint, 1000, $loop));
+
+    expect($records)->toBe(['8.8.8.8'])
+        ->and($response->questions[0]->name)->toBe($name)
+        ->and($response->questions[0]->type)->toBe(Message::TYPE_A)
+        ->and($response->questions[0]->class)->toBe(Message::CLASS_IN);
+})->with([
+    'udp answer' => 'lookup.example.test',
+    'truncated udp continued over tcp' => 'tcp.example.test',
+]);
 
 it('crosses a two-query DNS barrier and isolates a silent resolver response', function (): void {
     [$this->process, $endpoint] = startNetworkTransportProbe('DnsLoopbackServer.php', [$this->hits]);

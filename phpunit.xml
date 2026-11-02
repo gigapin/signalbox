@@ -58,5 +58,7 @@
         <env name="REDIS_DB" value="0" force="true"/>
         <env name="REDIS_CACHE_DB" value="1" force="true"/>
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <!-- A developer's enabled gate must not reach tests; "(false)" yields a real boolean, as PHPUnit empties "false". -->
+        <env name="MONITOR_SCHEDULING_ENABLED" value="(false)" force="true"/>
     </php>
 </phpunit>

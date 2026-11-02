@@ -44,7 +44,10 @@ final class ReactDnsTransport implements DnsTransport
         $tcp = new TcpTransportExecutor($server, $loop);
         $executor = new SelectiveTransportExecutor(new UdpTransportExecutor($server, $loop), $tcp);
 
-        return timeout($executor->query(new Query($name, $type, Message::CLASS_IN)), $timeoutMs / 1000, $loop)
+        // React's encoder appends the root label itself; a trailing dot would corrupt the question's type and class.
+        $question = new Query(rtrim($name, '.'), $type, Message::CLASS_IN);
+
+        return timeout($executor->query($question), $timeoutMs / 1000, $loop)
             ->catch(static function (Throwable $error): never {
                 if ($error instanceof TimeoutException) {
                     throw new CheckTransportFailed(CheckError::Timeout);

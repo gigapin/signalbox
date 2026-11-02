@@ -1,20 +1,25 @@
 /** Ask a visitor for the password of a protected status page. */
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import StatusPageHead from '../../components/status-pages/StatusPageHead';
+import type { StatusPageMetadata } from '../../components/status-pages/types';
 
-/** Page props: only the address, so nothing about the page shows before the password. */
+/** Locked props contain only the address and generic metadata, excluding protected page content. */
 interface UnlockProps {
     /** Public address segment. */
     slug: string;
+    /** Generic crawler policy without protected page data. */
+    metadata?: StatusPageMetadata;
     /** Inertia page props are an open record. */
     [key: string]: unknown;
 }
 
 /** The title is generic on purpose: the page's own title is part of what the password protects. */
 export default function Unlock() {
-    const { slug } = usePage<UnlockProps>().props;
+    const { slug, metadata } = usePage<UnlockProps>().props;
     const form = useForm({ password: '' });
 
+    /** @param event Explicit password submission, retaining normal CSRF protection. */
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         form.post(`/status/${slug}/unlock`, { onFinish: () => form.reset('password') });
@@ -22,9 +27,7 @@ export default function Unlock() {
 
     return (
         <>
-            <Head title="Protected status page">
-                <meta name="robots" content="noindex" />
-            </Head>
+            <StatusPageHead metadata={metadata} fallbackTitle="Protected status page" />
             <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
                 <div className="mx-auto max-w-lg">
                     <h1 className="text-2xl font-semibold">This status page is protected</h1>

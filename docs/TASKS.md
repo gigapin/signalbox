@@ -12,6 +12,17 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M8.06, 2026-11-02
+
+- **M8.06 completato**: dipendenze M8.01–M8.05 soddisfatte, task segnato in corso prima delle modifiche. Titolo/descrizione, canonical, robots e metadati social nell'HTML iniziale e coerenti nelle navigazioni Inertia. Regole, valutazione SSR e adozione: [STATUS-PAGE-SEO.md](STATUS-PAGE-SEO.md).
+- Decisione SSR: mantenere disabilitato il processo React SSR opzionale. Metadati server e riepilogo Blade della sola proiezione pubblica rendono contenuti essenziali leggibili senza JS; React rimuove il riepilogo quando l'interfaccia è pronta. Nessuna variante per user-agent, nuovo runtime, dipendenza o processo. Non si promettono indicizzazione o ranking; grafici e moduli interattivi richiedono JS.
+- Canonical unico su `APP_URL` e percorso corrente `/status/{slug}`, anche dagli alias: verifica DNS non equivale a disponibilità TLS e l'indirizzo principale sopravvive a scadenza/rimozione del dominio. Query e Host inoltrati non influiscono sul canonical.
+- Pagine protette, anche sbloccate, e capability email: metadati generici, nessun canonical/social target e `noindex, nofollow, nosnippet` in HTML/header. Nessun riepilogo server per contenuti protetti. Le autorizzazioni e la cache HTTP no-store restano operative.
+- **Backend finale exit 0**, PHP **8.4.27**: `docker compose run --rm -v /var/www/html/public/build php-test timeout 900 vendor/bin/pest --compact --fail-on-skipped --fail-on-warning`, **3020 passati/20247 asserzioni in 566,33 s**, nessuno saltato. La build nascosta riproduce la condizione CI. Include **23 nuovi casi/175 asserzioni**: 13 PostgreSQL sul documento pubblico e 10 feature senza storage. Nuovo gruppo PostgreSQL mirato finale: 13 passati/163 asserzioni. Il limite di 900 s resta invariato; il timeout Composer osservato in M8.05 non è dichiarato diagnosticato o risolto.
+- **Qualità e frontend finali exit 0**: PHP-CS-Fixer dry-run su **617 file** e Larastan livello 8; `docker compose run --rm node npm run verify`, **174 DOM**, 5 qualità, lint/formato/TypeScript e build. Sei nuovi casi DOM. Corretti i fixture di assegnazione massiva e titolo DOM non gestito, più la firma TypeScript per `undefined` esplicito. Gate eseguiti separatamente; nessun nuovo `composer verify` o `./scripts/verify.sh` integrale rivendicato.
+- File: `StatusPageMetadata`, `StatusPageDocuments`, `StatusPageIndexing`, controller pubblici pagina/iscrizioni, rotte status page e commenti configurazione Inertia; layout Blade con due partial, `StatusPageHead.tsx`, tipi e tre pagine pubbliche React. Nuovi `StatusPageDocumentsTest.php`, `StatusPageSeoTest.php`, `StatusPageMetadata.test.tsx`; documenti STATUS-PAGE-SEO, STATUS-PAGES, BOOTSTRAP, TESTING e questo piano.
+- **Operatività e limiti**: nessuna migrazione, dipendenza/lockfile, `.env`/chiave o modifica dei processi di sviluppo; ricompilare gli asset e distribuire PHP/view. Nessun browser/crawler reale, indicizzazione, benchmark, PHP 8.5 o CI remota verificato; debiti precedenti conservati. Git/gh mai eseguiti dall'agente. **Prossimo task pronto: M8.07**, matrice integrata di selezione cross-tenant, dati privati, password/cache, subscriber e domini non verificati; M8 resta aperta.
+
 ## Consegna di sessione — M8.05, 2026-11-02
 
 - **M8.05 completato**: dominio personalizzato per pagina, prova DNS TXT, associazione esclusiva con scadenza, rinnovo periodico, routing limitato alla pagina e contratto TLS per il deploy. Dipendenze M8.01–M8.04 soddisfatte; branch creato dall'utente. Regole e operatività: [STATUS-DOMAINS.md](STATUS-DOMAINS.md).
@@ -538,7 +549,7 @@ Dipendenze: M4–M5, M7.
 - [x] M8.03 Configurare cache con chiavi tenant/pagina, invalidazione su modifiche e protezione delle pagine riservate.
 - [x] M8.04 Implementare iscrizione email verificata, disiscrizione e invio degli aggiornamenti pubblici.
 - [x] M8.05 Implementare dominio personalizzato con verifica di proprietà e routing sicuro; definire gestione TLS nel deploy.
-- [ ] M8.06 Curare SEO e metadati; valutare SSR opzionale in base alla resa pubblica richiesta.
+- [x] M8.06 Curare SEO e metadati; valutare SSR opzionale in base alla resa pubblica richiesta.
 - [ ] M8.07 Testare selezione cross-tenant, dati privati, password/cache, subscriber e domini non verificati.
 
 Uscita: pagina pubblica accessibile, storico da rollup disponibile e nessuna esposizione di dati riservati.
@@ -684,6 +695,8 @@ Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M
 | 2026-11-01 | M8.03: cache applicativa del solo contenuto, nessuna cache HTTP | Ogni risposta porta il cookie di sessione e, per chi è autenticato, `auth.user`: non può stare in una cache condivisa. Bozza, indirizzo e password restano letti dal vivo, quindi una pagina si chiude subito. |
 | 2026-11-01 | M8.03: i risultati dei controlli non invalidano la cache | Un monitor ogni 30 secondi la svuoterebbe di continuo; un'interruzione reale arriva comunque dall'evento di incidente. Ritardo massimo 60 secondi. |
 | 2026-11-01 | M8.03: invalidazione con generazione nella chiave, dopo il commit | Un calcolo in corso durante la modifica scrive sotto la vecchia generazione e non viene più letto. Se la cache fallisce, le pagine si calcolano a ogni visita. |
+| 2026-11-02 | M8.06: head e riepilogo pubblico in Blade; React SSR opzionale disabilitato | La proiezione pubblica esistente basta per titolo, stato, disponibilità e voci pubblicate leggibili senza JS. React rimuove il riepilogo al mount; grafici e moduli richiedono JS. Nessuna variante crawler o processo Node aggiunto. Rivedere SSR per esigenze misurate di layout completo/performance. |
+| 2026-11-02 | M8.06: canonical sul primario anche per domini personalizzati | `APP_URL` più percorso corrente, senza query né Host della richiesta. La prova DNS non garantisce TLS e l'indirizzo primario resta dopo revoca dell'alias. Password anche sbloccate e link email: noindex, metadati generici, nessun canonical/social o riepilogo server protetto. |
 | 2026-10-28 | M4.04: storico pause tramite trigger PostgreSQL | Scelta utente: unico scrittore il database su ogni cambio di `is_paused`/`is_plan_suspended`, così anche i futuri job di billing e gli update massivi registrano lo storico; istante = `now()` della transazione; backfill all’istante della migration per inizio reale ignoto. |
 
 ## Registro sessioni

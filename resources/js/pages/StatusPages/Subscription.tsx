@@ -1,6 +1,8 @@
 /** Confirm signed email capabilities without mutating consent when an email scanner follows a link. */
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import StatusPageHead from '../../components/status-pages/StatusPageHead';
+import type { StatusPageMetadata } from '../../components/status-pages/types';
 
 /** Generic capability props deliberately exclude mailbox, page title and tenant data. */
 interface SubscriptionProps {
@@ -10,13 +12,15 @@ interface SubscriptionProps {
     actionUrl: string;
     /** True only after the visitor explicitly submits the form. */
     completed: boolean;
+    /** Generic metadata excluding signed URL and subscriber identity. */
+    metadata?: StatusPageMetadata;
     /** Inertia props are an open record. */
     [key: string]: unknown;
 }
 
 /** Render keyboard-accessible confirmation and terminal success without exposing any private page content. */
 export default function Subscription() {
-    const { action, actionUrl, completed } = usePage<SubscriptionProps>().props;
+    const { action, actionUrl, completed, metadata } = usePage<SubscriptionProps>().props;
     const form = useForm({});
     const title = action === 'verify' ? 'Confirm email updates' : 'Unsubscribe from updates';
 
@@ -28,9 +32,7 @@ export default function Subscription() {
 
     return (
         <>
-            <Head title={title}>
-                <meta name="robots" content="noindex" />
-            </Head>
+            <StatusPageHead metadata={metadata} fallbackTitle={title} />
             <main className="mx-auto max-w-xl px-6 py-12">
                 <h1 className="text-2xl font-semibold">{title}</h1>
                 {completed ? (

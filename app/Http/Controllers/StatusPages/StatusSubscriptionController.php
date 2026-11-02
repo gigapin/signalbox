@@ -9,6 +9,7 @@ namespace App\Http\Controllers\StatusPages;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StatusPages\SubscribeStatusPageRequest;
 use App\Services\StatusPages\PublicStatusPages;
+use App\Services\StatusPages\StatusPageDocuments;
 use App\Services\StatusPages\StatusSubscriptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,9 +22,13 @@ final class StatusSubscriptionController extends Controller
     /**
      * @param PublicStatusPages $pages Explicit public page discovery boundary.
      * @param StatusSubscriptions $subscriptions Transactional mailbox consent and outbox preparation.
+     * @param StatusPageDocuments $documents Generic noindex metadata excluding signed URLs and recipient values.
      */
-    public function __construct(private readonly PublicStatusPages $pages, private readonly StatusSubscriptions $subscriptions)
-    {
+    public function __construct(
+        private readonly PublicStatusPages $pages,
+        private readonly StatusSubscriptions $subscriptions,
+        private readonly StatusPageDocuments $documents,
+    ) {
     }
 
     /**
@@ -57,11 +62,13 @@ final class StatusSubscriptionController extends Controller
     {
         $commit = $request->isMethod('POST');
         $this->subscriptions->act($teamId, $pageId, $subscriberId, $generation, $action, $commit);
+        $metadata = $this->documents->restricted($action === 'verify' ? 'Confirm email updates' : 'Unsubscribe from updates');
 
         return Inertia::render('StatusPages/Subscription', [
             'action' => $action,
             'actionUrl' => $request->getRequestUri(),
             'completed' => $commit,
-        ]);
+            'metadata' => Inertia::always($metadata->toArray()),
+        ])->withViewData('statusMetadata', $metadata->toArray());
     }
 }

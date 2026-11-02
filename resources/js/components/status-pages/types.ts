@@ -1,6 +1,20 @@
 /** Describe the status page projections sent by StatusPageController and PublicStatusPageController. */
 import type { MonitorPageProps } from '../monitors/types';
 
+/** Live document metadata shared by the initial HTML and client navigation, outside the content cache. */
+export interface StatusPageMetadata {
+    /** Complete document title, including the product name. */
+    title: string;
+    /** Plain text summary; generic for protected pages and email capabilities. */
+    description: string;
+    /** Explicit crawler directives, including noindex for restricted pages. */
+    robots: string;
+    /** Configured primary public URL, without query; null for restricted documents. */
+    canonicalUrl: string | null;
+    /** Configured product name for social previews. */
+    siteName: string;
+}
+
 /** Appearance of a page, with values from closed server enums. */
 export interface StatusPageTheme {
     /** Color scheme: `system`, `light` or `dark`. */

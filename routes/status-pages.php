@@ -8,6 +8,7 @@ use App\Http\Controllers\StatusPages\StatusPageController;
 use App\Http\Controllers\StatusPages\StatusSubscriptionController;
 use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\NoStoreAuthentication;
+use App\Http\Middleware\StatusPageIndexing;
 use App\Models\StatusPage;
 use Illuminate\Support\Facades\Route;
 
@@ -38,7 +39,7 @@ Route::middleware(['auth', 'verified', EstablishTeamContext::class])
     });
 
 // A protected page's content must never be stored by a browser or an intermediary.
-Route::middleware(NoStoreAuthentication::class)
+Route::middleware([NoStoreAuthentication::class, StatusPageIndexing::class])
     ->group(function (): void {
         Route::get('/status/{slug}', [PublicStatusPageController::class, 'show'])
             ->where('slug', StatusPage::SLUG_PATTERN)

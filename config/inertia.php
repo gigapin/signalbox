@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Resolve React pages from one directory and disable optional SSR during bootstrap.
+ * Resolve React pages from one directory; public metadata and essential status content are rendered by Blade.
  */
 
 return [
-    // Render the initial document in the browser until an SSR service is introduced.
+    // React SSR remains optional: Blade provides crawler-readable status documents without a Node rendering service.
     'ssr' => ['enabled' => false],
     // Fail immediately if a controller references a React page missing from disk.
     'ensure_pages_exist' => true,

@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StatusPages\UnlockStatusPageRequest;
 use App\Models\StatusPage;
 use App\Services\StatusPages\PublicStatusPages;
+use App\Services\StatusPages\StatusPageDocuments;
 use App\Services\StatusPages\StatusPageUnlocks;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,15 +18,19 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** A locked page sends only its address, so title and components stay hidden until the password is entered. */
+/** A locked page exposes its address and generic metadata; page title and components require the password. */
 final class PublicStatusPageController extends Controller
 {
     /**
      * @param PublicStatusPages $pages Public lookup and projection.
      * @param StatusPageUnlocks $unlocks Session record of entered passwords.
+     * @param StatusPageDocuments $documents Metadata and canonical decisions outside the content cache.
      */
-    public function __construct(private readonly PublicStatusPages $pages, private readonly StatusPageUnlocks $unlocks)
-    {
+    public function __construct(
+        private readonly PublicStatusPages $pages,
+        private readonly StatusPageUnlocks $unlocks,
+        private readonly StatusPageDocuments $documents,
+    ) {
     }
 
     /**
@@ -36,14 +41,25 @@ final class PublicStatusPageController extends Controller
     public function show(Request $request, string $slug): Response
     {
         $page = $this->published($request, $slug);
+        $metadata = $this->documents->page($page);
+        $request->attributes->set('status_page_metadata', $metadata);
 
         if (!$this->unlocks->allows($request->session(), $page)) {
-            return Inertia::render('StatusPages/Unlock', ['slug' => $page->slug]);
+            return Inertia::render('StatusPages/Unlock', [
+                'slug' => $page->slug,
+                'metadata' => Inertia::always($metadata->toArray()),
+            ])->withViewData('statusMetadata', $metadata->toArray());
         }
 
+        $content = $this->pages->present($page);
+
         return Inertia::render('StatusPages/Public', [
-            'page' => $this->pages->present($page),
+            'page' => $content,
             'subscribePath' => route('status-pages.subscribe', ['slug' => $page->slug], absolute: false),
+            'metadata' => Inertia::always($metadata->toArray()),
+        ])->withViewData([
+            'statusMetadata' => $metadata->toArray(),
+            'statusSnapshot' => $page->password_hash === null ? $content : null,
         ]);
     }
 

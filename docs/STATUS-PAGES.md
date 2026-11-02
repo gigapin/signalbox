@@ -152,6 +152,8 @@ Configure the existing SMTP settings and `APP_URL`; no new dependency, environme
 
 ## Verification
 
+[STATUS-PAGE-SEO.md](STATUS-PAGE-SEO.md) describes initial HTML metadata, the public summary without JavaScript, canonical aliases, restricted noindex documents and the decision to keep optional React SSR disabled.
+
 ```sh
 docker compose run --rm php-test vendor/bin/pest tests/Feature/PublicHealthRulesTest.php tests/Integration/StatusPageManagementTest.php tests/Integration/PublicStatusPageTest.php tests/Integration/PublicStatusContentTest.php tests/Integration/StatusPageCacheTest.php --fail-on-skipped --fail-on-warning
 docker compose run --rm node npx vitest run tests/frontend/StatusPages.test.tsx
@@ -159,6 +161,8 @@ docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusSubscri
 docker compose run --rm node npx vitest run tests/frontend/StatusSubscriptions.test.tsx
 docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusDomainsTest.php --fail-on-skipped --fail-on-warning
 docker compose run --rm node npx vitest run tests/frontend/StatusDomains.test.tsx
+docker compose run --rm -v /var/www/html/public/build php-test vendor/bin/pest tests/Feature/StatusPageDocumentsTest.php tests/Integration/StatusPageSeoTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npx vitest run tests/frontend/StatusPageMetadata.test.tsx
 ```
 
 The acceptance gate remains `./scripts/verify.sh`. It builds the assets, while CI runs the backend without them, so a test rendering HTML must call `withoutVite()`. To reproduce CI's condition:

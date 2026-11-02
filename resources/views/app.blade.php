@@ -4,13 +4,20 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Signalbox application monitoring and status pages.">
-        <title inertia>{{ config('app.name') }}</title>
+        @isset($statusMetadata)
+            @include('status-pages.metadata', ['metadata' => $statusMetadata])
+        @else
+            <meta inertia="description" name="description" content="Signalbox application monitoring and status pages.">
+            <title inertia>{{ config('app.name') }}</title>
+        @endisset
         @viteReactRefresh
         @vite('resources/js/app.tsx')
         @inertiaHead
     </head>
     <body>
+        @isset($statusSnapshot)
+            @include('status-pages.snapshot', ['page' => $statusSnapshot])
+        @endisset
         @inertia
     </body>
 </html>

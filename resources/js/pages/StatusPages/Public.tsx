@@ -1,16 +1,21 @@
 /** Show a published status page to anonymous visitors, in the appearance its team chose. */
-import { Head, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
+import StatusPageHead from '../../components/status-pages/StatusPageHead';
 import SubscribeForm from '../../components/status-pages/SubscribeForm';
 import type {
     PublicComponent,
     PublicHistoryDay,
     PublicStatusPage,
+    StatusPageMetadata,
 } from '../../components/status-pages/types';
 
 /** Page props: the explicit visitor projection only. */
 interface PublicProps {
     /** Visitor projection. */
     page: PublicStatusPage;
+    /** Live crawler policy, always included by the server even on partial visits. */
+    metadata?: StatusPageMetadata;
     /** Live relative endpoint, outside the visitor content cache. */
     subscribePath?: string;
     /** Generic request acknowledgement from the session. */
@@ -101,11 +106,16 @@ function historySummary(component: PublicComponent): string {
 
 /** The current state comes from monitoring; incident details appear only where someone published them. */
 export default function Public() {
-    const { page, subscribePath, status } = usePage<PublicProps>().props;
+    const { page, subscribePath, status, metadata } = usePage<PublicProps>().props;
+
+    useEffect(() => {
+        // The server summary is outside Inertia's root and stays readable if JavaScript cannot mount.
+        document.getElementById('status-page-snapshot')?.remove();
+    }, []);
 
     return (
         <>
-            <Head title={page.title} />
+            <StatusPageHead metadata={metadata} fallbackTitle="Status page" />
             <main className={`min-h-screen px-6 py-12 ${MODES[page.theme.mode] ?? MODES.system}`}>
                 <div className="mx-auto max-w-3xl">
                     <div

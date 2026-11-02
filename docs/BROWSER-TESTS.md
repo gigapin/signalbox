@@ -586,7 +586,9 @@ docker compose logs --tail=30 scheduler
 docker compose logs --tail=50 queue
 ```
 
-Il primo deve dire `true` e il secondo `Horizon is running`. Se hai cambiato `.env` senza riavviare, esegui di nuovo il secondo comando del punto 1.1. Non c'è un pulsante per forzare un controllo: si attende lo slot successivo.
+Il primo deve dire `true` e il secondo `Horizon is running`. Non c'è un pulsante per forzare un controllo: si attende lo slot successivo.
+
+Il valore `true` non basta a escludere il problema: `config:show` e lo scheduler rileggono `.env` a ogni esecuzione, mentre i worker di Horizon restano con il valore letto all'avvio. Se nei log di `queue` vedi `DeliverCheckBatch` terminare in pochi millisecondi e i monitor restano `unknown`, hai cambiato `.env` senza riavviare i worker. Esegui di nuovo il secondo comando del punto 1.1.
 
 **Stato dei monitor nel database:**
 

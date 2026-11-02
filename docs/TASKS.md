@@ -12,6 +12,15 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Consegna di sessione — M8.07, 2026-11-02
+
+- **M8.07 completato e M8 completata**: dipendenze M8.01–M8.06 soddisfatte, task segnato in corso prima delle modifiche. Nuova matrice `tests/Integration/StatusPageIsolationMatrixTest.php`, **47 casi/742 asserzioni** su PostgreSQL e Redis, con due tenant attivi insieme: selezione cross-tenant, dati privati su ogni origine e protocollo, password con cache calda, subscriber e domini senza prova valida. Dettagli: [TESTING.md](TESTING.md#isolation-matrix-m807).
+- **Nessun difetto applicativo trovato: nessun file di produzione modificato.** Cambiati solo il nuovo test, TESTING, STATUS-PAGES e questo piano. Nessuna migrazione, dipendenza, `.env` o processo; niente da adottare.
+- **Prova che la matrice sa fallire**: 21 mutazioni di una riga, ognuna montata su un container usa e getta senza toccare il repository. 19 rilevate subito. 2 sopravvissute perché mal costruite (filtro `is_public` equivalente, dato che una voce privata non ha `published_at`; conteggio letto dopo l'iscrizione, sempre 1); riscritte per cambiare davvero il comportamento, rilevate entrambe.
+- **Verifiche finali**: backend exit 0, PHP **8.4.27**, `docker compose run --rm -v /var/www/html/public/build php-test timeout 900 vendor/bin/pest --compact --fail-on-skipped --fail-on-warning`, **3067 passati/20989 asserzioni in 444,05 s**, nessuno saltato; build nascosta come in CI. PHP-CS-Fixer dry-run su **618 file** e Larastan livello 8 senza errori. Eseguiti separatamente: nessun `./scripts/verify.sh` o `composer verify` integrale rivendicato, quindi il timeout Composer di M8.05 resta non diagnosticato. Frontend (`npm run verify`) non rieseguito perché nessun file frontend è cambiato.
+- **Limiti osservati leggendo il codice, non corretti e non coperti da test**: il limite dei tentativi di password è per indirizzo e IP, quindi rinominare la pagina lo azzera (azione riservata ai manager); il link alla pagina nelle email in coda contiene l'indirizzo al momento della pubblicazione, quindi dopo una rinomina può puntare a una pagina che ha preso quell'indirizzo, senza alcun accesso ai dati. Entrambi sono da rivalutare in M11.04.
+- **Non eseguiti**: Git/gh, CI remota/PHP 8.5, browser, DNS, TLS e SMTP reali, carico. Restano i debiti di M8.01–M8.06. La concorrenza tra processi non è ripetuta qui: è già provata in `StatusDomainsTest` e `StatusSubscriptionsTest`. **Prossimo task pronto: M9.01**, Cashier/Stripe test, piani e trial; rileggere [PLATFORM-ADMIN.md](PLATFORM-ADMIN.md) per la precedenza degli override e ricordare che M9.05 deve invalidare la cache delle status page.
+
 ## Consegna di sessione — M8.06, 2026-11-02
 
 - **M8.06 completato**: dipendenze M8.01–M8.05 soddisfatte, task segnato in corso prima delle modifiche. Titolo/descrizione, canonical, robots e metadati social nell'HTML iniziale e coerenti nelle navigazioni Inertia. Regole, valutazione SSR e adozione: [STATUS-PAGE-SEO.md](STATUS-PAGE-SEO.md).
@@ -550,9 +559,11 @@ Dipendenze: M4–M5, M7.
 - [x] M8.04 Implementare iscrizione email verificata, disiscrizione e invio degli aggiornamenti pubblici.
 - [x] M8.05 Implementare dominio personalizzato con verifica di proprietà e routing sicuro; definire gestione TLS nel deploy.
 - [x] M8.06 Curare SEO e metadati; valutare SSR opzionale in base alla resa pubblica richiesta.
-- [ ] M8.07 Testare selezione cross-tenant, dati privati, password/cache, subscriber e domini non verificati.
+- [x] M8.07 Testare selezione cross-tenant, dati privati, password/cache, subscriber e domini non verificati.
 
 Uscita: pagina pubblica accessibile, storico da rollup disponibile e nessuna esposizione di dati riservati.
+
+Uscita soddisfatta il 2026-11-02 con M8.07, sulla base dei test automatici: matrice in [TESTING.md](TESTING.md#isolation-matrix-m807). Browser, DNS, TLS e SMTP reali, carico e CI remota non sono verificati. M8 completata; prossimo task pronto M9.01.
 
 ## M9 — Billing e limiti (14 h)
 
@@ -618,7 +629,7 @@ Uscita soddisfatta il 2026-11-01: suite verde con le date simulate del criterio,
 
 Percorso iniziale: M0 → M1 → M2 → M3 → M4 → M5. Proseguire con M6 e M7, quindi M8/M9, M10, M11 e M12 rispettando le dipendenze. M6 può iniziare prima dei rollup, ma le metriche definitive dipendono da M7. Sicurezza, documentazione e test sono trasversali, non rinviati a M11.
 
-Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 e M8.01–M8.03 completati il 2026-11-01; prossimo task pronto M8.04. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
+Compatibilità e JSON:API verificati in M0.01 (vedere DEPENDENCIES.md). Decisioni fondanti completate in M0.08–M0.09: ADR-001–ADR-010 in [ARCHITECTURE.md](ARCHITECTURE.md). M0 completata il 2026-10-19 con bootstrap e smoke test da checkout pulito; gli esiti CI PHP 8.4/8.5 restano quelli confermati dall’utente in M0.07, senza nuova esecuzione remota dichiarata. M1.01 e M1.02 completati il 2026-10-20; M1.03 completato il 2026-10-21. M3 è completata; M4.01–M4.04 completati il 2026-10-28, M4.05–M4.06 il 2026-10-29: M4 completata. M5.01–M5.03 completati il 2026-10-29 e M5.04–M5.06 il 2026-10-30: M5 completata. M6.01–M6.03 e M6.05 completati il 2026-10-30; M6.04 chiuso con M7.03; M7.01–M7.03 completati il 2026-10-30: M6 completata; M7.04–M7.06 completati il 2026-11-01: M7 completata; TD.01–TD.02 e M8.01–M8.03 completati il 2026-11-01; M8.04–M8.07 completati il 2026-11-02: M8 completata; prossimo task pronto M9.01. La specifica cita un documento 02 non presente: non inventarne i requisiti; preparare README secondo le indicazioni disponibili.
 
 Possibili riduzioni, soltanto dopo decisione esplicita: dominio personalizzato M8, report PDF M7, portale clienti M9, in questo ordine. M3/M4/M5 restano obbligatorie.
 
@@ -1599,3 +1610,12 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Mutazioni, ripristinate e confrontate: invalidazione senza attendere il commit, 2 test falliscono; ricerca pubblica senza il filtro `is_public`, 3 test falliscono.
 - Verifiche: gate `./scripts/verify.sh` **exit 0**: formatter dry-run 583 file, Larastan livello 8, 2853 test Pest/19085 asserzioni, lint/formato/TypeScript, 5 test qualità, 158 DOM, build. Suite backend con `public/build` nascosta: 2853 passati. Dopo il gate modificato solo questo documento.
 - Non eseguiti: Git/gh, CI remota/PHP 8.5, misure di carico e concorrenza tra lettori alla scadenza (nessun lock contro i ricalcoli simultanei), prova su browser reale. La sospensione dei monitor per piano (M9.05) dovrà invalidare, oppure resta il ritardo di 60 secondi. **M8.03 completato; prossimo task pronto M8.04.**
+
+### 2026-11-02 — M8.07: matrice di isolamento delle status page (completato)
+
+- Richiesta dell'utente di implementare il prossimo task; dipendenze M8.01–M8.06 soddisfatte, task segnato in corso prima delle modifiche. Git/gh non eseguiti.
+- File: nuovo `tests/Integration/StatusPageIsolationMatrixTest.php`; documenti `TESTING.md`, `STATUS-PAGES.md` e questo piano. Nessun file di produzione modificato: la matrice non ha trovato difetti.
+- Correzioni al solo fixture durante il lavoro: `call()` non invia i cookie impostati nel test; dopo una richiesta su un'origine personalizzata un URL relativo si risolve su quell'origine, con 404 fuorvianti; il limite di pagine del piano interferiva con il caso sui destinatari.
+- Mutazioni su container usa e getta: 21 di una riga, 19 rilevate; le 2 sopravvissute erano mal costruite e, riscritte, sono state rilevate.
+- Verifiche: matrice 47 passati/742 asserzioni; suite backend con `public/build` nascosta 3067 passati/20989 asserzioni in 444,05 s; PHP-CS-Fixer dry-run 618 file; Larastan livello 8 senza errori. Dopo la suite modificato solo Markdown.
+- Non eseguiti: Git/gh, CI remota/PHP 8.5, `./scripts/verify.sh` integrale, frontend (nessun file cambiato), browser/DNS/TLS/SMTP reali, carico. **M8.07 completato, M8 completata; prossimo task pronto M9.01.**

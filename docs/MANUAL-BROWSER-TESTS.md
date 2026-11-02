@@ -1,5 +1,7 @@
 # Test manuali nel browser prima di M4
 
+> Per le prove aggiornate fino a M8 partire da [BROWSER-TESTS.md](BROWSER-TESTS.md). Questo documento resta valido per i casi di dettaglio sui monitor (sezioni A–G).
+
 Checklist per verificare l’applicazione disponibile dopo M3.08, prima di implementare incidenti e manutenzioni. Integra i [test automatici](TESTING.md); non sostituisce le prove di concorrenza, isolamento dei worker e timeout già eseguite.
 
 **Stato iniziale: test manuali non eseguiti.** Compilare il registro finale durante la sessione. La creazione di questo documento non attiva lo scheduler, non modifica configurazioni e non applica migration.

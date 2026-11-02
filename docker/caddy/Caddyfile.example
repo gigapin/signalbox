@@ -1,0 +1,37 @@
+# Deployment template only: TLS and the public ingress are enabled deliberately during M12.
+{
+	# Supply an operational ACME account email and keep Caddy's certificate storage persistent.
+	email {$ACME_EMAIL}
+
+	# The backend must be private/loopback; this endpoint performs only an indexed ownership lookup.
+	on_demand_tls {
+		ask http://127.0.0.1:8000/internal/status-domains/allow
+	}
+
+	# Prevent serving an HTTP Host different from the TLS handshake's SNI name.
+	servers {
+		strict_sni_host on
+	}
+}
+
+# The primary account application has its own explicitly configured hostname/certificate.
+{$APP_HOST} {
+	# TLS admission is internal even when an external client reaches the primary application.
+	@internal path /internal/status-domains/*
+	respond @internal 404
+	reverse_proxy 127.0.0.1:8000 {
+		header_up Host {http.request.hostport}
+	}
+}
+
+# Only names admitted by the application can trigger on-demand certificate management.
+https:// {
+	tls {
+		on_demand
+	}
+	@internal path /internal/status-domains/*
+	respond @internal 404
+	reverse_proxy 127.0.0.1:8000 {
+		header_up Host {http.request.hostport}
+	}
+}

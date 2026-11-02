@@ -227,7 +227,7 @@ final readonly class TeamAuthorizationFixture
             $parameters['policy'] = $foreignTeam || $foreignChild ? $this->foreignPolicy->id : $this->policy->id;
         }
 
-        if (in_array($route, ['teams.status-pages.update', 'teams.status-pages.destroy'], true)) {
+        if (in_array($route, ['teams.status-pages.update', 'teams.status-pages.destroy'], true) || str_starts_with($route, 'teams.status-pages.domain.')) {
             $parameters['statusPage'] = $foreignTeam || $foreignChild ? $this->foreignStatusPage->id : $this->statusPage->id;
         }
 
@@ -321,6 +321,10 @@ final readonly class TeamAuthorizationFixture
             ];
         }
 
+        if ($route === 'teams.status-pages.domain.update') {
+            return ['domain' => 'status.matrix-example.com'];
+        }
+
         if ($route === 'teams.monitors.escalation-policy') {
             return ['escalation_policy_id' => $this->policy->id];
         }
@@ -407,6 +411,8 @@ final readonly class TeamAuthorizationFixture
             'notification_channels' => self::rows('notification_channels', ['*'], ['id']),
             'escalation_policies' => self::rows('escalation_policies', ['*'], ['id']),
             'notification_logs' => self::rows('notification_logs', ['*'], ['id']),
+            'status_pages' => self::rows('status_pages', ['*'], ['id']),
+            'status_domain_bindings' => self::rows('status_domain_bindings', ['*'], ['hostname']),
         ];
     }
 
@@ -429,6 +435,8 @@ final readonly class TeamAuthorizationFixture
             'notification_channels' => array_values(array_filter($snapshot['notification_channels'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'escalation_policies' => array_values(array_filter($snapshot['escalation_policies'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
             'notification_logs' => array_values(array_filter($snapshot['notification_logs'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'status_pages' => array_values(array_filter($snapshot['status_pages'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
+            'status_domain_bindings' => array_values(array_filter($snapshot['status_domain_bindings'], fn (array $row): bool => $row['team_id'] === $this->foreign->id)),
         ];
     }
 

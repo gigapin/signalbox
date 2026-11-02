@@ -2,6 +2,7 @@
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import StatusPageForm from './StatusPageForm';
+import StatusDomainForm from './StatusDomainForm';
 import type { ManagedStatusPage, SelectableMonitor, StatusPageLimits, ThemeChoices } from './types';
 
 /** Row inputs. */
@@ -106,6 +107,20 @@ export default function StatusPageRow({
                         onSaved={() => setEditing(false)}
                     />
                 </div>
+            )}
+            {canManage && (
+                <StatusDomainForm
+                    key={page.domain?.hostname ?? 'no-domain'}
+                    path={path}
+                    domain={page.domain}
+                    pageId={page.id}
+                />
+            )}
+            {!canManage && page.domain && (
+                <p className="mt-2 text-sm">
+                    Custom domain: {page.domain.hostname} (
+                    {page.domain.verifiedUntil ? 'verified' : 'not verified'})
+                </p>
             )}
         </li>
     );

@@ -5,6 +5,7 @@
  */
 
 use App\Http\Middleware\EstablishTeamContext;
+use App\Http\Middleware\GuardStatusPageHosts;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Support\MonitorInputTransport;
 use App\Services\Monitoring\MonitorConfigurationMapper;
@@ -34,6 +35,10 @@ $configureMiddleware = function (Middleware $middleware) use ($preserveExactInpu
     $middleware->trimStrings(except: [$preserveExactInput]);
     $middleware->convertEmptyStringsToNull(except: [$preserveExactInput]);
     $middleware->web(append: [HandleInertiaRequests::class]);
+    // Host routing precedes sessions; only explicit proxy peers may supply scheme/client metadata, never Host.
+    $middleware->trustProxies(at: [], headers:
+        Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT);
+    $middleware->append(GuardStatusPageHosts::class);
     $middleware->authenticateSessions();
     $middleware->prependToPriorityList(SubstituteBindings::class, EstablishTeamContext::class);
     $middleware->redirectGuestsTo('/login');
@@ -64,6 +69,9 @@ return Application::configure(basePath: dirname(__DIR__))
         then: static function (): void {
             // Dedicated Bearer ingress deliberately runs outside web sessions, Inertia and CSRF.
             require __DIR__.'/../routes/heartbeats.php';
+            // TLS certificate admission is internal and stateless: no account/session or CSRF surface.
+            \Illuminate\Support\Facades\Route::get('/internal/status-domains/allow', [\App\Http\Controllers\StatusPages\StatusDomainController::class, 'allow'])
+                ->middleware(\App\Http\Middleware\NoStoreAuthentication::class)->name('status-domains.allow');
         },
     )
     ->withMiddleware($configureMiddleware)

@@ -35,7 +35,7 @@ final class PublicStatusPageController extends Controller
      */
     public function show(Request $request, string $slug): Response
     {
-        $page = $this->published($slug);
+        $page = $this->published($request, $slug);
 
         if (!$this->unlocks->allows($request->session(), $page)) {
             return Inertia::render('StatusPages/Unlock', ['slug' => $page->slug]);
@@ -55,7 +55,7 @@ final class PublicStatusPageController extends Controller
      */
     public function unlock(UnlockStatusPageRequest $request, string $slug): RedirectResponse
     {
-        $page = $this->published($slug);
+        $page = $this->published($request, $slug);
 
         // A page without a password has nothing to unlock, so any submission simply reaches it.
         if ($page->password_hash !== null && !$this->unlocks->attempt($request->session(), $page, $request->string('password')->toString())) {
@@ -66,13 +66,16 @@ final class PublicStatusPageController extends Controller
     }
 
     /**
+     * @param Request $request Admitted origin, possibly restricted to one custom-domain page identity.
      * @param string $slug Public address segment.
      * @return StatusPage Published page.
      */
-    private function published(string $slug): StatusPage
+    private function published(Request $request, string $slug): StatusPage
     {
         $page = $this->pages->find($slug);
         abort_if($page === null, 404);
+        $bound = $request->attributes->get('status_domain_page');
+        abort_if($bound !== null && $bound !== $page->id, 404);
 
         return $page;
     }

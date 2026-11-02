@@ -37,6 +37,7 @@ const page: ManagedStatusPage = {
     theme: { mode: 'dark', accent: 'blue' },
     isPublic: true,
     hasPassword: false,
+    domain: null,
     components: [
         { name: 'API', monitors: [{ id: 1, name: 'api-eu' }] },
         { name: 'Website', monitors: [{ id: 2, name: 'web-eu' }] },

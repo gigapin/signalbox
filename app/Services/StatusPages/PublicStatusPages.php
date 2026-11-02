@@ -18,8 +18,8 @@ use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 
 /**
- * The only code reading a page without an established tenant. Drafts are indistinguishable from addresses that do
- * not exist, and the projection lists fields explicitly: monitor names, the maintenance reason and every identity stay out.
+ * Public slug discovery, alongside StatusDomainRegistry's verified-host discovery. Drafts are indistinguishable
+ * from unknown addresses; monitor names, maintenance reasons and every identity stay out of the projection.
  */
 final readonly class PublicStatusPages
 {

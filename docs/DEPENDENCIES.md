@@ -2,6 +2,8 @@
 
 Verified on 2026-10-15 for M0.01. Product requirements remain in [the specification](03-Progetto-B-Signalbox-Laravel.md); work status is in [TASKS.md](TASKS.md).
 
+M8.05 adds no Composer/npm constraint or lockfile change. Its optional deployment template was adapted/validated with the official `caddy:2.11.7-alpine` image, digest `sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5`, in a disposable container with networking disabled. This is validation tooling, not a new running Compose service or a production image selection. Caddy is the chosen ACME/TLS termination boundary for custom status domains; pin/recheck the production image during M12. Protocol and operational boundaries are in [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-deployment-contract). The version is documented in the [official Caddy release](https://github.com/caddyserver/caddy/releases/tag/v2.11.7); the syntax/permission contract follows [Caddy's documentation](https://caddyserver.com/docs/caddyfile/options#on-demand-tls).
+
 ## Outcome and decisions
 
 The initial backend and frontend dependency graphs resolve successfully with stable packages. Exact versions are recorded in the root `composer.lock` and `package-lock.json`; constraints in the manifests intentionally permit compatible updates within the selected majors. At M0.01 this was a dependency baseline without an initialized application or installed packages. M0.02 subsequently added the application and installed these locked dependencies; see [BOOTSTRAP.md](BOOTSTRAP.md) for the current bootstrap state and verification evidence.

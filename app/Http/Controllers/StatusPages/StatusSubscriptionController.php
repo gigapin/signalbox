@@ -35,6 +35,8 @@ final class StatusSubscriptionController extends Controller
     {
         $page = $this->pages->find($slug);
         abort_if($page === null, 404);
+        $bound = $request->attributes->get('status_domain_page');
+        abort_if($bound !== null && $bound !== $page->id, 404);
         $this->subscriptions->subscribe($page, $request->session(), $request->string('email')->toString());
 
         return redirect()->route('status-pages.public', ['slug' => $slug])->with('status', 'status-subscription-requested');

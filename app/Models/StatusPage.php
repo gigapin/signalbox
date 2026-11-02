@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Persist a team's public status page: address, appearance, visibility and optional password. */
+/** Persist a team's public status page, optional password and revocable custom hostname claim. */
 
 namespace App\Models;
 
@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Written by ManageStatusPages. Public reads go through PublicStatusPages, the only code that looks a page up
- * without a tenant, and project explicit fields.
+ * Written by ManageStatusPages and ManageStatusDomains. Public slug/host discovery belongs to PublicStatusPages
+ * and StatusDomainRegistry; visitor responses project explicit fields only.
  *
  * @property int $id Page identity.
  * @property int $team_id Immutable owning tenant.
@@ -28,6 +28,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array{mode: string, accent: string} $theme_json Appearance, values from closed enums.
  * @property bool $is_public Whether the public address answers; false is a draft.
  * @property string|null $password_hash One-way hash; null when the page has no password.
+ * @property string|null $custom_domain Pending or active canonical customer hostname.
+ * @property string|null $domain_challenge Public random DNS proof generation, hidden from ordinary serialization.
+ * @property CarbonImmutable|null $domain_checked_at Last reserved DNS check in UTC.
  * @property int|null $created_by Creating user; null when deleted.
  * @property CarbonImmutable|null $created_at UTC creation timestamp.
  * @property CarbonImmutable|null $updated_at UTC modification timestamp.
@@ -46,8 +49,8 @@ final class StatusPage extends Model
     /** @var list<string> Pages are written explicitly by the owning action. */
     protected $guarded = ['*'];
 
-    /** @var list<string> The hash must not reach any serialized form. */
-    protected $hidden = ['password_hash'];
+    /** @var list<string> Password hashes stay private; DNS proof generations require an explicit management projection. */
+    protected $hidden = ['password_hash', 'domain_challenge'];
 
     /** @var array<string, mixed> New pages are drafts. */
     protected $attributes = [
@@ -64,6 +67,7 @@ final class StatusPage extends Model
             'created_by' => 'integer',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
+            'domain_checked_at' => 'immutable_datetime',
         ];
     }
 

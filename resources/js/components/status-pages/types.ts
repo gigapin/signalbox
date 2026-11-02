@@ -25,7 +25,21 @@ export interface ManagedComponent {
     monitors: SelectableMonitor[];
 }
 
-/** One page row of the settings screen; the password itself is never sent. */
+/** Public DNS proof and expiring ownership status of a custom hostname. */
+export interface ManagedStatusDomain {
+    /** Canonical ASCII customer hostname. */
+    hostname: string;
+    /** Absolute DNS TXT owner name. */
+    proofName: string;
+    /** Public random verification proof, retained for periodic revalidation. */
+    proofValue: string;
+    /** Exclusive UTC lease expiry; null without a current verified binding. */
+    verifiedUntil: string | null;
+    /** Last attempted ownership lookup in UTC. */
+    checkedAt: string | null;
+}
+
+/** One page row of the settings screen; credentials themselves are never sent. */
 export interface ManagedStatusPage {
     /** Team-local page identity. */
     id: number;
@@ -43,6 +57,8 @@ export interface ManagedStatusPage {
     isPublic: boolean;
     /** Whether visitors must enter a password. */
     hasPassword: boolean;
+    /** Independent custom hostname claim and live proof status. */
+    domain: ManagedStatusDomain | null;
     /** Components in display order. */
     components: ManagedComponent[];
 }

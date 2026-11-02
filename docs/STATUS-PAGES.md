@@ -6,13 +6,14 @@ A status page is a public page of a team: address, title, description, appearanc
 
 | Table | Content |
 |---|---|
-| `status_pages` | `slug` unique across all teams, `title`, `description`, `theme_json`, `is_public`, `password_hash`, `created_by`. |
+| `status_pages` | `slug` unique across all teams, `title`, `description`, `theme_json`, `is_public`, `password_hash`, `created_by`, pending custom hostname/proof and last verification attempt. |
 | `status_page_components` | `name`, `position`, unique per page. Replaced entirely on each save, so identities are not stable. |
 | `status_page_component_monitors` | Which monitors a component groups. |
 | `status_page_subscribers` | Encrypted mailbox, keyed uniqueness digest, consent generation, password fingerprint, verification deadline and opt-in/revocation times. |
 | `status_page_deliveries` | Encrypted verification/publication content, frozen recipient generation, stable message UUID, deduplication key, attempt budget and fenced lease. |
+| `status_domain_bindings` | Globally exclusive hostname association with the exact tenant/page/proof generation and a 24-hour lease. |
 
-**Deviation from the specification:** the join table replaces `monitor_ids_json`. Composite keys make a monitor of another team impossible at the database level, a deleted monitor leaves every page on its own, and a monitor cannot appear twice on a page. `custom_domain` is not created yet: it arrives with M8.05.
+**Deviation from the specification:** the join table replaces `monitor_ids_json`. Composite keys make a monitor of another team impossible at the database level, a deleted monitor leaves every page on its own, and a monitor cannot appear twice on a page. Custom domains use pending page claims plus a separate exclusive registry, so an unverified claim cannot reserve another owner's name.
 
 ## Rules
 
@@ -45,7 +46,7 @@ Owners and admins manage pages; every member reads the settings page. The page p
 | `POST /status/{slug}/subscribe` | Live public page and session unlock required. Bounded RFC email, no DNS call. Five requests per minute per visitor IP across all pages. Generic acknowledgement for new, pending and active addresses. |
 | `GET/POST /status/subscriptions/{teamId}/{pageId}/{subscriberId}/{generation}/{action}` | Relative signed capability for `verify` or `unsubscribe`, with CSRF on POST. GET shows a generic confirmation form; only POST changes consent. No mailbox, title or page content is projected. |
 
-`PublicStatusPages` is the only code that reads a page without a tenant, apart from the boolean address check in the action. Its projection lists the fields. Monitor names, identities, the team and the maintenance reason stay out, because they can be internal.
+`PublicStatusPages` resolves public slugs; `StatusDomainRegistry` separately resolves live verified custom hosts. Apart from these public discovery boundaries and the boolean address check in the action, page reads require an explicit tenant. The visitor projection lists fields. Monitor names, identities, the team and the maintenance reason stay out, because they can be internal.
 
 Unlocking is per session and per page. The session holds a keyed fingerprint of the current hash, so a new password locks out whoever entered the old one, while removing the password opens the page for everyone. The session identity rotates on unlock.
 
@@ -145,6 +146,10 @@ docker compose up -d --no-deps --force-recreate queue scheduler
 
 Configure the existing SMTP settings and `APP_URL`; no new dependency, environment variable or supervisor is required. Verification migrates only disposable test storage and does not perform these development operations. Recipient rows remain until their page or team is deleted; delivery history also cascades with its referenced incident entry. No independent email retention cleanup is introduced here.
 
+## Custom domains
+
+[STATUS-DOMAINS.md](STATUS-DOMAINS.md) documents DNS TXT proof, expiring exclusive associations, restricted host routing, separate public sessions and TLS admission. Owners/admins configure and verify a hostname independently of page contents. Custom origins expose only their associated page and its password/subscription forms; the primary page URL remains available. Certificates are handled by the deployment proxy, not issued by application requests.
+
 ## Verification
 
 ```sh
@@ -152,6 +157,8 @@ docker compose run --rm php-test vendor/bin/pest tests/Feature/PublicHealthRules
 docker compose run --rm node npx vitest run tests/frontend/StatusPages.test.tsx
 docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusSubscriptionsTest.php --fail-on-skipped --fail-on-warning
 docker compose run --rm node npx vitest run tests/frontend/StatusSubscriptions.test.tsx
+docker compose run --rm php-test vendor/bin/pest tests/Integration/StatusDomainsTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npx vitest run tests/frontend/StatusDomains.test.tsx
 ```
 
 The acceptance gate remains `./scripts/verify.sh`. It builds the assets, while CI runs the backend without them, so a test rendering HTML must call `withoutVite()`. To reproduce CI's condition:

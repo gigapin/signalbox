@@ -6,6 +6,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,10 +15,17 @@ use Inertia\Response;
 final class HomeController extends Controller
 {
     /**
-     * Return the React home page with only the middleware's public shared props.
+     * @param Request $request Origin already admitted by the host guard.
+     * @return Response|RedirectResponse Primary home page, or the verified custom page's relative public path.
      */
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
+        $slug = $request->attributes->get('status_domain_slug');
+
+        if (is_string($slug)) {
+            return redirect('/status/'.$slug);
+        }
+
         return Inertia::render('Home');
     }
 }

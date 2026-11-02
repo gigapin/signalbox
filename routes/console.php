@@ -27,5 +27,8 @@ Schedule::command('notifications:dispatch')->everyTenSeconds()->onOneServer()->w
 // Recover verified public updates and double opt-in messages through the existing notifications workers.
 Schedule::command('status-pages:dispatch-emails')->everyTenSeconds()->onOneServer()->withoutOverlapping(1);
 
+// Twenty-five DNS claims per pass bound ordinary runtime to about fifty seconds at the configured deadline.
+Schedule::command('status-pages:verify-domains')->everyFiveMinutes()->onOneServer()->withoutOverlapping(5);
+
 // Long-running by design: in the background it cannot delay the second-level commands above in the same scheduler.
 Schedule::command('metrics:nightly')->dailyAt('02:00')->timezone('UTC')->onOneServer()->withoutOverlapping(720)->runInBackground();

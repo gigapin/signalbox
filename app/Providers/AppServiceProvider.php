@@ -23,6 +23,7 @@ use App\Events\Incidents\IncidentOpened;
 use App\Events\Incidents\IncidentReopened;
 use App\Events\Incidents\IncidentResolved;
 use App\Events\Monitoring\CheckCompleted;
+use App\Models\StatusPage;
 use App\Services\Broadcasting\PublishTeamUpdates;
 use App\Services\Incidents\IncidentDetection;
 use App\Services\Monitoring\Checks\MonotonicCheckClock;
@@ -79,6 +80,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(EnsureStripeTestCredentials $ensureStripeTestCredentials, Dispatcher $events): void
     {
         $ensureStripeTestCredentials((string) config('cashier.key'), (string) config('cashier.secret'));
+        // Configuration is loaded here, unlike the early middleware builder used by the console bootstrap.
+        \Illuminate\Http\Middleware\TrustProxies::at((array) config('status-domains.proxy_ips'));
 
         // A named limiter keeps this counter apart from other routes throttled per user.
         RateLimiter::for('reports', static fn (Request $request): Limit => Limit::perMinute(10)->by((string) $request->user()?->getAuthIdentifier()));
@@ -90,6 +93,13 @@ class AppServiceProvider extends ServiceProvider
 
         // A global per-IP cap also bounds requests spread across different pages; mailbox cooldown is transactional.
         RateLimiter::for('status-page-subscribe', static fn (Request $request): Limit => Limit::perMinute(5)->by((string) $request->ip()));
+        // Bound DNS work by actor and page without allowing one tenant to throttle another tenant's verification.
+        RateLimiter::for('status-domain-verify', static function (Request $request): Limit {
+            $page = $request->route('statusPage');
+            $identity = $page instanceof StatusPage ? $page->id : (string) $page;
+
+            return Limit::perMinute(3)->by((string) $request->user()?->getAuthIdentifier().'|'.(string) $request->route('team').'|'.$identity);
+        });
 
         $events->listen(IncidentNotificationRequested::class, [PrepareIncidentNotifications::class, 'record']);
 

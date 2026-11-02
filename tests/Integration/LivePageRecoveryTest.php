@@ -57,6 +57,8 @@ function liveRecoveryHeaders(string $component = 'Monitors/Index', string $root 
 }
 
 it('shares only public browser coordinates independently of internal publishing configuration', function (): void {
+    // The browser fixture is the primary application origin, not an unverified custom hostname.
+    config(['app.url' => 'http://browser.example.test']);
     $this->actingAs($this->team->owner, 'web')
         ->get('http://browser.example.test/teams/'.$this->team->id.'/monitors', liveRecoveryHeaders())
         ->assertOk()

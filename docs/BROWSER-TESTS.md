@@ -2,7 +2,14 @@
 
 Guida passo per passo per provare l'applicazione com'è dopo M8, prima di iniziare M9. Non sostituisce i test automatici: controlla ciò che loro non vedono, cioè browser reale, email reali, aspetto delle pagine e flussi completi.
 
-**Stato: nessun caso eseguito.** Nessun esito di questo documento è stato verificato dall'agente; i comandi di preparazione modificano l'ambiente e sono lasciati a te.
+**Stato aggiornato al 2026-11-05: blocco F concluso dall'utente. Riprendere dal blocco G, caso G01 — Dashboard e report, nella sessione del 2026-11-06.** Gli esiti manuali sono riferiti dall'utente; l'agente non ha eseguito il collaudo nel browser. I comandi di preparazione modificano l'ambiente e sono lasciati a te.
+
+## Ripresa della prossima sessione
+
+- Ripartire da [Blocco G — Dashboard e report](#blocco-g--dashboard-e-report), aprendo **Dashboard** (`/teams/{TEAM}/dashboard`) con il proprio account e **GiGa Team**.
+- Riutilizzare i monitor e i canali già preparati. I casi G08–G10 sul tempo reale restano facoltativi.
+- Per lo stato dei processi e i trial consultare le sezioni 1.1 e 1.5; i limiti applicabili possono cambiare alla scadenza del trial.
+- Le quiet hours ora rinviano gli avvisi e li riprendono automaticamente alla fine della fascia per gli incidenti ancora aperti, raggruppando gli step dovuti sullo stesso canale. Decisione, test e migrazione sono registrati in [TASKS.md](TASKS.md#correzione-da-collaudo--notifiche-dopo-quiet-hours-2026-11-05) e [QUIET-HOURS.md](QUIET-HOURS.md).
 
 ## Come usare questo documento
 
@@ -323,10 +330,10 @@ Dopo E17 ferma il ciclo e metti in pausa il monitor, così non genera altri inci
 | F04 | Rimetti l'URL `/status/200` e attendi la risoluzione | Monitor `up`, incidente risolto |
 | F05 | Crea una finestra futura e premi **Edit window** per cambiarla, poi **Delete window** | Modificabile ed eliminabile prima dell'inizio |
 | F06 | Prova a inserire un inizio nel passato | Rifiutato |
-| F07 | Nel canale `Email prova` premi **Configure quiet hours**, attiva **Enable daily quiet hours** con un intervallo che comprende l'ora attuale e il tuo fuso in **Quiet hours timezone**. Premi **Save quiet hours** | Salvato |
+| F07 | Nel canale `Email prova` premi **Configure quiet hours**, attiva **Enable daily quiet hours** con un intervallo che comprende l'ora attuale e termina fra circa 10 minuti. Imposta **Quiet hours timezone** a `Europe/Rome` per l'ora italiana, poi **Save quiet hours** e ricarica | Il riepilogo mostra orari e fuso salvati; `UTC` non equivale all'ora italiana |
 | F08 | Provoca un incidente come in E01 e lascialo aperto almeno 6 minuti | Nessuna email durante le quiet hours; il webhook arriva normalmente al suo step, dopo 5 minuti |
-| F09 | Controlla la tabella **Notifications sent** dell'incidente, poi rimetti `/status/200` | Lo stato spiega la consegna rinviata o soppressa. Annota cosa vedi |
-| F10 | Disattiva le quiet hours e salva | Canale di nuovo normale |
+| F09 | Controlla **Notifications sent**: l'email deve essere `pending` con motivo di rinvio. Lascia l'incidente aperto fino alla fine della fascia, senza modificarlo | Dopo la fine, al successivo passaggio del dispatcher e dei worker, arriva un'email; gli eventuali step email maturati durante la fascia sono raggruppati. Nessun nuovo cambio di stato necessario |
+| F10 | Rimetti `/status/200` e verifica il riepilogo di risoluzione. Ripeti con una nuova fascia breve, ma risolvi l'incidente prima della fine, senza che il canale Email riceva alcun avviso; attendi la fine. Infine disattiva le quiet hours e salva | Nel primo caso un riepilogo; nel secondo nessuna apertura tardiva e nessun riepilogo inutile sul canale Email. Alla fine il canale torna normale |
 
 ---
 
@@ -334,12 +341,14 @@ Dopo E17 ferma il ciclo e metti in pausa il monitor, così non genera altri inci
 
 Apri **Dashboard** (`/teams/{TEAM}/dashboard`).
 
+Per G03 resta nella Dashboard: nella sua tabella **Monitors**, la colonna **Charts** contiene **View charts for {nome monitor}** oppure **Selected** per il monitor già selezionato. Cliccare sul nome del monitor apre invece il dettaglio di configurazione, dove attualmente non sono presenti grafici.
+
 | Caso | Cosa fare | Risultato atteso |
 |---|---|---|
 | G01 | Controlla i conteggi | Corrispondono alla lista monitor: up, down, unknown, in pausa |
 | G02 | Con un guasto attivo controlla **Open incidents** | L'incidente è presente; il link porta al dettaglio |
-| G03 | In **Monitors** seleziona un monitor per i grafici | Grafico **Last 24 hours · Hourly buckets · UTC** con i dati di quel monitor |
-| G04 | Apri la tabella dei dati sotto il grafico | Valori coerenti con il grafico |
+| G03 | Nella tabella **Monitors** della **Dashboard**, colonna **Charts**, clicca **View charts for {nome monitor}**. Se compare **Selected**, il monitor è già selezionato. Scorri sotto la tabella | Resti su `/teams/{TEAM}/dashboard?monitor={MONITOR}` (con eventuale `page`). Sotto il nome selezionato compaiono **Last 24 hours · Hourly buckets · UTC**, **Response time** e **Observed uptime**. In assenza di misure compare il relativo messaggio di indisponibilità |
+| G04 | Sotto i grafici apri **View response time data** e **View observed uptime data** | Valori coerenti con i grafici; gli intervalli senza dati restano mancanti |
 | G05 | Controlla **Observed uptime**, **Data coverage**, **SLA**, **Time up**, **Time down**, **Time unknown** e **Time excluded** | Valori plausibili. Con dati parziali lo **SLA** può risultare non disponibile: è corretto, non è un errore |
 | G06 | In **Monthly report** scegli il mese corrente e premi **Download PDF** | Scarica `signalbox-report-…pdf`, leggibile, con i monitor del team |
 | G07 | Controlla nel PDF che non compaiano URL o dati di altri team | Nessun dato estraneo |
@@ -590,6 +599,12 @@ Il primo deve dire `true` e il secondo `Horizon is running`. Non c'è un pulsant
 
 Il valore `true` non basta a escludere il problema: `config:show` e lo scheduler rileggono `.env` a ogni esecuzione, mentre i worker di Horizon restano con il valore letto all'avvio. Se nei log di `queue` vedi `DeliverCheckBatch` terminare in pochi millisecondi e i monitor restano `unknown`, hai cambiato `.env` senza riavviare i worker. Esegui di nuovo il secondo comando del punto 1.1.
 
+**Solo alcuni monitor non ricevono nuovi check:** controlla anche il piano effettivo e l'intervallo configurato. Alla scadenza del trial Pro, un monitor a 60 secondi non è più ammesso dal piano Free (minimo 300 secondi): lo scheduler non prenota nuovi check, anche se Horizon è attivo e il monitor non risulta in pausa o sospeso. `next_check_at` può restare nel passato; riavviare i worker non risolve il limite. Imposta un override dal [pannello amministratore](#blocco-k--pannello-amministratore) per continuare il collaudo a 60 secondi, oppure modifica **Interval** a 300 e considera tempi di attesa più lunghi. La soglia di tre fallimenti richiede tre check consecutivi prima dell'apertura dell'incidente. Vedi anche [Attenzione ai trial](#15-attenzione-ai-trial).
+
+**Lo stato cambia solo ricaricando:** con `BROADCAST_CONNECTION=log` gli aggiornamenti automatici sono disattivati. Ricarica dopo i check oppure segui [Aggiornamenti in tempo reale](#aggiornamenti-in-tempo-reale-facoltativo). Cambiare manualmente lo stato dell'incidente non cambia lo stato `up`/`down` del monitor, che dipende dai risultati dei check.
+
+**Reverb attivo ma compare “Live updates could not refresh”:** è stato corretto un errore del trasporto browser che impediva di inviare le richieste di aggiornamento nonostante la sottoscrizione riuscita. Con i sorgenti aggiornati ricompila gli asset (`docker compose run --rm node npm run build`), poi ricarica completamente la pagina. Il messaggio atteso è **Live updates connected.**; lascia aperta la lista mentre un nuovo check cambia lo stato del monitor e verifica l'aggiornamento senza ricaricare. Se l'errore persiste, annota lo stato HTTP della richiesta in Network e gli eventuali errori Console, senza condividere cookie o header di autorizzazione. Dettagli: [REALTIME-CLIENT.md](REALTIME-CLIENT.md#native-browser-fetch-context-correction-2026-11-06).
+
 **Stato dei monitor nel database:**
 
 ```sh
@@ -643,7 +658,9 @@ docker compose exec web php artisan metrics:rollups
 
 ## Registro degli esiti
 
-Data: ____ · Browser e versione: ____ · Secondo browser: ____
+Ultima sessione: **2026-11-05** · Browser e versione: ____ · Secondo browser: ____
+
+**Punto di ripartenza: G01, sessione prevista per il 2026-11-06.** `CONCLUSO` registra il completamento di un blocco confermato dall'utente, senza attribuire automaticamente `PASS` a ogni singolo caso o alle prove facoltative.
 
 Puoi mandarmi anche solo i casi che non sono `PASS`.
 
@@ -654,8 +671,8 @@ Puoi mandarmi anche solo i casi che non sono `PASS`.
 | C — Heartbeat | C01–C06 | | |
 | D — Notifiche | D01–D11 | | |
 | E — Incidenti | E01–E17 | | |
-| F — Manutenzioni e quiet hours | F01–F10 | | |
-| G — Dashboard e report | G01–G07 | | |
+| F — Manutenzioni e quiet hours | F01–F10 | CONCLUSO | Confermato dall'utente il 2026-11-05; correzione quiet hours documentata in QH.01 |
+| G — Dashboard e report | G01–G07 | NON ESEGUITO | Riprendere da G01 il 2026-11-06 |
 | G — Tempo reale, facoltativo | G08–G10 | | |
 | H — Status page | H01–H42 | | |
 | H — Dominio reale, facoltativo | H43–H46 | | |

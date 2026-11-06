@@ -25,6 +25,7 @@ Apply `2026_10_29_000019_add_notification_delivery_outbox.php` after the two cha
 | `message_payload` | Application-encrypted, minimal `ChannelMessage` envelope; hidden from serialization |
 | `destination_hash` | HMAC under the application key of the canonical family/configuration, excluding the webhook signing key; hidden |
 | `available_at` | Earliest UTC acquisition time, including coalescing, initial policy delay or retry backoff |
+| `quiet_hours_deferred_until` | Current quiet-hours UTC wait boundary, cleared on provider admission; hidden grouping metadata added on November 5, 2026 |
 | `claim_token` | Unique scalar queue-envelope ownership fence, retained after completion to reject stale hooks |
 | `claim_until` | UTC expiry of the active attempt; null outside an acquired attempt |
 
@@ -52,7 +53,7 @@ A due delivery acquired during maintenance becomes terminal `suppressed` with a 
 
 An already admitted provider request cannot be recalled; its real acknowledgement can still be recorded during maintenance or after resolution, subject to the existing live lease/fence. Summaries still target only actually notified recipients and are themselves silenced during maintenance. Verification-code messages are separate from incident deliveries and remain available during maintenance.
 
-M5.05 applies the same terminal-suppression semantics to current per-channel quiet hours at admission, retries and expired-lease recovery. The interval uses explicit IANA local wall time, including overnight ranges and both occurrences of repeated DST minutes. Changing quiet hours does not invalidate destinations or alter prepared UUID/body; it changes the next admission. No quiet hours are enabled by default. Schema, editor and DST examples are in [QUIET-HOURS.md](QUIET-HOURS.md).
+Following the November 5, 2026 browser-test decision, per-channel quiet hours **defer** due work instead of applying terminal suppression. Pending rows become due at the first permitted UTC instant, with no additional provider attempt. The existing dispatcher resumes them without a lifecycle event. At release the ledger groups due opening/escalation rows per incident/cycle/channel/destination, retaining the earliest UUID/body and leaving future steps scheduled. Recovery cancels obsolete deferred openings; owed summaries are deferred as well. Maintenance still suppresses terminally and takes priority. Explicit IANA wall time covers overnight ranges, repeated hours and skipped ends. Editing quiet hours makes pending deferred work due for reevaluation without changing verification or destination. Schema, legacy recovery, editor and DST examples are in [QUIET-HOURS.md](QUIET-HOURS.md).
 
 ## Acquisition, retry and recovery
 
@@ -98,5 +99,7 @@ docker compose up -d --no-deps --force-recreate queue scheduler
 ```
 
 M5.04 adds no migration; M5.05 adds `2026_10_30_000020_add_channel_quiet_hours.php` with silencing disabled by default. Neither adds a dependency, lockfile change, environment variable or key. Existing cycles prepared by M5.03 retain their original first-step-only audience; historical policy state is unavailable and is not reconstructed from today's policy. New openings and reopenings freeze all steps. Reload long-lived queue/scheduler code when adopting the change (`docker compose up -d --no-deps --force-recreate queue scheduler`); tests never restart development processes. The M5.03 migration above is still required if not applied previously. Monitor scheduling remains controlled by its existing separate switch. The full notification acceptance matrix is documented in [NOTIFICATION-ACCEPTANCE.md](NOTIFICATION-ACCEPTANCE.md) (M5.06). No live provider delivery, remote CI, PHP 8.5 integration or real browser run is claimed by this document; see the actual results in TASKS.
+
+The November 5 correction additionally requires `2026_11_05_000025_defer_quiet_hours_notifications.php` and an asset rebuild. It recovers only eligible legacy quiet-suppressed alerts for still-open current cycles, with the original frozen audience and message identities. Stop old queue/scheduler workers before applying this migration, then recreate web/queue/scheduler so restored work is handled by the revised ledger. Apply deliberately: restored work may notify ongoing incidents. See [QUIET-HOURS.md](QUIET-HOURS.md#operations-and-verification) for the updated adoption sequence.
 
 Queue lifecycle behavior was checked against the installed Laravel sources and [Laravel queue documentation](https://laravel.com/docs/13.x/queues). Automated coverage is described in [TESTING.md](TESTING.md#incident-delivery-and-concurrency-m503).

@@ -41,6 +41,7 @@ use LogicException;
  * @property array{id: string, event: string, occurred_at: string, subject: string, text: string, data: array<string, string|int|bool|null>}|null $message_payload Decrypted recipient snapshot; never projected.
  * @property string|null $destination_hash Protected fingerprint of the destination originally selected.
  * @property CarbonImmutable|null $available_at Earliest UTC time for the next attempt.
+ * @property CarbonImmutable|null $quiet_hours_deferred_until UTC quiet-hours wait boundary; cleared when a provider attempt starts.
  * @property string|null $claim_token Latest attempt fence, retained after completion for stale-hook rejection.
  * @property CarbonImmutable|null $claim_until Lease expiry; null when no attempt owns the row.
  * @property-read NotificationChannel|null $channel Target channel within the same tenant, if it still exists.
@@ -57,7 +58,7 @@ final class NotificationLog extends Model
     protected $guarded = ['*'];
 
     /** @var list<string> Recipient content, identities and attempt metadata never leave through model serialization. */
-    protected $hidden = ['dedupe_key', 'message_uuid', 'message_payload', 'destination_hash', 'cycle', 'available_at', 'claim_token', 'claim_until'];
+    protected $hidden = ['dedupe_key', 'message_uuid', 'message_payload', 'destination_hash', 'cycle', 'available_at', 'quiet_hours_deferred_until', 'claim_token', 'claim_until'];
 
     /** @var array<string, mixed> Rows start pending with no attempt. */
     protected $attributes = [
@@ -83,6 +84,7 @@ final class NotificationLog extends Model
             'cycle' => 'integer',
             'message_payload' => 'encrypted:array',
             'available_at' => 'immutable_datetime',
+            'quiet_hours_deferred_until' => 'immutable_datetime',
             'claim_until' => 'immutable_datetime',
         ];
     }

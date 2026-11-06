@@ -95,7 +95,13 @@ final readonly class NotificationDeliveryLedger
             }
 
             if ($quietHours?->contains($now) === true) {
-                $this->suppress($log, 'The channel is within its configured quiet hours.');
+                $until = CarbonImmutable::instance($quietHours->nextAllowedAt($now));
+                $log->forceFill([
+                    'available_at' => $until,
+                    'quiet_hours_deferred_until' => $until,
+                    'claim_until' => null,
+                    'response' => 'Deferred until the channel leaves its configured quiet hours.',
+                ])->save();
 
                 return null;
             }
@@ -133,8 +139,13 @@ final readonly class NotificationDeliveryLedger
                 return null;
             }
 
+            if (!$resolved && !$this->coalesceDeferred($log, $now)) {
+                return null;
+            }
+
             $log->forceFill([
                 'attempts' => $log->attempts + 1,
+                'quiet_hours_deferred_until' => null,
                 'claim_token' => $token,
                 'claim_until' => $now->addSeconds(NotificationDeliverySettings::LEASE_SECONDS),
             ])->save();
@@ -212,6 +223,39 @@ final readonly class NotificationDeliveryLedger
             'claim_until' => null,
             'available_at' => $now->addSeconds($this->settings->retryDelay($log->attempts)),
         ])->save();
+    }
+
+    /**
+     * @param NotificationLog $log Current pending opening/escalation, under the shared Team and incident locks.
+     * @param CarbonImmutable $now Current UTC admission instant outside quiet hours.
+     * @return bool Whether this row is the earliest pending alert retained for the recipient's deferred group.
+     */
+    private function coalesceDeferred(NotificationLog $log, CarbonImmutable $now): bool
+    {
+        $rows = NotificationLog::query()
+            ->where('incident_id', $log->incident_id)
+            ->where('channel_id', $log->channel_id)
+            ->where('cycle', $log->cycle)
+            ->where('destination_hash', $log->destination_hash)
+            ->where('kind', '!=', NotificationKind::Resolved->value)
+            ->where('status', DeliveryStatus::Pending)
+            ->where('attempts', '<', $this->settings->maxAttempts)
+            ->where('available_at', '<=', $now)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        if (!$rows->contains(fn (NotificationLog $row): bool => $row->quiet_hours_deferred_until !== null)) {
+            return true;
+        }
+
+        $first = $rows->first();
+
+        foreach ($rows->skip(1) as $row) {
+            $this->suppress($row, 'Grouped with one pending incident alert after quiet hours.');
+        }
+
+        return $first?->id === $log->id;
     }
 
     /**

@@ -253,6 +253,7 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_11_02_000023_create_status_page_subscriptions.php',
         // Verified hostname associations reference the page's pending claim generation.
         'database/migrations/2026_11_02_000024_create_status_domain_bindings.php',
+        'database/migrations/2026_11_05_000025_defer_quiet_hours_notifications.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

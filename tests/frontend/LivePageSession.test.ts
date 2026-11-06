@@ -110,6 +110,57 @@ test('waits for private admission then recovers the filtered URL and only whitel
     expect(f.read).toHaveBeenCalledTimes(1);
 });
 
+test('uses the default browser transport without passing the live session as the native fetch receiver', async () => {
+    vi.useFakeTimers();
+    const callbacks: TeamStreamCallbacks[] = [];
+    const nativeFetch = vi.fn<typeof fetch>(
+        /** Model the browser receiver check that rejects method calls on unrelated objects. */
+        function (this: unknown): Promise<Response> {
+            if (this !== undefined && this !== globalThis && this !== window) {
+                throw new TypeError('fetch called on an object that does not implement Window.');
+            }
+
+            return Promise.resolve(response());
+        },
+    );
+    vi.stubGlobal('fetch', nativeFetch);
+    const session = new LivePageSession(
+        {
+            teamId: 7,
+            component: 'Monitors/Show',
+            url: '/teams/7/monitors/11?status=down&page=2',
+            version: 'asset-v1',
+            props,
+            keys: ['monitor'],
+            actorEmail: 'actor@example.test',
+            configuration,
+        },
+        (_configuration, _teamId, signals) => {
+            callbacks.push(signals);
+
+            return vi.fn();
+        },
+    );
+    sessions.push(session);
+    session.start();
+    callbacks[0]?.subscribed();
+    await tick();
+
+    expect(nativeFetch).toHaveBeenCalledWith(
+        '/teams/7/monitors/11?status=down&page=2',
+        expect.objectContaining({ credentials: 'same-origin', redirect: 'error' }),
+    );
+    expect(session.getSnapshot()).toMatchObject({
+        phase: 'live',
+        props: { monitor: { lastStatus: 'up' } },
+    });
+
+    callbacks[0]?.event('CheckCompleted', check);
+    await tick(250);
+    expect(nativeFetch).toHaveBeenCalledTimes(2);
+    expect(session.getSnapshot().phase).toBe('live');
+});
+
 test('coalesces duplicate and out-of-order regional facts without applying their status directly', async () => {
     const f = fixture();
     f.callbacks[0]?.subscribed();

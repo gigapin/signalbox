@@ -225,6 +225,12 @@ Incident transitions now prepare notification intents transactionally; public af
 
 ## Notification acceptance matrix (M5.06)
 
+### Quiet-hours delivery correction (2026-11-05)
+
+Rebuild the editor assets, stop the old queue/scheduler workers, apply `2026_11_05_000025_defer_quiet_hours_notifications.php`, then recreate web/queue/scheduler with the revised code. Quiet-hour waits now remain pending until the first permitted UTC instant and resume automatically, grouping due steps per incident and recipient. Recovery cancels obsolete openings. The migration also restores only quiet-suppressed alerts for still-open current cycles on active verified channels; applying it can resume notifications about ongoing incidents. Original UUIDs, frozen audiences and attempt counts remain intact. No dependency, environment variable, key or new process is introduced. Tests use only isolated storage and fake providers; no development migration or worker restart is performed. See [QUIET-HOURS.md](QUIET-HOURS.md#operations-and-verification) for the adoption commands.
+
+### Original acceptance checks
+
 [NOTIFICATION-ACCEPTANCE.md](NOTIFICATION-ACCEPTANCE.md) maps notification exit criteria to the automated suites. M5.06 adds tests/documentation and raises Composer's finite child-process timeout from 300 to 900 seconds after the full PostgreSQL suite exceeded the default. No migration, dependency, environment variable, application key, queue timeout or application-process change. Existing channel/outbox/quiet-hour migrations remain prerequisites for their application features. Full verification still uses isolated test storage and fake recipient services; no development migration or worker restart is performed.
 
 ## Committed private team broadcasts (M6.01)

@@ -29,7 +29,7 @@ interface QuietHoursFormProps {
 const INPUT =
     'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 disabled:opacity-50 focus:outline-2 focus:outline-emerald-400';
 
-/** Daily silence is terminal for due deliveries; the editor never changes the verified recipient. */
+/** Daily silence postpones due deliveries; the editor never changes the verified recipient. */
 export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursFormProps) {
     const form = useForm<QuietHoursFields>({
         enabled: hours !== null,
@@ -96,8 +96,10 @@ export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursForm
             <p id={`${idPrefix}-quiet-hint`} className="text-sm text-slate-400 md:col-span-3">
                 Every day in the chosen IANA timezone, such as Europe/Rome or America/New_York. The
                 start is included and the end excluded; an earlier end continues past midnight. Due
-                incident notifications, including recovery summaries and retries, are suppressed
-                without later delivery. Verification codes remain available.
+                incident notifications wait until quiet hours end. If the incident is still open,
+                one alert groups its due steps for this channel. Incidents resolved before any alert
+                was sent do not trigger a late opening. Recovery summaries and retries also wait.
+                Verification codes remain available.
             </p>
             {errors.quiet_hours && (
                 <p role="alert" className="text-red-300 md:col-span-3">

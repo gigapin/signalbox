@@ -325,7 +325,48 @@ it('persists a safe SMTP failure and retries the same snapshot through a fresh q
     Http::assertNothingSent();
 });
 
-it('combines quiet hours and maintenance at a retry boundary without catch-up or duplicate summaries', function (string $quietStart, string $quietEnd, string $maintenanceStart, string $maintenanceEnd, ?string $reason): void {
+it('dispatches a deferred alert automatically after quiet hours without a new incident event', function (string $family): void {
+    $channel = matrixChannel($this->team, $family);
+    matrixPolicy($this->team, [['after_minutes' => 0, 'channel_ids' => [$channel->id]]]);
+    app(ManageNotificationChannels::class)->setQuietHours(
+        $this->team->owner,
+        $this->team->id,
+        $channel->id,
+        new QuietHours('11:00', '11:01', 'Europe/Rome'),
+    );
+    $incident = matrixTransition($this->team, $this->monitor);
+    $row = matrixRows($this->team)->sole();
+    $oldJob = matrixJob($row);
+    $this->travel(5)->seconds();
+    matrixExecute($oldJob);
+    $waiting = matrixRows($this->team)->sole();
+
+    expect($waiting->status)->toBe(DeliveryStatus::Pending)
+        ->and($waiting->attempts)->toBe(0)
+        ->and($waiting->available_at?->toIso8601String())->toBe('2026-10-30T10:01:00+00:00');
+    Mail::assertNothingSent();
+    Http::assertNothingSent();
+    $this->travel(55)->seconds();
+    $this->artisan('notifications:dispatch')->assertSuccessful();
+    $newJob = matrixJob($row);
+    expect($newJob->token)->not->toBe($oldJob->token);
+    matrixExecute($newJob);
+    matrixExecute($oldJob);
+    matrixExecute($newJob);
+
+    expect(matrixRows($this->team)->sole()->status)->toBe(DeliveryStatus::Sent)
+        ->and(matrixRows($this->team)->sole()->attempts)->toBe(1)
+        ->and(matrixRows($this->team)->sole()->message_uuid)->toBe($row->message_uuid)
+        ->and(DB::table('incidents')->where('id', $incident->id)->value('resolved_at'))->toBeNull();
+
+    if ($family === 'email') {
+        Mail::assertSentCount(1);
+    } else {
+        Http::assertSentCount(1);
+    }
+})->with(['email', 'webhook', 'slack', 'telegram']);
+
+it('combines quiet-hour deferral and terminal maintenance at a retry boundary without duplicate summaries', function (string $quietStart, string $quietEnd, string $maintenanceStart, string $maintenanceEnd, ?string $reason): void {
     $channel = matrixChannel($this->team, 'webhook');
     matrixPolicy($this->team, [['after_minutes' => 0, 'channel_ids' => [$channel->id]]]);
     $incident = matrixTransition($this->team, $this->monitor);
@@ -360,7 +401,7 @@ it('combines quiet hours and maintenance at a retry boundary without catch-up or
     Http::assertSentCount($reason === null ? 2 : 1);
 })->with([
     'quiet end equals maintenance start' => ['10:00', '10:01', '10:01:00', '10:02:00', 'The monitor is under planned maintenance.'],
-    'maintenance end equals quiet start' => ['10:01', '10:02', '10:00:05', '10:01:00', 'The channel is within its configured quiet hours.'],
+    'maintenance end equals quiet start' => ['10:01', '10:02', '10:00:05', '10:01:00', null],
     'overlap keeps maintenance priority' => ['10:00', '10:02', '10:00:05', '10:02:00', 'The monitor is under planned maintenance.'],
     'both ends allow the retry' => ['10:00', '10:01', '10:00:05', '10:01:00', null],
 ]);

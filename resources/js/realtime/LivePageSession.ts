@@ -67,12 +67,12 @@ export class LivePageSession<P extends Record<string, unknown>> {
     /**
      * @param scope Fixed page identity and public configuration.
      * @param connect Disposable socket adapter.
-     * @param read Same-origin HTTP transport.
+     * @param read Same-origin HTTP transport; the default wrapper preserves native fetch's browser context.
      */
     public constructor(
         private readonly scope: LivePageScope<P>,
         private readonly connect: TeamStreamFactory = openTeamStream,
-        private readonly read: typeof fetch = fetch,
+        private readonly read: typeof fetch = (input, init) => fetch(input, init),
     ) {
         this.snapshot = {
             props: scope.props,

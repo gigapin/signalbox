@@ -980,7 +980,7 @@ function deliveryQuietHours(Team $team, NotificationChannel $channel, ?QuietHour
     app(ManageNotificationChannels::class)->setQuietHours($team->owner, $team->id, $channel->id, $hours);
 }
 
-it('applies half-open quiet-hour boundaries to openings escalations and resolution summaries', function (string $kind, string $at, bool $suppressed): void {
+it('applies half-open quiet-hour deferral boundaries to openings escalations and resolution summaries', function (string $kind, string $at, bool $suppressed): void {
     deliverySteps($this->team, [
         ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
         ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
@@ -1004,7 +1004,7 @@ it('applies half-open quiet-hour boundaries to openings escalations and resoluti
     deliveryRun($row);
     $fresh = deliveryRows($this->team)->find($row->id);
 
-    expect($fresh->status)->toBe($suppressed ? DeliveryStatus::Suppressed : DeliveryStatus::Sent)
+    expect($fresh->status)->toBe($suppressed ? DeliveryStatus::Pending : DeliveryStatus::Sent)
         ->and($fresh->attempts)->toBe($suppressed ? 0 : 1)
         ->and($fresh->message_uuid)->toBe($row->message_uuid);
     Http::assertSentCount(($kind === 'resolved' ? 1 : 0) + ($suppressed ? 0 : 1));
@@ -1015,7 +1015,7 @@ it('applies half-open quiet-hour boundaries to openings escalations and resoluti
     'at end' => ['2026-10-29 10:07:00', false],
 ]);
 
-it('checks a changed quiet-hours rule on retries and does not revive a suppressed message after disabling it', function (): void {
+it('defers retries without consuming attempts and releases them when quiet hours are disabled', function (): void {
     deliveryOpen($this->team, $this->monitor);
     $row = deliveryRows($this->team)->sole();
     $payload = $row->message()->payload();
@@ -1025,17 +1025,20 @@ it('checks a changed quiet-hours rule on retries and does not revive a suppresse
     deliveryQuietHours($this->team, $this->channel, new QuietHours('10:06', '10:07', 'UTC'));
     CarbonImmutable::setTestNow('2026-10-29 10:06:20');
     deliveryRun($row);
+
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Pending)
+        ->and(deliveryRows($this->team)->sole()->available_at?->toIso8601String())->toBe('2026-10-29T10:07:00+00:00')
+        ->and(deliveryRows($this->team)->sole()->attempts)->toBe(1);
     deliveryQuietHours($this->team, $this->channel, null);
-    CarbonImmutable::setTestNow('2026-10-29 10:07:00');
     deliveryRun($row);
 
-    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Suppressed)
-        ->and(deliveryRows($this->team)->sole()->attempts)->toBe(1)
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Sent)
+        ->and(deliveryRows($this->team)->sole()->attempts)->toBe(2)
         ->and(deliveryRows($this->team)->sole()->message()->payload())->toBe($payload);
-    Http::assertSentCount(1);
+    Http::assertSentCount(2);
 });
 
-it('suppresses expired attempts during quiet hours and fences their late completion', function (): void {
+it('defers expired attempts during quiet hours and fences their late completion', function (): void {
     deliveryOpen($this->team, $this->monitor);
     $row = deliveryRows($this->team)->sole();
     $ledger = app(NotificationDeliveryLedger::class);
@@ -1046,10 +1049,33 @@ it('suppresses expired attempts during quiet hours and fences their late complet
     CarbonImmutable::setTestNow('2026-10-29 10:06:15');
     deliveryRun($row);
 
-    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Suppressed)
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Pending)
         ->and(deliveryRows($this->team)->sole()->attempts)->toBe(1)
         ->and($ledger->complete($this->team->id, $row->id, $token, new ChannelDeliveryReceipt()))->toBeFalse();
     Http::assertNothingSent();
+});
+
+it('preserves provider retry backoff when quiet hours change after a deferred alert is released', function (): void {
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:01', 'UTC'));
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun($row);
+    $this->providerResponses = Http::sequence()->pushStatus(503)->pushStatus(204);
+    CarbonImmutable::setTestNow('2026-10-29 10:01:00');
+    deliveryRun($row);
+    CarbonImmutable::setTestNow('2026-10-29 10:01:10');
+    deliveryQuietHours($this->team, $this->channel, null);
+    $retry = deliveryRows($this->team)->sole();
+    expect($retry->quiet_hours_deferred_until)->toBeNull()
+        ->and($retry->available_at?->toIso8601String())->toBe('2026-10-29T10:01:30+00:00')
+        ->and($retry->attempts)->toBe(1);
+    deliveryRun($row);
+    Http::assertSentCount(1);
+    CarbonImmutable::setTestNow('2026-10-29 10:01:30');
+    deliveryRun($row);
+    Http::assertSentCount(2);
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Sent);
 });
 
 it('retains provider acceptance when quiet hours start after admission', function (): void {
@@ -1075,12 +1101,14 @@ it('keeps future steps outside quiet hours and never summarizes an entirely sile
     $incident = deliveryOpen($this->team, $this->monitor);
     CarbonImmutable::setTestNow('2026-10-29 10:00:05');
     deliveryRun(deliveryRows($this->team)->firstOrFail());
+    CarbonImmutable::setTestNow('2026-10-29 10:06:00');
+    deliveryRun(deliveryRows($this->team)->firstOrFail());
     CarbonImmutable::setTestNow('2026-10-29 10:10:00');
     deliveryRun(deliveryRows($this->team)->last());
     deliveryTransition($this->team, $incident, 'resolve');
     CarbonImmutable::setTestNow('2026-10-29 10:10:05');
     deliveryRun(deliveryRows($this->team)->last());
-    Http::assertSentCount(2);
+    Http::assertSentCount(3);
 
     CarbonImmutable::setTestNow('2026-10-30 10:00:00');
     $next = deliveryOpen($this->team, $this->monitor);
@@ -1089,7 +1117,7 @@ it('keeps future steps outside quiet hours and never summarizes an entirely sile
     deliveryRun($row);
     deliveryTransition($this->team, $next, 'resolve');
     expect(deliveryRows($this->team)->where('incident_id', $next->id)->where('kind', NotificationKind::Resolved))->toHaveCount(0);
-    Http::assertSentCount(2);
+    Http::assertSentCount(3);
 });
 
 it('respects both repeated local hours and the spring gap through actual delivery admission', function (string $prepared, string $attempt, string $start, string $end, bool $silenced): void {
@@ -1100,7 +1128,7 @@ it('respects both repeated local hours and the spring gap through actual deliver
     CarbonImmutable::setTestNow($attempt);
     deliveryRun($row);
 
-    expect(deliveryRows($this->team)->sole()->status)->toBe($silenced ? DeliveryStatus::Suppressed : DeliveryStatus::Sent);
+    expect(deliveryRows($this->team)->sole()->status)->toBe($silenced ? DeliveryStatus::Pending : DeliveryStatus::Sent);
     Http::assertSentCount($silenced ? 0 : 1);
 })->with([
     ['2026-10-25 00:00:00', '2026-10-25 00:15:00', '02:15', '02:45', true],
@@ -1124,7 +1152,7 @@ it('keeps quiet-hour settings local to the selected recipient and tenant', funct
         deliveryRun($row);
     }
 
-    expect(deliveryRows($this->team)->pluck('status')->all())->toBe([DeliveryStatus::Suppressed, DeliveryStatus::Sent]);
+    expect(deliveryRows($this->team)->pluck('status')->all())->toBe([DeliveryStatus::Pending, DeliveryStatus::Sent]);
     Http::assertSentCount(1);
 });
 
@@ -1153,3 +1181,212 @@ it('fails closed for an unsupported stored timezone without leaking it or retryi
         ->and(deliveryRows($this->team)->sole()->response)->not->toContain('Invalid/StoredZone');
     Http::assertNothingSent();
 });
+
+it('groups due deferred steps once per incident and recipient regardless of worker order', function (bool $reverse, bool $dispatchDuringQuietHours): void {
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 15, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:10', 'UTC'));
+    $incident = deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    $rows = deliveryRows($this->team);
+    deliveryRun($rows[0]);
+
+    if ($dispatchDuringQuietHours) {
+        CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+        deliveryRun($rows[1]);
+    }
+
+    CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+
+    foreach ($reverse ? $rows->reverse() : $rows as $row) {
+        deliveryRun($row);
+    }
+
+    $fresh = deliveryRows($this->team);
+    expect($fresh->pluck('status')->all())->toBe([DeliveryStatus::Sent, DeliveryStatus::Suppressed, DeliveryStatus::Pending])
+        ->and($fresh->pluck('attempts')->all())->toBe([1, 0, 0])
+        ->and($fresh[0]->message_uuid)->toBe($rows[0]->message_uuid)
+        ->and($fresh[1]->response)->toBe('Grouped with one pending incident alert after quiet hours.');
+    Http::assertSentCount(1);
+    CarbonImmutable::setTestNow('2026-10-29 10:15:00');
+    deliveryRun($rows[2]);
+    Http::assertSentCount(2);
+    deliveryTransition($this->team, $incident, 'resolve');
+    CarbonImmutable::setTestNow('2026-10-29 10:15:05');
+    deliveryRun(deliveryRows($this->team)->last());
+    Http::assertSentCount(3);
+})->with([false, true])->with([false, true]);
+
+it('cancels a deferred opening on recovery and never sends it from an old queue envelope', function (bool $reopen): void {
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:10', 'UTC'));
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun($row);
+    CarbonImmutable::setTestNow('2026-10-29 10:01:00');
+    deliveryTransition($this->team, $incident, 'resolve');
+    expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Suppressed);
+
+    if ($reopen) {
+        deliveryTransition($this->team, $incident, 'reopen');
+        CarbonImmutable::setTestNow('2026-10-29 10:01:05');
+        deliveryRun(deliveryRows($this->team)->last());
+    }
+
+    CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+
+    foreach (deliveryRows($this->team) as $pending) {
+        deliveryRun($pending);
+    }
+
+    Http::assertSentCount($reopen ? 1 : 0);
+    expect(deliveryRows($this->team)->first()->status)->toBe(DeliveryStatus::Suppressed);
+})->with([false, true]);
+
+it('does not let an exhausted deferred opening cancel a still-eligible escalation', function (): void {
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:10', 'UTC'));
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+    $rows = deliveryRows($this->team);
+
+    foreach ($rows as $row) {
+        deliveryRun($row);
+    }
+
+    DB::table('notification_logs')->where('id', $rows[0]->id)->update(['attempts' => 3]);
+    CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+    deliveryRun($rows[1]);
+    deliveryRun($rows[0]);
+    expect(deliveryRows($this->team)->pluck('status')->all())->toBe([DeliveryStatus::Failed, DeliveryStatus::Sent]);
+    Http::assertSentCount(1);
+});
+
+it('releases separate incident groups sharing a recipient without combining their alerts', function (): void {
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:10', 'UTC'));
+    deliverySteps($this->team, [
+        ['after_minutes' => 0, 'channel_ids' => [$this->channel->id]],
+        ['after_minutes' => 5, 'channel_ids' => [$this->channel->id]],
+    ]);
+    deliveryOpen($this->team, $this->monitor);
+    $otherMonitor = app(TenantContext::class)->run($this->team->id, fn (): Monitor => Monitor::factory()->create());
+    deliveryOpen($this->team, $otherMonitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+
+    foreach (deliveryRows($this->team) as $row) {
+        deliveryRun($row);
+    }
+
+    CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+
+    foreach (deliveryRows($this->team)->reverse() as $row) {
+        deliveryRun($row);
+    }
+
+    expect(deliveryRows($this->team)->pluck('status')->all())->toBe([
+        DeliveryStatus::Sent,
+        DeliveryStatus::Suppressed,
+        DeliveryStatus::Sent,
+        DeliveryStatus::Suppressed,
+    ]);
+    Http::assertSentCount(2);
+});
+
+it('defers an owed recovery summary and sends it once after quiet hours', function (): void {
+    $incident = deliveryOpen($this->team, $this->monitor);
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun(deliveryRows($this->team)->sole());
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:01', '10:02', 'UTC'));
+    CarbonImmutable::setTestNow('2026-10-29 10:01:00');
+    deliveryTransition($this->team, $incident, 'resolve');
+    $summary = deliveryRows($this->team)->last();
+    CarbonImmutable::setTestNow('2026-10-29 10:01:05');
+    deliveryRun($summary);
+    expect(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Pending);
+    Http::assertSentCount(1);
+    CarbonImmutable::setTestNow('2026-10-29 10:02:00');
+    deliveryRun($summary);
+    deliveryRun($summary);
+    Http::assertSentCount(2);
+    expect(deliveryRows($this->team)->last()->status)->toBe(DeliveryStatus::Sent);
+});
+
+it('rechecks the current interval and recipient eligibility before releasing deferred work', function (string $change): void {
+    deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:10', 'UTC'));
+    deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+    CarbonImmutable::setTestNow('2026-10-29 10:00:05');
+    deliveryRun($row);
+    CarbonImmutable::setTestNow('2026-10-29 10:05:00');
+
+    if ($change === 'extend') {
+        deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:20', 'UTC'));
+    } elseif ($change === 'shorten') {
+        deliveryQuietHours($this->team, $this->channel, new QuietHours('10:00', '10:06', 'UTC'));
+    } elseif ($change === 'pause') {
+        app(ManageNotificationChannels::class)->setActive($this->team->owner, $this->team->id, $this->channel->id, false);
+    } else {
+        app(ManageNotificationChannels::class)->update($this->team->owner, $this->team->id, $this->channel->id, 'Changed', ['url' => 'https://hooks.example.test/new']);
+        DB::table('notification_channels')->where('id', $this->channel->id)->update(['is_active' => true, 'verified_at' => CarbonImmutable::now()]);
+    }
+
+    CarbonImmutable::setTestNow($change === 'shorten' ? '2026-10-29 10:06:00' : '2026-10-29 10:10:00');
+    deliveryRun($row);
+    $fresh = deliveryRows($this->team)->sole();
+
+    if ($change === 'extend') {
+        expect($fresh->status)->toBe(DeliveryStatus::Pending)
+            ->and($fresh->available_at?->toIso8601String())->toBe('2026-10-29T10:20:00+00:00');
+        Http::assertNothingSent();
+        CarbonImmutable::setTestNow('2026-10-29 10:20:00');
+        deliveryRun($row);
+        Http::assertSentCount(1);
+    } elseif ($change === 'shorten') {
+        expect($fresh->status)->toBe(DeliveryStatus::Sent);
+        Http::assertSentCount(1);
+    } else {
+        expect($fresh->status)->toBe(DeliveryStatus::Suppressed);
+        Http::assertNothingSent();
+    }
+})->with(['extend', 'shorten', 'pause', 'destination']);
+
+it('restores only legacy quiet-suppressed alerts belonging to eligible open cycles when migrating', function (string $case): void {
+    $incident = deliveryOpen($this->team, $this->monitor);
+    $row = deliveryRows($this->team)->sole();
+
+    if ($case === 'resolved') {
+        deliveryTransition($this->team, $incident, 'resolve');
+    } elseif ($case === 'old-cycle') {
+        DB::table('notification_logs')->where('id', $row->id)->update(['cycle' => 9]);
+    } elseif ($case === 'inactive') {
+        app(ManageNotificationChannels::class)->setActive($this->team->owner, $this->team->id, $this->channel->id, false);
+    }
+
+    DB::table('notification_logs')->where('id', $row->id)->update([
+        'status' => 'suppressed',
+        'response' => $case === 'maintenance' ? 'The monitor is under planned maintenance.' : 'The channel is within its configured quiet hours.',
+    ]);
+    $migration = require base_path('database/migrations/2026_11_05_000025_defer_quiet_hours_notifications.php');
+    $migration->down();
+    $migration->up();
+    $fresh = deliveryRows($this->team)->sole();
+
+    expect($fresh->status)->toBe($case === 'open' ? DeliveryStatus::Pending : DeliveryStatus::Suppressed)
+        ->and($fresh->quiet_hours_deferred_until !== null)->toBe($case === 'open')
+        ->and($fresh->message_uuid)->toBe($row->message_uuid)
+        ->and($fresh->attempts)->toBe(0);
+    Http::assertNothingSent();
+
+    if ($case === 'open') {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse((string) DB::scalar('SELECT CURRENT_TIMESTAMP'))->addSecond());
+        deliveryRun($fresh);
+        expect(deliveryRows($this->team)->sole()->status)->toBe(DeliveryStatus::Sent);
+        Http::assertSentCount(1);
+    }
+})->with(['open', 'resolved', 'old-cycle', 'inactive', 'maintenance']);

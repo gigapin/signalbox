@@ -10,11 +10,13 @@ use App\Contracts\Notifications\ChannelVerificationSender;
 use App\Data\Notifications\QuietHours;
 use App\Data\Notifications\WebhookChannelConfiguration;
 use App\Enums\Notifications\ChannelType;
+use App\Enums\Notifications\DeliveryStatus;
 use App\Exceptions\ChannelConfigurationInvalid;
 use App\Exceptions\ChannelDeliveryFailed;
 use App\Exceptions\NotificationChannelRejected;
 use App\Models\EscalationPolicy;
 use App\Models\NotificationChannel;
+use App\Models\NotificationLog;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\Notifications\ChannelConfigurationParser;
@@ -23,6 +25,7 @@ use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
@@ -252,7 +255,7 @@ final readonly class ManageNotificationChannels
      * @param int $teamId Active team.
      * @param int $channelId Channel of that team.
      * @param QuietHours|null $hours Validated daily interval, or null to disable silencing.
-     * @return NotificationChannel Updated channel; destination, verification, pending codes and activation are preserved.
+     * @return NotificationChannel Updated channel; deferred work is made due for reevaluation without changing recipient identity.
      */
     public function setQuietHours(User $actor, int $teamId, int $channelId, ?QuietHours $hours): NotificationChannel
     {
@@ -262,6 +265,16 @@ final readonly class ManageNotificationChannels
                 'quiet_hours_end' => $hours?->end,
                 'quiet_hours_timezone' => $hours?->timezone,
             ])->save();
+
+            $now = CarbonImmutable::now('UTC');
+
+            // A shortened or disabled interval must release deferred work without waiting for its former end.
+            NotificationLog::query()
+                ->where('channel_id', $channel->id)
+                ->where('status', DeliveryStatus::Pending)
+                ->whereNotNull('quiet_hours_deferred_until')
+                ->where(fn (Builder $query): Builder => $query->whereNull('claim_until')->orWhere('claim_until', '<=', $now))
+                ->update(['available_at' => $now]);
 
             return $channel;
         });

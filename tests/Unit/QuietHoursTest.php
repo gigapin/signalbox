@@ -86,3 +86,32 @@ it('supports intervals ending or starting at midnight', function (): void {
         ->and((new QuietHours('22:00', '00:00', 'UTC'))->contains(new DateTimeImmutable('2026-10-31T00:00:00Z')))->toBeFalse()
         ->and((new QuietHours('00:00', '07:00', 'UTC'))->contains(new DateTimeImmutable('2026-10-31T00:00:00Z')))->toBeTrue();
 });
+
+it('finds the first permitted real instant across midnight fractional offsets and DST', function (string $start, string $end, string $zone, string $at, string $expected): void {
+    $instant = new DateTimeImmutable($at);
+    $original = $instant->format('c.u');
+    $rule = new QuietHours($start, $end, $zone);
+    $allowed = $rule->nextAllowedAt($instant);
+
+    expect($allowed->format('Y-m-d\TH:i:s.uP'))->toBe($expected)
+        ->and($rule->contains($allowed))->toBeFalse()
+        ->and($instant->format('c.u'))->toBe($original);
+
+    if ($rule->contains($instant)) {
+        expect($rule->contains($allowed->modify('-1 microsecond')))->toBeTrue();
+    }
+})->with([
+    ['16:00', '17:00', 'Europe/Rome', '2026-11-05T15:30:00.123456Z', '2026-11-05T16:00:00.000000+00:00'],
+    ['16:00', '17:00', 'Europe/Rome', '2026-11-05T16:00:00.123456Z', '2026-11-05T16:00:00.123456+00:00'],
+    ['22:00', '07:00', 'Europe/Rome', '2026-11-05T22:00:00Z', '2026-11-06T06:00:00.000000+00:00'],
+    ['22:00', '00:00', 'UTC', '2026-11-05T23:59:59Z', '2026-11-06T00:00:00.000000+00:00'],
+    ['01:15', '01:45', 'Asia/Kathmandu', '2026-10-30T19:30:00Z', '2026-10-30T20:00:00.000000+00:00'],
+    ['02:15', '02:45', 'Europe/Rome', '2026-10-25T00:15:00Z', '2026-10-25T00:45:00.000000+00:00'],
+    ['02:15', '02:45', 'Europe/Rome', '2026-10-25T01:15:00Z', '2026-10-25T01:45:00.000000+00:00'],
+    ['01:30', '03:30', 'Europe/Rome', '2026-10-25T00:00:00Z', '2026-10-25T02:30:00.000000+00:00'],
+    ['01:30', '02:30', 'Europe/Rome', '2026-03-29T00:45:00Z', '2026-03-29T01:00:00.000000+00:00'],
+    ['01:30', '03:30', 'Europe/Rome', '2026-03-29T00:45:00Z', '2026-03-29T01:30:00.000000+00:00'],
+    ['01:15', '01:45', 'America/New_York', '2026-11-01T05:15:00Z', '2026-11-01T05:45:00.000000+00:00'],
+    ['01:15', '01:45', 'America/New_York', '2026-11-01T06:15:00Z', '2026-11-01T06:45:00.000000+00:00'],
+    ['01:30', '02:30', 'Australia/Lord_Howe', '2026-10-03T15:15:00Z', '2026-10-03T15:30:00.000000+00:00'],
+]);

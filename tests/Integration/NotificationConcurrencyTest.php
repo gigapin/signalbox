@@ -289,7 +289,8 @@ it('observes a quiet-hours change committed while a delivery waits on the team a
         expect($child->isSuccessful())->toBeTrue($child->getErrorOutput());
         $fresh = $fixture->connection->table('notification_logs')->where('id', $row->id)->first();
 
-        expect($fresh->status)->toBe('suppressed')
+        expect($fresh->status)->toBe('pending')
+            ->and($fresh->available_at)->toBe('2026-10-29 11:00:00+00')
             ->and($fresh->attempts)->toBe(0)
             ->and(is_file($receipts))->toBeFalse();
     } finally {
@@ -299,6 +300,58 @@ it('observes a quiet-hours change committed while a delivery waits on the team a
 
         if ($child !== null && $child->isRunning()) {
             $child->stop();
+        }
+
+        if (is_file($receipts)) {
+            unlink($receipts);
+        }
+
+        $fixture->cleanup();
+    }
+});
+
+it('sends one grouped alert when different deferred steps race at the quiet-hours boundary', function (): void {
+    $fixture = CommittedTeamFixture::freeTeam(1);
+    $children = [];
+    $receipts = sys_get_temp_dir().'/signalbox-deferred-alert-receipts-'.bin2hex(random_bytes(8));
+
+    try {
+        $ids = notificationRaceFixture($fixture, true, true);
+        CarbonImmutable::setTestNow('2026-10-29 10:10:00');
+        $fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])->update([
+            'available_at' => CarbonImmutable::now(),
+            'quiet_hours_deferred_until' => CarbonImmutable::now(),
+        ]);
+        $rows = $fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])->orderBy('id')->get();
+        $fixture->connection->beginTransaction();
+        $fixture->connection->table('teams')->where('id', $fixture->teamId)->lockForUpdate()->first();
+
+        foreach ($rows as $row) {
+            $child = notificationProbe('deliver', $fixture->teamId, (int) $row->id, $receipts);
+            $child->start();
+            $children[] = $child;
+        }
+
+        awaitNotificationParticipants($fixture, $children);
+        $fixture->connection->commit();
+
+        foreach ($children as $child) {
+            $child->wait();
+            expect($child->isSuccessful())->toBeTrue($child->getErrorOutput());
+        }
+
+        expect($fixture->connection->table('notification_logs')->where('incident_id', $ids['incident'])->orderBy('id')->pluck('status')->all())
+            ->toBe(['sent', 'suppressed'])
+            ->and(file($receipts, FILE_IGNORE_NEW_LINES))->toBe(['accepted']);
+    } finally {
+        if ($fixture->connection->transactionLevel() > 0) {
+            $fixture->connection->rollBack();
+        }
+
+        foreach ($children as $child) {
+            if ($child->isRunning()) {
+                $child->stop();
+            }
         }
 
         if (is_file($receipts)) {

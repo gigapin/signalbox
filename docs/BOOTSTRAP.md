@@ -4,6 +4,14 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## Browser acceptance handoff — 2026-11-06
+
+The user ended browser acceptance at **H12**. Resume with **H13 — Status page updates and cache** in [BROWSER-TESTS.md](BROWSER-TESTS.md#h3-aggiornamento-e-cache), using GiGa Team (ID 2) and the actual public address `/status/status-test`. The status-page block remains in progress; optional realtime/domain cases and individual manual PASS results are not inferred from this progress. Continue acceptance before M9.01.
+
+BT.03 fixes native browser fetch context during live-page recovery. Client assets were rebuilt successfully with the complete frontend gate (175 DOM tests); already open pages need a full reload. The corrected coordinator also passed an isolated Firefox probe with synthetic same-origin HTTP responses. There is no migration, dependency, environment/key change or required server restart for this fix. See [REALTIME-CLIENT.md](REALTIME-CLIENT.md#native-browser-fetch-context-correction-2026-11-06) and [TASKS.md](TASKS.md#diagnosi-da-collaudo--aggiornamenti-realtime-2026-11-06).
+
+At the last runtime checks, scheduling and Reverb were enabled and PROVA-HTTP was receiving current observations. Recheck running services and current entitlements on resume: GiGa Team's initial Pro trial has expired, so its 60-second monitors require a compatible plan/override. The session closure changes documentation only and does not stop or restart services, clean test data or modify the team's plan.
+
 ## Application structure
 
 | Path | Responsibility |

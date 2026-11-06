@@ -2,13 +2,15 @@
 
 Guida passo per passo per provare l'applicazione com'è dopo M8, prima di iniziare M9. Non sostituisce i test automatici: controlla ciò che loro non vedono, cioè browser reale, email reali, aspetto delle pagine e flussi completi.
 
-**Stato aggiornato al 2026-11-05: blocco F concluso dall'utente. Riprendere dal blocco G, caso G01 — Dashboard e report, nella sessione del 2026-11-06.** Gli esiti manuali sono riferiti dall'utente; l'agente non ha eseguito il collaudo nel browser. I comandi di preparazione modificano l'ambiente e sono lasciati a te.
+**Stato aggiornato al 2026-11-06: collaudo arrivato a H12. Riprendere da H13 — Aggiornamento e cache della status page.** Gli esiti manuali sono riferiti dall'utente; l'agente non ha eseguito il collaudo completo nella sua sessione browser. Le verifiche automatiche e le prove isolate sono documentate in TASKS. I comandi di preparazione modificano l'ambiente e sono lasciati a te.
 
 ## Ripresa della prossima sessione
 
-- Ripartire da [Blocco G — Dashboard e report](#blocco-g--dashboard-e-report), aprendo **Dashboard** (`/teams/{TEAM}/dashboard`) con il proprio account e **GiGa Team**.
-- Riutilizzare i monitor e i canali già preparati. I casi G08–G10 sul tempo reale restano facoltativi.
-- Per lo stato dei processi e i trial consultare le sezioni 1.1 e 1.5; i limiti applicabili possono cambiare alla scadenza del trial.
+- Ripartire da **H13** in [H3 — Aggiornamento e cache](#h3-aggiornamento-e-cache), con il proprio account e **GiGa Team** (`{TEAM}=2`). La pagina pubblica effettivamente creata è `/status/status-test` (`{SLUG}=status-test`), non `/status/stato-prova`.
+- Riutilizzare monitor, canali e pagina già preparati; non ricominciare da G01 e non iniziare M9.01 prima di terminare il collaudo. Il blocco H resta in corso; H13 e i casi successivi sono ancora da affrontare. I casi G08–G10 e H43–H46 restano facoltativi e non ricevono PASS per deduzione dall'avanzamento.
+- Correzione realtime **BT.03** applicata e asset ricompilati: il trasporto predefinito ora mantiene il contesto nativo di `fetch`. Gate frontend superato (175 test DOM) e prova Firefox isolata riuscita; nessun esito dei singoli casi G08–G10 confermato dall'utente. In caso di asset vecchi ricaricare completamente la pagina. Dettagli: [REALTIME-CLIENT.md](REALTIME-CLIENT.md#native-browser-fetch-context-correction-2026-11-06).
+- Il trial Pro di GiGa Team è scaduto il 2026-11-06 alle 13:33 italiane. I check a 60 s richiedono un piano/override compatibile; Free richiede 300 s. Il motore ha ripreso a registrare check di PROVA-HTTP durante la diagnosi, ma piano e processi vanno ricontrollati alla ripresa secondo le sezioni 1.1 e 1.5, senza presumere che siano rimasti attivi.
+- H10 chiarito: **Color scheme** va salvato nella gestione della pagina pubblica; il pannello privato resta scuro. H12 verificato dall'agente via HEAD locale su `/status/status-test`: 200, `no-store, private`, `index, follow` e canonical; l'indirizzo di esempio inesistente restituisce invece 404/noindex.
 - Le quiet hours ora rinviano gli avvisi e li riprendono automaticamente alla fine della fascia per gli incidenti ancora aperti, raggruppando gli step dovuti sullo stesso canale. Decisione, test e migrazione sono registrati in [TASKS.md](TASKS.md#correzione-da-collaudo--notifiche-dopo-quiet-hours-2026-11-05) e [QUIET-HOURS.md](QUIET-HOURS.md).
 
 ## Come usare questo documento
@@ -394,18 +396,22 @@ Nella finestra privata:
 | H07 | Ctrl/Cmd+U e cerca: `PROVA-HTTP`, `httpbin`, `Nota privata`, `Causa privata`, `Manutenzione privata`, il nome del team, la tua email, `team_id`, `monitor_id` | Nessun risultato |
 | H08 | Sempre nel sorgente cerca il titolo e `Stiamo verificando` | Presenti, come controllo che la ricerca funzioni |
 | H09 | Disattiva JavaScript nel browser e ricarica, poi riattivalo | Riepilogo leggibile con titolo, stati e voci pubblicate |
-| H10 | Prova **Color scheme** light e system, e tutti gli **Accent** | Testo sempre leggibile |
+| H10 | Con JavaScript riattivato, torna alla gestione **Status pages**, premi **Edit {titolo}**, scegli **Color scheme = light** e **Save page**. Ricarica la pagina pubblica nella finestra privata. Ripeti con **system** e tutti gli **Accent**, salvando ogni volta | Con **light** la pagina pubblica ha sfondo chiaro e testo scuro. Con **system** segue la preferenza chiaro/scuro del browser o sistema. Gli **Accent** cambiano la barretta decorativa; testo sempre leggibile |
 | H11 | Riduci la finestra a larghezza da telefono (F12 → icona dispositivo) | Contenuti leggibili, nessun blocco che esce dallo schermo |
 
-Controlla gli header da terminale:
+**H10 riguarda la pagina pubblica**, per esempio `/status/stato-prova`, e non il pannello di gestione di Signalbox, che resta scuro. Cambiare il tema del browser o emulare `prefers-color-scheme` non sostituisce **Color scheme** salvato nella pagina: se questo è **dark**, la pagina pubblica resta scura. Per provare la preferenza del browser salva prima **system**.
+
+Controlla gli header da terminale usando il **Public address** effettivamente salvato: sostituisci `{SLUG}` con quello della tua pagina (per esempio `stato-prova`, oppure `status-test` se hai scelto quel nome). La pagina deve essere pubblicata e senza password per l'esito H12 qui sotto.
 
 ```sh
-curl -sI http://127.0.0.1:8000/status/stato-prova | grep -iE 'cache-control|x-robots-tag|^link'
+curl -sI 'http://127.0.0.1:8000/status/{SLUG}' | grep -iE '^HTTP/|cache-control|x-robots-tag|^link'
 ```
 
 | Caso | Risultato atteso |
 |---|---|
-| H12 | `Cache-Control` con `no-store` e `private`, `X-Robots-Tag: index, follow` e un `Link` con `rel="canonical"` |
+| H12 | `HTTP/… 200`, `Cache-Control` con `no-store` e `private`, `X-Robots-Tag: index, follow` e un `Link` con `rel="canonical"` verso l'indirizzo pubblico corrente |
+
+Con **404** controlla prima l'indirizzo e la pubblicazione: una pagina inesistente o in bozza risponde correttamente con `noindex, nofollow, nosnippet`, senza canonical. Anche una pagina protetta da password usa correttamente `noindex` e non ha canonical, persino dopo lo sblocco; quel comportamento riguarda H18 e i casi successivi.
 
 ### H3. Aggiornamento e cache
 
@@ -658,9 +664,9 @@ docker compose exec web php artisan metrics:rollups
 
 ## Registro degli esiti
 
-Ultima sessione: **2026-11-05** · Browser e versione: ____ · Secondo browser: ____
+Ultima sessione: **2026-11-06** · Browser e versione: ____ · Secondo browser: ____
 
-**Punto di ripartenza: G01, sessione prevista per il 2026-11-06.** `CONCLUSO` registra il completamento di un blocco confermato dall'utente, senza attribuire automaticamente `PASS` a ogni singolo caso o alle prove facoltative.
+**Punto di ripartenza: H13. Collaudo arrivato a H12, come comunicato dall'utente alla chiusura del 2026-11-06.** `CONCLUSO` registra l'avanzamento oltre un blocco, senza attribuire automaticamente `PASS` a ogni singolo caso o alle prove facoltative. H resta in corso.
 
 Puoi mandarmi anche solo i casi che non sono `PASS`.
 
@@ -672,9 +678,9 @@ Puoi mandarmi anche solo i casi che non sono `PASS`.
 | D — Notifiche | D01–D11 | | |
 | E — Incidenti | E01–E17 | | |
 | F — Manutenzioni e quiet hours | F01–F10 | CONCLUSO | Confermato dall'utente il 2026-11-05; correzione quiet hours documentata in QH.01 |
-| G — Dashboard e report | G01–G07 | NON ESEGUITO | Riprendere da G01 il 2026-11-06 |
-| G — Tempo reale, facoltativo | G08–G10 | | |
-| H — Status page | H01–H42 | | |
+| G — Dashboard e report | G01–G07 | CONCLUSO | Avanzamento fino a H12 comunicato il 2026-11-06; chiarito il percorso dei grafici in G03, esiti singoli non dettagliati |
+| G — Tempo reale, facoltativo | G08–G10 | DA CONFERMARE | Difetto fetch corretto in BT.03 e verificato automaticamente; nessun PASS manuale dei tre casi confermato |
+| H — Status page | H01–H42 | IN CORSO | Arrivati a H12 il 2026-11-06; riprendere da H13 sulla pagina `/status/status-test` |
 | H — Dominio reale, facoltativo | H43–H46 | | |
 | I — Permessi e isolamento | I01–I19 | | |
 | J — Limiti di piano | J01–J06 | | |
@@ -685,7 +691,7 @@ Puoi mandarmi anche solo i casi che non sono `PASS`.
 
 | Caso | URL e account | Atteso | Ottenuto | Gravità |
 |---|---|---|---|---|
-| | | | | |
+| G08–G10, realtime | `/teams/2/monitors`, GiGa Team | Aggiornamento al completamento dei check senza ricarica | Banner di errore del recupero; contesto nativo di fetch corretto in BT.03, gate e prova Firefox isolata superati. Conferma manuale specifica ancora da registrare | Funzionale, correzione implementata |
 
 ### Note sulla grafica
 

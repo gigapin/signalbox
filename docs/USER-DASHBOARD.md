@@ -4,6 +4,14 @@ Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una n
 
 Questa consegna è pianificazione. Layout, componenti e nuove schermate non risultano implementati con l’aggiunta del documento. Il primo sotto-task da avviare è **UI.01.1**, inventario dei flussi/dati e dimensionamento delle porzioni.
 
+## Ripartenza della prossima sessione
+
+La sessione si chiude con **UI.PLAN completato** e **UI.01.1 ancora da iniziare**. Le correzioni funzionali del collaudo sono implementate e l’utente conferma A–K conclusi; la nuova dashboard, i nuovi componenti e AppLayout restano da realizzare. Non confondere i 27 sotto-task pianificati con lavoro già eseguito.
+
+Output atteso di UI.01.1: inventario delle schermate/rotte/ruoli, elenco dei componenti riusabili, mappa scheda/grafico → servizio/dato reale, gap da coprire e stima/ordine delle porzioni. Aggiornare questo brief e TASKS con il risultato, poi proseguire UI.01.2/UI.01.3. Non è necessario riaprire L o M9 per iniziare l’inventario.
+
+La prima vista di riferimento è il dettaglio monitor dello screenshot descritto sotto; la sequenza utente è dashboard → lista → dettaglio → incidente e ritorno. L01–L08 sarà aggiornato ed eseguito in UI.06 dopo l’intera fase A. Per verifiche già eseguite e ambiente rimasto alla chiusura, leggere [BOOTSTRAP.md](BOOTSTRAP.md) e [TASKS.md](TASKS.md).
+
 ## Obiettivo per l’utente
 
 Dopo l’accesso l’utente deve poter riconoscere il team attivo, capire se ci sono problemi, trovare il monitor interessato, leggere grafici e incidenti e compiere le azioni consentite dal proprio ruolo. Menu, ritorni e contesto devono evitare la necessità di ricordare URL o cercare un grafico in una pagina diversa dal monitor.

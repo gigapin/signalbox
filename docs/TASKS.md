@@ -12,6 +12,31 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Chiusura sessione — Collaudo e dashboard utenti, 2026-11-09
+
+- [x] **SESSION.2026-11-09.UI** Preparata la ripresa richiesta dall’utente: riepilogo correzioni/esiti, stato del collaudo, ordine UI e primo sotto-task. Dipendenze: BT.08–BT.15, UI.PLAN e conferma utente fino a K. Chiusura segnata in corso prima delle modifiche. Aggiornati `TASKS.md`, `BOOTSTRAP.md`, `BROWSER-TESTS.md`, `BROWSER-RESULTS-2026-11-09.md` e `USER-DASHBOARD.md`; consegna storica H28 esplicitamente superata e nessuna vecchia esecuzione riscritta come prova nuova.
+- **Verifiche di chiusura**: cinque Markdown analizzati con Prettier senza riformattazione globale, collegamenti locali/blocchi validi; tutti i documenti indicano UI.01.1, 27 sotto-task di implementazione ancora aperti, UI prima di M9, L differito a UI.06, sette ID UI e scelta UI.07 preservati, 169 casi/72 righe storiche invariati. Nessun collegamento ai due titoli storici rinominati trovato. Nessun test applicativo, formatter del codice, analisi statica, build o CI rieseguito: soltanto documentazione; l’ultima baseline reale è riportata sotto. Nessun comando Git/gh, screenshot, cambiamento a dati, credenziali o processi.
+
+**Punto di ripartenza vincolante:** **UI.01.1**, non M9 e non il collaudo L. Il macro UI è pianificato, non implementato. Sequenza: inventario/progetto UI.01 → layout UI.02 → dashboard/monitor UI.03 e sezioni UI.04.1–UI.04.4 → UI.06 con L01–L08 → M9. Billing/API e pagine pubbliche successive conservano le proprie dipendenze; nome/logo UI.07 rimane aperto senza bloccare la fase A.
+
+**Completato e verificato nella sessione:**
+
+| Area | Esito da conservare |
+|---|---|
+| Connessione e mobile | BT.08: avviso di errore di rete, draft conservati e tabelle/navigazione mobili; screenshot eliminati in BT.09 |
+| Ambiente frontend | BT.10: Echo/Pusher installati anche sul computer per il Vite host, usando il lock esistente; nessun nuovo pacchetto |
+| Validazione monitor | BT.12: messaggio sotto il campo durante la digitazione; intervallo invalido senza richiesta/redirect, bozza conservata e invio consentito dopo correzione |
+| 2FA e override | BT.13: letture sensibili AJAX e redirect espliciti; setup/conferma/disattivazione/recovery tornano alla Sicurezza |
+| Riconferma operatore | BT.14: password inline nel team, scelta/motivo conservati, zero mutazioni con password errata/annullamento e una sola mutazione dopo conferma valida |
+| Collaudo | L’utente conferma completati i blocchi obbligatori A–K; esiti delle opzioni realtime/dominio non dedotti. L rinviato esplicitamente alla nuova UI |
+| Progetto dashboard | UI.PLAN: sette ID UI.01–UI.07 preservati e 27 sotto-task aperti; screenshot descritto in `USER-DASHBOARD.md`, non copiato nel repository |
+
+**Ultima baseline applicativa realmente eseguita:** `npm run verify` host, exit 0: **212 DOM in 22 file**, **5 qualità**, ESLint/Prettier/TypeScript/build. Backend pertinente, exit 0: **101 test / 725 asserzioni** (`PlanOverrideTest`, `PlatformAdminAccessTest`, `TwoFactorAuthenticationTest`, `AuthenticationSurfaceTest`), PostgreSQL/Redis di test isolati. PHP-CS-Fixer e Larastan livello 8 superati. Browser Brave/Firefox: password errata con 0 DELETE, conferma valida con 1 DELETE/303, annullamento/assegnazione/rimozione verificati e zero eccezioni JS. Sono verifiche della correzione, non prove della dashboard futura. Suite backend completa, CI remota/PHP 8.5 e benchmark non eseguiti in questa sessione.
+
+**Prima attività della prossima sessione, UI.01.1:** leggere AGENTS/spec/TASKS, [brief dashboard](USER-DASHBOARD.md), [handoff](BOOTSTRAP.md) e matrice dipendenze. Censire layout, rotte e permessi di tutte le viste interne; mappare schede/grafici dello screenshot su dati e servizi reali, distinguendo proiezioni da estendere e funzioni assenti. Punti di ingresso: `resources/js/components/auth/AuthLayout.tsx`, `resources/js/pages/Dashboard/Show.tsx`, pagine Monitors e altre sezioni; `DashboardOverview`, `DashboardLatency`, `MonitorAvailability`, presenter/policy e hook `useLivePage`. Consegnare inventario, gap, ordine delle porzioni e stima aggiornata nel brief/piano. Poi UI.01.2/UI.01.3 per flussi, gerarchia e componenti condivisi. Nessun sotto-task UI di implementazione risulta avviato con questa chiusura.
+
+**Ambiente e dati da ricontrollare alla ripresa:** server browser temporanei sulla porta 18001 arrestati e loro fixture/audit di test rimossi; servizi e sessioni di sviluppo lasciati all’utente, senza nuova verifica runtime durante la chiusura. Vite host era su 127.0.0.1:5173; il suo `node_modules` è distinto dal volume Node Docker. Stato attuale di processi, piani/override, monitor e inviti non va dedotto dalle vecchie foto del collaudo. Riferimenti di sviluppo: GiGa Team 2, `/status/status-test`, Synthetic Alpha 3 e Beta 4; consultare la guida per ruoli/fixture. Non resettare dati o `.env` per l’inventario. Git/gh restano esclusivamente all’utente; nessuno screenshot da aggiungere al repository.
+
 ## Pianificazione dashboard utenti — 2026-11-09
 
 - [x] **UI.PLAN** Dettagliato e anticipato il macro UI su richiesta dell’utente: dashboard fruibile e navigazione applicativa dal suo screenshot del dettaglio UptimeRobot. Pianificazione segnata in corso prima delle modifiche. Riutilizzato il macro già presente, conservando **UI.01–UI.07** e aggiungendo **27 sotto-task**, tutti da implementare. La fase A parte da M1–M8 e precede M9; L01–L08 è rinviato a UI.06 dopo l’interfaccia nuova. Billing/API e rifiniture pubbliche mantengono le dipendenze successive, UI.07 resta distinto e non blocca la dashboard. Decisione registrata anche nella tabella delle deviazioni, senza modificare la specifica o ridurre M3–M5/M9–M12.

@@ -50,6 +50,14 @@ Verifiche successive alla correzione:
 - Sul bundle finale, il banner a 390 px è stato verificato nei due browser, inclusa la chiusura esplicita e senza salvare altre note.
 - [Misure e controlli dei due browser](browser-evidence/2026-11-09/BT08/verification.json). Il JSON generato contiene un oggetto per browser: `version` è la versione eseguita; `mobile` elenca le viste con `screen` (schermata), `viewport` e `document` (larghezze in CSS px), `overflowControls` (controlli fuori viewport, vuoto in caso positivo) e `tables` (nome accessibile `name`, larghezza visibile `width`, contenuto `content`, in CSS px). `errors` contiene le eccezioni JavaScript non gestite osservate ed è vuoto per entrambi. Nessun cookie, payload o URL privato nel file.
 
+## Visibilità degli errori monitor — BT.11
+
+Durante la ripetizione manuale di J01 l’utente ha segnalato che il valore 30 s veniva rifiutato senza feedback visibile. Il messaggio inline era già implementato e correttamente restituito dal server, ma il focus veniva richiesto in `onFinish` prima che React avesse applicato gli errori al DOM. Con una finestra di altezza 600 px, il messaggio restava sopra il viewport in Brave e Firefox: bordi verticali circa **−81/−41 px**, nessun campo focalizzato.
+
+Il modulo ora attende il commit degli errori con un effetto React e programma il focus nel frame successivo, limitandolo al proprio elemento form. La pulizia cancella il frame se si cambia pagina. Il rifiuto non altera il dato salvato e conserva il valore digitato per correggerlo.
+
+Ripetizione reale su un monitor sintetico con minimo Pro di 60 s, sola submission invalida: in **Brave 157 e Firefox 159**, campo intervallo focalizzato e messaggio interamente visibile a **349–389 px** in un viewport alto 600 px; nessuna eccezione JS. Verificata anche la vista **390×844 px**, senza scrivere un nuovo intervallo. Due regressioni prima fallite ora passano; gate frontend **186 test DOM**, 5 qualità, lint/formato/TypeScript/build superato. J01 conserva PASS dopo questa correzione; nessun altro caso viene dedotto dalla prova.
+
 ## Registro per caso
 
 Le ore osservate sono italiane, CET (UTC+1). Una riga senza ora indica un prerequisito mancante o una prova facoltativa non scelta.

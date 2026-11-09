@@ -383,6 +383,77 @@ async function showsValidationErrors(): Promise<void> {
     );
 }
 
+test('focuses a rejected interval after errors render even when the visit finishes before React commits', async () => {
+    const user = userEvent.setup();
+    const frames: FrameRequestCallback[] = [];
+    let visit: VisitOptions | undefined;
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+        frames.push(callback);
+
+        return frames.length;
+    });
+    vi.spyOn(router, 'patch').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
+
+    renderInertia('Signalbox', Edit, {
+        team,
+        monitor: httpDetail,
+        defaults,
+        options,
+        usage: { ...usage, minimumIntervalSeconds: 60 },
+    });
+    const interval = screen.getByLabelText('Interval (seconds)');
+    await user.clear(interval);
+    await user.type(interval, '30');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    act(() => {
+        visit?.onError?.({
+            interval_seconds: 'Your plan requires an interval of at least 60 seconds.',
+        });
+        visit?.onFinish?.({} as never);
+        // A finish callback can run before the validation state has reached the DOM.
+        frames.splice(0).forEach((frame) => frame(0));
+    });
+    act(() => frames.splice(0).forEach((frame) => frame(0)));
+
+    expect(interval).toHaveFocus();
+    expect(interval).toHaveValue('30');
+    expect(interval).toHaveAttribute('aria-invalid', 'true');
+    expect(interval).toHaveAccessibleDescription(/Your plan requires an interval of at least 60/);
+
+    await user.click(screen.getByLabelText('Name'));
+    await user.type(screen.getByLabelText('Name'), ' revised');
+    act(() => frames.splice(0).forEach((frame) => frame(0)));
+    expect(screen.getByLabelText('Name')).toHaveFocus();
+});
+
+test('cancels pending validation focus when leaving the monitor editor', () => {
+    vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(73);
+    const cancel = vi.spyOn(window, 'cancelAnimationFrame');
+    const view = renderInertia('Signalbox', Edit, {
+        team,
+        monitor: httpDetail,
+        defaults,
+        options,
+        usage,
+        errors: {},
+    });
+    let visit: VisitOptions | undefined;
+    vi.spyOn(router, 'patch').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
+
+    act(() => {
+        screen.getByRole('button', { name: 'Save changes' }).click();
+        visit?.onError?.({ interval_seconds: 'Your plan requires at least 300 seconds.' });
+    });
+    view.unmount();
+
+    expect(cancel).toHaveBeenCalledWith(73);
+});
+
 /** A quota refusal after submission keeps everything typed, so the user can retry after freeing a slot. */
 async function keepsInputAfterQuotaRefusal(): Promise<void> {
     const user = userEvent.setup();

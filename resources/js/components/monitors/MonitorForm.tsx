@@ -1,6 +1,6 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
 import { useForm } from '@inertiajs/react';
-import type { FormEvent, ReactNode } from 'react';
+import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
 import {
     buildPayload,
     HTTP_TYPES,
@@ -251,6 +251,7 @@ export default function MonitorForm({
     submitLabel,
 }: MonitorFormProps) {
     const form = useForm<MonitorFormData>(initial);
+    const formElement = useRef<HTMLFormElement>(null);
     const data = form.data;
     const errors = form.errors as Record<string, string>;
     const isHttp = HTTP_TYPES.includes(data.type);
@@ -262,6 +263,21 @@ export default function MonitorForm({
             !INLINE_FIELDS.includes(key) &&
             !NESTED_FIELDS.some((prefix) => key === prefix || key.startsWith(`${prefix}.`)),
     );
+
+    // Wait for error markup to commit; visit completion can precede React's validation render.
+    useEffect(() => {
+        if (Object.keys(errors).length === 0) {
+            return;
+        }
+
+        const frame = window.requestAnimationFrame(() => {
+            formElement.current
+                ?.querySelector<HTMLElement>('[aria-invalid="true"], [data-form-alert]')
+                ?.focus();
+        });
+
+        return () => window.cancelAnimationFrame(frame);
+    }, [errors]);
 
     /**
      * @param field Form key to update.
@@ -275,16 +291,7 @@ export default function MonitorForm({
         event.preventDefault();
         form.transform((current) => buildPayload(current, originalType));
 
-        const visit = {
-            preserveScroll: true,
-            onFinish: () => {
-                window.requestAnimationFrame(() =>
-                    document
-                        .querySelector<HTMLElement>('[aria-invalid="true"], [data-form-alert]')
-                        ?.focus(),
-                );
-            },
-        };
+        const visit = { preserveScroll: true };
 
         if (method === 'post') {
             form.post(action, visit);
@@ -336,7 +343,7 @@ export default function MonitorForm({
     const showBody = isHttp && (mustSendSecrets || data.replace_body);
 
     return (
-        <form onSubmit={submit} className="space-y-6" noValidate>
+        <form ref={formElement} onSubmit={submit} className="space-y-6" noValidate>
             {general.length > 0 && (
                 <div
                     role="alert"

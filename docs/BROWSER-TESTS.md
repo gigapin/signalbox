@@ -4,14 +4,14 @@ Guida passo per passo per provare l'applicazione com'è dopo M8, prima di inizia
 
 **Guida rivista il 2026-11-08.** È rivolta a chi usa l'applicazione e non ne conosce il codice. La revisione delle istruzioni non cambia gli esiti del collaudo.
 
-**Stato aggiornato al 2026-11-09: l’agente ha eseguito i collaudi accessibili da H13. Registro dei 72 casi restanti: 47 PASS, 2 FAIL, 18 BLOCCATO e 5 NON ESEGUITO (compresi i quattro casi facoltativi di dominio reale).** Dettaglio per caso, browser, evidenze e ripristini in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). I risultati precedenti fino a H12 restano riferiti dall’utente. Il collaudo non è concluso: riprendere da **H28**, completare i prerequisiti mancanti e correggere/ripetere L05 e L07 secondo il registro.
+**Stato aggiornato al 2026-11-09: l’agente ha eseguito i collaudi accessibili da H13. Registro dei 72 casi restanti: 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO (compresi i quattro casi facoltativi di dominio reale).** Dettaglio per caso, browser, evidenze e ripristini in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). I risultati precedenti fino a H12 restano riferiti dall’utente. Il collaudo non è concluso: riprendere da **H28**, completare i prerequisiti mancanti; L05 e L07 sono stati corretti e ripetuti con PASS in BT.08.
 
 
 ## Ripresa della prossima sessione
 
 - Ripartire da **H28** con accesso all’inbox Mailtrap: l’ultima richiesta H27 dopo H26 è delle **10:45 italiane del 2026-11-09**, destinatario sintetico `lettore-bt07-20261109@example.test`. Non usare per deduzione una vecchia email precedente ai cambi password. Proseguire H29–H37 e I14–I17; invito viewer pendente `nuovo-bt07-20261109@example.test` conservato per la ripresa.
 - GiGa Team resta `{TEAM}=2`, pagina `/status/status-test`, titolo `Stato Prova`, tema light/amber, pubblicata senza password né dominio personalizzato. PROVA-HTTP è stato riportato a URL 200, Up e incidente 8 Resolved; soglia 3 e intervallo 60 s invariati. Il suo override preesistente Granted Pro è conservato. H13–H26 e H38–H42 sono PASS osservati nel browser/HTTP.
-- Conservare le fixture del blocco I documentate nel registro; J01–J06 sono PASS e le fixture Free sono state eliminate. Per K02–K04 serve la riconferma password dell’operatore; per L02 VoiceOver, per L03 zoom nativo 200%. L05/L07 hanno rilevato lo stesso difetto: invio offline senza messaggio inline e `Network Error` non gestito. Non iniziare M9.01 prima della chiusura dei casi obbligatori.
+- Conservare le fixture del blocco I documentate nel registro; J01–J06 sono PASS e le fixture Free sono state eliminate. Per K02–K04 serve la riconferma password dell’operatore; per L02 VoiceOver, per L03 zoom nativo 200%. L05/L07 ora PASS dopo BT.08: avviso di connessione visibile, testo conservato e nessuna eccezione JS non gestita. I debordamenti mobile sono corretti; L03 resta aperto solo per lo zoom nativo. Non iniziare M9.01 prima della chiusura dei casi obbligatori.
 - G08–G10 e H43–H46 restano facoltativi, senza PASS per deduzione. Nessun dominio reale/DNS/hosts modificato. I processi vanno ricontrollati prima di riprendere; non assumere che siano rimasti attivi.
 - L'errore **Live updates could not refresh** è stato corretto e le pagine ricompilate (**BT.03**). Ricarica completamente le schede rimaste aperte dalla sessione precedente. Le verifiche tecniche sono in [TASKS.md](TASKS.md#diagnosi-da-collaudo--aggiornamenti-realtime-2026-11-06); G08–G10 restano da confermare manualmente.
 - Il trial Pro di GiGa Team è scaduto il 2026-11-06 alle 13:33 italiane. I check a 60 s richiedono un piano/override compatibile; Free richiede 300 s. Il motore ha ripreso a registrare check di PROVA-HTTP durante la diagnosi, ma piano e processi vanno ricontrollati alla ripresa secondo le sezioni 1.1 e 1.5, senza presumere che siano rimasti attivi.
@@ -871,7 +871,7 @@ docker compose exec web php artisan metrics:rollups
 
 Ultima sessione: **2026-11-09** · Browser: **Brave / Chromium 157.0.8103.39** · Secondo browser: **Firefox 159.0**
 
-**Punto di ripartenza: H28.** I risultati osservati dall’agente il 2026-11-09 sono nel [registro per caso](BROWSER-RESULTS-2026-11-09.md#registro-per-caso): 47 PASS, 2 FAIL, 18 BLOCCATO, 5 NON ESEGUITO. `CONCLUSO` nei blocchi storici registra soltanto l’avanzamento comunicato dall’utente, senza attribuire PASS ai singoli casi. H, I, K e L restano aperti; J completato.
+**Punto di ripartenza: H28.** I risultati osservati dall’agente il 2026-11-09 sono nel [registro per caso](BROWSER-RESULTS-2026-11-09.md#registro-per-caso): 49 PASS, 0 FAIL, 18 BLOCCATO, 5 NON ESEGUITO. `CONCLUSO` nei blocchi storici registra soltanto l’avanzamento comunicato dall’utente, senza attribuire PASS ai singoli casi. H, I, K e L restano aperti; J completato.
 
 Puoi mandarmi anche solo i casi che non sono `PASS`.
 
@@ -898,14 +898,14 @@ Riepilogo dei blocchi, con risultati delegati del 2026-11-09:
 | I — Permessi e isolamento | I01–I19 | IN CORSO | I01–I13/I18–I19 PASS; I14–I17 BLOCCATO per email |
 | J — Limiti di piano | J01–J06 | PASS | Tutti osservati; fixture Free eliminate |
 | K — Amministratore | K01–K05 | IN CORSO | K01/K05 PASS; K02/K03 BLOCCATO, K04 NON ESEGUITO |
-| L — Accessibilità | L01–L08 | IN CORSO | L01/L04/L06/L08 PASS; L05/L07 FAIL; L02/L03 BLOCCATO |
+| L — Accessibilità | L01–L08 | IN CORSO | L01/L04–L08 PASS; L02/L03 BLOCCATO |
 
 ### Difetti trovati
 
 | Caso | URL e account | Atteso | Ottenuto | Gravità |
 |---|---|---|---|---|
 | G08–G10, realtime | `/teams/2/monitors`, GiGa Team | Aggiornamento al completamento dei check senza ricarica | Banner di errore del recupero; contesto nativo di fetch corretto in BT.03, gate e prova Firefox isolata superati. Conferma manuale specifica ancora da registrare | Funzionale, correzione implementata |
-| L05 / L07, offline | `/teams/3/incidents/9`, owner sintetico | Errore comprensibile nel modulo, nessuna eccezione JS non gestita | Nessun errore inline; `Network Error` non gestito. Recupero con ritorno online/ricarica senza duplicati; [evidenza](browser-evidence/2026-11-09/L05-offline.png) | Funzionale, da correggere |
+| L05 / L07, offline | `/teams/3/incidents/9`, owner sintetico | Errore comprensibile nel modulo, nessuna eccezione JS non gestita | Difetto iniziale documentato nel registro; corretto in BT.08 e ripetuto con PASS in Brave/Firefox. [Correzione e verifiche](BROWSER-RESULTS-2026-11-09.md#correzione-e-ripetizione-bt08) | Funzionale, corretto e verificato |
 
 ### Note sulla grafica
 
@@ -913,4 +913,4 @@ Da usare come spunto per i task UI, non come difetti da correggere ora.
 
 | Pagina | Cosa non funziona o cosa vorresti | Confronto con UptimeRobot |
 |---|---|---|
-| Lista/dettaglio monitor e gestione status page a 390 px | Navigazione e tabelle allargano il documento a 420/528/416 px; input e pulsanti misurati nel viewport. [Evidenze](BROWSER-RESULTS-2026-11-09.md#note-mobile-da-riprendere-nella-ui) | Da considerare nei task UI |
+| Lista/dettaglio monitor e gestione status page a 390 px | Debordamenti corretti in BT.08: documento a 390 px, navigazione su più righe e tabelle scorrevoli da tastiera. [Prima e dopo](BROWSER-RESULTS-2026-11-09.md#correzione-e-ripetizione-bt08) | Correzione funzionale verificata; restyling generale rinviato ai task UI |

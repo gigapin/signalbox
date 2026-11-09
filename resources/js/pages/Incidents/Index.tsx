@@ -68,7 +68,10 @@ export default function Index() {
     return (
         <AuthLayout title="Incidents" description={`Incidents of ${team.name}.`} wide>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <nav aria-label="Team navigation" className="mb-6 flex gap-4 text-sm text-emerald-300">
+            <nav
+                aria-label="Team navigation"
+                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
+            >
                 <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
                 <Link href={monitorsPath(team.id)}>Monitors</Link>
                 <Link href={`/teams/${team.id}`}>Team members</Link>

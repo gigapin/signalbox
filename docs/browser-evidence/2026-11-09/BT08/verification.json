@@ -1,0 +1,122 @@
+{
+  "Brave": {
+    "version": "157.0.8103.39",
+    "mobile": [
+      {
+        "screen": "monitors",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": [
+          {
+            "name": "Monitors of Synthetic Alpha",
+            "width": 342,
+            "content": 397
+          }
+        ]
+      },
+      {
+        "screen": "monitor",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": [
+          {
+            "name": "Recent incidents of PROVA-RUOLI-ALPHA",
+            "width": 342,
+            "content": 482
+          }
+        ]
+      },
+      {
+        "screen": "incident",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      },
+      {
+        "screen": "notifications",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      },
+      {
+        "screen": "status-management",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      },
+      {
+        "screen": "public",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      }
+    ],
+    "errors": []
+  },
+  "Firefox": {
+    "version": "159.0",
+    "mobile": [
+      {
+        "screen": "monitors",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": [
+          {
+            "name": "Monitors of Synthetic Alpha",
+            "width": 342,
+            "content": 397
+          }
+        ]
+      },
+      {
+        "screen": "monitor",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": [
+          {
+            "name": "Recent incidents of PROVA-RUOLI-ALPHA",
+            "width": 342,
+            "content": 482
+          }
+        ]
+      },
+      {
+        "screen": "incident",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      },
+      {
+        "screen": "notifications",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      },
+      {
+        "screen": "status-management",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      },
+      {
+        "screen": "public",
+        "viewport": 390,
+        "document": 390,
+        "overflowControls": [],
+        "tables": []
+      }
+    ],
+    "errors": []
+  }
+}

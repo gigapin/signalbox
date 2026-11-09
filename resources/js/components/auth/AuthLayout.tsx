@@ -48,8 +48,10 @@ export default function AuthLayout({ title, description, children, wide = false 
                             </Link>
                         )}
                     </div>
-                    <h1 className="mt-10 text-3xl font-semibold">{title}</h1>
-                    {description && <p className="mt-3 text-slate-300">{description}</p>}
+                    <h1 className="mt-10 text-3xl font-semibold break-words">{title}</h1>
+                    {description && (
+                        <p className="mt-3 break-words text-slate-300">{description}</p>
+                    )}
                     {status && (
                         <p
                             role="status"

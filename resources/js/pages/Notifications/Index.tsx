@@ -27,7 +27,10 @@ export default function Index() {
             description={`Channels and escalation of ${team.name}.`}
             wide
         >
-            <nav aria-label="Team navigation" className="mb-6 flex gap-4 text-sm text-emerald-300">
+            <nav
+                aria-label="Team navigation"
+                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
+            >
                 <Link href={`/teams/${team.id}`}>Team members</Link>
                 <Link href={`/teams/${team.id}/monitors`}>Monitors</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>

@@ -43,6 +43,21 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
+test('lets keyboard users focus the incident table viewport and then open its first incident', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Index, indexProps([row(42)]));
+    const viewport = screen.getByRole('region', { name: 'Incidents of Synthetic team' });
+
+    for (let step = 0; step < 20 && document.activeElement !== viewport; step++) {
+        await user.tab();
+    }
+
+    expect(viewport).toHaveFocus();
+    expect(within(viewport).getByRole('table')).toHaveAccessibleName('Incidents of Synthetic team');
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Incident #42' })).toHaveFocus();
+});
+
 /**
  * @param id Row identity.
  * @param status Incident status.

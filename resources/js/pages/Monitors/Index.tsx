@@ -1,4 +1,5 @@
 /** List, search and filter one team's monitors with pagination and explicit empty and error states. */
+import TableScrollArea from '../../components/TableScrollArea';
 import { Link, router, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
@@ -160,7 +161,10 @@ export default function Index() {
     return (
         <AuthLayout title="Monitors" description={`Monitors of ${team.name}.`} wide>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <nav aria-label="Team navigation" className="mb-6 flex gap-4 text-sm text-emerald-300">
+            <nav
+                aria-label="Team navigation"
+                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
+            >
                 <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
                 <Link href={`/teams/${team.id}`}>Team members</Link>
                 <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
@@ -284,54 +288,58 @@ export default function Index() {
                 )}
 
                 {monitors.data.length > 0 && (
-                    <table className="w-full text-left text-sm">
-                        <caption className="sr-only">Monitors of {team.name}</caption>
-                        <thead>
-                            <tr className="border-b border-slate-700">
-                                <th scope="col" className="py-2">
-                                    Name
-                                </th>
-                                <th scope="col">Type</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">State</th>
-                                <th scope="col">Interval</th>
-                                <th scope="col">Regions</th>
-                                <th scope="col">Last check</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {monitors.data.map((monitor) => (
-                                <tr key={monitor.id} className="border-b border-slate-800">
-                                    <th scope="row" className="py-2 font-medium">
-                                        <Link
-                                            href={monitorPath(team.id, monitor.id)}
-                                            className="text-emerald-300 underline"
-                                        >
-                                            {monitor.name}
-                                        </Link>
+                    <TableScrollArea label={`Monitors of ${team.name}`}>
+                        <table className="w-full text-left text-sm">
+                            <caption className="sr-only">Monitors of {team.name}</caption>
+                            <thead>
+                                <tr className="border-b border-slate-700">
+                                    <th scope="col" className="py-2">
+                                        Name
                                     </th>
-                                    <td>{typeLabel(monitor.type)}</td>
-                                    <td>
-                                        <StatusBadge status={monitor.lastStatus} />
-                                    </td>
-                                    <td>
-                                        <StateBadge state={monitor.state} />
-                                    </td>
-                                    <td>{intervalLabel(monitor.intervalSeconds)}</td>
-                                    <td>{monitor.regions.map(regionLabel).join(', ')}</td>
-                                    <td>
-                                        {monitor.lastCheckedAt === null ? (
-                                            'Never'
-                                        ) : (
-                                            <time dateTime={monitor.lastCheckedAt}>
-                                                {new Date(monitor.lastCheckedAt).toLocaleString()}
-                                            </time>
-                                        )}
-                                    </td>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">State</th>
+                                    <th scope="col">Interval</th>
+                                    <th scope="col">Regions</th>
+                                    <th scope="col">Last check</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {monitors.data.map((monitor) => (
+                                    <tr key={monitor.id} className="border-b border-slate-800">
+                                        <th scope="row" className="py-2 font-medium">
+                                            <Link
+                                                href={monitorPath(team.id, monitor.id)}
+                                                className="text-emerald-300 underline"
+                                            >
+                                                {monitor.name}
+                                            </Link>
+                                        </th>
+                                        <td>{typeLabel(monitor.type)}</td>
+                                        <td>
+                                            <StatusBadge status={monitor.lastStatus} />
+                                        </td>
+                                        <td>
+                                            <StateBadge state={monitor.state} />
+                                        </td>
+                                        <td>{intervalLabel(monitor.intervalSeconds)}</td>
+                                        <td>{monitor.regions.map(regionLabel).join(', ')}</td>
+                                        <td>
+                                            {monitor.lastCheckedAt === null ? (
+                                                'Never'
+                                            ) : (
+                                                <time dateTime={monitor.lastCheckedAt}>
+                                                    {new Date(
+                                                        monitor.lastCheckedAt,
+                                                    ).toLocaleString()}
+                                                </time>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </TableScrollArea>
                 )}
 
                 <Pagination

@@ -38,3 +38,6 @@ Thumbs.db
 # Ignore local frontend test reports and coverage artifacts.
 /.vitest/
 /coverage/
+
+# Keep browser acceptance screenshots local instead of versioning them.
+/docs/browser-evidence/**/*.png

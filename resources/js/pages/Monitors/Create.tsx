@@ -19,11 +19,13 @@ interface CreateProps extends MonitorPageProps {
     options: MonitorOptions;
     /** Informational plan quota. */
     usage: MonitorUsage;
+    /** Operational cadence ceiling in seconds from the server configuration. */
+    maximumIntervalSeconds: number;
 }
 
 /** Warn about a full quota up front; the server still decides and reports the refusal on submit. */
 export default function Create() {
-    const { team, defaults, options, usage } = usePage<CreateProps>().props;
+    const { team, defaults, options, usage, maximumIntervalSeconds } = usePage<CreateProps>().props;
     return (
         <AuthLayout title="New monitor" description={`Add a monitor to ${team.name}.`} wide>
             <nav aria-label="Monitor navigation" className="mb-6 text-sm text-emerald-300">
@@ -43,6 +45,7 @@ export default function Create() {
                 method="post"
                 options={options}
                 usage={usage}
+                maximumIntervalSeconds={maximumIntervalSeconds}
                 submitLabel="Create monitor"
             />
         </AuthLayout>

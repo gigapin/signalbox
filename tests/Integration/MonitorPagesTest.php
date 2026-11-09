@@ -264,6 +264,31 @@ it('projects quota hints from the effective plan and form defaults above the pla
             ->where('usage', ['used' => 0, 'limit' => 50, 'minimumIntervalSeconds' => 60, 'full' => false]));
 });
 
+it('projects the configured cadence ceiling into both forms and enforces it when JavaScript is bypassed', function (): void {
+    config()->set('monitor-input.interval_max_seconds', 7200);
+    $team = Team::factory()->create();
+    $monitor = pageMonitor($team, 'Cadence validation');
+
+    foreach (["/teams/{$team->id}/monitors/create", "/teams/{$team->id}/monitors/{$monitor->id}/edit"] as $url) {
+        $this->actingAs($team->owner)
+            ->get($url)
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('maximumIntervalSeconds', 7200)
+                ->where('usage.minimumIntervalSeconds', 60));
+    }
+
+    $this->actingAs($team->owner)
+        ->patchJson("/teams/{$team->id}/monitors/{$monitor->id}", ['interval_seconds' => 7201])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('interval_seconds');
+    $this->assertDatabaseHas('monitors', [
+        'id' => $monitor->id,
+        'team_id' => $team->id,
+        'interval_seconds' => $monitor->interval_seconds,
+    ]);
+});
+
 it('marks a full quota and monitors beyond it without blocking reads', function (): void {
     $team = Team::factory()->trialEnded()->create();
 

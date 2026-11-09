@@ -121,6 +121,12 @@ The full frontend gate passes with **184 DOM tests in 22 files** and **5 quality
 
 The monitor DOM suite now reproduces validation callbacks completing before React has committed the inline error. Focus is scheduled from the committed error state, scoped to the mounted form, and its animation frame is canceled on unmount. The tests also ensure ordinary field edits do not keep stealing focus. Both new regressions fail on the previous implementation. Real Brave/Firefox rejected PATCH requests verify visible focus at 1365×600 and 390×844, with the saved interval unchanged. The complete frontend gate now passes **186 DOM tests in 22 files** and **5 quality tests**. These checks do not establish VoiceOver announcements or native 200-percent zoom acceptance.
 
+## Live cadence validation (BT.12)
+
+The monitor form suite covers immediate errors, correction, click/Enter blocking without router calls, malformed/empty/too-large input, server-error clearing, configured maximums and unchanged legacy cadences after a downgrade. Thirteen new cases fail on the previous server-only behavior and pass with live validation. A backend case changes the operational ceiling to 7200 seconds, verifies that both forms project it and confirms that a direct JSON update to 7201 is still refused without altering persisted data. These tests use isolated PostgreSQL through `php-test`.
+
+Separate real-browser cases cover create/edit in Brave and Firefox, including a 390-pixel mobile viewport. They count actual mutation/navigation requests: both stay zero for invalid cadence, drafts remain editable and the error clears immediately after correction. The corrected request is intercepted before the server so development monitors are not modified. The complete frontend gate passes **199 DOM tests in 22 files** and **5 quality tests**.
+
 ## Compatibility and evidence limits
 
 New test dependencies are exact-pinned in npm's lock. React 19, Inertia 2, Vite 8 and all existing direct dependency versions are preserved. jsdom 30.1.3 requires Node 22.22.2 on Node 22, so the minimum patch rises from 22.13.0 to **22.22.2**; the major stays 22, npm stays 10, and the existing host/pinned Docker image satisfy the floor. This is documented in [DEPENDENCIES.md](DEPENDENCIES.md).

@@ -49,6 +49,137 @@ const defaults: MonitorDefaults = {
 /** Quota with room left on a Free plan. */
 const usage = { used: 2, limit: 5, minimumIntervalSeconds: 300, full: false };
 
+/** Operational upper cadence bound projected by the server into both form pages. */
+const maximumIntervalSeconds = 86400;
+
+test.each([
+    { mode: 'create', minimum: 60, invalid: '30' },
+    { mode: 'create', minimum: 300, invalid: '60' },
+    { mode: 'edit', minimum: 60, invalid: '30' },
+    { mode: 'edit', minimum: 300, invalid: '60' },
+])(
+    'validates $mode cadence while typing and blocks click and Enter below $minimum seconds',
+    async ({ mode, minimum, invalid }) => {
+        const user = userEvent.setup();
+        const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
+        const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+        renderInertia('Signalbox', mode === 'create' ? Create : Edit, {
+            team,
+            defaults,
+            options,
+            usage: { ...usage, minimumIntervalSeconds: minimum },
+            maximumIntervalSeconds,
+            ...(mode === 'edit' ? { monitor: httpDetail } : {}),
+        });
+        const interval = screen.getByLabelText('Interval (seconds)');
+        const originalUrl = window.location.href;
+        await user.clear(interval);
+        await user.type(interval, invalid);
+
+        expect(interval).toHaveFocus();
+        expect(interval).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByRole('alert')).toHaveTextContent(`at least ${minimum} seconds`);
+        await user.keyboard('{Enter}');
+        await user.click(
+            screen.getByRole('button', {
+                name: mode === 'create' ? 'Create monitor' : 'Save changes',
+            }),
+        );
+
+        expect(post).not.toHaveBeenCalled();
+        expect(patch).not.toHaveBeenCalled();
+        expect(window.location.href).toBe(originalUrl);
+        expect(interval).toHaveValue(invalid);
+        expect(interval).toHaveFocus();
+
+        await user.clear(interval);
+        await user.type(interval, String(minimum));
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(interval).toHaveAttribute('aria-invalid', 'false');
+        await user.keyboard('{Enter}');
+        expect(mode === 'create' ? post : patch).toHaveBeenCalledOnce();
+    },
+);
+
+test.each(['', '-1', 'abc', '60.5', '3e2', '9007199254740993', '86401'])(
+    'keeps invalid cadence %j local without submitting it',
+    async (value) => {
+        const user = userEvent.setup();
+        const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+        renderInertia('Signalbox', Edit, {
+            team,
+            monitor: httpDetail,
+            defaults,
+            options,
+            usage,
+            maximumIntervalSeconds,
+        });
+        const interval = screen.getByLabelText('Interval (seconds)');
+        await user.clear(interval);
+        if (value !== '') {
+            await user.type(interval, value);
+        }
+
+        expect(interval).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        await user.keyboard('{Enter}');
+        expect(patch).not.toHaveBeenCalled();
+        expect(interval).toHaveValue(value);
+    },
+);
+
+test('allows an unchanged legacy cadence below the plan minimum while validating edits to it', async () => {
+    const user = userEvent.setup();
+    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Edit, {
+        team,
+        monitor: { ...httpDetail, intervalSeconds: 60 },
+        defaults,
+        options,
+        usage,
+        maximumIntervalSeconds,
+    });
+    await user.type(screen.getByLabelText('Name'), ' revised');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(patch).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Interval (seconds)'));
+    await user.type(screen.getByLabelText('Interval (seconds)'), '120');
+    expect(screen.getByRole('alert')).toHaveTextContent('at least 300 seconds');
+    await user.keyboard('{Enter}');
+    expect(patch).toHaveBeenCalledOnce();
+});
+
+test('clears a server interval error when editing it and uses the configured maximum', async () => {
+    const user = userEvent.setup();
+    let visit: VisitOptions | undefined;
+    vi.spyOn(router, 'patch').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
+    renderInertia('Signalbox', Edit, {
+        team,
+        monitor: httpDetail,
+        defaults,
+        options,
+        usage,
+        maximumIntervalSeconds: 7200,
+    });
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    act(() =>
+        visit?.onError?.({ interval_seconds: 'The plan changed. Reload to see its new minimum.' }),
+    );
+    await user.clear(screen.getByLabelText('Interval (seconds)'));
+    await user.type(screen.getByLabelText('Interval (seconds)'), '7201');
+    expect(screen.getByRole('alert')).toHaveTextContent('at most 7200 seconds');
+    expect(
+        screen.queryByText('The plan changed. Reload to see its new minimum.'),
+    ).not.toBeInTheDocument();
+    await user.clear(screen.getByLabelText('Interval (seconds)'));
+    await user.type(screen.getByLabelText('Interval (seconds)'), '7200');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
 /** Monitor detail sections without incidents, maintenance or escalation policies, as for a new monitor. */
 const quietHistory = {
     recentIncidents: [],
@@ -264,7 +395,7 @@ async function createsDnsMonitorWithRelevantFields(): Promise<void> {
     const user = userEvent.setup();
     const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
 
-    renderInertia('Signalbox', Create, { team, defaults, options, usage });
+    renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
     expect(screen.getByRole('group', { name: 'HTTP request' })).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Type'), 'dns');
@@ -300,7 +431,14 @@ async function editsWithoutResendingSecrets(): Promise<void> {
     const user = userEvent.setup();
     const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
 
-    renderInertia('Signalbox', Edit, { team, monitor: httpDetail, defaults, options, usage });
+    renderInertia('Signalbox', Edit, {
+        team,
+        monitor: httpDetail,
+        defaults,
+        options,
+        usage,
+        maximumIntervalSeconds,
+    });
     expect(screen.getByText(/Stored URL:/)).toHaveTextContent('key=[REDACTED]');
     expect(screen.getByText(/Stored headers:/)).toHaveTextContent('authorization (values hidden)');
     expect(screen.queryByLabelText('URL')).not.toBeInTheDocument();
@@ -339,7 +477,14 @@ async function requiresSecretsOnTypeChange(): Promise<void> {
         },
     };
 
-    renderInertia('Signalbox', Edit, { team, monitor: tlsDetail, defaults, options, usage });
+    renderInertia('Signalbox', Edit, {
+        team,
+        monitor: tlsDetail,
+        defaults,
+        options,
+        usage,
+        maximumIntervalSeconds,
+    });
     expect(screen.getByLabelText('Host')).toHaveValue('shop.example.test');
 
     await user.selectOptions(screen.getByLabelText('Type'), 'keyword');
@@ -362,7 +507,7 @@ async function showsValidationErrors(): Promise<void> {
         visit = options;
     });
 
-    renderInertia('Signalbox', Create, { team, defaults, options, usage });
+    renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
     await user.click(screen.getByRole('button', { name: 'Create monitor' }));
     act(() => {
         visit?.onError?.({
@@ -383,7 +528,7 @@ async function showsValidationErrors(): Promise<void> {
     );
 }
 
-test('focuses a rejected interval after errors render even when the visit finishes before React commits', async () => {
+test('focuses a server refusal after errors render even when the visit finishes before React commits', async () => {
     const user = userEvent.setup();
     const frames: FrameRequestCallback[] = [];
     let visit: VisitOptions | undefined;
@@ -397,6 +542,7 @@ test('focuses a rejected interval after errors render even when the visit finish
     });
 
     renderInertia('Signalbox', Edit, {
+        maximumIntervalSeconds,
         team,
         monitor: httpDetail,
         defaults,
@@ -405,12 +551,12 @@ test('focuses a rejected interval after errors render even when the visit finish
     });
     const interval = screen.getByLabelText('Interval (seconds)');
     await user.clear(interval);
-    await user.type(interval, '30');
+    await user.type(interval, '120');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     act(() => {
         visit?.onError?.({
-            interval_seconds: 'Your plan requires an interval of at least 60 seconds.',
+            interval_seconds: 'Your plan requires an interval of at least 300 seconds.',
         });
         visit?.onFinish?.({} as never);
         // A finish callback can run before the validation state has reached the DOM.
@@ -419,9 +565,9 @@ test('focuses a rejected interval after errors render even when the visit finish
     act(() => frames.splice(0).forEach((frame) => frame(0)));
 
     expect(interval).toHaveFocus();
-    expect(interval).toHaveValue('30');
+    expect(interval).toHaveValue('120');
     expect(interval).toHaveAttribute('aria-invalid', 'true');
-    expect(interval).toHaveAccessibleDescription(/Your plan requires an interval of at least 60/);
+    expect(interval).toHaveAccessibleDescription(/Your plan requires an interval of at least 300/);
 
     await user.click(screen.getByLabelText('Name'));
     await user.type(screen.getByLabelText('Name'), ' revised');
@@ -433,6 +579,7 @@ test('cancels pending validation focus when leaving the monitor editor', () => {
     vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(73);
     const cancel = vi.spyOn(window, 'cancelAnimationFrame');
     const view = renderInertia('Signalbox', Edit, {
+        maximumIntervalSeconds,
         team,
         monitor: httpDetail,
         defaults,
@@ -462,7 +609,7 @@ async function keepsInputAfterQuotaRefusal(): Promise<void> {
         visit = options;
     });
 
-    renderInertia('Signalbox', Create, { team, defaults, options, usage });
+    renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
     await user.type(screen.getByLabelText('Name'), 'Checkout');
     await user.type(screen.getByLabelText('URL'), 'https://shop.example.test/health');
     await user.click(screen.getByRole('button', { name: 'Create monitor' }));

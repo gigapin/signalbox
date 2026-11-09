@@ -58,6 +58,17 @@ Il modulo ora attende il commit degli errori con un effetto React e programma il
 
 Ripetizione reale su un monitor sintetico con minimo Pro di 60 s, sola submission invalida: in **Brave 157 e Firefox 159**, campo intervallo focalizzato e messaggio interamente visibile a **349–389 px** in un viewport alto 600 px; nessuna eccezione JS. Verificata anche la vista **390×844 px**, senza scrivere un nuovo intervallo. Due regressioni prima fallite ora passano; gate frontend **186 test DOM**, 5 qualità, lint/formato/TypeScript/build superato. J01 conserva PASS dopo questa correzione; nessun altro caso viene dedotto dalla prova.
 
+## Validazione durante la digitazione — BT.12
+
+Dopo BT.11 l’utente ha segnalato nuovamente l’assenza di feedback e ha richiesto esplicitamente la validazione React prima dell’invio. Il solo spostamento del focus dopo la risposta del server non soddisfaceva questa UX; BT.12 lo integra con controllo locale dell’intervallo.
+
+- Messaggio inline e stato ARIA aggiornati durante la digitazione per campo vuoto, formato non intero, minimo del piano e massimo operativo. Il minimo arriva dalla policy proiettata in `usage`; il massimo da `monitor-input.interval_max_seconds`, ora esposto in `maximumIntervalSeconds` nelle pagine Create/Edit. Nessun limite di piano è duplicato nel frontend.
+- Clic e Invio con valore invalido chiamano soltanto il controllo locale: **nessun POST/PATCH, redirect o navigazione**. Il modulo e tutti i valori digitati restano disponibili. Correggendo il campo, l’errore locale o precedente del server si cancella immediatamente; l’invio torna consentito.
+- Conservata la regola di downgrade: un intervallo preesistente sotto il minimo del piano permette modifiche non correlate se rimane invariato; un nuovo valore sotto minimo viene bloccato. Le validazioni server restano autoritative e ricontrollano i limiti anche senza JavaScript o con dati di piano cambiati.
+- Sei scenari reali in Brave 157 e Firefox 159: modifica a 1365×600 e 390×844, creazione a 1365×600. Messaggio verificato prima del blur, **0 richieste e 0 navigazioni** con valore invalido, bozza conservata e scomparsa dell’errore correggendo il valore. L’invio corretto è stato intercettato prima del server per verificare l’abilitazione senza scrivere dati. Nessuno screenshot.
+
+Le regressioni e il gate frontend comprendono 199 test DOM; la precedente prova di solo focus resta nella cronologia, ma il comportamento corrente di J01 è quello di questa sezione.
+
 ## Registro per caso
 
 Le ore osservate sono italiane, CET (UTC+1). Una riga senza ora indica un prerequisito mancante o una prova facoltativa non scelta.

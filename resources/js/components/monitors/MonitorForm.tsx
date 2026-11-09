@@ -1,6 +1,6 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
 import { useForm } from '@inertiajs/react';
-import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
     buildPayload,
     HTTP_TYPES,
@@ -9,6 +9,7 @@ import {
     type MonitorFormData,
 } from './formData';
 import { regionLabel, typeLabel } from './labels';
+import { intervalValidationError } from './intervalValidation';
 import type { MonitorConfigurationView, MonitorOptions, MonitorUsage } from './types';
 
 /** Form inputs for one create or edit screen. */
@@ -27,6 +28,8 @@ interface MonitorFormProps {
     options: MonitorOptions;
     /** Plan quota, used to explain the minimum interval. */
     usage: MonitorUsage;
+    /** Operational cadence ceiling in seconds, supplied by the server configuration. */
+    maximumIntervalSeconds: number;
     /** Submit button label. */
     submitLabel: string;
 }
@@ -93,7 +96,7 @@ type TextField = {
 
 /** Field styling shared by inputs, selects and text areas. */
 const INPUT =
-    'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
+    'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 aria-invalid:border-red-400 focus:outline-2 focus:outline-emerald-400';
 
 /**
  * @param name Field identity.
@@ -248,15 +251,23 @@ export default function MonitorForm({
     method,
     options,
     usage,
+    maximumIntervalSeconds,
     submitLabel,
 }: MonitorFormProps) {
     const form = useForm<MonitorFormData>(initial);
     const formElement = useRef<HTMLFormElement>(null);
+    const [serverFocusAttempt, setServerFocusAttempt] = useState(0);
     const data = form.data;
     const errors = form.errors as Record<string, string>;
     const isHttp = HTTP_TYPES.includes(data.type);
     const mustSendSecrets = secretsRequired(data, originalType);
     const storedHttp = stored !== null && HTTP_TYPES.includes(stored.type) && !mustSendSecrets;
+    const intervalError = intervalValidationError(
+        data.interval_seconds,
+        usage.minimumIntervalSeconds,
+        maximumIntervalSeconds,
+        originalType === null ? null : initial.interval_seconds,
+    );
 
     const general = Object.entries(errors).filter(
         ([key]) =>
@@ -264,9 +275,9 @@ export default function MonitorForm({
             !NESTED_FIELDS.some((prefix) => key === prefix || key.startsWith(`${prefix}.`)),
     );
 
-    // Wait for error markup to commit; visit completion can precede React's validation render.
+    // Focus only after a server refusal commits; live edits must not steal focus on each keystroke.
     useEffect(() => {
-        if (Object.keys(errors).length === 0) {
+        if (serverFocusAttempt === 0) {
             return;
         }
 
@@ -277,7 +288,7 @@ export default function MonitorForm({
         });
 
         return () => window.cancelAnimationFrame(frame);
-    }, [errors]);
+    }, [serverFocusAttempt]);
 
     /**
      * @param field Form key to update.
@@ -287,11 +298,22 @@ export default function MonitorForm({
         return (value: string) => form.setData(field, value);
     }
 
-    function submit(event: FormEvent<HTMLFormElement>) {
+    /** @param event Submission from either the button or Enter; invalid cadence stays entirely local. */
+    function submit(event: FormEvent<HTMLFormElement>): void {
         event.preventDefault();
+
+        if (intervalError !== undefined) {
+            formElement.current?.querySelector<HTMLInputElement>('#interval_seconds')?.focus();
+
+            return;
+        }
+
         form.transform((current) => buildPayload(current, originalType));
 
-        const visit = { preserveScroll: true };
+        const visit = {
+            preserveScroll: true,
+            onError: () => setServerFocusAttempt((attempt) => attempt + 1),
+        };
 
         if (method === 'post') {
             form.post(action, visit);
@@ -386,8 +408,11 @@ export default function MonitorForm({
                         name="interval_seconds"
                         label="Interval (seconds)"
                         value={data.interval_seconds}
-                        onChange={bind('interval_seconds')}
-                        error={errors.interval_seconds}
+                        onChange={(value) => {
+                            form.clearErrors('interval_seconds');
+                            form.setData('interval_seconds', value);
+                        }}
+                        error={intervalError ?? errors.interval_seconds}
                         hint={`Your plan allows at least ${usage.minimumIntervalSeconds} seconds.`}
                         numeric
                         required

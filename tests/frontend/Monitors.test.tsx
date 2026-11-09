@@ -59,6 +59,21 @@ const quietHistory = {
 /** No active filters. */
 const noFilters = { q: '', type: null, status: null, state: null };
 
+test('lets keyboard users reach the monitor table viewport before its monitor links', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Index, indexProps([row(11, 'Checkout API')]));
+    const viewport = screen.getByRole('region', { name: 'Monitors of Synthetic team' });
+
+    for (let step = 0; step < 20 && document.activeElement !== viewport; step++) {
+        await user.tab();
+    }
+
+    expect(viewport).toHaveFocus();
+    expect(within(viewport).getByRole('table')).toHaveAccessibleName('Monitors of Synthetic team');
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Checkout API' })).toHaveFocus();
+});
+
 /**
  * @param id Row identity.
  * @param name Row label.

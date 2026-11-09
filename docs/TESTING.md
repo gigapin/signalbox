@@ -111,6 +111,12 @@ npm run verify
 
 `test` runs Vitest once and exits; `test:watch` is explicitly interactive. `verify` runs existing frontend quality checks, DOM tests and the production build. TypeScript and ESLint now include test source plus `vitest.config.ts`; formatting includes frontend tests. Reports/coverage outputs are ignored; no coverage target or coverage measurement is claimed.
 
+## Inertia transport and table keyboard regressions (BT.08)
+
+`RequestFailureNotice.test.tsx` uses the installed Inertia form and Axios XMLHttpRequest adapter, failing its send via a synthetic browser error event without network access. It checks visible feedback, retained drafts, released processing, timeout categories, diagnostic redaction, warning dismissal/success and subscription cleanup. Unrelated programming errors, cancellations and HTTP responses remain unhandled by the notice. The monitor and incident suites additionally reach the named table viewport and its first resource link using Tab.
+
+The full frontend gate passes with **184 DOM tests in 22 files** and **5 quality tests**. Separate Brave/Firefox checks use the development app with scheduler/workers stopped: offline submission, explicit recovery and a real committed update whose response is dropped. Twelve mobile views keep their document at 390 CSS pixels and their tables keyboard-scrollable. Those checks do not replace VoiceOver or native browser zoom acceptance. See [the transport contract](REQUEST-FAILURES.md) and [browser evidence](BROWSER-RESULTS-2026-11-09.md#correzione-e-ripetizione-bt08).
+
 ## Compatibility and evidence limits
 
 New test dependencies are exact-pinned in npm's lock. React 19, Inertia 2, Vite 8 and all existing direct dependency versions are preserved. jsdom 30.1.3 requires Node 22.22.2 on Node 22, so the minimum patch rises from 22.13.0 to **22.22.2**; the major stays 22, npm stays 10, and the existing host/pinned Docker image satisfy the floor. This is documented in [DEPENDENCIES.md](DEPENDENCIES.md).

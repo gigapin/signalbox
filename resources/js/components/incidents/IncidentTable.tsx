@@ -1,4 +1,5 @@
 /** Render incident rows as an accessible table shared by the team list and the monitor page. */
+import TableScrollArea from '../TableScrollArea';
 import { Link } from '@inertiajs/react';
 import { monitorPath } from '../monitors/urls';
 import { IncidentStatusBadge, SeverityBadge } from './IncidentBadges';
@@ -27,60 +28,62 @@ export default function IncidentTable({
     showMonitor,
 }: IncidentTableProps) {
     return (
-        <table className="w-full text-left text-sm">
-            <caption className="sr-only">{caption}</caption>
-            <thead>
-                <tr className="border-b border-slate-700">
-                    <th scope="col" className="py-2">
-                        Incident
-                    </th>
-                    {showMonitor && <th scope="col">Monitor</th>}
-                    <th scope="col">Status</th>
-                    <th scope="col">Severity</th>
-                    <th scope="col">Cause</th>
-                    <th scope="col">Started</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">Responsible</th>
-                </tr>
-            </thead>
-            <tbody>
-                {incidents.map((incident) => (
-                    <tr key={incident.id} className="border-b border-slate-800">
-                        <th scope="row" className="py-2 font-medium">
-                            <Link
-                                href={incidentPath(teamId, incident.id)}
-                                className="text-emerald-300 underline"
-                            >
-                                Incident #{incident.id}
-                            </Link>
+        <TableScrollArea label={caption}>
+            <table className="w-full text-left text-sm">
+                <caption className="sr-only">{caption}</caption>
+                <thead>
+                    <tr className="border-b border-slate-700">
+                        <th scope="col" className="py-2">
+                            Incident
                         </th>
-                        {showMonitor && (
-                            <td>
-                                <Link
-                                    href={monitorPath(teamId, incident.monitor.id)}
-                                    className="underline"
-                                >
-                                    {incident.monitor.name}
-                                </Link>
-                            </td>
-                        )}
-                        <td>
-                            <IncidentStatusBadge status={incident.status} />
-                        </td>
-                        <td>
-                            <SeverityBadge severity={incident.severity} />
-                        </td>
-                        <td>{causeLabel(incident.cause)}</td>
-                        <td>{formatInstant(incident.startedAt, '')}</td>
-                        <td>
-                            {incident.durationSeconds === null
-                                ? 'Ongoing'
-                                : durationLabel(incident.durationSeconds)}
-                        </td>
-                        <td>{incident.acknowledged ? 'Taken' : 'Nobody yet'}</td>
+                        {showMonitor && <th scope="col">Monitor</th>}
+                        <th scope="col">Status</th>
+                        <th scope="col">Severity</th>
+                        <th scope="col">Cause</th>
+                        <th scope="col">Started</th>
+                        <th scope="col">Duration</th>
+                        <th scope="col">Responsible</th>
                     </tr>
-                ))}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {incidents.map((incident) => (
+                        <tr key={incident.id} className="border-b border-slate-800">
+                            <th scope="row" className="py-2 font-medium">
+                                <Link
+                                    href={incidentPath(teamId, incident.id)}
+                                    className="text-emerald-300 underline"
+                                >
+                                    Incident #{incident.id}
+                                </Link>
+                            </th>
+                            {showMonitor && (
+                                <td>
+                                    <Link
+                                        href={monitorPath(teamId, incident.monitor.id)}
+                                        className="underline"
+                                    >
+                                        {incident.monitor.name}
+                                    </Link>
+                                </td>
+                            )}
+                            <td>
+                                <IncidentStatusBadge status={incident.status} />
+                            </td>
+                            <td>
+                                <SeverityBadge severity={incident.severity} />
+                            </td>
+                            <td>{causeLabel(incident.cause)}</td>
+                            <td>{formatInstant(incident.startedAt, '')}</td>
+                            <td>
+                                {incident.durationSeconds === null
+                                    ? 'Ongoing'
+                                    : durationLabel(incident.durationSeconds)}
+                            </td>
+                            <td>{incident.acknowledged ? 'Taken' : 'Nobody yet'}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </TableScrollArea>
     );
 }

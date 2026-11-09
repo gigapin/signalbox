@@ -4,9 +4,19 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## Browser acceptance handoff — 2026-11-09
+
+The agent executed the remaining accessible browser cases starting at H13: **47 PASS, 2 FAIL, 18 BLOCKED and 5 NOT RUN**, including the four optional real-domain cases. See [the complete case register](BROWSER-RESULTS-2026-11-09.md). Resume at **H28** with Mailtrap access, then complete the invitation flows, operator password reconfirmation/2FA, VoiceOver and native 200-percent zoom. Fix and repeat L05/L07: an offline incident update produces an unhandled `Network Error` and no inline error. Acceptance remains open; do not start M9.01.
+
+GiGa Team (2) retains its pre-existing Granted Pro override. `/status/status-test` is published with its original title/theme and no password/domain. PROVA-HTTP was recovered through a real HTTP 200 observation; the original threshold 3, EU and 60-second cadence remain. Synthetic role fixtures and cleanup are recorded in the case register; Free quota fixtures were removed. Recheck services before continuing. No application code, dependency, environment setting, migration, production privilege or 2FA change is included.
+
+The historical handoff below is preserved for context and superseded by this restart point.
+
 ## Browser acceptance handoff — 2026-11-06
 
 The user ended browser acceptance at **H12**. Resume with **H13 — Status page updates and cache** in [BROWSER-TESTS.md](BROWSER-TESTS.md#h3-aggiornamento-e-cache), using GiGa Team (ID 2) and the actual public address `/status/status-test`. The status-page block remains in progress; optional realtime/domain cases and individual manual PASS results are not inferred from this progress. Continue acceptance before M9.01.
+
+The guide was revised on 2026-11-08 for users who did not write the application. It now includes a screen map, browser/account contexts, explicit failure/recovery/publication procedures, exact public-state labels and per-block prerequisites. H13 distinguishes the component label from the overall sentence and measures its wait from the current opening or reopening. This is a documentation revision, not a new browser acceptance result; existing case identifiers and the H13 restart point are preserved.
 
 BT.03 fixes native browser fetch context during live-page recovery. Client assets were rebuilt successfully with the complete frontend gate (175 DOM tests); already open pages need a full reload. The corrected coordinator also passed an isolated Firefox probe with synthetic same-origin HTTP responses. There is no migration, dependency, environment/key change or required server restart for this fix. See [REALTIME-CLIENT.md](REALTIME-CLIENT.md#native-browser-fetch-context-correction-2026-11-06) and [TASKS.md](TASKS.md#diagnosi-da-collaudo--aggiornamenti-realtime-2026-11-06).
 

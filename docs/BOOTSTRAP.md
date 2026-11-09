@@ -47,6 +47,17 @@ At the last runtime checks, scheduling and Reverb were enabled and PROVA-HTTP wa
 | `vite.config.ts` | Integrate the TSX entry point with Laravel, React and Tailwind. |
 | `tests/Feature/BootstrapTest.php` | Verify initial HTML, JSON protocol, liveness and missing routes. |
 
+## Host Vite and Docker dependencies
+
+The host `node_modules` and Compose's `node-modules` volume are separate installations. Installing/building with `docker compose run --rm node ...` does not install packages for a host `npm run dev` process. If using host Vite, install from the current lock in the project directory:
+
+```sh
+npm ci --ignore-scripts --strict-peer-deps
+npm run dev
+```
+
+After a lockfile change, stop the host Vite process, reinstall its locked dependencies and start it again. Laravel uses the development server while `public/hot` exists; a successful Docker build does not make a running host Vite installation complete. A `Failed to resolve import "laravel-echo"` overlay after login/navigation can therefore be an installation mismatch even when the package is correctly declared. Do not add a second dependency version to work around it. See [browser troubleshooting](BROWSER-TESTS.md#se-qualcosa-non-parte).
+
 ## Environment and service boundaries
 
 Copy `.env.example` to `.env` once, then generate the local key with `php artisan key:generate`. Each environment variable has an English comment describing its purpose. The template contains no real credentials. The generated key stays in the ignored local `.env`; the static key in `phpunit.xml` is public test data.

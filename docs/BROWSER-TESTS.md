@@ -809,6 +809,17 @@ Poi attendi un intervallo completo e ricontrolla **Last check**. Un job molto br
 
 **Lo stato cambia solo ricaricando:** con `BROADCAST_CONNECTION=log` gli aggiornamenti automatici sono disattivati. Ricarica dopo i check oppure segui [Aggiornamenti in tempo reale](#aggiornamenti-in-tempo-reale-facoltativo). Cambiare manualmente lo stato dell'incidente non cambia lo stato `up`/`down` del monitor, che dipende dai risultati dei check.
 
+**Vite mostra `Failed to resolve import "laravel-echo"`:** se hai avviato `npm run dev` sul computer, le dipendenze devono essere installate anche sul computer. Il servizio Node di Docker usa un volume diverso: la sua installazione non aggiorna il `node_modules` locale. Ferma Vite con Ctrl+C nel suo terminale, poi dalla cartella del progetto esegui:
+
+```sh
+npm ci --ignore-scripts --strict-peer-deps
+npm run dev
+```
+
+Ricarica la pagina e riprendi il caso interrotto. Echo/Pusher sono già dichiarati nel lockfile: non aggiungere nuove versioni per aggirare l’errore. Se il problema persiste, annota il modulo non trovato e l’indirizzo di Vite mostrato nel terminale. Dettagli in [BOOTSTRAP.md](BOOTSTRAP.md#host-vite-and-docker-dependencies).
+
+**Il link locale non si apre in Brave con `ERR_SOCKS_CONNECTION_FAILED`:** usa una finestra privata standard per il profilo dell’invitato. La finestra privata con Tor usa un proxy; durante il collaudo l’utente ha confermato che era la causa e che il collegamento funzionava in Firefox. Mantieni il link originale completo; il solo errore di rete non prova che l’invito sia invalido.
+
 **Reverb attivo ma compare “Live updates could not refresh”:** è stato corretto un errore del trasporto browser che impediva di inviare le richieste di aggiornamento nonostante la sottoscrizione riuscita. Con i sorgenti aggiornati ricompila gli asset (`docker compose run --rm node npm run build`), poi ricarica completamente la pagina. Il messaggio atteso è **Live updates connected.**; lascia aperta la lista mentre un nuovo check cambia lo stato del monitor e verifica l'aggiornamento senza ricaricare. Se l'errore persiste, annota lo stato HTTP della richiesta in Network e gli eventuali errori Console, senza condividere cookie o header di autorizzazione. Dettagli: [REALTIME-CLIENT.md](REALTIME-CLIENT.md#native-browser-fetch-context-correction-2026-11-06).
 
 **Solo per una diagnosi aggiuntiva, stato dei monitor nel database:** il comando seguente legge i campi operativi senza modificarli. L'output può contenere nomi privati: non pubblicarlo integralmente.

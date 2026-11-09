@@ -117,6 +117,10 @@ npm run verify
 
 The full frontend gate passes with **184 DOM tests in 22 files** and **5 quality tests**. Separate Brave/Firefox checks use the development app with scheduler/workers stopped: offline submission, explicit recovery and a real committed update whose response is dropped. Twelve mobile views keep their document at 390 CSS pixels and their tables keyboard-scrollable. Those checks do not replace VoiceOver or native browser zoom acceptance. See [the transport contract](REQUEST-FAILURES.md) and [browser evidence](BROWSER-RESULTS-2026-11-09.md#correzione-e-ripetizione-bt08).
 
+## User dashboard acceptance scheduling (2026-11-09)
+
+The user explicitly deferred final browser block L until UI.06 after the new phase A dashboard/navigation. This changes execution order only: existing L outcomes remain historical and no new PASS is implied. Implement keyboard/focus/error semantics and meaningful DOM, authorization, tenant-isolation and metric tests during each UI subtask. At UI.06, update the screen map without renumbering A–L, smoke the changed functional paths and run L01–L08 against the new layout, including actual VoiceOver announcements, native browser 200-percent zoom and 390-pixel mobile width. See [the dashboard brief](USER-DASHBOARD.md) and [the operational plan](TASKS.md).
+
 ## Inline override password confirmation (BT.14)
 
 `Admin.test.tsx` covers pending grants/removals with expired confirmation, preserving choice/reason, an invalid password followed by correction, cancellation/focus restoration, malformed/expired/network failures and aborted status/password requests with late replies. No mutation occurs before valid acknowledgement, and the exact draft is submitted once afterward. The three pre-existing submit cases explicitly model a recent confirmation. Credentials remain outside the Inertia form payload.

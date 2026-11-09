@@ -4,21 +4,20 @@ Guida passo per passo per provare l'applicazione com'è dopo M8, prima di inizia
 
 **Guida rivista il 2026-11-08.** È rivolta a chi usa l'applicazione e non ne conosce il codice. La revisione delle istruzioni non cambia gli esiti del collaudo.
 
-**Stato aggiornato al 2026-11-09: l’agente ha eseguito i collaudi accessibili da H13. Registro dei 72 casi restanti: 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO (compresi i quattro casi facoltativi di dominio reale).** Dettaglio per caso, browser, evidenze e ripristini in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). I risultati precedenti fino a H12 restano riferiti dall’utente. Il collaudo non è concluso: riprendere da **H28**, completare i prerequisiti mancanti; L05 e L07 sono stati corretti e ripetuti con PASS in BT.08.
-
+**Stato aggiornato al 2026-11-09: l’utente conferma completati i blocchi obbligatori fino a K; rimane il blocco L — Accessibilità e usabilità, **rinviato su richiesta dell’utente a UI.06, dopo la nuova dashboard e navigazione applicativa**.** Il registro delle precedenti prove dell’agente conserva 72 casi con 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO: è una fotografia storica, non l’elenco attuale dei blocchi ancora aperti. Dettagli in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). Nessun nuovo esito individuale viene dedotto per le prove facoltative realtime/dominio.
 
 ## Ripresa della prossima sessione
 
-- Ripartire da **H28** con accesso all’inbox Mailtrap: l’ultima richiesta H27 dopo H26 è delle **10:45 italiane del 2026-11-09**, destinatario sintetico `lettore-bt07-20261109@example.test`. Non usare per deduzione una vecchia email precedente ai cambi password. Proseguire H29–H37 e I14–I17; invito viewer pendente `nuovo-bt07-20261109@example.test` conservato per la ripresa.
-- GiGa Team resta `{TEAM}=2`, pagina `/status/status-test`, titolo `Stato Prova`, tema light/amber, pubblicata senza password né dominio personalizzato. PROVA-HTTP è stato riportato a URL 200, Up e incidente 8 Resolved; soglia 3 e intervallo 60 s invariati. Il suo override preesistente Granted Pro è conservato. H13–H26 e H38–H42 sono PASS osservati nel browser/HTTP.
-- Conservare le fixture del blocco I documentate nel registro; J01–J06 sono PASS e le fixture Free sono state eliminate. Per K02–K04 serve la riconferma password dell’operatore; per L02 VoiceOver, per L03 zoom nativo 200%. L05/L07 ora PASS dopo BT.08: avviso di connessione visibile, testo conservato e nessuna eccezione JS non gestita. I debordamenti mobile sono corretti; L03 resta aperto solo per lo zoom nativo. Non iniziare M9.01 prima della chiusura dei casi obbligatori.
+- **Prossimo lavoro: UI.01.1**, inventario/progetto della dashboard nel [macro task UI](USER-DASHBOARD.md). Eseguire L01–L08 dopo l’implementazione della fase A, in UI.06. I precedenti PASS L01/L04–L08 restano storici: la nuova navigazione richiederà una verifica aggiornata di tutti gli otto casi, includendo VoiceOver e zoom nativo 200%.
+- Riferimenti storici delle fixture, da ricontrollare prima delle prove L: GiGa Team resta `{TEAM}=2`, pagina `/status/status-test`, titolo `Stato Prova`, tema light/amber, pubblicata senza password né dominio personalizzato. PROVA-HTTP è stato riportato a URL 200, Up e incidente 8 Resolved; soglia 3 e intervallo 60 s invariati. Il suo override preesistente Granted Pro è conservato. H13–H26 e H38–H42 sono PASS osservati nel browser/HTTP.
+- H obbligatorio, I e K ora conclusi sulla base della conferma complessiva dell’utente dopo BT.14; J era già PASS. Non ricostruire dai conteggi storici nuovi dettagli di inbox, inviti o ripristini non comunicati. Non iniziare M9.01 prima della chiusura dei casi obbligatori L.
 - G08–G10 e H43–H46 restano facoltativi, senza PASS per deduzione. Nessun dominio reale/DNS/hosts modificato. I processi vanno ricontrollati prima di riprendere; non assumere che siano rimasti attivi.
 - L'errore **Live updates could not refresh** è stato corretto e le pagine ricompilate (**BT.03**). Ricarica completamente le schede rimaste aperte dalla sessione precedente. Le verifiche tecniche sono in [TASKS.md](TASKS.md#diagnosi-da-collaudo--aggiornamenti-realtime-2026-11-06); G08–G10 restano da confermare manualmente.
 - Il trial Pro di GiGa Team è scaduto il 2026-11-06 alle 13:33 italiane. I check a 60 s richiedono un piano/override compatibile; Free richiede 300 s. Il motore ha ripreso a registrare check di PROVA-HTTP durante la diagnosi, ma piano e processi vanno ricontrollati alla ripresa secondo le sezioni 1.1 e 1.5, senza presumere che siano rimasti attivi.
 - H10 chiarito: **Color scheme** va salvato nella gestione della pagina pubblica; il pannello privato resta scuro. H12 verificato dall'agente via HEAD locale su `/status/status-test`: 200, `no-store, private`, `index, follow` e canonical; l'indirizzo di esempio inesistente restituisce invece 404/noindex.
 - Gli avvisi sospesi dalle quiet hours ripartono alla fine della fascia se l'incidente è ancora aperto; non occorre cambiare di nuovo il suo stato. La correzione è registrata in [QUIET-HOURS.md](QUIET-HOURS.md).
 
-**Accesso rapido:** [preparazione](#1-preparazione), [A accesso](#blocco-a--accesso-e-account), [B monitor](#blocco-b--monitor), [C heartbeat](#blocco-c--heartbeat), [D notifiche](#blocco-d--notifiche), [E incidenti](#blocco-e--incidenti), [F manutenzioni](#blocco-f--manutenzioni-e-quiet-hours), [G dashboard](#blocco-g--dashboard-e-report), [H status page](#blocco-h--status-page), [H28 da riprendere](#h5-iscrizione-email), [I permessi](#blocco-i--permessi-e-isolamento), [J limiti](#blocco-j--limiti-di-piano), [K amministrazione](#blocco-k--pannello-amministratore), [L accessibilità](#blocco-l--accessibilità-e-usabilità), [registro](#registro-degli-esiti).
+**Accesso rapido:** [preparazione](#1-preparazione), [A accesso](#blocco-a--accesso-e-account), [B monitor](#blocco-b--monitor), [C heartbeat](#blocco-c--heartbeat), [D notifiche](#blocco-d--notifiche), [E incidenti](#blocco-e--incidenti), [F manutenzioni](#blocco-f--manutenzioni-e-quiet-hours), [G dashboard](#blocco-g--dashboard-e-report), [H status page](#blocco-h--status-page), [L dopo la nuova UI](#blocco-l--accessibilità-e-usabilità), [I permessi](#blocco-i--permessi-e-isolamento), [J limiti](#blocco-j--limiti-di-piano), [K amministrazione](#blocco-k--pannello-amministratore), [L accessibilità](#blocco-l--accessibilità-e-usabilità), [registro](#registro-degli-esiti).
 
 ## Come usare questo documento
 
@@ -762,6 +761,8 @@ docker compose exec web php artisan signalbox:platform-admin '{EMAIL_OPERATORE}'
 
 ## Blocco L — Accessibilità e usabilità
 
+**Esecuzione rinviata:** decisione dell’utente del 2026-11-09, dopo la dashboard e la navigazione della fase A UI. Il riferimento operativo è UI.06 in [TASKS.md](TASKS.md), con brief in [USER-DASHBOARD.md](USER-DASHBOARD.md). Questi passi restano la base; aggiornare nomi e percorsi delle schermate durante l’implementazione senza rinumerare i casi. Aggiungere dashboard e navigazione comune alla copertura. Gli esiti precedenti non sostituiscono il collaudo della nuova UI.
+
 **Preparazione:** esegui le prove su **Monitors**, dettaglio monitor, dettaglio incidente, **Notifications**, gestione **Status pages** e pagina pubblica. Per le pagine private usa un account con permessi di modifica; per quella pubblica il contesto anonimo. Annota browser/versione. Usa risorse e testi temporanei; se riusi l'incidente risolto di H13, aggiungi note con **Status after this update = Resolved**.
 
 Per vista mobile e rete usa gli strumenti sviluppatore: **Network** per **Slow 4G / Offline**, barra dispositivi per larghezza 390 px. I nomi delle opzioni variano fra browser: annota l'equivalente usato. **L02 richiede una tecnologia assistiva per valutare l'annuncio**: su Mac VoiceOver si attiva con ⌘F5 (o Fn+⌘F5); senza lettore di schermo puoi confermare solo l'errore visibile, lasciando l'annuncio non verificato.
@@ -900,20 +901,20 @@ Riepilogo dei blocchi, con risultati delegati del 2026-11-09:
 
 | Blocco | Casi | Esito | Note |
 |---|---|---|---|
-| A — Accesso | A01–A10 | | |
-| B — Monitor | B01–B21 | | |
-| C — Heartbeat | C01–C06 | | |
-| D — Notifiche | D01–D11 | | |
-| E — Incidenti | E01–E17 | | |
+| A — Accesso | A01–A10 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| B — Monitor | B01–B21 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| C — Heartbeat | C01–C06 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| D — Notifiche | D01–D11 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| E — Incidenti | E01–E17 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
 | F — Manutenzioni e quiet hours | F01–F10 | CONCLUSO | Confermato dall'utente il 2026-11-05; correzione quiet hours documentata in QH.01 |
 | G — Dashboard e report | G01–G07 | CONCLUSO | Avanzamento fino a H12 comunicato il 2026-11-06; chiarito il percorso dei grafici in G03, esiti singoli non dettagliati |
 | G — Tempo reale, facoltativo | G08–G10 | DA CONFERMARE | Difetto fetch corretto in BT.03 e verificato automaticamente; nessun PASS manuale dei tre casi confermato |
-| H — Status page | H01–H42 | IN CORSO | H01–H12: avanzamento precedente utente. H13–H27 e H38–H42 PASS; H28–H37 BLOCCATO per inbox Mailtrap |
+| H — Status page | H01–H42 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; precedenti blocchi inbox nel registro storico |
 | H — Dominio reale, facoltativo | H43–H46 | NON ESEGUITO | Nessun dominio reale fornito |
-| I — Permessi e isolamento | I01–I19 | IN CORSO | I01–I13/I18–I19 PASS; I14–I17 BLOCCATO per email |
+| I — Permessi e isolamento | I01–I19 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; nessuna nuova prova dell’agente |
 | J — Limiti di piano | J01–J06 | PASS | Tutti osservati; fixture Free eliminate |
-| K — Amministratore | K01–K05 | IN CORSO | K01/K05 PASS; K02/K03 BLOCCATO, K04 NON ESEGUITO |
-| L — Accessibilità | L01–L08 | IN CORSO | L01/L04–L08 PASS; L02/L03 BLOCCATO |
+| K — Amministratore | K01–K05 | CONCLUSO | Confermato dall’utente dopo BT.14; correzioni override in BT.13/BT.14 |
+| L — Accessibilità e usabilità | L01–L08 | DIFFERITO A UI.06 | Su richiesta dell’utente, dopo dashboard/navigazione fase A. Tutti i casi da verificare sulla nuova UI; PASS precedenti conservati come storici |
 
 ### Difetti trovati
 

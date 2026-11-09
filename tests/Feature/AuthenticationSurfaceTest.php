@@ -12,7 +12,7 @@ it('renders declared public authentication pages without database access', /** @
 
 it('redirects unauthenticated account requests to login', /** @param string $url Protected destination. */ function (string $url): void {
     $this->get($url)->assertRedirect('/login');
-})->with(['/account', '/account/security', '/email/verify', '/user/confirm-password', '/user/two-factor-recovery-codes']);
+})->with(['/account', '/account/security', '/email/verify', '/user/confirm-password', '/user/confirmed-password-status', '/user/two-factor-recovery-codes']);
 
 it('does not expose unrelated profile passkey or token endpoints', /** @param string $url Route intentionally outside M1.02. */ function (string $url): void {
     $this->get($url)->assertNotFound();

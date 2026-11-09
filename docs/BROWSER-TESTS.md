@@ -4,21 +4,20 @@ Guida passo per passo per provare l'applicazione com'è dopo M8, prima di inizia
 
 **Guida rivista il 2026-11-08.** È rivolta a chi usa l'applicazione e non ne conosce il codice. La revisione delle istruzioni non cambia gli esiti del collaudo.
 
-**Stato aggiornato al 2026-11-09: l’agente ha eseguito i collaudi accessibili da H13. Registro dei 72 casi restanti: 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO (compresi i quattro casi facoltativi di dominio reale).** Dettaglio per caso, browser, evidenze e ripristini in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). I risultati precedenti fino a H12 restano riferiti dall’utente. Il collaudo non è concluso: riprendere da **H28**, completare i prerequisiti mancanti; L05 e L07 sono stati corretti e ripetuti con PASS in BT.08.
-
+**Stato aggiornato al 2026-11-09: l’utente conferma completati i blocchi obbligatori fino a K; rimane il blocco L — Accessibilità e usabilità, **rinviato su richiesta dell’utente a UI.06, dopo la nuova dashboard e navigazione applicativa**.** Il registro delle precedenti prove dell’agente conserva 72 casi con 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO: è una fotografia storica, non l’elenco attuale dei blocchi ancora aperti. Dettagli in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). Nessun nuovo esito individuale viene dedotto per le prove facoltative realtime/dominio.
 
 ## Ripresa della prossima sessione
 
-- Ripartire da **H28** con accesso all’inbox Mailtrap: l’ultima richiesta H27 dopo H26 è delle **10:45 italiane del 2026-11-09**, destinatario sintetico `lettore-bt07-20261109@example.test`. Non usare per deduzione una vecchia email precedente ai cambi password. Proseguire H29–H37 e I14–I17; invito viewer pendente `nuovo-bt07-20261109@example.test` conservato per la ripresa.
-- GiGa Team resta `{TEAM}=2`, pagina `/status/status-test`, titolo `Stato Prova`, tema light/amber, pubblicata senza password né dominio personalizzato. PROVA-HTTP è stato riportato a URL 200, Up e incidente 8 Resolved; soglia 3 e intervallo 60 s invariati. Il suo override preesistente Granted Pro è conservato. H13–H26 e H38–H42 sono PASS osservati nel browser/HTTP.
-- Conservare le fixture del blocco I documentate nel registro; J01–J06 sono PASS e le fixture Free sono state eliminate. Per K02–K04 serve la riconferma password dell’operatore; per L02 VoiceOver, per L03 zoom nativo 200%. L05/L07 ora PASS dopo BT.08: avviso di connessione visibile, testo conservato e nessuna eccezione JS non gestita. I debordamenti mobile sono corretti; L03 resta aperto solo per lo zoom nativo. Non iniziare M9.01 prima della chiusura dei casi obbligatori.
+- **Prossimo lavoro: UI.01.1**, inventario/progetto della dashboard nel [macro task UI](USER-DASHBOARD.md). Eseguire L01–L08 dopo l’implementazione della fase A, in UI.06. I precedenti PASS L01/L04–L08 restano storici: la nuova navigazione richiederà una verifica aggiornata di tutti gli otto casi, includendo VoiceOver e zoom nativo 200%.
+- Riferimenti storici delle fixture, da ricontrollare prima delle prove L: GiGa Team resta `{TEAM}=2`, pagina `/status/status-test`, titolo `Stato Prova`, tema light/amber, pubblicata senza password né dominio personalizzato. PROVA-HTTP è stato riportato a URL 200, Up e incidente 8 Resolved; soglia 3 e intervallo 60 s invariati. Il suo override preesistente Granted Pro è conservato. H13–H26 e H38–H42 sono PASS osservati nel browser/HTTP.
+- H obbligatorio, I e K ora conclusi sulla base della conferma complessiva dell’utente dopo BT.14; J era già PASS. Non ricostruire dai conteggi storici nuovi dettagli di inbox, inviti o ripristini non comunicati. Non iniziare M9.01 prima della chiusura dei casi obbligatori L.
 - G08–G10 e H43–H46 restano facoltativi, senza PASS per deduzione. Nessun dominio reale/DNS/hosts modificato. I processi vanno ricontrollati prima di riprendere; non assumere che siano rimasti attivi.
 - L'errore **Live updates could not refresh** è stato corretto e le pagine ricompilate (**BT.03**). Ricarica completamente le schede rimaste aperte dalla sessione precedente. Le verifiche tecniche sono in [TASKS.md](TASKS.md#diagnosi-da-collaudo--aggiornamenti-realtime-2026-11-06); G08–G10 restano da confermare manualmente.
 - Il trial Pro di GiGa Team è scaduto il 2026-11-06 alle 13:33 italiane. I check a 60 s richiedono un piano/override compatibile; Free richiede 300 s. Il motore ha ripreso a registrare check di PROVA-HTTP durante la diagnosi, ma piano e processi vanno ricontrollati alla ripresa secondo le sezioni 1.1 e 1.5, senza presumere che siano rimasti attivi.
 - H10 chiarito: **Color scheme** va salvato nella gestione della pagina pubblica; il pannello privato resta scuro. H12 verificato dall'agente via HEAD locale su `/status/status-test`: 200, `no-store, private`, `index, follow` e canonical; l'indirizzo di esempio inesistente restituisce invece 404/noindex.
 - Gli avvisi sospesi dalle quiet hours ripartono alla fine della fascia se l'incidente è ancora aperto; non occorre cambiare di nuovo il suo stato. La correzione è registrata in [QUIET-HOURS.md](QUIET-HOURS.md).
 
-**Accesso rapido:** [preparazione](#1-preparazione), [A accesso](#blocco-a--accesso-e-account), [B monitor](#blocco-b--monitor), [C heartbeat](#blocco-c--heartbeat), [D notifiche](#blocco-d--notifiche), [E incidenti](#blocco-e--incidenti), [F manutenzioni](#blocco-f--manutenzioni-e-quiet-hours), [G dashboard](#blocco-g--dashboard-e-report), [H status page](#blocco-h--status-page), [H28 da riprendere](#h5-iscrizione-email), [I permessi](#blocco-i--permessi-e-isolamento), [J limiti](#blocco-j--limiti-di-piano), [K amministrazione](#blocco-k--pannello-amministratore), [L accessibilità](#blocco-l--accessibilità-e-usabilità), [registro](#registro-degli-esiti).
+**Accesso rapido:** [preparazione](#1-preparazione), [A accesso](#blocco-a--accesso-e-account), [B monitor](#blocco-b--monitor), [C heartbeat](#blocco-c--heartbeat), [D notifiche](#blocco-d--notifiche), [E incidenti](#blocco-e--incidenti), [F manutenzioni](#blocco-f--manutenzioni-e-quiet-hours), [G dashboard](#blocco-g--dashboard-e-report), [H status page](#blocco-h--status-page), [L dopo la nuova UI](#blocco-l--accessibilità-e-usabilità), [I permessi](#blocco-i--permessi-e-isolamento), [J limiti](#blocco-j--limiti-di-piano), [K amministrazione](#blocco-k--pannello-amministratore), [L accessibilità](#blocco-l--accessibilità-e-usabilità), [registro](#registro-degli-esiti).
 
 ## Come usare questo documento
 
@@ -222,7 +221,7 @@ Alla data della revisione entrambi i trial sono scaduti. Per conoscere i limiti 
 
 Per B–H puoi scegliere una delle due preparazioni:
 
-1. **Mantenere le prove a 60 secondi:** con il tuo account operatore, segui l'accesso del [blocco K](#blocco-k--pannello-amministratore), apri GiGa Team, seleziona **Granted Pro plan**, compila **Reason (required, recorded in the audit log)** con `Collaudo browser a 60 secondi`, poi **Save override**. Se richiesto completa **Confirm password** e ripeti il salvataggio. Annota la configurazione precedente per ripristinarla alla fine. Torna in **Monitors** e controlla **Minimum interval 1 min**. In locale l'accesso operatore non richiede necessariamente la 2FA; la regola esatta è nel blocco K.
+1. **Mantenere le prove a 60 secondi:** con il tuo account operatore, segui l'accesso del [blocco K](#blocco-k--pannello-amministratore), apri GiGa Team, seleziona **Granted Pro plan**, compila **Reason (required, recorded in the audit log)** con `Collaudo browser a 60 secondi`, poi **Save override**. Se compare la richiesta password nella stessa pagina, compila **Current password** e premi **Confirm password and save override**: l’operazione viene eseguita dopo la conferma, senza ripetere il salvataggio. Annota la configurazione precedente per ripristinarla alla fine. Torna in **Monitors** e controlla **Minimum interval 1 min**. In locale l'accesso operatore non richiede necessariamente la 2FA; la regola esatta è nel blocco K.
 2. **Usare Free:** in ciascun monitor a 60 s apri **Edit monitor**, cambia **Interval (seconds)** in `300`, premi **Save changes**. Usa le attese più lunghe descritte nelle operazioni comuni. Free consente cinque monitor in totale: B14 richiede un posto aggiuntivo, quindi quella prova rimane bloccata finché non c'è quota o un piano Pro. La pausa non libera un posto.
 
 Se non puoi accedere all'amministrazione e la prova richiede il piano Pro, segna il caso **BLOCCATO**. Non riavviare ripetutamente i processi per aggirare il limite: il piano viene controllato anche nell'esecuzione dei check. Per J02–J06 servirà invece un team effettivamente Free senza override.
@@ -718,7 +717,7 @@ Conta tutti i monitor del team Free, incluse le pagine successive della lista e 
 
 | Caso | Cosa fare | Risultato atteso |
 |---|---|---|
-| J01 | Come owner di GiGa Team con Pro, apri un monitor di prova → **Edit monitor**, imposta **Interval (seconds)** `30`, poi **Save changes** | Errore vicino all'intervallo, minimo 60; il valore salvato resta quello precedente. Ripristina il campo valido prima di uscire |
+| J01 | Come owner di GiGa Team con Pro, apri un monitor di prova → **Edit monitor**, imposta **Interval (seconds)** `30`, poi **Save changes** | Già durante la digitazione compare sotto **Interval (seconds)** **Your plan requires an interval of at least 60 seconds.** Premendo Invio o **Save changes** non partono richieste né navigazioni: il modulo conserva `30` e gli altri campi. Correggendo a `60` l’errore sparisce subito e l’invio è consentito. Il valore persistito resta invariato finché non salvi un intervallo valido |
 | J02 | Come tester in Tester Team Free, apri un monitor temporaneo → **Edit monitor**, imposta **Interval (seconds)** `60` e **Save changes**. Se non hai monitor, usa un modulo **New monitor** valido con quel solo valore errato | Rifiuto, minimo 300; nessun valore invalido salvato. Ripristina 300 prima di continuare |
 | J03 | Crea solo i monitor temporanei necessari per arrivare a **5** totali. Prima di salvare il quinto lascia aperto un altro modulo **New monitor** valido in una seconda scheda. Dopo il quinto, ricarica la lista e invia dal modulo rimasto aperto. Se parti già a quota apri direttamente `/teams/{TEAM_FREE}/monitors/create`, compila un HTTP temporaneo valido e premi **Create monitor** | Lista **5 of 5 monitors used**, senza **New monitor**, avviso di quota. Il percorso diretto di creazione resta accessibile all'owner e mostra **Your plan allows 5 monitors and all are in use. Saving will be refused until you delete a monitor or upgrade.**; è il salvataggio che deve essere rifiutato, senza creare un sesto monitor |
 | J04 | Metti in pausa uno dei cinque, poi ricarica lista e pagina di creazione | Sempre quota piena e creazione rifiutata; **Paused** non libera posti |
@@ -748,8 +747,8 @@ docker compose exec web php artisan signalbox:platform-admin '{EMAIL_OPERATORE}'
 |---|---|---|
 | K01 | Se l'account operatore non ha ancora 2FA, accedi in **Gestione** e apri `/admin`. Se ha già 2FA, registra questo caso **NON ESEGUITO: 2FA già presente**, senza disattivarla | **In locale:** elenco team accessibile anche senza 2FA, comportamento previsto. **Solo in un ambiente già di produzione:** rimando a `/account/security` e **Enable two-factor authentication to use the admin panel.**; quel ramo non è verificato dal collaudo locale |
 | K02 | Per provare anche l'accesso con 2FA, attivala e confermala con A08 sul tuo account operatore, conservando privatamente i recovery code; se è già attiva riutilizzala. Riapri `/admin` | Elenco globale dei team; aprendo il nome di uno accedi al suo dettaglio amministrativo. In locale attivare la 2FA non è un prerequisito per K03–K05 |
-| K03 | Apri un team sintetico e annota override/scadenza iniziali. In **Plan override** scegli **Unlimited testing**, compila **Reason (required, recorded in the audit log)** con `Collaudo limiti temporanei`, poi **Save override**. Se richiesto completa **Confirm password** e ripeti il salvataggio. Con un account membro di quel team apri Monitors e modifica un monitor temporaneo a 30 s | **Plan override saved.**, limite minimo 30 s nella lista e salvataggio a 30 s consentito. Un operatore che non è membro del team non ottiene per questo accesso alle sue pagine private |
-| K04 | Prima rimetti il monitor temporaneo a 300 s e salva. Nel pannello del team scegli **No override (stored plan and trial apply)**, compila un motivo e premi **Save override** | **Plan override removed.**, limiti del piano/trial effettivo ripristinati. Se prima di K03 c'era già un altro override, ripristina anche quello con motivo e scadenza annotati; non lasciare il team con una configurazione diversa senza volerlo |
+| K03 | Apri un team sintetico e annota override/scadenza iniziali. In **Plan override** scegli **Unlimited testing**, compila **Reason (required, recorded in the audit log)** con `Collaudo limiti temporanei`, poi **Save override**. Se compare la richiesta password nella stessa pagina, compila **Current password** e premi **Confirm password and save override**: l’operazione viene eseguita dopo la conferma, senza ripetere il salvataggio. Con un account membro di quel team apri Monitors e modifica un monitor temporaneo a 30 s | Ritorno allo stesso dettaglio amministrativo del team con **Plan override saved.**, anche dopo aver mostrato QR/codici 2FA in K02; nessuna schermata JSON di Inertia. Limite minimo 30 s nella lista e salvataggio a 30 s consentito. Un operatore che non è membro del team non ottiene per questo accesso alle sue pagine private |
+| K04 | Prima rimetti il monitor temporaneo a 300 s e salva. Nel pannello del team scegli **No override (stored plan and trial apply)**, compila un motivo e premi **Save override**. Se compare la conferma inline, inserisci **Current password** e premi **Confirm password and save override**; una password errata deve lasciare invariati override, scelta e motivo | Ritorno allo stesso dettaglio amministrativo con **Plan override removed.**, limiti del piano/trial effettivo ripristinati. Se prima di K03 c'era già un altro override, ripristina anche quello con motivo e scadenza annotati; non lasciare il team con una configurazione diversa senza volerlo |
 | K05 | Col medesimo account operatore verificato (2FA richiesta in produzione), apri `/horizon` e guarda supervisori/processi | Pannello accessibile, Horizon attivo e worker visibili. Un pannello accessibile ma senza worker non prova l'esecuzione dei check: torna a 1.1 |
 
 Alla fine, se hai aggiunto il ruolo solo per questa prova e non ti serve più, revocalo dal terminale. Non togliere un ruolo che esisteva già senza averlo deciso:
@@ -761,6 +760,8 @@ docker compose exec web php artisan signalbox:platform-admin '{EMAIL_OPERATORE}'
 ---
 
 ## Blocco L — Accessibilità e usabilità
+
+**Esecuzione rinviata:** decisione dell’utente del 2026-11-09, dopo la dashboard e la navigazione della fase A UI. Il riferimento operativo è UI.06 in [TASKS.md](TASKS.md), con brief in [USER-DASHBOARD.md](USER-DASHBOARD.md). Questi passi restano la base; aggiornare nomi e percorsi delle schermate durante l’implementazione senza rinumerare i casi. Aggiungere dashboard e navigazione comune alla copertura. Gli esiti precedenti non sostituiscono il collaudo della nuova UI.
 
 **Preparazione:** esegui le prove su **Monitors**, dettaglio monitor, dettaglio incidente, **Notifications**, gestione **Status pages** e pagina pubblica. Per le pagine private usa un account con permessi di modifica; per quella pubblica il contesto anonimo. Annota browser/versione. Usa risorse e testi temporanei; se riusi l'incidente risolto di H13, aggiungi note con **Status after this update = Resolved**.
 
@@ -817,6 +818,10 @@ npm run dev
 ```
 
 Ricarica la pagina e riprendi il caso interrotto. Echo/Pusher sono già dichiarati nel lockfile: non aggiungere nuove versioni per aggirare l’errore. Se il problema persiste, annota il modulo non trovato e l’indirizzo di Vite mostrato nel terminale. Dettagli in [BOOTSTRAP.md](BOOTSTRAP.md#host-vite-and-docker-dependencies).
+
+**Dopo Save override viene chiesta la password ma il piano resta invariato:** prima di BT.14 il redirect di riconferma interrompeva il salvataggio. Con il codice aggiornato la password si conferma nella stessa pagina del team: **Current password** → **Confirm password and save override**. La password valida fa partire una sola volta l’operazione scelta; una password errata o **Cancel** non cambiano l’override e conservano il motivo. Ricarica una volta le schede aperte per caricare la nuova UI. Verifica l’esito con **Plan override removed.**/**Plan override saved.**, **Current** e **History**.
+
+**Dopo Save override compare un JSON del QR 2FA:** difetto di redirect corretto in BT.13. Riapri direttamente `/admin/teams/{TEAM}` e ricarica la pagina per usare il codice aggiornato; verifica **Current** e **History**, perché il salvataggio può essere già riuscito prima del redirect errato. Prosegui K03 se l’override desiderato è già presente. Il salvataggio e la rimozione ora tornano esplicitamente al dettaglio del team; non modificare la 2FA per risolvere questo errore. Non inserire QR, chiavi o codici nel registro.
 
 **Il link locale non si apre in Brave con `ERR_SOCKS_CONNECTION_FAILED`:** usa una finestra privata standard per il profilo dell’invitato. La finestra privata con Tor usa un proxy; durante il collaudo l’utente ha confermato che era la causa e che il collegamento funzionava in Firefox. Mantieni il link originale completo; il solo errore di rete non prova che l’invito sia invalido.
 
@@ -896,20 +901,20 @@ Riepilogo dei blocchi, con risultati delegati del 2026-11-09:
 
 | Blocco | Casi | Esito | Note |
 |---|---|---|---|
-| A — Accesso | A01–A10 | | |
-| B — Monitor | B01–B21 | | |
-| C — Heartbeat | C01–C06 | | |
-| D — Notifiche | D01–D11 | | |
-| E — Incidenti | E01–E17 | | |
+| A — Accesso | A01–A10 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| B — Monitor | B01–B21 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| C — Heartbeat | C01–C06 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| D — Notifiche | D01–D11 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
+| E — Incidenti | E01–E17 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; resta L |
 | F — Manutenzioni e quiet hours | F01–F10 | CONCLUSO | Confermato dall'utente il 2026-11-05; correzione quiet hours documentata in QH.01 |
 | G — Dashboard e report | G01–G07 | CONCLUSO | Avanzamento fino a H12 comunicato il 2026-11-06; chiarito il percorso dei grafici in G03, esiti singoli non dettagliati |
 | G — Tempo reale, facoltativo | G08–G10 | DA CONFERMARE | Difetto fetch corretto in BT.03 e verificato automaticamente; nessun PASS manuale dei tre casi confermato |
-| H — Status page | H01–H42 | IN CORSO | H01–H12: avanzamento precedente utente. H13–H27 e H38–H42 PASS; H28–H37 BLOCCATO per inbox Mailtrap |
+| H — Status page | H01–H42 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; precedenti blocchi inbox nel registro storico |
 | H — Dominio reale, facoltativo | H43–H46 | NON ESEGUITO | Nessun dominio reale fornito |
-| I — Permessi e isolamento | I01–I19 | IN CORSO | I01–I13/I18–I19 PASS; I14–I17 BLOCCATO per email |
+| I — Permessi e isolamento | I01–I19 | CONCLUSO | Conferma complessiva dell’utente il 2026-11-09; nessuna nuova prova dell’agente |
 | J — Limiti di piano | J01–J06 | PASS | Tutti osservati; fixture Free eliminate |
-| K — Amministratore | K01–K05 | IN CORSO | K01/K05 PASS; K02/K03 BLOCCATO, K04 NON ESEGUITO |
-| L — Accessibilità | L01–L08 | IN CORSO | L01/L04–L08 PASS; L02/L03 BLOCCATO |
+| K — Amministratore | K01–K05 | CONCLUSO | Confermato dall’utente dopo BT.14; correzioni override in BT.13/BT.14 |
+| L — Accessibilità e usabilità | L01–L08 | DIFFERITO A UI.06 | Su richiesta dell’utente, dopo dashboard/navigazione fase A. Tutti i casi da verificare sulla nuova UI; PASS precedenti conservati come storici |
 
 ### Difetti trovati
 

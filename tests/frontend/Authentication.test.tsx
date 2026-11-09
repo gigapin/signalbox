@@ -122,13 +122,51 @@ async function keepsRecoveryCodesEphemeral(): Promise<void> {
     await waitFor(() => expect(screen.getByText('fixture-recovery-code')).toBeVisible());
     expect(fetch).toHaveBeenCalledWith(
         '/user/two-factor-recovery-codes',
-        expect.objectContaining({ cache: 'no-store', credentials: 'same-origin' }),
+        expect.objectContaining({
+            cache: 'no-store',
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        }),
     );
     await user.click(screen.getByRole('button', { name: 'Hide recovery codes' }));
     expect(screen.queryByText('fixture-recovery-code')).not.toBeInTheDocument();
     view.unmount();
     renderInertia('Signalbox', Security, { twoFactorEnabled: true, twoFactorPending: false });
     expect(screen.queryByText('fixture-recovery-code')).not.toBeInTheDocument();
+}
+
+/** Setup reads remain AJAX so neither secret endpoint becomes the session's back-navigation target. */
+async function marksSetupReadsAsAjax(): Promise<void> {
+    const user = userEvent.setup();
+    const read = vi
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation((path) =>
+            Promise.resolve(
+                new Response(
+                    JSON.stringify(
+                        path === '/user/two-factor-qr-code'
+                            ? { svg: '<svg xmlns="http://www.w3.org/2000/svg" />' }
+                            : { secretKey: 'fixture-setup-key' },
+                    ),
+                    { headers: { 'Content-Type': 'application/json' } },
+                ),
+            ),
+        );
+    renderInertia('Signalbox', Security, { twoFactorEnabled: false, twoFactorPending: true });
+
+    await user.click(screen.getByRole('button', { name: 'Show authenticator setup' }));
+    await waitFor(() => expect(screen.getByText('fixture-setup-key')).toBeVisible());
+
+    for (const path of ['/user/two-factor-qr-code', '/user/two-factor-secret-key']) {
+        expect(read).toHaveBeenCalledWith(
+            path,
+            expect.objectContaining({
+                cache: 'no-store',
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            }),
+        );
+    }
 }
 
 /** Failed or expired security loads show a safe error and initiate password confirmation through the server. */
@@ -179,3 +217,8 @@ test(
     handlesExpiredSecurityAccess,
 );
 test('shows an explicit empty state when a team is unavailable', showsMissingTeam);
+
+test(
+    'marks QR and secret reads as AJAX without retaining them in navigation',
+    marksSetupReadsAsAjax,
+);

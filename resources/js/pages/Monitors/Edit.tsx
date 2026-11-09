@@ -22,11 +22,14 @@ interface EditProps extends MonitorPageProps {
     options: MonitorOptions;
     /** Informational plan quota. */
     usage: MonitorUsage;
+    /** Operational cadence ceiling in seconds from the server configuration. */
+    maximumIntervalSeconds: number;
 }
 
 /** Submit a PATCH whose secrets are present only when the user chose to replace them. */
 export default function Edit() {
-    const { team, monitor, defaults, options, usage } = usePage<EditProps>().props;
+    const { team, monitor, defaults, options, usage, maximumIntervalSeconds } =
+        usePage<EditProps>().props;
     return (
         <AuthLayout title={`Edit ${monitor.name}`} wide>
             <nav aria-label="Monitor navigation" className="mb-6 text-sm text-emerald-300">
@@ -40,6 +43,7 @@ export default function Edit() {
                 method="patch"
                 options={options}
                 usage={usage}
+                maximumIntervalSeconds={maximumIntervalSeconds}
                 submitLabel="Save changes"
             />
         </AuthLayout>

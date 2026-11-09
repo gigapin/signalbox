@@ -117,6 +117,32 @@ npm run verify
 
 The full frontend gate passes with **184 DOM tests in 22 files** and **5 quality tests**. Separate Brave/Firefox checks use the development app with scheduler/workers stopped: offline submission, explicit recovery and a real committed update whose response is dropped. Twelve mobile views keep their document at 390 CSS pixels and their tables keyboard-scrollable. Those checks do not replace VoiceOver or native browser zoom acceptance. See [the transport contract](REQUEST-FAILURES.md) and [browser evidence](BROWSER-RESULTS-2026-11-09.md#correzione-e-ripetizione-bt08).
 
+## User dashboard acceptance scheduling (2026-11-09)
+
+The user explicitly deferred final browser block L until UI.06 after the new phase A dashboard/navigation. This changes execution order only: existing L outcomes remain historical and no new PASS is implied. Implement keyboard/focus/error semantics and meaningful DOM, authorization, tenant-isolation and metric tests during each UI subtask. At UI.06, update the screen map without renumbering A–L, smoke the changed functional paths and run L01–L08 against the new layout, including actual VoiceOver announcements, native browser 200-percent zoom and 390-pixel mobile width. See [the dashboard brief](USER-DASHBOARD.md) and [the operational plan](TASKS.md).
+
+## Inline override password confirmation (BT.14)
+
+`Admin.test.tsx` covers pending grants/removals with expired confirmation, preserving choice/reason, an invalid password followed by correction, cancellation/focus restoration, malformed/expired/network failures and aborted status/password requests with late replies. No mutation occurs before valid acknowledgement, and the exact draft is submitted once afterward. The three pre-existing submit cases explicitly model a recent confirmation. Credentials remain outside the Inertia form payload.
+
+`PlanOverrideTest` exercises the full HTTP sequence on isolated PostgreSQL: stale status, direct DELETE denied with 423, invalid JSON password denied with 422, valid password acknowledgement without changing the override, then the explicit DELETE redirects to the team and removes exactly one audited override. Additional cases cover absent/current/899/900/901-second/future timestamps, unverified access, no-store and ignored client timeout parameters; reading status cannot extend the timestamp. `AuthenticationSurfaceTest` includes the new endpoint's guest boundary. The original server middleware still protects direct requests.
+
+Final validation: frontend gate with 212 DOM tests in 22 files, five quality checks, lint/format/TypeScript and build; 101 pertinent backend tests with 725 assertions, PHP-CS-Fixer and Larastan pass. Brave/Firefox probes use disposable test-server operators and owners: wrong password causes zero removals, a valid acknowledgement causes exactly one DELETE/303, the path/draft remain available, cancellation changes nothing and the effective limits return for the owner. Test fixtures and server are removed afterward; no screenshots or development data changes.
+
+## Override redirect after 2FA reads (BT.13)
+
+`Authentication.test.tsx` checks AJAX headers, same-origin credentials and no-store behavior for QR, manual-key and recovery-code fetches. `TwoFactorAuthenticationTest` exercises the same headers over HTTP and verifies that each sensitive GET preserves `/account/security` as the session's previous URL. `PlanOverrideTest` deliberately reproduces the old fetch transport with three real JSON endpoints, then grants and clears an override with no referrer or an unrelated referrer. All six scenarios require a 303 to the mutated team's detail and a valid Inertia response without security props; persisted override state and audit entries are checked. Eight additional mutation cases cover enable, confirm, recovery-code regeneration and disable with stale password-confirmation history, for both Inertia redirects and unchanged JSON acknowledgements. Asset versions are supplied when following Inertia GET redirects, and JSON responses use JSON assertions rather than the Blade-only Inertia test helper.
+
+## Monitor validation focus regression (BT.11)
+
+The monitor DOM suite now reproduces validation callbacks completing before React has committed the inline error. Focus is scheduled from the committed error state, scoped to the mounted form, and its animation frame is canceled on unmount. The tests also ensure ordinary field edits do not keep stealing focus. Both new regressions fail on the previous implementation. Real Brave/Firefox rejected PATCH requests verify visible focus at 1365×600 and 390×844, with the saved interval unchanged. The complete frontend gate now passes **186 DOM tests in 22 files** and **5 quality tests**. These checks do not establish VoiceOver announcements or native 200-percent zoom acceptance.
+
+## Live cadence validation (BT.12)
+
+The monitor form suite covers immediate errors, correction, click/Enter blocking without router calls, malformed/empty/too-large input, server-error clearing, configured maximums and unchanged legacy cadences after a downgrade. Thirteen new cases fail on the previous server-only behavior and pass with live validation. A backend case changes the operational ceiling to 7200 seconds, verifies that both forms project it and confirms that a direct JSON update to 7201 is still refused without altering persisted data. These tests use isolated PostgreSQL through `php-test`.
+
+Separate real-browser cases cover create/edit in Brave and Firefox, including a 390-pixel mobile viewport. They count actual mutation/navigation requests: both stay zero for invalid cadence, drafts remain editable and the error clears immediately after correction. The corrected request is intercepted before the server so development monitors are not modified. The complete frontend gate passes **199 DOM tests in 22 files** and **5 quality tests**.
+
 ## Compatibility and evidence limits
 
 New test dependencies are exact-pinned in npm's lock. React 19, Inertia 2, Vite 8 and all existing direct dependency versions are preserved. jsdom 30.1.3 requires Node 22.22.2 on Node 22, so the minimum patch rises from 22.13.0 to **22.22.2**; the major stays 22, npm stays 10, and the existing host/pinned Docker image satisfy the floor. This is documented in [DEPENDENCIES.md](DEPENDENCIES.md).

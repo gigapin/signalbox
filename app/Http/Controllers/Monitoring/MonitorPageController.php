@@ -18,6 +18,7 @@ use App\Models\Monitor;
 use App\Models\Team;
 use App\Services\Incidents\IncidentListing;
 use App\Services\Incidents\MaintenanceSchedule;
+use App\Services\Monitoring\MonitorInputLimits;
 use App\Services\Monitoring\MonitorLimits;
 use App\Services\Monitoring\MonitorListing;
 use Carbon\CarbonImmutable;
@@ -40,10 +41,12 @@ final class MonitorPageController extends Controller
     /**
      * @param MonitorPresenter $presenter Safe page projections.
      * @param MonitorLimits $limits Plan quota and cadence minimums.
+     * @param MonitorInputLimits $inputLimits Operational bounds shared with server-side validation.
      */
     public function __construct(
         private readonly MonitorPresenter $presenter,
         private readonly MonitorLimits $limits,
+        private readonly MonitorInputLimits $inputLimits,
     ) {
     }
 
@@ -83,6 +86,7 @@ final class MonitorPageController extends Controller
         return Inertia::render('Monitors/Create', [
             'team' => $this->teamSummary($identity),
             'defaults' => MonitorPresenter::defaults($usage->minimumIntervalSeconds),
+            'maximumIntervalSeconds' => $this->inputLimits->get('interval_max_seconds'),
             'options' => MonitorPresenter::options(),
             'usage' => $usage->toArray(),
         ]);
@@ -164,6 +168,7 @@ final class MonitorPageController extends Controller
             'team' => $this->teamSummary($identity),
             'monitor' => $this->presenter->detail($monitor, $this->limits->isWithinQuota($identity, $monitor)),
             'defaults' => MonitorPresenter::defaults($usage->minimumIntervalSeconds),
+            'maximumIntervalSeconds' => $this->inputLimits->get('interval_max_seconds'),
             'options' => MonitorPresenter::options(),
             'usage' => $usage->toArray(),
         ]);

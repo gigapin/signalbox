@@ -51,6 +51,81 @@ it('generates encrypted pending setup and confirms only a valid current token', 
     expect($user->fresh()?->hasEnabledTwoFactorAuthentication())->toBeTrue();
 });
 
+it('keeps the security page as the previous URL during AJAX secret reads', function (string $endpoint): void {
+    $user = AuthFixture::enroll(User::factory()->create());
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => now()->timestamp])
+        ->get('/account/security')
+        ->assertOk();
+
+    $this->getJson($endpoint, ['X-Requested-With' => 'XMLHttpRequest'])
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'no-store, private')
+        ->assertSessionHas('_previous.url', url('/account/security'));
+})->with([
+    'QR' => ['/user/two-factor-qr-code'],
+    'manual key' => ['/user/two-factor-secret-key'],
+    'recovery codes' => ['/user/two-factor-recovery-codes'],
+]);
+
+it('keeps two-factor mutations on security independently of stale session history', function (string $operation, bool $json): void {
+    $user = User::factory()->create();
+
+    if ($operation !== 'enable') {
+        $user = AuthFixture::enroll($user, $operation !== 'confirm');
+    }
+
+    $oldCodes = $user->two_factor_recovery_codes;
+    $path = match ($operation) {
+        'confirm' => '/user/confirmed-two-factor-authentication',
+        'regenerate' => '/user/two-factor-recovery-codes',
+        default => '/user/two-factor-authentication',
+    };
+    $payload = $operation === 'confirm' ? ['code' => AuthFixture::code($user)] : [];
+    $method = $operation === 'disable' ? 'DELETE' : 'POST';
+    $status = match ($operation) {
+        'enable' => Fortify::TWO_FACTOR_AUTHENTICATION_ENABLED,
+        'confirm' => Fortify::TWO_FACTOR_AUTHENTICATION_CONFIRMED,
+        'regenerate' => Fortify::RECOVERY_CODES_GENERATED,
+        default => Fortify::TWO_FACTOR_AUTHENTICATION_DISABLED,
+    };
+
+    $this->actingAs($user)->withSession([
+        'auth.password_confirmed_at' => now()->timestamp,
+        '_previous.url' => url('/user/confirm-password'),
+    ]);
+
+    if ($json) {
+        $this->json($method, $path, $payload)->assertOk()->assertContent('""');
+    } else {
+        $this->call($method, $path, $payload, server: [
+            'HTTP_X_INERTIA' => 'true',
+            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+        ])->assertStatus($operation === 'disable' ? 303 : 302)
+            ->assertRedirect('/account/security')
+            ->assertSessionHas('status', $status);
+    }
+
+    $user->refresh();
+
+    if ($operation === 'enable') {
+        expect($user->two_factor_secret)->not->toBeNull()
+            ->and($user->two_factor_confirmed_at)->toBeNull();
+    } elseif ($operation === 'confirm') {
+        expect($user->hasEnabledTwoFactorAuthentication())->toBeTrue();
+    } elseif ($operation === 'regenerate') {
+        expect($user->two_factor_recovery_codes)->not->toBe($oldCodes)
+            ->and($user->recoveryCodes())->toHaveCount(8);
+    } else {
+        expect($user->two_factor_secret)->toBeNull()
+            ->and($user->two_factor_recovery_codes)->toBeNull()
+            ->and($user->two_factor_confirmed_at)->toBeNull();
+    }
+})->with(['enable', 'confirm', 'regenerate', 'disable'])->with([
+    'Inertia' => [false],
+    'JSON' => [true],
+]);
+
 it('allows password-only access while enrollment is still pending', /** A generated but unconfirmed secret must not lock the user out. */ function (): void {
     /** @var User $user Identity that has not completed enrollment. */
     $user = AuthFixture::enroll(User::factory()->create(), false);

@@ -1,6 +1,6 @@
 /** Platform operator view of one team: effective plan, override form and audit history. */
 import { Link, useForm, usePage } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { planLabel, sourceLabel, utcLabel } from '../../../components/admin/labels';
 import {
     overridePayload,
@@ -9,6 +9,7 @@ import {
 } from '../../../components/admin/overrideForm';
 import type { AdminTeamDetail } from '../../../components/admin/types';
 import AuthLayout, { type AuthProps } from '../../../components/auth/AuthLayout';
+import PasswordConfirmationForm from '../../../components/auth/PasswordConfirmationForm';
 
 /** Detail response from TeamDirectoryController::show. */
 interface ShowProps extends AuthProps {
@@ -77,27 +78,92 @@ export default function Show() {
         .map((key) => fieldErrors[key])
         .filter((message): message is string => message !== undefined);
 
-    function submit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+    const [checkingPassword, setCheckingPassword] = useState(false);
+    const [pendingDraft, setPendingDraft] = useState<OverrideForm | null>(null);
+    const [confirmationError, setConfirmationError] = useState('');
+    const passwordCheck = useRef<AbortController | null>(null);
+    const saveButton = useRef<HTMLButtonElement>(null);
+    const locked = form.processing || checkingPassword || pendingDraft !== null;
+    let saveLabel = 'Save override';
+    if (checkingPassword) saveLabel = 'Checking password…';
+    else if (form.processing) saveLabel = 'Saving…';
 
-        const clearing = form.data.choice === 'none';
-        const question = clearing
-            ? `Remove the plan override of ${team.name}?`
-            : `Apply this plan override to ${team.name}?`;
+    /** Stop the preflight when leaving; a late response must never trigger the stored operation. */
+    useEffect(() => () => passwordCheck.current?.abort(), []);
 
-        if (!window.confirm(question)) {
-            return;
-        }
-
-        form.transform((data) => overridePayload(data));
-
+    /** Send the exact confirmed draft through the existing, server-protected Inertia mutation. */
+    function save(draft: OverrideForm): void {
+        form.transform(() => overridePayload(draft));
         const visit = { preserveScroll: true, onSuccess: () => form.setData('reason', '') };
 
-        if (clearing) {
-            form.delete(path, visit);
-        } else {
-            form.put(path, visit);
+        if (draft.choice === 'none') form.delete(path, visit);
+        else form.put(path, visit);
+    }
+
+    /** Read the actual server session before deciding whether the current intent needs an inline challenge. */
+    async function checkPassword(draft: OverrideForm): Promise<void> {
+        const operation = new AbortController();
+        passwordCheck.current = operation;
+        setCheckingPassword(true);
+        setConfirmationError('');
+
+        try {
+            const response = await fetch('/user/confirmed-password-status', {
+                credentials: 'same-origin',
+                cache: 'no-store',
+                signal: operation.signal,
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok || response.redirected)
+                throw new Error('Invalid confirmation status.');
+            const body: unknown = await response.json();
+            if (
+                typeof body !== 'object' ||
+                body === null ||
+                !('confirmed' in body) ||
+                typeof body.confirmed !== 'boolean'
+            ) {
+                throw new Error('Invalid confirmation status.');
+            }
+            if (operation.signal.aborted) return;
+            if (body.confirmed) save(draft);
+            else setPendingDraft(draft);
+        } catch {
+            if (!operation.signal.aborted)
+                setConfirmationError(
+                    'Unable to check password confirmation. Check your connection or sign in again.',
+                );
+        } finally {
+            if (passwordCheck.current === operation) passwordCheck.current = null;
+            if (!operation.signal.aborted) setCheckingPassword(false);
         }
+    }
+
+    /** Preserve the selected intent while confirming; no pending draft is stored in history or on the server. */
+    function submit(event: FormEvent<HTMLFormElement>): void {
+        event.preventDefault();
+        if (locked || passwordCheck.current) return;
+
+        const question =
+            form.data.choice === 'none'
+                ? `Remove the plan override of ${team.name}?`
+                : `Apply this plan override to ${team.name}?`;
+        if (!window.confirm(question)) return;
+        void checkPassword({ ...form.data });
+    }
+
+    /** Resume only the explicit pending draft after the server accepts the password. */
+    function confirmPendingDraft(): void {
+        if (pendingDraft === null) return;
+        const draft = pendingDraft;
+        setPendingDraft(null);
+        save(draft);
+    }
+
+    /** Drop the prompt without changing the draft and restore keyboard focus to its trigger. */
+    function cancelPendingDraft(): void {
+        setPendingDraft(null);
+        window.requestAnimationFrame(() => saveButton.current?.focus());
     }
 
     return (
@@ -154,105 +220,123 @@ export default function Show() {
                         : `Current: ${team.override.kind === 'unlimited' ? 'unlimited testing' : `granted ${planLabel(team.override.plan ?? 'pro')}`}, ends ${utcLabel(team.override.expiresAt, 'never')}. Reason: ${team.override.reason}`}
                 </p>
 
-                <form onSubmit={submit} className="mt-4 grid gap-4" noValidate>
-                    {general.length > 0 && (
-                        <div
-                            role="alert"
-                            tabIndex={-1}
-                            className="rounded border border-red-800 p-3 text-red-300"
-                        >
-                            {general.map((message) => (
-                                <p key={message}>{message}</p>
+                {confirmationError && (
+                    <p role="alert" className="mt-4 text-red-300">
+                        {confirmationError}
+                    </p>
+                )}
+                <form onSubmit={submit} className="mt-4" noValidate>
+                    <fieldset disabled={locked} className="grid min-w-0 gap-4">
+                        <legend className="sr-only">Plan override settings</legend>
+                        {general.length > 0 && (
+                            <div
+                                role="alert"
+                                tabIndex={-1}
+                                className="rounded border border-red-800 p-3 text-red-300"
+                            >
+                                {general.map((message) => (
+                                    <p key={message}>{message}</p>
+                                ))}
+                            </div>
+                        )}
+
+                        <fieldset>
+                            <legend className="mb-2 text-sm font-medium">Override</legend>
+                            {CHOICES.map((choice) => (
+                                <label key={choice.value} className="flex items-center gap-2 py-1">
+                                    <input
+                                        type="radio"
+                                        name="choice"
+                                        value={choice.value}
+                                        checked={form.data.choice === choice.value}
+                                        onChange={() => form.setData('choice', choice.value)}
+                                    />
+                                    {choice.label}
+                                </label>
                             ))}
-                        </div>
-                    )}
+                        </fieldset>
 
-                    <fieldset>
-                        <legend className="mb-2 text-sm font-medium">Override</legend>
-                        {CHOICES.map((choice) => (
-                            <label key={choice.value} className="flex items-center gap-2 py-1">
+                        {form.data.choice !== 'none' && (
+                            <div>
+                                <label
+                                    htmlFor="valid-through"
+                                    className="mb-2 block text-sm font-medium"
+                                >
+                                    Valid through (UTC date, optional)
+                                </label>
                                 <input
-                                    type="radio"
-                                    name="choice"
-                                    value={choice.value}
-                                    checked={form.data.choice === choice.value}
-                                    onChange={() => form.setData('choice', choice.value)}
+                                    id="valid-through"
+                                    type="date"
+                                    value={form.data.valid_through}
+                                    onChange={(event) =>
+                                        form.setData('valid_through', event.target.value)
+                                    }
+                                    aria-invalid={form.errors.valid_through !== undefined}
+                                    aria-describedby="valid-through-hint valid-through-error"
+                                    className={INPUT}
                                 />
-                                {choice.label}
-                            </label>
-                        ))}
-                    </fieldset>
+                                <p id="valid-through-hint" className="mt-1 text-xs text-slate-400">
+                                    Leave empty to keep the override until it is removed.
+                                </p>
+                                {form.errors.valid_through && (
+                                    <p
+                                        id="valid-through-error"
+                                        role="alert"
+                                        className="mt-1 text-red-300"
+                                    >
+                                        {form.errors.valid_through}
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
-                    {form.data.choice !== 'none' && (
                         <div>
                             <label
-                                htmlFor="valid-through"
+                                htmlFor="override-reason"
                                 className="mb-2 block text-sm font-medium"
                             >
-                                Valid through (UTC date, optional)
+                                Reason (required, recorded in the audit log)
                             </label>
-                            <input
-                                id="valid-through"
-                                type="date"
-                                value={form.data.valid_through}
-                                onChange={(event) =>
-                                    form.setData('valid_through', event.target.value)
+                            <textarea
+                                id="override-reason"
+                                required
+                                maxLength={reasonMaxLength}
+                                value={form.data.reason}
+                                onChange={(event) => form.setData('reason', event.target.value)}
+                                aria-invalid={form.errors.reason !== undefined}
+                                aria-describedby={
+                                    form.errors.reason ? 'override-reason-error' : undefined
                                 }
-                                aria-invalid={form.errors.valid_through !== undefined}
-                                aria-describedby="valid-through-hint valid-through-error"
                                 className={INPUT}
                             />
-                            <p id="valid-through-hint" className="mt-1 text-xs text-slate-400">
-                                Leave empty to keep the override until it is removed.
-                            </p>
-                            {form.errors.valid_through && (
+                            {form.errors.reason && (
                                 <p
-                                    id="valid-through-error"
+                                    id="override-reason-error"
                                     role="alert"
                                     className="mt-1 text-red-300"
                                 >
-                                    {form.errors.valid_through}
+                                    {form.errors.reason}
                                 </p>
                             )}
                         </div>
-                    )}
 
-                    <div>
-                        <label htmlFor="override-reason" className="mb-2 block text-sm font-medium">
-                            Reason (required, recorded in the audit log)
-                        </label>
-                        <textarea
-                            id="override-reason"
-                            required
-                            maxLength={reasonMaxLength}
-                            value={form.data.reason}
-                            onChange={(event) => form.setData('reason', event.target.value)}
-                            aria-invalid={form.errors.reason !== undefined}
-                            aria-describedby={
-                                form.errors.reason ? 'override-reason-error' : undefined
-                            }
-                            className={INPUT}
-                        />
-                        {form.errors.reason && (
-                            <p
-                                id="override-reason-error"
-                                role="alert"
-                                className="mt-1 text-red-300"
+                        <div>
+                            <button
+                                ref={saveButton}
+                                disabled={locked}
+                                className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
                             >
-                                {form.errors.reason}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <button
-                            disabled={form.processing}
-                            className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                        >
-                            {form.processing ? 'Saving…' : 'Save override'}
-                        </button>
-                    </div>
+                                {saveLabel}
+                            </button>
+                        </div>
+                    </fieldset>
                 </form>
+                {pendingDraft !== null && (
+                    <PasswordConfirmationForm
+                        onConfirmed={confirmPendingDraft}
+                        onCancel={cancelPendingDraft}
+                    />
+                )}
             </section>
 
             <section aria-labelledby="history-heading" className="mt-10">

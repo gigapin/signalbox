@@ -50,6 +50,43 @@ Verifiche successive alla correzione:
 - Sul bundle finale, il banner a 390 px è stato verificato nei due browser, inclusa la chiusura esplicita e senza salvare altre note.
 - [Misure e controlli dei due browser](browser-evidence/2026-11-09/BT08/verification.json). Il JSON generato contiene un oggetto per browser: `version` è la versione eseguita; `mobile` elenca le viste con `screen` (schermata), `viewport` e `document` (larghezze in CSS px), `overflowControls` (controlli fuori viewport, vuoto in caso positivo) e `tables` (nome accessibile `name`, larghezza visibile `width`, contenuto `content`, in CSS px). `errors` contiene le eccezioni JavaScript non gestite osservate ed è vuoto per entrambi. Nessun cookie, payload o URL privato nel file.
 
+## Visibilità degli errori monitor — BT.11
+
+Durante la ripetizione manuale di J01 l’utente ha segnalato che il valore 30 s veniva rifiutato senza feedback visibile. Il messaggio inline era già implementato e correttamente restituito dal server, ma il focus veniva richiesto in `onFinish` prima che React avesse applicato gli errori al DOM. Con una finestra di altezza 600 px, il messaggio restava sopra il viewport in Brave e Firefox: bordi verticali circa **−81/−41 px**, nessun campo focalizzato.
+
+Il modulo ora attende il commit degli errori con un effetto React e programma il focus nel frame successivo, limitandolo al proprio elemento form. La pulizia cancella il frame se si cambia pagina. Il rifiuto non altera il dato salvato e conserva il valore digitato per correggerlo.
+
+Ripetizione reale su un monitor sintetico con minimo Pro di 60 s, sola submission invalida: in **Brave 157 e Firefox 159**, campo intervallo focalizzato e messaggio interamente visibile a **349–389 px** in un viewport alto 600 px; nessuna eccezione JS. Verificata anche la vista **390×844 px**, senza scrivere un nuovo intervallo. Due regressioni prima fallite ora passano; gate frontend **186 test DOM**, 5 qualità, lint/formato/TypeScript/build superato. J01 conserva PASS dopo questa correzione; nessun altro caso viene dedotto dalla prova.
+
+## Validazione durante la digitazione — BT.12
+
+Dopo BT.11 l’utente ha segnalato nuovamente l’assenza di feedback e ha richiesto esplicitamente la validazione React prima dell’invio. Il solo spostamento del focus dopo la risposta del server non soddisfaceva questa UX; BT.12 lo integra con controllo locale dell’intervallo.
+
+- Messaggio inline e stato ARIA aggiornati durante la digitazione per campo vuoto, formato non intero, minimo del piano e massimo operativo. Il minimo arriva dalla policy proiettata in `usage`; il massimo da `monitor-input.interval_max_seconds`, ora esposto in `maximumIntervalSeconds` nelle pagine Create/Edit. Nessun limite di piano è duplicato nel frontend.
+- Clic e Invio con valore invalido chiamano soltanto il controllo locale: **nessun POST/PATCH, redirect o navigazione**. Il modulo e tutti i valori digitati restano disponibili. Correggendo il campo, l’errore locale o precedente del server si cancella immediatamente; l’invio torna consentito.
+- Conservata la regola di downgrade: un intervallo preesistente sotto il minimo del piano permette modifiche non correlate se rimane invariato; un nuovo valore sotto minimo viene bloccato. Le validazioni server restano autoritative e ricontrollano i limiti anche senza JavaScript o con dati di piano cambiati.
+- Sei scenari reali in Brave 157 e Firefox 159: modifica a 1365×600 e 390×844, creazione a 1365×600. Messaggio verificato prima del blur, **0 richieste e 0 navigazioni** con valore invalido, bozza conservata e scomparsa dell’errore correggendo il valore. L’invio corretto è stato intercettato prima del server per verificare l’abilitazione senza scrivere dati. Nessuno screenshot.
+
+Le regressioni e il gate frontend comprendono 199 test DOM; la precedente prova di solo focus resta nella cronologia, ma il comportamento corrente di J01 è quello di questa sezione.
+
+## Redirect dopo configurazione 2FA — BT.13
+
+Durante K03 l’utente ha osservato un modal Inertia con una risposta JSON del QR dopo **Save override**. Le letture native `fetch` di QR/chiave/codici non avevano il marcatore AJAX e Laravel le memorizzava come URL precedente; le pagine protette non inviano referrer, quindi `back()` riutilizzava quel JSON. Il difetto riguarda la navigazione successiva alla mutazione: l’override può essere già salvato.
+
+Correzione: letture 2FA con `X-Requested-With: XMLHttpRequest`; creazione/sostituzione e rimozione dell’override con redirect nominato al dettaglio del team modificato, indipendente da cronologia o referrer. Nessuna modifica ai permessi, alla conferma password o ai segreti dell’operatore. Test frontend per i tre endpoint e backend per URL precedente preservato, sessioni già compromesse dal vecchio trasporto, referrer assente/diverso, redirect 303 e risposta Inertia valida. **200 test DOM e 79 backend / 606 asserzioni** superati; dettagli e prova browser nel piano BT.13.
+
+Nella prova completa è emerso lo stesso problema nelle risposte Fortify dopo riconferma password: ora un adapter mantiene le quattro mutazioni 2FA sulla pagina Sicurezza, conservando i contratti JSON e gli status flash. Otto ulteriori casi automatici e la ripetizione browser senza ricariche intermedie coprono questa correzione. In Brave e Firefox, su account/team/server di test isolati, setup TOTP confermato, tre letture AJAX, vecchia cronologia QR simulata e salvataggio/rimozione override hanno prodotto 303 al team corretto, minimo 30 poi 300 s e zero eccezioni JS. Fixture e server temporanei rimossi; nessun dato/account di sviluppo modificato.
+
+K03 dell’utente richiede ripresa dal dettaglio e verifica di **Current/History**; nessun PASS manuale attribuito automaticamente. I conteggi storici del registro sottostante restano quelli delle prove precedenti. Nessuno screenshot salvato nel repository.
+
+## Password durante rimozione override — BT.14
+
+L’utente ha segnalato in K04 che la riconferma password riportava a una pagina senza applicare **No override**. Il middleware interrompeva la mutazione e la conferma password non la riprendeva; BT.13 correggeva i redirect dopo le mutazioni già riuscite e non questo passaggio precedente.
+
+Ora il modulo verifica lo stato password con una lettura JSON non cacheabile e, se necessario, chiede **Current password** nella stessa pagina. **Confirm password and save override** invia il draft scelto una sola volta dopo conferma valida; password errata, annullamento o errore non cambiano il piano e conservano scelta/motivo. Il server continua a richiedere una password recente sulle mutazioni.
+
+Prova su dati e server isolati, Brave e Firefox: password errata con zero rimozioni, password valida con una sola DELETE/303 al team e messaggio **Plan override removed.**; scelta e motivo conservati, limite Free 300 s osservato anche come owner del team. Provati inoltre annullamento dell’assegnazione, successiva assegnazione confermata e rimozione con conferma ancora recente senza secondo prompt. Nessuna eccezione JavaScript, screenshot o modifica ai dati dell’utente. Verifiche automatiche finali: **212 DOM, 101 backend / 725 asserzioni**, 5 qualità, lint/formato/TypeScript/build e analisi statica superati. K04 manuale dell’utente resta da riprendere dopo una ricarica; i conteggi del registro storico non assegnano automaticamente un PASS nuovo.
+
 ## Registro per caso
 
 Le ore osservate sono italiane, CET (UTC+1). Una riga senza ora indica un prerequisito mancante o una prova facoltativa non scelta.

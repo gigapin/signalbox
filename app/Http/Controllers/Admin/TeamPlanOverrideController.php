@@ -23,7 +23,7 @@ final class TeamPlanOverrideController extends Controller
     /**
      * @param SavePlanOverrideRequest $request Validated override.
      * @param int $team Target team.
-     * @return RedirectResponse Previous page with `plan-override-saved`.
+     * @return RedirectResponse Target team detail with `plan-override-saved`, independent of session history.
      */
     public function update(SavePlanOverrideRequest $request, int $team): RedirectResponse
     {
@@ -36,18 +36,18 @@ final class TeamPlanOverrideController extends Controller
             $request->reason(),
         );
 
-        return back()->with('status', 'plan-override-saved');
+        return redirect()->route('admin.teams.show', ['team' => $team])->with('status', 'plan-override-saved');
     }
 
     /**
      * @param ClearPlanOverrideRequest $request Validated reason.
      * @param int $team Target team.
-     * @return RedirectResponse Previous page with `plan-override-cleared`.
+     * @return RedirectResponse Target team detail with `plan-override-cleared`, independent of session history.
      */
     public function destroy(ClearPlanOverrideRequest $request, int $team): RedirectResponse
     {
         $this->overrides->clear($this->authenticatedUser($request), $team, $request->reason());
 
-        return back()->with('status', 'plan-override-cleared');
+        return redirect()->route('admin.teams.show', ['team' => $team])->with('status', 'plan-override-cleared');
     }
 }

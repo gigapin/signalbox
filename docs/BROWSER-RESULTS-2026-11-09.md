@@ -69,6 +69,24 @@ Dopo BT.11 l’utente ha segnalato nuovamente l’assenza di feedback e ha richi
 
 Le regressioni e il gate frontend comprendono 199 test DOM; la precedente prova di solo focus resta nella cronologia, ma il comportamento corrente di J01 è quello di questa sezione.
 
+## Redirect dopo configurazione 2FA — BT.13
+
+Durante K03 l’utente ha osservato un modal Inertia con una risposta JSON del QR dopo **Save override**. Le letture native `fetch` di QR/chiave/codici non avevano il marcatore AJAX e Laravel le memorizzava come URL precedente; le pagine protette non inviano referrer, quindi `back()` riutilizzava quel JSON. Il difetto riguarda la navigazione successiva alla mutazione: l’override può essere già salvato.
+
+Correzione: letture 2FA con `X-Requested-With: XMLHttpRequest`; creazione/sostituzione e rimozione dell’override con redirect nominato al dettaglio del team modificato, indipendente da cronologia o referrer. Nessuna modifica ai permessi, alla conferma password o ai segreti dell’operatore. Test frontend per i tre endpoint e backend per URL precedente preservato, sessioni già compromesse dal vecchio trasporto, referrer assente/diverso, redirect 303 e risposta Inertia valida. **200 test DOM e 79 backend / 606 asserzioni** superati; dettagli e prova browser nel piano BT.13.
+
+Nella prova completa è emerso lo stesso problema nelle risposte Fortify dopo riconferma password: ora un adapter mantiene le quattro mutazioni 2FA sulla pagina Sicurezza, conservando i contratti JSON e gli status flash. Otto ulteriori casi automatici e la ripetizione browser senza ricariche intermedie coprono questa correzione. In Brave e Firefox, su account/team/server di test isolati, setup TOTP confermato, tre letture AJAX, vecchia cronologia QR simulata e salvataggio/rimozione override hanno prodotto 303 al team corretto, minimo 30 poi 300 s e zero eccezioni JS. Fixture e server temporanei rimossi; nessun dato/account di sviluppo modificato.
+
+K03 dell’utente richiede ripresa dal dettaglio e verifica di **Current/History**; nessun PASS manuale attribuito automaticamente. I conteggi storici del registro sottostante restano quelli delle prove precedenti. Nessuno screenshot salvato nel repository.
+
+## Password durante rimozione override — BT.14
+
+L’utente ha segnalato in K04 che la riconferma password riportava a una pagina senza applicare **No override**. Il middleware interrompeva la mutazione e la conferma password non la riprendeva; BT.13 correggeva i redirect dopo le mutazioni già riuscite e non questo passaggio precedente.
+
+Ora il modulo verifica lo stato password con una lettura JSON non cacheabile e, se necessario, chiede **Current password** nella stessa pagina. **Confirm password and save override** invia il draft scelto una sola volta dopo conferma valida; password errata, annullamento o errore non cambiano il piano e conservano scelta/motivo. Il server continua a richiedere una password recente sulle mutazioni.
+
+Prova su dati e server isolati, Brave e Firefox: password errata con zero rimozioni, password valida con una sola DELETE/303 al team e messaggio **Plan override removed.**; scelta e motivo conservati, limite Free 300 s osservato anche come owner del team. Provati inoltre annullamento dell’assegnazione, successiva assegnazione confermata e rimozione con conferma ancora recente senza secondo prompt. Nessuna eccezione JavaScript, screenshot o modifica ai dati dell’utente. Verifiche automatiche finali: **212 DOM, 101 backend / 725 asserzioni**, 5 qualità, lint/formato/TypeScript/build e analisi statica superati. K04 manuale dell’utente resta da riprendere dopo una ricarica; i conteggi del registro storico non assegnano automaticamente un PASS nuovo.
+
 ## Registro per caso
 
 Le ore osservate sono italiane, CET (UTC+1). Una riga senza ora indica un prerequisito mancante o una prova facoltativa non scelta.

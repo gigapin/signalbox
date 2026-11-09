@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Requests\Auth\SecurityInputRequest;
 use App\Models\User;
 use Illuminate\Contracts\Support\Responsable;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
 use Laravel\Fortify\Http\Controllers\ConfirmablePasswordController;
@@ -38,6 +40,17 @@ final class SecurityController
     public function password(SecurityInputRequest $request, ConfirmablePasswordController $controller): Responsable
     {
         return $controller->store($request);
+    }
+
+    /**
+     * @param Request $request Authenticated session checked before an inline confirmation prompt.
+     * @return JsonResponse Confirmation state under the server timeout, without extending it or accepting client bounds.
+     */
+    public function passwordStatus(Request $request): JsonResponse
+    {
+        $age = now()->getTimestamp() - (int) $request->session()->get('auth.password_confirmed_at', 0);
+
+        return response()->json(['confirmed' => $age >= 0 && $age <= (int) config('auth.password_timeout', 900)]);
     }
 
     /**

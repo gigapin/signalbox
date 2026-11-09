@@ -42,6 +42,7 @@ Route::middleware(NoStoreAuthentication::class)->group(/** Register only authent
         Route::middleware('verified')->group(/** Account-only destinations requiring verified identity, without claiming tenant authorization. */ function (): void {
             Route::get('/account', [AccountController::class, 'show'])->name('account');
             Route::get('/user/confirm-password', AuthPageController::class)->name('password.confirm');
+            Route::get('/user/confirmed-password-status', [SecurityController::class, 'passwordStatus'])->name('password.confirm.status');
             Route::post('/user/confirm-password', [SecurityController::class, 'password'])->middleware('throttle:password-confirmation')->name('password.confirm.store');
             Route::get('/account/security', [AccountController::class, 'security'])->middleware('password.confirm')->name('account.security');
             Route::middleware(['password.confirm', ProtectTwoFactorState::class])->group(/** Fresh password and shared user lock protect all second-factor state access. */ function (): void {

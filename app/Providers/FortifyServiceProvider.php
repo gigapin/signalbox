@@ -10,6 +10,7 @@ use App\Http\Requests\Auth\ChallengeRequest;
 use App\Http\Responses\Auth\AuthenticatedResponse;
 use App\Http\Responses\Auth\InvitationVerifiedResponse;
 use App\Http\Responses\Auth\ResetLinkResponse;
+use App\Http\Responses\Auth\TwoFactorSettingsResponse;
 use App\Services\Auth\ScopedTwoFactorProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Cache\Factory as CacheFactory;
@@ -18,7 +19,11 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\RecoveryCodesGeneratedResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
+use Laravel\Fortify\Contracts\TwoFactorConfirmedResponse;
+use Laravel\Fortify\Contracts\TwoFactorDisabledResponse;
+use Laravel\Fortify\Contracts\TwoFactorEnabledResponse;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Http\Requests\TwoFactorLoginRequest;
@@ -32,6 +37,16 @@ class FortifyServiceProvider extends ServiceProvider
     {
         $this->app->singleton(\Laravel\Fortify\Contracts\VerifyEmailResponse::class, InvitationVerifiedResponse::class);
         Fortify::ignoreRoutes();
+        // Settings mutations must return to their page even immediately after password reconfirmation.
+        foreach ([
+            TwoFactorEnabledResponse::class => Fortify::TWO_FACTOR_AUTHENTICATION_ENABLED,
+            TwoFactorConfirmedResponse::class => Fortify::TWO_FACTOR_AUTHENTICATION_CONFIRMED,
+            TwoFactorDisabledResponse::class => Fortify::TWO_FACTOR_AUTHENTICATION_DISABLED,
+            RecoveryCodesGeneratedResponse::class => Fortify::RECOVERY_CODES_GENERATED,
+        ] as $contract => $status) {
+            $this->app->bind($contract, static fn (): TwoFactorSettingsResponse => new TwoFactorSettingsResponse($status));
+        }
+
         $this->app->bind(
             \Laravel\Fortify\Contracts\PasswordConfirmedResponse::class,
             \App\Http\Responses\Auth\PasswordConfirmedResponse::class,

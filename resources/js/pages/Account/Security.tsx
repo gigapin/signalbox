@@ -25,7 +25,8 @@ async function readSecurity(path: string): Promise<unknown> {
     const response = await fetch(path, {
         credentials: 'same-origin',
         cache: 'no-store',
-        headers: { Accept: 'application/json' },
+        // Laravel must not record these JSON resources as the previous navigable page.
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
     });
     if (response.status === 423 || response.status === 401 || response.redirected) {
         router.visit('/account/security');

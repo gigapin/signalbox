@@ -17,7 +17,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 use Inertia\Testing\AssertableInertia;
+use Tests\Support\AuthFixture;
 use Tests\Support\CommittedTeamFixture;
 use Tests\Support\MonitorInputFixture;
 
@@ -144,6 +146,57 @@ it('lets an unlimited test team exceed the Free quota and cadence, and restores 
         ->and($events->pluck('reason')->all())->toBe(['QA team', 'QA finished']);
 });
 
+it('returns override mutations to the target team despite stale security navigation', function (string $endpoint, ?string $referrer): void {
+    $team = Team::factory()->free()->trialEnded()->create();
+    $operator = AuthFixture::enroll($this->operator);
+    $target = "/admin/teams/{$team->id}";
+    $headers = ['X-Inertia' => 'true', 'X-Requested-With' => 'XMLHttpRequest'];
+
+    if ($referrer !== null) {
+        $headers['Referer'] = $referrer;
+    }
+
+    // Reproduce a session written by the old fetch transport, without exposing its response body.
+    $this->actingAs($operator)
+        ->withSession(['auth.password_confirmed_at' => now()->timestamp])
+        ->getJson($endpoint)
+        ->assertOk()
+        ->assertSessionHas('_previous.url', url($endpoint));
+
+    $this->put($target.'/plan-override', ['kind' => 'unlimited', 'reason' => 'Regression grant'], $headers)
+        ->assertStatus(303)
+        ->assertRedirect($target)
+        ->assertSessionHas('status', 'plan-override-saved');
+
+    // Match the deployed asset version when following the redirect as an Inertia client.
+    $headers['X-Inertia-Version'] = Inertia::getVersion() ?? '';
+
+    $this->get($target, $headers)
+        ->assertOk()
+        ->assertHeader('X-Inertia', 'true')
+        ->assertJsonPath('component', 'Admin/Teams/Show')
+        ->assertJsonPath('props.team.id', $team->id)
+        ->assertJsonPath('props.team.override.kind', 'unlimited')
+        ->assertJsonMissingPath('props.svg')
+        ->assertJsonMissingPath('props.secretKey')
+        ->assertJsonMissingPath('props.recoveryCodes');
+
+    $this->delete($target.'/plan-override', ['reason' => 'Regression cleanup'], $headers)
+        ->assertStatus(303)
+        ->assertRedirect($target)
+        ->assertSessionHas('status', 'plan-override-cleared');
+
+    expect($team->planOverride()->exists())->toBeFalse()
+        ->and(DB::table('platform_audit_events')->where('actor_id', $operator->id)->count())->toBe(2);
+})->with([
+    'QR' => ['/user/two-factor-qr-code'],
+    'manual key' => ['/user/two-factor-secret-key'],
+    'recovery codes' => ['/user/two-factor-recovery-codes'],
+])->with([
+    'no referrer' => [null],
+    'unrelated referrer' => ['http://localhost/account/security'],
+]);
+
 it('grants a plan until an inclusive UTC date and falls back afterwards', function (): void {
     $this->travelTo(CarbonImmutable::parse('2026-11-10 12:00:00', 'UTC'));
     $team = Team::factory()->free()->trialEnded()->create();
@@ -268,4 +321,57 @@ it('makes an override change wait for a creation holding the Team lock', functio
         $fixture->connection->table('users')->where('id', $operatorId)->delete();
         $fixture->cleanup();
     }
+});
+
+it('confirms an expired operator password without changing the override until its explicit mutation', function (): void {
+    $team = Team::factory()->free()->trialEnded()->create();
+    overrideTeam($team, PlanOverrideKind::Unlimited);
+    $path = "/admin/teams/{$team->id}/plan-override";
+    $this->actingAs($this->operator)->withSession(['auth.password_confirmed_at' => now()->subMinutes(16)->timestamp]);
+
+    $this->getJson('/user/confirmed-password-status', ['X-Requested-With' => 'XMLHttpRequest'])
+        ->assertOk()->assertExactJson(['confirmed' => false])->assertHeader('Cache-Control', 'no-store, private');
+    $this->deleteJson($path, ['reason' => 'Blocked without confirmation'])->assertStatus(423);
+    expect($team->planOverride()->exists())->toBeTrue();
+
+    $this->postJson('/user/confirm-password', ['password' => 'incorrect'])
+        ->assertUnprocessable()->assertJsonValidationErrors('password')->assertSessionMissing('_old_input.password');
+    expect($team->planOverride()->exists())->toBeTrue();
+
+    $this->postJson('/user/confirm-password', ['password' => 'password'])
+        ->assertOk()->assertExactJson(['confirmed' => true])->assertHeader('Cache-Control', 'no-store, private');
+    // Password confirmation only authorizes the browser's next explicit request; it cannot replay a mutation.
+    expect($team->planOverride()->exists())->toBeTrue();
+    $this->getJson('/user/confirmed-password-status')->assertExactJson(['confirmed' => true]);
+    $this->delete($path, ['reason' => 'Confirmed removal'], ['X-Inertia' => 'true', 'X-Requested-With' => 'XMLHttpRequest'])
+        ->assertStatus(303)->assertRedirect("/admin/teams/{$team->id}")->assertSessionHas('status', 'plan-override-cleared');
+
+    expect($team->planOverride()->exists())->toBeFalse()
+        ->and(app(TeamEntitlement::class)->effectivePlan($team))->toBe(Plan::Free)
+        ->and(DB::table('platform_audit_events')->where('actor_id', $this->operator->id)->count())->toBe(2);
+});
+
+it('checks password confirmation against the server timeout without extending or accepting client bounds', function (?int $age, bool $confirmed): void {
+    $session = $age === null ? [] : ['auth.password_confirmed_at' => now()->timestamp - $age];
+    $this->actingAs($this->operator)->withSession($session)
+        ->getJson('/user/confirmed-password-status?seconds=999999999', ['X-Requested-With' => 'XMLHttpRequest'])
+        ->assertOk()->assertExactJson(['confirmed' => $confirmed])->assertHeader('Cache-Control', 'no-store, private');
+
+    if ($age !== null) {
+        expect(session('auth.password_confirmed_at'))->toBe($session['auth.password_confirmed_at']);
+    } else {
+        expect(session()->has('auth.password_confirmed_at'))->toBeFalse();
+    }
+})->with([
+    'never confirmed' => [null, false],
+    'recent' => [0, true],
+    'before expiry' => [899, true],
+    'middleware boundary' => [900, true],
+    'expired' => [901, false],
+    'future timestamp' => [-1, false],
+]);
+
+it('denies confirmation status to unverified users', function (): void {
+    $this->actingAs(User::factory()->unverified()->create())
+        ->getJson('/user/confirmed-password-status')->assertForbidden();
 });

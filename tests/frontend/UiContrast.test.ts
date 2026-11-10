@@ -40,7 +40,7 @@ function contrast(foreground: string, background: string): number {
 
 test('normal-size text meets AA on every supported dark surface including disabled readable controls', () => {
     for (const surface of ['canvas', 'surface', 'raised']) {
-        for (const foreground of ['text', 'muted', 'accent', 'danger']) {
+        for (const foreground of ['text', 'muted', 'accent', 'danger', 'success', 'warning']) {
             expect(
                 contrast(foreground, surface),
                 `${foreground} on ${surface}`,

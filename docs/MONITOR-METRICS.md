@@ -61,3 +61,7 @@ Il piano SQL realmente eseguito conferma 62 righe aggregate, non 62 campioni sor
 ## Verifiche
 
 [MonitorMetricProjectionTest](../tests/Integration/MonitorMetricProjectionTest.php) copre dati mancanti/zero, distribuzioni diseguali, regioni, finestre semiaperte, risultati futuri/esteri, piano/retention/vita monitor, rollup e manutenzioni, filtri malformati, viewer/non membro, letture parziali, provenienza TLS e ciphertext canali deliberatamente illeggibile. Le suite pagine/SLA/rollup/notifiche/autorizzazioni e i controlli finali sono registrati nel [piano](TASKS.md). Nessun nuovo flusso visivo o PASS browser/L in UI.03.1; UI.03.2 prosegue con l’overview team.
+
+## Adeguamento overview — UI.03.2
+
+Il controller aggiunge `dashboard.can.create` e `dashboard.usage` dal Gate e da MonitorLimits, nello stesso root riletto da useLivePage. Il servizio metrico resta invariato. La precedente tabella di misure UI.03.1 è storica: dopo questo adeguamento il benchmark registra **18 query** dashboard sia con 1 sia con 40 monitor (prima 15), massimo venti righe proiettate; mediane locali 23.41/24.79 ms. Lista/dettaglio conservano rispettivamente 10/36 query sulla fixture senza risultati. Ripetizione con lo stesso comando e fixture, non un’ottimizzazione né una nuova attestazione di carico. Tempi dell’ulteriore prova con 1440 risultati: fallback grezzo 410.62 ms, rollup 97.79 ms; le fluttuazioni locali non modificano i limiti dichiarati sopra. Le nuove proprietà sono hint aggiornati, le mutazioni ricontrollano sempre policy/quota sotto lock.

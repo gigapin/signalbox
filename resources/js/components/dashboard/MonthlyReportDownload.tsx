@@ -35,27 +35,29 @@ export function reportMonths(timezone: string, now: Date = new Date()): ReportMo
     });
 }
 
-/** Render the month choice with a plain link, because Inertia navigation cannot deliver a file. The last complete month comes preselected. */
-export default function MonthlyReportDownload({
-    teamId,
-    timezone,
-}: {
+/** Route and calendar context for the downloadable monthly report. */
+interface MonthlyReportDownloadProps {
+    /** Authorized route team used in the download URL. */
     teamId: number;
+    /** IANA team timezone controlling the offered months. */
     timezone: string;
-}) {
+}
+
+/** Render the month choice with a plain link, because Inertia navigation cannot deliver a file. The last complete month comes preselected. */
+export default function MonthlyReportDownload({ teamId, timezone }: MonthlyReportDownloadProps) {
     const [options] = useState(() => reportMonths(timezone));
     const [selected, setSelected] = useState(options[1]?.value ?? '');
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            <label htmlFor="report-month" className="text-slate-400">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <label htmlFor="report-month" className="ui-label">
                 Monthly report
             </label>
             <select
                 id="report-month"
                 value={selected}
                 onChange={(event) => setSelected(event.target.value)}
-                className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+                className="ui-input max-w-full sm:w-auto"
             >
                 {options.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -63,7 +65,9 @@ export default function MonthlyReportDownload({
                     </option>
                 ))}
             </select>
-            <a href={`/teams/${teamId}/reports/${selected}`}>Download PDF</a>
+            <a className="ui-link" href={`/teams/${teamId}/reports/${selected}`}>
+                Download PDF
+            </a>
         </div>
     );
 }

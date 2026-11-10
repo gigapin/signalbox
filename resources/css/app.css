@@ -580,3 +580,76 @@
         background: var(--color-ui-surface);
     }
 }
+
+/* Team overview uses existing semantic tokens and local table scrolling at every breakpoint. */
+@layer components {
+    .ui-dashboard-stack {
+        display: grid;
+        gap: var(--spacing-ui-6);
+        min-width: 0;
+    }
+
+    .ui-overview {
+        display: grid;
+        gap: var(--spacing-ui-4);
+        min-width: 0;
+    }
+
+    .ui-overview-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: start;
+        gap: var(--spacing-ui-4);
+    }
+
+    .ui-overview-total {
+        font-size: var(--text-ui-section);
+        font-weight: 600;
+    }
+
+    .ui-overview-counts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+        gap: var(--spacing-ui-3);
+    }
+
+    .ui-overview-count {
+        min-width: 0;
+        padding: var(--spacing-ui-4);
+        background: var(--color-ui-surface);
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-overview-count dt a {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--spacing-ui-control);
+    }
+
+    .ui-overview-count dd {
+        font-size: var(--text-ui-title);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ui-overview-count[data-tone='danger'] dd {
+        color: var(--color-ui-danger);
+    }
+
+    .ui-overview-count[data-tone='success'] dd {
+        color: var(--color-ui-success);
+    }
+
+    .ui-overview-count[data-tone='warning'] dd {
+        color: var(--color-ui-warning);
+    }
+
+    .ui-overview-empty {
+        display: grid;
+        gap: var(--spacing-ui-3);
+        padding-block: var(--spacing-ui-4);
+    }
+}

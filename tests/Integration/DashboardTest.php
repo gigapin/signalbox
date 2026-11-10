@@ -273,3 +273,31 @@ it('includes a just-completed check within the current second instead of waiting
         ->assertOk()->assertJsonPath('props.dashboard.latency.23.eu.meanMs', 42)
         ->assertJsonPath('props.dashboard.window.endsAt', '2026-10-30T12:00:00.800000Z');
 });
+
+it('projects fresh dashboard creation permissions and centralized plan hints for every role', function (string $role, bool $create): void {
+    $actor = $role === 'owner' ? $this->team->owner : \App\Models\User::factory()->create();
+    if ($role !== 'owner') {
+        \App\Models\Membership::factory()->create(['team_id' => $this->team->id, 'user_id' => $actor->id, 'role' => $role]);
+    }
+    $this->actingAs($actor)->get('/teams/'.$this->team->id.'/dashboard', dashboardHeaders())
+        ->assertOk()->assertJsonPath('props.dashboard.can.create', $create)
+        ->assertJsonPath('props.dashboard.usage.used', 0)
+        ->assertJsonPath('props.dashboard.usage.limit', 200)
+        ->assertJsonPath('props.dashboard.usage.minimumIntervalSeconds', 30)
+        ->assertJsonPath('props.dashboard.usage.full', false);
+})->with([['owner', true], ['admin', true], ['member', true], ['viewer', false]]);
+
+it('counts paused suspended monitors against capacity and refreshes permission in the live root', function (): void {
+    config(['plans.business.monitors' => 2]);
+    $actor = \App\Models\User::factory()->create();
+    \App\Models\Membership::factory()->create(['team_id' => $this->team->id, 'user_id' => $actor->id, 'role' => 'member']);
+    dashboardMonitor($this->team, ['is_paused' => true]);
+    dashboardMonitor($this->team, ['is_plan_suspended' => true]);
+    $url = '/teams/'.$this->team->id.'/dashboard';
+    $this->actingAs($actor)->get($url, dashboardHeaders())->assertOk()
+        ->assertJsonPath('props.dashboard.can.create', true)
+        ->assertJsonPath('props.dashboard.usage.full', true)
+        ->assertJsonPath('props.dashboard.usage.used', 2);
+    DB::table('team_user')->where('team_id', $this->team->id)->where('user_id', $actor->id)->update(['role' => 'viewer']);
+    $this->get($url, dashboardHeaders())->assertOk()->assertJsonPath('props.dashboard.can.create', false);
+});

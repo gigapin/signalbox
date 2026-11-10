@@ -16,11 +16,12 @@ use App\Enums\Monitoring\MonitorType;
 use App\Models\Monitor;
 use App\Models\MonitorHeartbeat;
 use App\Services\Monitoring\MonitorConfigurationProjection;
+use App\Services\Monitoring\ReadModels\MonitorDestination;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * Summaries read only non-configuration columns, so listing never decrypts URLs, headers or bodies.
+ * Summaries read non-configuration columns. List pages optionally decrypt only the destination URL for immediate redaction; headers and bodies are never hydrated.
  * Details take type-specific settings exclusively from MonitorConfigurationProjection.
  * Keys are camelCase like other page projections; the nested `configuration` keeps the snake_case
  * input field names so edit forms can prefill the non-secret values directly.
@@ -33,8 +34,11 @@ final readonly class MonitorPresenter
     /** Suggested execution budget for new monitors, in milliseconds. */
     private const int DEFAULT_TIMEOUT_MS = 5000;
 
-    /** @param MonitorConfigurationProjection $configuration Only allowed configuration projection. */
-    public function __construct(private MonitorConfigurationProjection $configuration)
+    /**
+     * @param MonitorConfigurationProjection $configuration Only allowed detail configuration projection.
+     * @param MonitorDestination $destination Minimal redacted destination for list pages.
+     */
+    public function __construct(private MonitorConfigurationProjection $configuration, private MonitorDestination $destination)
     {
     }
 
@@ -95,16 +99,17 @@ final readonly class MonitorPresenter
 
     /**
      * @param LengthAwarePaginator<int, Monitor> $page Tenant-filtered result page.
+     * @param bool $destinations Include redacted destinations only when their minimal columns were loaded.
      * @return array{data: list<array<string, mixed>>, currentPage: int, lastPage: int, perPage: int, total: int, from: int|null, to: int|null}
      *         Rows and counters only; the client builds links from its own filters so engine-specific query
      *         parameters never reach page URLs.
      */
-    public function page(LengthAwarePaginator $page): array
+    public function page(LengthAwarePaginator $page, bool $destinations = false): array
     {
         $rows = [];
 
         foreach ($page->items() as $monitor) {
-            $rows[] = $this->summary($monitor);
+            $rows[] = [...$this->summary($monitor), ...($destinations ? ['destination' => $this->destination->read($monitor)] : [])];
         }
 
         return [

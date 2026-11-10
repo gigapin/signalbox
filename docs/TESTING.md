@@ -578,3 +578,14 @@ docker compose run --rm php-test vendor/bin/pest tests/Integration/MetricBoundar
 
 The acceptance gate remains `./scripts/verify.sh`.
 
+
+## Private monitor read projections — UI.03.1
+
+[MONITOR-METRICS.md](MONITOR-METRICS.md) documents bounded filters, duration/latency contracts, TLS provenance and the measured query cost. MonitorMetricProjectionTest exercises PostgreSQL observations, exact percentiles, missing/zero/foreign/future data, retention/plan/lifetime, rollups/exclusions, policy/read-only access, malformed controls, partial Inertia reads and redaction without hydrating channel credentials. MonitorProjectionBenchmarkTest asserts query counts independent of 1/40 monitors and at most twenty projected list rows; its second fixture compares raw SLA fallback with stored hourly rollups on 1440 observations. EXPLAIN ANALYZE verifies 62 aggregate latency rows. Printed wall times are diagnostic, never CI thresholds.
+
+```sh
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorPagesTest.php tests/Integration/DashboardTest.php tests/Integration/MonitorAvailabilityTest.php tests/Integration/CheckRollupsTest.php tests/Integration/NotificationPagesTest.php tests/Integration/TeamAuthorizationMatrixTest.php
+docker compose run --rm -e RUN_PROJECTION_BENCHMARK=1 php-test php vendor/bin/pest tests/Integration/MonitorProjectionBenchmarkTest.php
+```
+
+Fixture writes and warm-up are excluded from measurements, and data is rolled back in the isolated database. The workload uses hourly observations per region; it does not attest performance at maximum cadence or at thousands of monitors. Schema maintenance timestamps have whole-second precision; fractional bucket clipping is tested with the application clock rather than pretending the stored maintenance timestamps preserve fractions. Frontend changes in this portion are types, without new controls or chart interaction: the existing DOM gate verifies compatibility. Subsequent UI portions own presentation and final browser/VoiceOver/zoom acceptance.

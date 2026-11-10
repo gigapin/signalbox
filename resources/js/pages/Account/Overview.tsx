@@ -1,6 +1,7 @@
 /** Present the authenticated identity and currently accessible team without monitoring data. */
-import { Link, useForm, usePage } from '@inertiajs/react';
-import AuthLayout, { type AuthProps } from '../../components/auth/AuthLayout';
+import { Link, usePage } from '@inertiajs/react';
+import type { AuthProps } from '../../components/auth/AuthLayout';
+import PrivateContextLayout from '../../components/app/PrivateContextLayout';
 
 /** Account-only data deliberately scoped through membership resolution. */
 interface OverviewProps extends AuthProps {
@@ -14,10 +15,8 @@ interface OverviewProps extends AuthProps {
 export default function Overview() {
     const { auth, currentTeam, hasPendingInvitation } = usePage<OverviewProps>().props;
 
-    const logout = useForm({});
-
     return (
-        <AuthLayout title="Your account">
+        <PrivateContextLayout title="Your account">
             <p className="text-xl">Welcome, {auth?.user?.name}.</p>
             <p className="mt-2 text-slate-300">{auth?.user?.email}</p>
             <p className="mt-6">
@@ -25,17 +24,12 @@ export default function Overview() {
                     ? `Current team: ${currentTeam.name}`
                     : 'No accessible team is currently selected.'}
             </p>
-            <nav aria-label="Account navigation" className="mt-8 flex gap-6 text-emerald-300">
+            <div className="ui-actions">
                 {currentTeam?.id && (
                     <Link href={`/teams/${currentTeam.id}/dashboard`}>Open dashboard</Link>
                 )}
-                <Link href="/teams">Your teams</Link>
                 {hasPendingInvitation && <Link href="/invitations/accept">Review invitation</Link>}
-                <Link href="/account/security">Account security</Link>
-                <button disabled={logout.processing} onClick={() => logout.post('/logout')}>
-                    Sign out
-                </button>
-            </nav>
-        </AuthLayout>
+            </div>
+        </PrivateContextLayout>
     );
 }

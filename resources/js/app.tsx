@@ -1,9 +1,11 @@
 /** Mount the Inertia 2 application with typed React page modules. */
 import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/react';
-import { Fragment, createElement, type ComponentType } from 'react';
+import { createElement, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 import RequestFailureNotice from './components/RequestFailureNotice';
+import { prepareHistoryNavigation } from './components/app/historyNavigation';
+import { NavigationGuardProvider } from './components/app/NavigationGuard';
 
 /** Describe the default React export required from each page module. */
 interface PageModule {
@@ -37,10 +39,11 @@ void createInertiaApp({
      */
     setup(options) {
         /** React root associated with the Inertia mount element. */
+        prepareHistoryNavigation();
         const root = createRoot(options.el);
         root.render(
             createElement(
-                Fragment,
+                NavigationGuardProvider,
                 null,
                 createElement(RequestFailureNotice),
                 createElement(options.App, options.props),

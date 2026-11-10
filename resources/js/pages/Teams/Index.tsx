@@ -3,7 +3,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import TeamSwitcher from '../../components/app/TeamSwitcher';
 import type { TeamNavigationView } from '../../components/app/navigation';
-import AuthLayout, { type AuthProps } from '../../components/auth/AuthLayout';
+import type { AuthProps } from '../../components/auth/AuthLayout';
+import PrivateContextLayout from '../../components/app/PrivateContextLayout';
 
 /** Explicit list response without tenant domain resources. */
 interface TeamsProps extends AuthProps {
@@ -20,7 +21,7 @@ export default function Teams() {
     const [suspended, setSuspended] = useState(false);
 
     return (
-        <AuthLayout title="Your teams">
+        <PrivateContextLayout title="Your teams">
             {teams.length > 0 && (
                 <TeamSwitcher
                     key={currentTeamId}
@@ -47,9 +48,6 @@ export default function Teams() {
                         ))}
                     </ul>
                 ))}
-            <Link className="mt-6 block text-emerald-300" href="/account">
-                Your account
-            </Link>
-        </AuthLayout>
+        </PrivateContextLayout>
     );
 }

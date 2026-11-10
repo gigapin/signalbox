@@ -1,4 +1,5 @@
 /** Show one notification channel with its verification state and the changes its state admits. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { formatInstant } from '../incidents/time';
@@ -50,8 +51,11 @@ export default function ChannelRow({
 }: ChannelRowProps) {
     const [editing, setEditing] = useState(false);
     const action = useForm<Record<string, never>>({});
+    useFormProtection(action);
     const activation = useForm({ active: !channel.isActive });
+    useFormProtection(activation);
     const confirm = useForm({ code: '' });
+    useFormProtection(confirm);
     const codeId = `channel-${channel.id}-code`;
 
     function sendCode() {

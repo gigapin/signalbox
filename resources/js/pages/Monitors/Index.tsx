@@ -4,7 +4,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
 import { useState, type FormEvent } from 'react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
 import Pagination from '../../components/monitors/Pagination';
 import {
@@ -128,7 +128,7 @@ function CreateControl({ teamId, usage, canCreate }: CreateControlProps) {
 }
 
 /** Search and filter through GET navigation so results stay bookmarkable and keyboard-operable. */
-export default function Index() {
+function PageContent() {
     const { team } = usePage<IndexProps>().props;
     const live = useLivePage<IndexProps>(team.id, 'Monitors/Index');
     const { monitors, filters, filtered, rejectedFilters, options, usage, can } = live.props;
@@ -159,19 +159,8 @@ export default function Index() {
     }
 
     return (
-        <AuthLayout title="Monitors" description={`Monitors of ${team.name}.`} wide>
+        <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <nav
-                aria-label="Team navigation"
-                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
-            >
-                <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
-                <Link href={`/teams/${team.id}`}>Team members</Link>
-                <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
-                <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
-                <Link href={`/teams/${team.id}/status-pages`}>Status pages</Link>
-            </nav>
-
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm text-slate-300">
                     {usage.used} of {usage.limit} monitors used. Minimum interval{' '}
@@ -348,6 +337,21 @@ export default function Index() {
                     href={(page) => listUrl(team.id, filters, page)}
                 />
             </section>
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team } = usePage<IndexProps>().props;
+    return (
+        <AppLayout
+            team={team}
+            section="monitors"
+            title="Monitors"
+            description={`Monitors of ${team.name}.`}
+        >
+            <PageContent />
+        </AppLayout>
     );
 }

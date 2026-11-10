@@ -1,6 +1,6 @@
 /** Edit one monitor without ever receiving or resending its stored secrets implicitly. */
 import { Link, usePage } from '@inertiajs/react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 import MonitorForm from '../../components/monitors/MonitorForm';
 import { editFormData } from '../../components/monitors/formData';
 import type {
@@ -27,11 +27,11 @@ interface EditProps extends MonitorPageProps {
 }
 
 /** Submit a PATCH whose secrets are present only when the user chose to replace them. */
-export default function Edit() {
+function PageContent() {
     const { team, monitor, defaults, options, usage, maximumIntervalSeconds } =
         usePage<EditProps>().props;
     return (
-        <AuthLayout title={`Edit ${monitor.name}`} wide>
+        <>
             <nav aria-label="Monitor navigation" className="mb-6 text-sm text-emerald-300">
                 <Link href={monitorPath(team.id, monitor.id)}>Back to monitor</Link>
             </nav>
@@ -46,6 +46,16 @@ export default function Edit() {
                 maximumIntervalSeconds={maximumIntervalSeconds}
                 submitLabel="Save changes"
             />
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team, monitor } = usePage<EditProps>().props;
+    return (
+        <AppLayout team={team} section="monitors" title={`Edit ${monitor.name}`}>
+            <PageContent />
+        </AppLayout>
     );
 }

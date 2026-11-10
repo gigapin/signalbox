@@ -2,6 +2,8 @@
 import { App } from '@inertiajs/react';
 import { render, type RenderResult } from '@testing-library/react';
 import type { ComponentProps, ComponentType } from 'react';
+import { prepareHistoryNavigation } from '../../resources/js/components/app/historyNavigation';
+import { NavigationGuardProvider } from '../../resources/js/components/app/NavigationGuard';
 import Home from '../../resources/js/pages/Home';
 
 /**
@@ -16,6 +18,8 @@ export function renderInertia(
     component: ComponentType = Home,
     props: Record<string, unknown> = {},
 ): RenderResult {
+    prepareHistoryNavigation();
+
     /** Inertia page shape derived from the installed adapter rather than a duplicate protocol interface. */
     const page: ComponentProps<typeof App>['initialPage'] = {
         component: 'Home',
@@ -32,6 +36,12 @@ export function renderInertia(
     const resolveComponent = (): ComponentType => component;
 
     return render(
-        <App initialPage={page} initialComponent={component} resolveComponent={resolveComponent} />,
+        <NavigationGuardProvider>
+            <App
+                initialPage={page}
+                initialComponent={component}
+                resolveComponent={resolveComponent}
+            />
+        </NavigationGuardProvider>,
     );
 }

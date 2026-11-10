@@ -1,4 +1,5 @@
 /** Create a notification channel or change one, without ever receiving its stored secrets. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { channelFields } from './labels';
@@ -60,6 +61,7 @@ export default function ChannelForm({
         name,
         config: { ...editable },
     });
+    useFormProtection(form);
     const errors = form.errors as Record<string, string | undefined>;
     const selected = types.find((option) => option.value === form.data.type);
     const editing = method === 'patch';

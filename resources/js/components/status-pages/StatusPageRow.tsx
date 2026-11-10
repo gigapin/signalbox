@@ -1,4 +1,5 @@
 /** Show one status page with its visibility and components, and offer editing and deletion to managers. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import StatusPageForm from './StatusPageForm';
@@ -32,6 +33,7 @@ export default function StatusPageRow({
 }: StatusPageRowProps) {
     const [editing, setEditing] = useState(false);
     const remove = useForm<Record<string, never>>({});
+    useFormProtection(remove);
 
     function destroy() {
         if (!window.confirm(`Delete the status page ${page.title}? Its address stops working.`)) {

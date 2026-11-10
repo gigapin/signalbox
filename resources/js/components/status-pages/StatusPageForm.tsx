@@ -1,4 +1,5 @@
 /** Create or change a status page: address, texts, appearance, visibility, password and ordered components. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import type { ManagedStatusPage, SelectableMonitor, StatusPageLimits, ThemeChoices } from './types';
@@ -96,6 +97,7 @@ export default function StatusPageForm({
     onSaved,
 }: StatusPageFormProps) {
     const form = useForm<PageFields>(initialFields(page));
+    useFormProtection(form);
     const errors = form.errors as Record<string, string | undefined>;
 
     /**

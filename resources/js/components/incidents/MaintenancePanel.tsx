@@ -1,4 +1,5 @@
 /** List a monitor's maintenance windows and let managers schedule, reschedule, end or delete them. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { phaseLabel } from './labels';
@@ -73,6 +74,7 @@ function MaintenanceForm({
     onSaved,
 }: MaintenanceFormProps) {
     const form = useForm<MaintenanceFields>(initial);
+    useFormProtection(form);
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -182,6 +184,7 @@ function MaintenanceForm({
 function WindowRow({ path, window: item, canManage, reasonMaxLength }: WindowRowProps) {
     const [editing, setEditing] = useState(false);
     const remove = useForm<Record<string, never>>({});
+    useFormProtection(remove);
     const url = `${path}/${item.id}`;
     const upcoming = item.phase === 'upcoming';
 

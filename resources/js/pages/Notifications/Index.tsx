@@ -1,6 +1,6 @@
 /** Manage the team's notification channels and escalation policies. */
-import { Link, usePage } from '@inertiajs/react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import { usePage } from '@inertiajs/react';
+import AppLayout from '../../components/app/AppLayout';
 import ChannelForm from '../../components/notifications/ChannelForm';
 import ChannelRow from '../../components/notifications/ChannelRow';
 import PolicyForm from '../../components/notifications/PolicyForm';
@@ -17,26 +17,12 @@ import {
  * Every member sees channels with masked destinations and the policies; owners and admins get the forms.
  * Domain refusals arrive on the `channel` and `policy` keys and are announced at the top of their section.
  */
-export default function Index() {
+function PageContent() {
     const { team, channels, policies, unnotifiedMonitors, channelTypes, limits, can, errors } =
         usePage<NotificationsPageProps>().props;
 
     return (
-        <AuthLayout
-            title="Notifications"
-            description={`Channels and escalation of ${team.name}.`}
-            wide
-        >
-            <nav
-                aria-label="Team navigation"
-                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
-            >
-                <Link href={`/teams/${team.id}`}>Team members</Link>
-                <Link href={`/teams/${team.id}/monitors`}>Monitors</Link>
-                <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
-                <Link href={`/teams/${team.id}/status-pages`}>Status pages</Link>
-            </nav>
-
+        <>
             {unnotifiedMonitors > 0 && (
                 <p className="mb-6 rounded border border-amber-700 p-3 text-amber-200">
                     {unnotifiedMonitors} monitor{unnotifiedMonitors === 1 ? '' : 's'} notify nobody:
@@ -146,6 +132,21 @@ export default function Index() {
                     Only owners and admins can change channels and escalation policies.
                 </p>
             )}
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team } = usePage<NotificationsPageProps>().props;
+    return (
+        <AppLayout
+            team={team}
+            section="notifications"
+            title="Notifications"
+            description={`Channels and escalation of ${team.name}.`}
+        >
+            <PageContent />
+        </AppLayout>
     );
 }

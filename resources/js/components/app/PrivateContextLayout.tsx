@@ -1,0 +1,87 @@
+/** Render account and platform workspaces without inferring membership from an inspected team. */
+import { Head, Link, usePage } from '@inertiajs/react';
+import { useId, type ReactNode } from 'react';
+import type { AuthProps } from '../auth/AuthLayout';
+import Alert from '../ui/Alert';
+import { PageHeading } from '../ui/Panel';
+import AccountMenu from './AccountMenu';
+
+/** Explicit non-tenant workspace inputs; platform context never offers a team selector. */
+interface ContextLayoutProps {
+    /** Current visible/document title. */
+    title: string;
+    /** Account by default, platform only for server-authorized operator pages. */
+    context?: 'account' | 'platform';
+    /** Safe explanation of the current screen. */
+    description?: string;
+    /** Existing private forms and content. */
+    children: ReactNode;
+}
+
+/**
+ * @param props Account or operator workspace and page content.
+ * @returns The shared private visual shell with a context-specific navigation.
+ */
+export default function PrivateContextLayout({
+    title,
+    context = 'account',
+    description,
+    children,
+}: ContextLayoutProps) {
+    const { appName, auth, status } = usePage<AuthProps>().props;
+    const mainId = useId();
+    const platform = context === 'platform';
+    return (
+        <div className="ui-theme ui-app-shell">
+            <Head title={title} />
+            <a className="ui-skip-link ui-link" href={`#${mainId}`}>
+                Skip to content
+            </a>
+            <header className="ui-app-header">
+                <Link className="ui-brand ui-link" href="/account">
+                    {appName}
+                </Link>
+                <p className="ui-team-identity">
+                    {platform ? 'Platform administration' : 'Account'}
+                </p>
+                {auth?.user && (
+                    <AccountMenu
+                        name={auth.user.name}
+                        isPlatformAdmin={auth.user.isPlatformAdmin === true}
+                    />
+                )}
+            </header>
+            <main id={mainId} tabIndex={-1} className="ui-app-main">
+                <nav aria-label="Workspace navigation" className="ui-actions">
+                    <Link className="ui-link" href="/account">
+                        Your account
+                    </Link>
+                    {platform ? (
+                        <Link className="ui-link" href="/admin/teams">
+                            All teams
+                        </Link>
+                    ) : (
+                        <>
+                            <Link className="ui-link" href="/teams">
+                                Your teams
+                            </Link>
+                            <Link className="ui-link" href="/account/security">
+                                Account security
+                            </Link>
+                        </>
+                    )}
+                </nav>
+                <PageHeading
+                    title={title}
+                    {...(description === undefined ? {} : { description })}
+                />
+                {status && (
+                    <Alert title="Update" tone="success" announce="polite">
+                        {status}
+                    </Alert>
+                )}
+                <div className="ui-page-content">{children}</div>
+            </main>
+        </div>
+    );
+}

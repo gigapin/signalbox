@@ -4,6 +4,16 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## UI inventory handoff — 2026-11-10
+
+**Next: UI.01.2, flows and desktop/mobile hierarchy.** UI.01.1 is complete as a static inventory in [USER-DASHBOARD.md](USER-DASHBOARD.md): routes/screens, role and action matrix, reusable components, card-to-data mapping, gaps and implementation order. The older 2026-11-09 handoffs below are historical where they name UI.01.1 as the next task.
+
+Key gaps: private screens still use AuthLayout with local menus; accessible memberships/current role are not shared globally; team selection currently redirects to account; no standalone team-creation route exists; maintenance has monitor actions but no team list; charts remain on the dashboard. TLS expiry is stored but not projected, and the last check does not prove a fresh certificate observation. Longer metric windows and effective notification channels need deliberate read projections. Preserve existing dashboard chart URLs, filter context, server gates, drafts and event-driven recovery.
+
+Estimated phase A: **73–108 hours**, including inventory, documentation and checks; this is an estimate, not measured effort. No application code, API, dependencies or data changed. No application suites, browser acceptance, build, PHP analysis or CI were rerun for this documentation-only task; the 2026-11-09 baseline below remains historical. Markdown parsing, local links and roadmap consistency are checked for the three changed documents. No Git/gh, screenshots, environment or process changes.
+
+Sequence remains UI.01.2 → UI.01.3 → UI.02 → UI.03/UI.04.1–UI.04.4 → UI.06 including L01–L08 → M9. Naming/logo UI.07 and later billing/API/public refinements keep their existing dependencies.
+
 ## Session close and next start — 2026-11-09
 
 **Start at UI.01.1.** The user completed mandatory acceptance blocks A–K, then requested a usable dashboard/application navigation based on the supplied monitor-detail screenshot. The expanded UI macro has seven preserved parent IDs and 27 pending subtasks. It is planned, not implemented. Read [the latest session closure and roadmap](TASKS.md), [the dashboard brief](USER-DASHBOARD.md) and AGENTS/spec/dependency references before implementation.

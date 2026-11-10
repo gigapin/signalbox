@@ -2,11 +2,11 @@
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 
-**Stato al 2026-11-10:** UI.01.1 completato con l’inventario statico riportato sotto. Il prossimo sotto-task è **UI.01.2**, percorsi e gerarchia desktop/mobile. Layout, componenti e nuove schermate rimangono da implementare.
+**Stato al 2026-11-10:** UI.01.1 e UI.01.2 completati: inventario e progetto di percorsi/gerarchia sono riportati sotto. Il prossimo sotto-task è **UI.01.3**, token e componenti condivisi con documentazione in `UI-GUIDELINES.md`. Layout, componenti e nuove schermate rimangono da implementare.
 
 ## Ripartenza della prossima sessione
 
-Leggere l’inventario UI.01.1 di questo brief, il piano e l’handoff. Definire in UI.01.2 i percorsi dashboard → lista → dettaglio → incidente e ritorno, preservazione dei filtri, contesti team/account/piattaforma e stati vuoti/caricamento/errore. Poi UI.01.3 realizzerà token e componenti con regole in `UI-GUIDELINES.md`; quel documento non viene anticipato dall’inventario.
+Leggere inventario UI.01.1 e progetto UI.01.2 di questo brief, il piano e l’handoff. Realizzare in UI.01.3 token e primitive condivise con regole in `UI-GUIDELINES.md`, test significativi e controlli frontend. Percorsi, ritorni, contesti e stati sono già definiti; shell e migrazione delle pagine seguono in UI.02. Nessuna schermata nuova è certificata dalla sola progettazione.
 
 La stima della fase A è 73–108 h incluso inventario, non un consuntivo. Le correzioni del collaudo sono implementate e l’utente conferma A–K conclusi; AppLayout e nuova dashboard non sono certificati da tali risultati.
 
@@ -40,7 +40,7 @@ Tema scuro, schede e accento per gli stati sono un punto di partenza. Colori pro
 
 **Layout comune.** Sidebar desktop e menu mobile, team sempre identificabile, cambio team fra membership correnti, menu account/sicurezza e uscita. L’amministrazione della piattaforma è un contesto distinto e disponibile solo agli operatori. Le pagine di accesso e le pagine pubbliche mantengono layout dedicati.
 
-**Dashboard team.** Sintesi operativa, monitor in difficoltà e incidenti aperti prioritari, ultimo aggiornamento e accessi alle azioni consentite. Primo utilizzo con una spiegazione e un ingresso alla creazione. Un account senza team ha un percorso chiaro per creare/selezionare un team o accettare un invito, secondo i flussi già implementati.
+**Dashboard team.** Sintesi operativa, monitor in difficoltà e incidenti aperti prioritari, ultimo aggiornamento e accessi alle azioni consentite. Primo utilizzo con una spiegazione e un ingresso alla creazione. Un account senza team ha un percorso chiaro per selezionare un team accessibile o rivedere un invito; la creazione del team iniziale resta nel flusso di registrazione ordinaria, senza introdurre una creazione autonoma di ulteriori team.
 
 **Lista monitor.** Ricerca, filtri e paginazione conservati nell’URL. Stato distinguibile dal solo colore, tipo, destinazione sicura, ultimo check e azioni pertinenti. Clic sul nome apre il dettaglio completo con grafici; tornare alla lista conserva il contesto di ricerca.
 
@@ -182,3 +182,110 @@ La specifica somma 178 h per M0–M12: l’aggiunta della fase A porta la previs
 Riutilizzare le suite DOM Dashboard/Monitors/Incidents/Notifications/StatusPages/Teams/Admin, i test RealtimePages/RealtimeAcceptance/LivePageSession e le integrazioni DashboardTest, MonitorPagesTest, MonitorAvailabilityTest, MaintenanceWindowTest, TeamAuthorizationMatrixTest e PlatformAdminAccessTest secondo le parti toccate. Aggiungere test per nuove proiezioni/rotte, dati mancanti, retention, dinieghi viewer/non membro e isolamento tenant. In UI.03.1 misurare query/righe/tempi su fixture riproducibili prima e dopo: questo inventario non produce benchmark o attestazioni di assenza di N+1.
 
 Per UI.01.1: lettura statica e verifica documentale, senza avvio servizi, interrogazione dati, screenshot o esecuzione delle suite applicative. Le evidenze del 2026-11-09 restano storiche. UI.01.2/UI.01.3 e la fase A restano aperte; L01–L08 rimane in UI.06.
+
+## Percorsi e gerarchia definiti per l’implementazione — UI.01.2, 2026-11-10
+
+Questa sezione definisce il progetto da realizzare in UI.01.3/UI.02/UI.03/UI.04. Non attesta un layout già implementato. Le scelte derivano dall’inventario e dall’obiettivo di rendere raggiungibili le funzioni esistenti; non aggiungono nuovi motori o funzioni di dominio. Etichette applicative in inglese, come nelle viste attuali; documentazione in italiano. Tema scuro iniziale, nome testuale da configurazione e nessun nuovo logo. Token, contrasto e API dei componenti saranno concretizzati in UI.01.3 in `UI-GUIDELINES.md`.
+
+### Mappa dei percorsi e contesti
+
+```mermaid
+flowchart TD
+    Access[Accesso e verifica] --> Account[Account]
+    Account --> Teams[Team accessibili o invito]
+    Account --> Dashboard[Dashboard team]
+    Teams --> Dashboard
+    Dashboard --> Monitors[Lista monitor]
+    Monitors --> Monitor[Dettaglio monitor]
+    Monitor --> Incident[Dettaglio incidente]
+    Incident --> Monitor
+    Monitor --> Monitors
+    Monitors --> Dashboard
+    Dashboard --> Incidents[Lista incidenti]
+    Incidents --> Incident
+    Monitor --> Notifications[Notifiche del team]
+    Account --> Security[Sicurezza account]
+    Account --> Admin[Amministrazione solo operatori]
+```
+
+Le frecce indicano collegamenti di navigazione, non autorizzazioni né accettazione automatica di un invito. Le altre sezioni team sono sempre raggiungibili dal menu comune. Il proprietario di un team non acquisisce accesso piattaforma.
+
+| Contesto | Ingresso e identità visibile | Navigazione e uscita |
+|---|---|---|
+| Team | ID dell’URL autorizzato, nome e ruolo corrente; la preferenza salvata non sostituisce il team della pagina | Dashboard, Monitors, Incidents, Notifications, Status pages, Team. Maintenance entra dopo UI.04.2, tra Incidents e Notifications. Selettore team e menu account sempre raggiungibili |
+| Account | `/account`, `/account/security`, `/teams`, ownership con esplicito nome team | Your account, Your teams, Account security; ingresso “Open dashboard” per un team correntemente accessibile. Ownership è una sotto-pagina di Team con conferma dedicata, non un potere globale dell’account |
+| Piattaforma | `/admin/teams` e dettaglio; titolo “Platform administration”, nessun team cliente presentato come team attivo dell’operatore | Directory e breadcrumb del team ispezionato, “Your account” per uscire; nessun cambio team implicito. Override e audit restano separati dalla normale gestione del team |
+| Accesso/pubblico | Auth, invito/registrazione invitata e status page pubbliche conservano layout dedicati | Conservare verifica, password, URL firmati, password status page e tema pubblico; nessuna sidebar privata o identità tenant resa pubblica |
+
+Dopo login resta il comportamento di [AuthenticatedResponse](../app/Http/Responses/Auth/AuthenticatedResponse.php): destinazione intended quando presente, altrimenti `/account`; un link diretto autorizzato continua quindi ad aprire la risorsa richiesta. Account offrirà il collegamento evidente alla dashboard usando un ID verificato dal server. Invito pendente resta un percorso esplicito di revisione, prima e dopo la verifica email. La conferma password mantiene i ritorni di [PasswordConfirmedResponse](../app/Http/Responses/Auth/PasswordConfirmedResponse.php): sicurezza oppure ownership selezionata dal server, mai un return URL arbitrario. L’override conserva la conferma inline e un solo invio della mutazione.
+
+**Cambio team (UI.02.2).** Il selettore elenca solo membership correnti, con nome e ruolo, marcando il team dell’URL nelle pagine team. Dal contesto account marca la preferenza accessibile; nel contesto piattaforma resta un collegamento a Your teams, senza suggerire che il team ispezionato sia una membership. Scegliere un altro team invia il POST esistente `/teams/{team}/select`; il redirect di successo verrà reso esplicitamente verso la dashboard di quel team, anche per la selezione in Your teams. Questo è un adeguamento pianificato del redirect attuale verso account, da coprire nei test di UI.02.2. Non trasportare filtri o ID risorsa del team precedente. Durante il cambio disabilitare ulteriori selezioni, annunciare “Switching team…” e coprire il contenuto tenant finché non è confermata la nuova destinazione; chiudere la vecchia sottoscrizione e ignorarne le risposte tardive. Un errore di rete non cambia ottimisticamente nome/ruolo: mostra esito non confermato e consente una lettura esplicita delle membership/stato corrente prima di riprovare. Su revoca eliminare la vista privata e offrire Your teams; non recuperare dati tenant da cache locale.
+
+### Percorso principale e ritorni
+
+| Passaggio | Contenuto prioritario e azione | Ritorno e contesto |
+|---|---|---|
+| Dashboard → Monitors | Stato operativo team, incidenti aperti, monitor Down/Unknown e accesso “All monitors”; “Create monitor” solo con permesso e quota | Sidebar Dashboard sempre disponibile; nessuna percentuale di uptime globale inventata |
+| Lista → Dettaglio | Nome monitor come link principale, ricerca/filtri/pagina nell’URL; stato testuale, tipo, destinazione redatta e ultimo check | Link “Back to monitors” conserva ricerca, filtri e pagina di provenienza. Breadcrumb canonico Team → Monitors → nome |
+| Dettaglio → Incidente | Incidenti recenti con stato/data e link nominativo; incidente mostra subito il monitor associato | Link “Back to monitor” torna allo stesso dettaglio con il ritorno alla lista ancora disponibile. Se arrivato da lista incidenti, “Back to incidents” conserva i suoi filtri |
+| Dettaglio → Edit | Modifica solo per chi è autorizzato; submit e annullamento espliciti | Annullamento/salvataggio riuscito tornano al dettaglio conservando il ritorno alla lista. Dati sensibili e draft restano fuori dagli URL |
+| Lista → Create | Form con quota/minimo intervallo reali; blocco quota spiegato, viewer senza CTA di creazione | Annullamento torna alla lista di provenienza; successo apre il nuovo dettaglio, senza perdere il ritorno alla lista |
+| Dettaglio → Maintenance/Notifications | “Manage maintenance” porta al pannello manutenzioni del monitor; “View notification settings” apre la sezione team; canali effettivi solo quando proiettati | Maintenance resta nel monitor fino all’elenco UI.04.2. Notifications rimane voce propria; breadcrumb e link al monitor di provenienza se raggiunta dal dettaglio |
+| Dettaglio → eliminazione | Conferma inline con nome monitor, annulla raggiungibile e invio disabilitato durante richiesta | Successo torna alla lista di provenienza; pagina diventata vuota mantiene filtri e offre pagina precedente/prima pagina, senza rimuoverli automaticamente |
+
+**Contratto dei ritorni da implementare in UI.02/UI.03/UI.04.** Usare il parametro di navigazione `returnTo` nei link interni di approfondimento, costruito e normalizzato da helper comuni; non affidare “Back to…” a `history.back()` o al referrer. Sono accettati solo percorsi relativi canonici dello stesso team verso dashboard, lista monitor, lista incidenti o dettaglio del monitor corrente/associato. Query ammesse: dashboard `page`/`monitor`, lista monitor `q`/`type`/`status`/`state`/`page`, incidenti `state`/`severity`/`page`. Normalizzare con gli stessi limiti/enum dei filtri esistenti e ricostruire l’URL da valori consentiti, scartando chiavi ignote, frammenti e duplicati. Nessun host/schema, percorso `//`, altro team, endpoint di mutazione, segreto o payload form è ammesso. Il ritorno al dettaglio può contenere a sua volta il ritorno alla lista: massimo due livelli, senza ricorsione ulteriore. Validare il contesto del monitor associato all’incidente; il parametro non concede mai accesso a una risorsa.
+
+Se assente/invalido, usare il ritorno canonico della pagina: lista monitor per un monitor, lista incidenti per un incidente, dettaglio per edit. Un collegamento separato al monitor resta sempre disponibile nell’incidente. Per la pagina Notifications proveniente da un monitor usare il ritorno allo stesso dettaglio, altrimenti il normale menu. Preservare la navigazione nativa Indietro/Avanti e le normali visite Inertia per filtri/pagine; il contesto nell’URL funziona anche dopo reload o apertura in un’altra scheda, senza salvare draft/segreti nello storage. `returnTo` è solo contesto dei link GET, escluso dai payload di dominio e dai redirect di autenticazione/password; le mutazioni autorizzate che devono tornare alla lista usano un ritorno ricostruito/validato, mai un redirect grezzo da input.
+
+Gli URL dashboard esistenti con selezione `monitor`/`page` restano operativi con la stessa selezione e i relativi grafici durante la fase A. Aggiungere il link “Open monitor details” per portare al nuovo dettaglio; non convertire silenziosamente un vecchio link in una dashboard senza grafico. I controlli periodo/regione del nuovo dettaglio entrano in UI.03.5 soltanto per finestre supportate e con filtri validati; il loro contratto dati resta a UI.03.1.
+
+### Gerarchia desktop/mobile
+
+Usare il medesimo ordine DOM per entrambe le larghezze. Sidebar persistente da **1024 CSS px**; sotto tale soglia un pulsante “Open navigation” apre un dialogo laterale, mantenendo visibili nell’header nome team e titolo corrente. La colonna contestuale del dettaglio affianca i grafici solo da **1280 CSS px** e con spazio utile sufficiente; prima resta sotto il contenuto principale. Non fissare altezza alle schede e non troncare l’unica rappresentazione di nome/destinazione. A 390 px e con zoom nativo 200% nessuna azione essenziale richiede scorrimento orizzontale dell’intero documento.
+
+| Vista | Ordine verticale comune | Desktop | Mobile/larghezza ridotta |
+|---|---|---|---|
+| Shell | Skip link, header/team/account, breadcrumb, H1 e descrizione, feedback, contenuto | Sidebar con voce corrente, header e contenuto flessibile | Header e pulsante menu, breadcrumb a capo, azioni a capo. Nessuna sidebar duplicata attiva nel tab order |
+| Dashboard | Timestamp/connessione, conteggi, incidenti aperti, monitor che richiedono attenzione, collegamento elenco completo, report mensile | Conteggi in griglia, sezioni operative a larghezza utile; compatibilità grafici storici sotto le sezioni principali | Conteggi su due colonne se leggibili, poi sezioni in fila; stesso accesso ai report e grafici |
+| Lista monitor | H1/CTA, quota, ricerca/filtri, riepilogo risultati, tabella, paginazione | Filtri affiancati dove entrano; nome e stato prima dei dettagli tecnici | Filtri impilati, azioni a capo; tabella semantica dentro regione nominata scorrevole con indicazione di scorrimento, nessuna colonna nascosta che contenga l’unica azione |
+| Dettaglio monitor | Breadcrumb/nome/stati/destinazione, azioni, connessione, ultimo check/frequenza, andamento 24 h, uptime/copertura/downtime, latenza e tabella, pannelli contestuali, incidenti recenti | Blocco principale flessibile, pannelli TLS/manutenzioni/notifiche nella colonna laterale; ordine di lettura coerente con DOM | Sequenza verticale completa; comandi prima dei grafici; niente tab obbligatori per trovare incidenti o manutenzioni |
+| Incidente | Stato/severità/monitor, presa in carico, date/durata/causa, timeline, inserimento aggiornamento, consegne | Sezioni distinte e testo a larghezza leggibile | Stesso ordine, note a capo e log in regione scorrevole; pubblico/privato indicati per testo |
+| Notifications, Status pages, Team | Titolo/contesto, riepilogo configurazione/limiti, elementi esistenti, aggiunta quando autorizzata | Riutilizzare sezioni/pannelli con heading espliciti, nessun menu locale duplicato | Form impilati, comandi vicini all’elemento, errori vicini ai campi; link pagina pubblica chiaramente etichettato |
+| Account e piattaforma | Nome contesto, contenuto, comandi autorizzati e ritorno | Shell con navigazione pertinente, senza fingere il contesto di un team | Stesso ordine, nessuna tabella o conferma fuori viewport |
+
+Il menu mobile è un solo dialogo modale con nome accessibile: focus iniziale sul comando di chiusura, Tab contenuto nel dialogo, Escape e pulsante esplicito per chiudere, sfondo non interattivo. Chiusura senza navigazione restituisce il focus al pulsante di apertura; navigazione chiude il menu e sposta il focus al titolo della destinazione. Passaggio al desktop chiude il dialogo e non lascia focus su elementi nascosti. Il menu account è una disclosure con normali link e pulsante logout, richiudibile con Escape/focus ripristinato; non introdurre semantica ARIA menu senza la relativa navigazione tastiera. Voce corrente con `aria-current="page"`, landmark distinti e un H1 per pagina. Dopo cambio filtri, ripristinare focus al controllo e annunciare il numero risultati senza rifocalizzare continuamente la pagina; gli eventi realtime non spostano il focus.
+
+### Stati e feedback
+
+| Stato | Presentazione e azioni | Vincoli |
+|---|---|---|
+| Nessun team accessibile | Account/Your teams spiega l’assenza; “Review invitation” solo se pendente, altrimenti spiegazione di come ottenere un invito | Nessun menu team, dato sintetico o CTA di creazione team non implementata |
+| Nessuna preferenza valida, membership presenti | Your teams elenca quelle accessibili e permette selezione | Nessuna scelta silenziosa del primo team; un URL team già autorizzato resta utilizzabile indipendentemente dalla preferenza |
+| Nessun monitor | Dashboard/lista spiegano il primo utilizzo; “Create monitor” solo se permesso/quota consentono, viewer invitato a contattare un gestore | Distinguere dalla ricerca senza risultati; non mostrare tutti i servizi “Up” o SLA 100% |
+| Nessun risultato con filtri | Mostrare filtri attivi e “Clear filters”, mantenendo l’URL finché l’utente non agisce | Filtri modificati azzerano pagina; Back alla lista conserva pagina/filtri originali |
+| Quota piena/sospensione | Uso e limite reali, motivo e azione consentita; ripresa subordinata ai limiti autorevoli | Nessun checkout/upgrade funzionante prima di M9; un semplice stato disabilitato non sostituisce la policy |
+| Nessuna osservazione o storia insufficiente | “No observations yet” oppure finestra indisponibile, null e copertura espliciti, grafico/tabella vuoti con spiegazione | Zero misurato resta zero; downtime, esclusioni, buchi e percentuali non si deducono dal colore delle barre |
+| Non applicabile/non configurato | Certificato solo per TLS; altri tipi senza scheda certificato. Policy/canali assenti spiegati con link impostazioni; ultimo check assente indicato | Lettura TLS storica senza data affidabile non si presenta come appena aggiornata; destinatari mai inventati |
+| Navigazione/lettura iniziale | Progress della visita, stato busy della regione caricata e testo accessibile; skeleton solo finché non arrivano dati | Non cancellare la bozza per un refresh; non mostrare skeleton dopo un vuoto autorevole come se stesse ancora caricando |
+| Aggiornamento realtime | Stato connessione distinto da ultimo check e generazione proiezione, lettura in corso e dati eventualmente non aggiornati espliciti | Dati precedenti dello stesso contesto possono restare visibili con avviso; revoca/cambio identità rimuovono invece i dati privati. Nessun polling |
+| Validazione/rifiuto certo | Errore accanto al campo o alla sezione, messaggio annunciato, draft conservato e invio riabilitato | Invalidità intervallo blocca invio mentre si digita; nessun segreto nei messaggi globali |
+| Rete/offline/esito incerto | Avviso globale di RequestFailureNotice e recupero esplicito di sola lettura; draft conservato, indicazione di verificare lo stato prima di ritentare | Riconnessione non conferma la mutazione; nessun replay automatico. Non montare un secondo listener globale |
+| Accesso revocato/sessione scaduta/risorsa assente | Interrompere aggiornamenti, rimuovere i dati privati quando l’autorità viene meno; login o Your teams secondo risposta autorevole. Risorsa non trovata con ritorno canonico consentito | Non distinguere nel messaggio una risorsa altrui da una inesistente; il menu non decide gli esiti HTTP e non aggira 403/404/419 |
+
+Le modifiche ai form restano locali durante la pagina. Se l’utente prova a lasciare una bozza modificata o cambiare team, chiedere “Discard unsaved changes?” con Stay/Discard tramite un’unica conferma accessibile prima di avviare la navigazione; il browser può gestire chiusura/ricarica con il suo avviso nativo. Non persistere password, token, segreti o payload sensibili per ripristinare una bozza dopo l’uscita. Durante una mutazione in corso bloccare il cambio team fino alla conclusione o al riscontro di esito incerto, così una risposta non viene associata al contesto sbagliato; nessuna conferma può impedire l’eliminazione dei dati dopo revoca.
+
+### Consegna ai task successivi e criteri da verificare
+
+UI.01.3 realizza token e primitive per heading/azioni, campi, badge, schede, tabelle e avvisi; documenta contrasto AA, focus, unità e date. UI.02 realizza la shell, il selettore, le proiezioni membership sicure e i ritorni; UI.03/UI.04 adottano gerarchia, collegamenti e stati nelle pagine, mantenendo query/metriche nei servizi. Il progetto non introduce endpoint di dominio nuovi in UI.01.2; la futura GET Maintenance resta assegnata a UI.04.2. Nessuna nuova dipendenza è richiesta da questo progetto.
+
+Scenari di accettazione da tradurre in test DOM e feature nei task d’implementazione:
+
+1. Login normale apre account con ingresso dashboard; intended autorizzato e invito dopo verifica conservano il percorso; password torna solo alle destinazioni già consentite.
+2. Dashboard → lista con filtri/pagina → monitor → incidente → monitor → lista mantiene il contesto anche dopo reload; link diretto senza origine usa ritorni canonici. Provare returnTo esterno, altro team, doppio parametro, profondità eccessiva e ID monitor incoerente senza navigazioni arbitrarie.
+3. Create/Edit/Cancel/Delete rispettano i ritorni, ruolo viewer e quota; Indietro/Avanti non riesegue mutazioni. Pagina filtrata diventata vuota mostra un recupero esplicito.
+4. Cambio team passa da pending al team confermato senza dati/listener tardivi; errore, revoca e assenza di preferenza non selezionano un team per deduzione. Owner non operatore non vede Admin; operatore senza membership non riceve il team cliente come proprio contesto.
+5. Navigazione desktop e menu mobile hanno focus coerente, Escape e skip link; a 390 px e zoom 200% azioni, grafici e tabelle sono raggiungibili. Verificare tastiera e VoiceOver effettivi in UI.06.
+6. Vuoto, filtri senza risultati, null/zero, dati parziali, non applicabile, rete offline e riconnessione hanno messaggi distinti; refresh non sovrascrive form, abbandono draft richiede una sola conferma, esito incerto non genera retry automatici.
+7. Vecchio URL dashboard con `monitor` continua a mostrare la selezione; nuove finestre/regione e alternative testuali non presentano misure simulate. Pagine pubbliche restano prive di navigazione e proiezioni private.
+
+UI.01.2 è una consegna documentale: i casi sopra sono criteri futuri, non test eseguiti o PASS browser. La stima di UI.01.1 resta invariata (fase A 73–108 h); non sono state raccolte nuove misure di sviluppo o prestazioni. Prossimo sotto-task: **UI.01.3**, che comprende codice e test delle primitive condivise.

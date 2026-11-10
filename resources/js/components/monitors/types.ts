@@ -9,8 +9,10 @@ export interface TeamSummary {
     name: string;
 }
 
-/** One list row; contains no configuration values. */
+/** One list row; optional destination is immediately redacted on the server. */
 export interface MonitorSummary {
+    /** Safe destination on the monitor list; omitted from dashboard summaries/events. */
+    destination?: string | null;
     /** Team-local monitor identifier. */
     id: number;
     /** Human-readable label. */

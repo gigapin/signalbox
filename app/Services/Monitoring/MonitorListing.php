@@ -32,6 +32,7 @@ final readonly class MonitorListing
             ->where('team_id', $teamId)
             ->query(function (Builder $query) use ($filter): void {
                 $this->constrain($query, $filter);
+                $query->select(['id', 'team_id', 'name', 'type', 'last_status', 'is_paused', 'is_plan_suspended', 'interval_seconds', 'regions_json', 'last_checked_at', 'url', 'tls_host', 'dns_name']);
             })
             ->orderBy('name')
             ->orderBy('id')

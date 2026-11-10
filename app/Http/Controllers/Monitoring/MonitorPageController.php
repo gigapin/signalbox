@@ -13,6 +13,7 @@ use App\Http\Presenters\Incidents\MaintenanceWindowPresenter;
 use App\Http\Presenters\Monitoring\MonitorPresenter;
 use App\Http\Presenters\Notifications\NotificationPresenter;
 use App\Http\Requests\Monitoring\ListMonitorsRequest;
+use App\Http\Requests\Monitoring\ShowMonitorRequest;
 use App\Models\EscalationPolicy;
 use App\Models\Monitor;
 use App\Models\Team;
@@ -21,6 +22,8 @@ use App\Services\Incidents\MaintenanceSchedule;
 use App\Services\Monitoring\MonitorInputLimits;
 use App\Services\Monitoring\MonitorLimits;
 use App\Services\Monitoring\MonitorListing;
+use App\Services\Monitoring\ReadModels\MonitorContext;
+use App\Services\Monitoring\ReadModels\MonitorMetrics;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -63,7 +66,7 @@ final class MonitorPageController extends Controller
 
         return Inertia::render('Monitors/Index', [
             'team' => $this->teamSummary($identity),
-            'monitors' => $this->presenter->page($listing->page($team, $filter)),
+            'monitors' => $this->presenter->page($listing->page($team, $filter), true),
             'filters' => $filter->toArray(),
             'filtered' => $filter->isFiltered(),
             'rejectedFilters' => $request->rejectedFilters(),
@@ -93,6 +96,9 @@ final class MonitorPageController extends Controller
     }
 
     /**
+     * @param ShowMonitorRequest $request Authorized, bounded metric selection.
+     * @param MonitorMetrics $metrics Read-only availability and latency projection.
+     * @param MonitorContext $context Certificate provenance and effective safe notification targets.
      * @param int $team Route team.
      * @param Monitor $monitor Monitor bound inside the route team; foreign IDs are already 404.
      * @param IncidentListing $incidents Tenant-filtered incident reads.
@@ -103,6 +109,9 @@ final class MonitorPageController extends Controller
      * @return Response Safe detail, recent incidents, maintenance windows, escalation choice and the actor's management permissions.
      */
     public function show(
+        ShowMonitorRequest $request,
+        MonitorMetrics $metrics,
+        MonitorContext $context,
         int $team,
         Monitor $monitor,
         IncidentListing $incidents,
@@ -115,6 +124,7 @@ final class MonitorPageController extends Controller
         $identity = $this->team($team);
         $now = CarbonImmutable::now('UTC');
 
+        $selection = $request->selection();
         $recent = [];
 
         foreach ($incidents->recentForMonitor($team, $monitor->id, self::RECENT_INCIDENTS) as $incident) {
@@ -137,6 +147,9 @@ final class MonitorPageController extends Controller
         return Inertia::render('Monitors/Show', [
             'team' => $this->teamSummary($identity),
             'monitor' => $this->presenter->detail($monitor, $this->limits->isWithinQuota($identity, $monitor)),
+            'metrics' => fn (): array => $metrics->read($monitor, $identity, $selection['period'], $selection['region']),
+            'rejectedMetricFilters' => $selection['rejected'],
+            'monitorContext' => fn (): array => ['certificate' => $context->certificate($monitor), 'notifications' => $context->notifications($monitor)],
             'recentIncidents' => $recent,
             'maintenance' => [
                 'current' => $current,

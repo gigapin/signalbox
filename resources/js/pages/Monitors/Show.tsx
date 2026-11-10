@@ -1,4 +1,5 @@
 /** Show one monitor's safe configuration, recent incidents and maintenance; offer management when permitted. */
+import type { MonitorMetricsView, MonitorContextView } from '../../components/monitors/metrics';
 import { useFormProtection } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
@@ -24,6 +25,12 @@ import { monitorPath, monitorsPath } from '../../components/monitors/urls';
 
 /** Detail page response from MonitorPageController::show. */
 interface ShowProps extends MonitorPageProps {
+    /** Read-only metrics; rendering is introduced with the subsequent monitor cards/charts. */
+    metrics: MonitorMetricsView;
+    /** Certificate provenance and safe effective notification targets. */
+    monitorContext: MonitorContextView;
+    /** Names of malformed metric controls; raw values are never reflected. */
+    rejectedMetricFilters: string[];
     /** Safe detail projection. */
     monitor: MonitorDetail;
     /** Latest incidents of this monitor, newest first. */

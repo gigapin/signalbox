@@ -4,6 +4,16 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## UI flows handoff — 2026-11-10
+
+**Next: UI.01.3, shared tokens and UI primitives with code, tests and UI-GUIDELINES.** UI.01.2 defines the flow and desktop/mobile hierarchy in [USER-DASHBOARD.md](USER-DASHBOARD.md); UI.01.1 inventory remains its factual baseline. Earlier handoffs naming UI.01.1/UI.01.2 as next are superseded. No AppLayout or new screen is implemented by this documentation task.
+
+Decisions for implementation: preserve login intended/account and invitation/password continuations; account gains a verified dashboard link. UI.02.2 will make the existing team-selection POST redirect explicitly to the destination dashboard, with pending/error/revocation handling. Route team remains authoritative. Return links carry a normalized, same-team, allowlisted returnTo context with at most two levels; never feed arbitrary destinations into authentication redirects. Preserve old dashboard chart URLs and filtered-list context through monitor/incident/edit flows.
+
+The hierarchy uses the same reading order on desktop/mobile: sidebar from 1024 CSS pixels, accessible navigation dialog below, monitor contextual column from 1280 pixels when space permits. Empty/no-team/no-observation/loading/error states, draft departure, mutation pending and uncertain transport outcomes are specified. Platform/account/public contexts remain explicit. Maintenance only joins the menu after its team list in UI.04.2; billing/API and naming/logo dependencies remain unchanged.
+
+This task changes only the brief, TASKS and this handoff. Check Markdown parsing, file links, balanced blocks and UI states/IDs; no application tests, build, browser/VoiceOver, PHP analysis or CI are implied. Historical application baseline remains below. Phase A estimate is still 73–108 hours, not measured effort; L01–L08 remains in UI.06 before M9. No Git/gh, dependencies, data, environment, processes or screenshots changed.
+
 ## UI inventory handoff — 2026-11-10
 
 **Next: UI.01.2, flows and desktop/mobile hierarchy.** UI.01.1 is complete as a static inventory in [USER-DASHBOARD.md](USER-DASHBOARD.md): routes/screens, role and action matrix, reusable components, card-to-data mapping, gaps and implementation order. The older 2026-11-09 handoffs below are historical where they name UI.01.1 as the next task.

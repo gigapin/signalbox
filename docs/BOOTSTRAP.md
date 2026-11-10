@@ -4,6 +4,16 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## UI primitives handoff — 2026-11-10
+
+**Next: UI.02.1, AppLayout and persistent navigation.** UI.01 is complete: inventory, flows and shared primitives. Read [UI-GUIDELINES.md](UI-GUIDELINES.md) for contracts and [USER-DASHBOARD.md](USER-DASHBOARD.md) for the route/data map and hierarchy. Earlier UI.01 restart points below are historical. AppLayout, team selector/mobile navigation and page migration remain UI.02 work.
+
+Available: prefixed semantic dark tokens and opt-in component styles in app.css; Button, InputField, Panel/PageHeading, Badge, Alert and DataTable in components/ui. Monitor/incident badges and the existing TableScrollArea adopt the shared styles; field/table refs and native semantics are preserved. Controls do not own domain requests, retries or metrics. No new library or backend/API change. The public theme has no global CSS override.
+
+Actual host verification: targeted new suites **12/12**, final `npm run verify` exit 0 with lint/Prettier/TypeScript, **5 quality tests**, **224 DOM tests in 24 files** and Vite build. Contrast tests read CSS tokens: 18 normal-text pairs >=4.5:1 and 10 focus/border pairs >=3:1. Four changed Markdown documents are parsed and checked for local links/roadmap consistency; compiled CSS retains the primitives. Backend/PHP checks were not run because no PHP changed; remote CI, real-browser/VoiceOver/native zoom and performance measurements were not run. L01–L08 stays in UI.06 before M9. No Git/gh, screenshots, data, process, environment or dependency changes.
+
+Reuse the primitives for the shell; preserve intended/account and invitation/password continuations, same-team allowlisted return context and old dashboard chart URLs. UI.02.2 owns the explicit team-selection redirect to its dashboard; Maintenance joins the menu only after UI.04.2. UI.07 remains open. Reload built assets when evaluating the current badges, or use the existing host Vite workflow; no environment reset or server restart is required.
+
 ## UI flows handoff — 2026-11-10
 
 **Next: UI.01.3, shared tokens and UI primitives with code, tests and UI-GUIDELINES.** UI.01.2 defines the flow and desktop/mobile hierarchy in [USER-DASHBOARD.md](USER-DASHBOARD.md); UI.01.1 inventory remains its factual baseline. Earlier handoffs naming UI.01.1/UI.01.2 as next are superseded. No AppLayout or new screen is implemented by this documentation task.

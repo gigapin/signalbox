@@ -2,11 +2,11 @@
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 
-**Stato al 2026-11-10:** UI.01.1 e UI.01.2 completati: inventario e progetto di percorsi/gerarchia sono riportati sotto. Il prossimo sotto-task è **UI.01.3**, token e componenti condivisi con documentazione in `UI-GUIDELINES.md`. Layout, componenti e nuove schermate rimangono da implementare.
+**Stato al 2026-11-10:** UI.01.1–UI.01.3 completano inventario, flussi e primitive condivise. Regole e contratti in [UI-GUIDELINES.md](UI-GUIDELINES.md). Il prossimo sotto-task è **UI.02.1**, AppLayout e navigazione persistente. La nuova shell e le nuove schermate rimangono da implementare; badge e viewport tabelle esistenti adottano già la base condivisa.
 
 ## Ripartenza della prossima sessione
 
-Leggere inventario UI.01.1 e progetto UI.01.2 di questo brief, il piano e l’handoff. Realizzare in UI.01.3 token e primitive condivise con regole in `UI-GUIDELINES.md`, test significativi e controlli frontend. Percorsi, ritorni, contesti e stati sono già definiti; shell e migrazione delle pagine seguono in UI.02. Nessuna schermata nuova è certificata dalla sola progettazione.
+Leggere inventario UI.01.1, progetto UI.01.2, [guida dei componenti UI.01.3](UI-GUIDELINES.md), piano e handoff. Partire in UI.02.1 da AppLayout separato da AuthLayout, sidebar/header/breadcrumb e destinazioni reali. Poi selettore team, menu mobile e migrazione pagine seguono UI.02.2–UI.02.4. Riutilizzare token e primitive, mantenendo le policy backend e le root realtime esistenti. Nessuna nuova schermata è certificata dal solo completamento delle primitive.
 
 La stima della fase A è 73–108 h incluso inventario, non un consuntivo. Le correzioni del collaudo sono implementate e l’utente conferma A–K conclusi; AppLayout e nuova dashboard non sono certificati da tali risultati.
 
@@ -289,3 +289,10 @@ Scenari di accettazione da tradurre in test DOM e feature nei task d’implement
 7. Vecchio URL dashboard con `monitor` continua a mostrare la selezione; nuove finestre/regione e alternative testuali non presentano misure simulate. Pagine pubbliche restano prive di navigazione e proiezioni private.
 
 UI.01.2 è una consegna documentale: i casi sopra sono criteri futuri, non test eseguiti o PASS browser. La stima di UI.01.1 resta invariata (fase A 73–108 h); non sono state raccolte nuove misure di sviluppo o prestazioni. Prossimo sotto-task: **UI.01.3**, che comprende codice e test delle primitive condivise.
+
+
+## Primitive condivise realizzate — UI.01.3, 2026-11-10
+
+Token semantici scuri in `app.css` con colori, focus, scala tipografica/spaziatura e controlli leggibili anche disabled; classi opt-in senza override globali dei temi pubblici. Sei moduli in `components/ui` forniscono Button, InputField, Panel/PageHeading, Badge, Alert e DataTable. TableScrollArea mantiene il contratto preesistente con descrizione opzionale; badge monitor/incidenti adottano toni comuni senza cambiare etichette, dati o permessi. Nessuna nuova dipendenza.
+
+[UI-GUIDELINES.md](UI-GUIDELINES.md) documenta API, combinazioni AA, label, unità/date, focus, tabelle e stati; due suite nuove verificano interazioni e contrasto dei token CSS. Il contrasto numerico e i test DOM non sostituiscono il collaudo browser/VoiceOver di UI.06. Esiti effettivi nel piano. Le sezioni di inventario/progetto sopra descrivono lo stato al proprio completamento e le implementazioni future: i riferimenti alle primitive mancanti sono ora superati da questa consegna. AppLayout, nuovo selettore e letture metriche rimangono in UI.02/UI.03; prossimo sotto-task **UI.02.1**. Stima di perimetro invariata.

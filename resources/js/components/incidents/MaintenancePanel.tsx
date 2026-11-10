@@ -58,7 +58,7 @@ interface MaintenanceFields {
 
 /** Field styling shared by the inputs. */
 const INPUT =
-    'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
+    'w-full min-w-0 rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
 
 /** Values of a blank scheduling form. */
 const BLANK: MaintenanceFields = { starts_at: '', ends_at: '', reason: '' };
@@ -104,7 +104,11 @@ function MaintenanceForm({
     }
 
     return (
-        <form onSubmit={submit} noValidate className="grid gap-4 md:grid-cols-2">
+        <form
+            onSubmit={submit}
+            noValidate
+            className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2"
+        >
             <div>
                 <label htmlFor={`${idPrefix}-starts_at`} className="mb-2 block text-sm font-medium">
                     Start (your local time)
@@ -171,7 +175,7 @@ function MaintenanceForm({
             <div className="md:col-span-2">
                 <button
                     disabled={form.processing}
-                    className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
+                    className="max-w-full wrap-anywhere rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
                 >
                     {form.processing ? 'Saving…' : submitLabel}
                 </button>

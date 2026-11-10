@@ -11,6 +11,7 @@ import Button from '../../components/ui/Button';
 import MonitorSnapshot, { monitorDestination } from '../../components/monitors/MonitorSnapshot';
 import AvailabilitySummary from '../../components/monitors/AvailabilitySummary';
 import AvailabilityHistory from '../../components/monitors/AvailabilityHistory';
+import MonitorCharts from '../../components/monitors/MonitorCharts';
 import AppLayout from '../../components/app/AppLayout';
 import IncidentTable from '../../components/incidents/IncidentTable';
 import MaintenancePanel from '../../components/incidents/MaintenancePanel';
@@ -167,6 +168,7 @@ function PageContent({ onIdentity }: PageContentProps) {
         can,
         monitorListUrl,
         metrics,
+        rejectedMetricFilters,
     } = live.props;
     useEffect(() => {
         onIdentity({ id: monitor.id, name: monitor.name, type: monitor.type });
@@ -292,6 +294,13 @@ function PageContent({ onIdentity }: PageContentProps) {
                 <MonitorSnapshot monitor={monitor} maintenance={maintenance} />
                 <AvailabilityHistory metrics={metrics} />
                 <AvailabilitySummary metrics={metrics} />
+                <MonitorCharts
+                    teamId={team.id}
+                    monitorId={monitor.id}
+                    returnTo={monitorListUrl ?? monitorsPath(team.id)}
+                    metrics={metrics}
+                    rejected={rejectedMetricFilters ?? []}
+                />
                 <Panel
                     title="Monitor settings"
                     description="Stored configuration is shown with sensitive values redacted."

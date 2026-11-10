@@ -613,3 +613,15 @@ docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMe
 ```
 
 Final actual counts and unexecuted checks are recorded in [TASKS.md](TASKS.md). UI.03.5 continues with charts and period/region controls rather than duplicating the duration history or SLA formulas.
+
+
+## Monitor charts — UI.03.5
+
+MonitorCharts.test.tsx adds eight cases covering regional measurements/zero/gaps, exact whole-window summaries, percentile and coverage/SLA selection, unavailable/unsupported history, single GET and explicit retry, 401/403/404 removal, and the real draft guard's Stay/Discard behavior. The shared read lifecycle is also exercised by existing monitor-list tests, and TimeSeriesChart retains dashboard regression coverage. MonitorMetricProjectionTest adds five cases (including three period dataset cases) for aligned hour/day windows, region-independent availability, authoritative duration equivalence, bounded query count, overlong-window rejection, plan and monitor-life support.
+
+```sh
+npm run verify
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorAvailabilityTest.php tests/Integration/MetricBoundaryMatrixTest.php tests/Integration/MonitorPagesTest.php tests/Integration/DashboardTest.php tests/Integration/CheckRollupsTest.php
+```
+
+The benchmark's optional `RUN_CHART_DENSE_BENCHMARK=1` uses 172800 dual-region results at 30-second cadence instead of 1440 hourly results. Fixture statistics are analyzed before measurements. Reproduction, actual cost and memory limitations are in [MONITOR-METRICS.md](MONITOR-METRICS.md); this opt-in run does not establish a production or concurrency SLO. Final gates and native browser evidence are recorded in [TASKS.md](TASKS.md).

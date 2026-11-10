@@ -96,29 +96,60 @@ final readonly class MonitorAvailability
      */
     public function hourly(Monitor $monitor, TimeInterval $window): array
     {
-        $now = CarbonImmutable::now('UTC');
-        $hours = [];
+        return $this->buckets($monitor, $window, 1);
+    }
 
-        for ($start = $window->start; $start->isBefore($window->end); $start = $start->addHour()) {
-            $hours[] = new TimeInterval($start, $start->addHour()->min($window->end));
+    /**
+     * Read a retained raw timeline once, then split it into rolling 24-hour buckets without averaging hourly ratios.
+     *
+     * @param Monitor $monitor Authorized monitor, with creation instant loaded.
+     * @param TimeInterval $window Validated window of at most thirty days, within the effective plan's history.
+     * @return list<AvailabilityReport> Daily reports; missing retained input makes every bucket unavailable.
+     * @throws \InvalidArgumentException When a direct caller exceeds the raw chart range.
+     */
+    public function daily(Monitor $monitor, TimeInterval $window): array
+    {
+        if ($window->endMicroseconds() - $window->startMicroseconds() > self::RAW_RETENTION_DAYS * 86400 * 1_000_000) {
+            throw new \InvalidArgumentException('Raw availability charts are limited to thirty days.');
+        }
+        return $this->buckets($monitor, $window, 24);
+    }
+
+    /**
+     * @param Monitor $monitor Authorized monitor of the active team.
+     * @param TimeInterval $window Readable half-open raw window; logical retention is checked by rawTimeline.
+     * @param int $bucketHours One or twenty-four hours, supplied only by the public readers.
+     * @return list<AvailabilityReport> Reports sharing one timeline/exclusion read and the existing availability formulas.
+     */
+    private function buckets(Monitor $monitor, TimeInterval $window, int $bucketHours): array
+    {
+        $now = CarbonImmutable::now('UTC');
+        $buckets = [];
+
+        for ($start = $window->start; $start->isBefore($window->end); $start = $start->addHours($bucketHours)) {
+            $buckets[] = new TimeInterval($start, $start->addHours($bucketHours)->min($window->end));
         }
 
         $monitored = $this->monitoredPart($monitor, $window, $now);
 
         if ($monitored === null) {
-            return array_map(fn (): AvailabilityReport => $this->reportWithoutMonitoredTime($monitor), $hours);
+            return array_map(fn (): AvailabilityReport => $this->reportWithoutMonitoredTime($monitor), $buckets);
+        }
+
+        if ($bucketHours === 24 && $monitored->start->isBefore($now->subDays($this->historyDays($monitor)))) {
+            return array_map(static fn (): AvailabilityReport => AvailabilityReport::unavailable(), $buckets);
         }
 
         $timeline = $this->rawTimeline($monitor, $monitored, $now);
 
         if ($timeline === null) {
-            return array_map(static fn (): AvailabilityReport => AvailabilityReport::unavailable(), $hours);
+            return array_map(static fn (): AvailabilityReport => AvailabilityReport::unavailable(), $buckets);
         }
 
         $reports = [];
 
-        foreach ($hours as $hour) {
-            $part = $hour->clip($monitored);
+        foreach ($buckets as $bucket) {
+            $part = $bucket->clip($monitored);
 
             $reports[] = new AvailabilityReport($part === null
                 ? new AvailabilityDurations(0, 0, 0, 0)

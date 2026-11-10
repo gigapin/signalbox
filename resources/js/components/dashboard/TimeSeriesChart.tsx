@@ -1,7 +1,8 @@
 /** Render bounded, accessible time series with real gaps, selectable series and an equivalent data table. */
+import TableScrollArea from '../TableScrollArea';
 import { useState } from 'react';
 
-/** One comparable series in the same unit and hourly time axis. */
+/** One comparable series in the same unit and UTC bucket axis. */
 export interface ChartSeries {
     /** Stable series identity used by the keyboard-operable selection controls. */
     id: string;
@@ -25,6 +26,12 @@ interface ChartProps {
     unit: 'ms' | '%';
     /** Truthful empty-state message, without substituting zero or 100%. */
     empty: string;
+    /** Optional sample counts parallel to timestamps; zero stays distinct from a missing value. */
+    samples?: number[];
+    /** Optional exclusive UTC ends, for complete hour/day window labels. */
+    endsAt?: string[];
+    /** Detail charts nest below their enclosing h2; dashboard headings stay h2 by default. */
+    headingLevel?: 2 | 3;
 }
 
 /** Format a UTC bucket label independently of the browser's local time zone. */
@@ -57,7 +64,11 @@ export default function TimeSeriesChart({
     series,
     unit,
     empty,
+    samples,
+    endsAt,
+    headingLevel = 2,
 }: ChartProps) {
+    const Heading = headingLevel === 3 ? 'h3' : 'h2';
     const [choice, setChoice] = useState(series[0]?.id);
     const selected = series.find((entry) => entry.id === choice) ?? series[0];
     const values = timestamps.map((_, index) => selected?.values[index] ?? null);
@@ -80,18 +91,19 @@ export default function TimeSeriesChart({
         .join(' ');
 
     return (
-        <section className="min-w-0 rounded border border-slate-700 p-5" aria-label={title}>
-            <h2 className="text-lg font-semibold">{title}</h2>
-            <p className="mt-2 text-sm text-slate-400">{description}</p>
+        <section className="ui-panel" aria-label={title}>
+            <Heading className="ui-section-title">{title}</Heading>
+            <p className="ui-description">{description}</p>
             {series.length > 1 && (
-                <div className="mt-4 flex gap-3" role="group" aria-label={`${title} series`}>
+                <div className="ui-actions mt-4" role="group" aria-label={`${title} series`}>
                     {series.map((entry) => (
                         <button
                             type="button"
                             key={entry.id}
                             aria-pressed={selected?.id === entry.id}
                             onClick={() => setChoice(entry.id)}
-                            className="rounded border border-slate-600 px-3 py-1 aria-pressed:border-emerald-400 aria-pressed:text-emerald-300"
+                            className="ui-button min-w-0 max-w-full wrap-anywhere"
+                            data-variant={selected?.id === entry.id ? 'primary' : 'secondary'}
                         >
                             {entry.label}
                         </button>
@@ -158,16 +170,16 @@ export default function TimeSeriesChart({
                 </svg>
             )}
             <details className="mt-4 text-sm">
-                <summary className="cursor-pointer text-emerald-300">
-                    View {title.toLowerCase()} data
-                </summary>
-                <div className="mt-3 max-h-64 overflow-auto">
+                <summary className="ui-link">View {title.toLowerCase()} data</summary>
+                <TableScrollArea label={`${title} data viewport`}>
                     <table className="w-full text-left">
                         <caption className="sr-only">{`${title}, ${selected?.label ?? ''}, UTC`}</caption>
                         <thead>
                             <tr>
                                 <th scope="col">Bucket start (UTC)</th>
+                                {endsAt && <th scope="col">Bucket end (UTC)</th>}
                                 <th scope="col">{`Value (${unit})`}</th>
+                                {samples && <th scope="col">Measured samples</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -176,14 +188,26 @@ export default function TimeSeriesChart({
                                     <th scope="row" className="py-1 font-normal">
                                         <time dateTime={at}>{label(at)}</time>
                                     </th>
+                                    {endsAt && (
+                                        <td>
+                                            {endsAt[index] === undefined ? (
+                                                'Unavailable'
+                                            ) : (
+                                                <time dateTime={endsAt[index]}>
+                                                    {label(endsAt[index])}
+                                                </time>
+                                            )}
+                                        </td>
+                                    )}
                                     <td>
                                         {measured(values[index], unit) ? values[index] : 'No data'}
                                     </td>
+                                    {samples && <td>{samples[index] ?? 'Unavailable'}</td>}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                </div>
+                </TableScrollArea>
             </details>
         </section>
     );

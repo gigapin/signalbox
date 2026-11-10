@@ -73,3 +73,27 @@ Monitors/Show usa ora `metrics.periods/recent/generatedAt` per schede 24h/7d/30d
 La partial read del dettaglio include ora `metrics` insieme ai root esistenti monitor/recentIncidents/maintenance/escalation/can, seguiti da team/auth/realtime. Nessun nuovo endpoint, cache, formula o motore di calcolo; la closure metrica già presente viene eseguita anche nel recupero del dettaglio che adesso la visualizza. Il costo noto del fallback grezzo senza rollup resta applicabile; non sono nuove misure di prestazioni. La matrice backend verifica il nuovo protocollo senza esporre monitorContext nella partial read che lo omette. Le prove di UI.03.1 rimangono storiche.
 
 Gli stati operativo/osservato e manutenzione sono separati in MonitorSnapshot. Il valore lastCheckedAt mancante non consente di presentare Up, e nextCheckAt non è mostrato come lavoro in esecuzione su un monitor paused/suspended. Grafici di latenza e controlli regione/periodo sono ancora UI.03.5; provenienza TLS e target notifiche UI.03.6.
+
+
+## Grafici selezionabili — UI.03.5
+
+`metrics.supportedPeriods` elenca 24h/7d/30d compatibili con vita effettiva del monitor, piano corrente e limite raw di 30 giorni. La disponibilità fisica viene verificata durante la lettura: un periodo logicamente consentito può comunque risultare non ricostruibile. `metrics.uptime` espone `available` e `series`, con le stesse durate/rapporti dei report e confini UTC della serie latency. Le proprietà sono opzionali nel tipo client per la cronologia precedente, che mostra un invito esplicito al reload.
+
+Per 24h la serie riusa le barre recenti, senza altre query. Per 7/30 giorni `MonitorAvailability::daily` legge una sola timeline grezza e le esclusioni, poi ricava bucket mobili di 24 ore usando le formule autorevoli; non esegue una lettura per giorno e rifiuta intervalli oltre 30 giorni. La selezione regionale cambia solo la latenza. I totali periodo continuano a usare rollup/bordi grezzi: possono essere disponibili mentre il grafico raw non è ricostruibile. Nessuna media di percentuali, medie o percentili. Questa scelta evita un secondo motore SLA, ma ha un costo proporzionale ai risultati grezzi caricati nella timeline PHP.
+
+### Misure dei grafici e limite di carico
+
+Il benchmark ora esegue `ANALYZE` sulle tabelle della fixture dopo gli inserimenti bulk e prima del riscaldamento. Le statistiche della precedente fixture appena migrata provocavano piani anomali: i nuovi tempi non sono un confronto diretto di velocità con le misure storiche sopra. Nessun comando applicativo, indice, cache o schema è stato aggiunto. Query count su 1/40 monitor: dashboard 18/18, lista 10/10, dettaglio predefinito 36/36; proiezione lista limitata a 20.
+
+| Fixture 30 giorni, EU + US | Totali | Query | HTTP mediana ms | SQL ultima richiesta ms | EXPLAIN latenza ms | Picco lettura MiB |
+|---|---|---:|---:|---:|---:|---:|
+| 1440 risultati, cadenza 3600 s | fallback raw | 45 | 90.45 | 44.87 | 1.91 | non misurato |
+| 1440 risultati, cadenza 3600 s | 720 rollup orari | 37 | 69.74 | 33.06 | 2.05 | non misurato |
+| 172800 risultati, cadenza 30 s | fallback raw | 45 | 5301.73 | 2370.48 | 204.87 | 273.5 |
+| 172800 risultati, cadenza 30 s | 720 rollup orari | 37 | 3173.96 | 1483.96 | 226.59 | 278.0 |
+
+Stesso ambiente PHP 8.4.27/PostgreSQL 16 e clock fisso; tre richieste riscaldate, scritture fixture e costruzione rollup escluse. EXPLAIN ANALYZE misura separatamente la query latenza, con 62 righe aggregate; non rappresenta il costo della timeline di disponibilità. Il picco è memoria PHP allocata totale nel processo caldo dopo reset del contatore, comprende memoria trattenuta dall'allocatore e piccole allocazioni successive di diagnostica; non è memoria incrementale né del solo SQL. La fixture densa è opt-in; entrambi i run: 2 test/55 asserzioni. La finestra lunga resta costosa anche con rollup: queste misure locali di una richiesta non attestano concorrenza, prestazioni di produzione o completamento del benchmark M12.
+
+```sh
+docker compose run --rm -e RUN_PROJECTION_BENCHMARK=1 -e RUN_CHART_DENSE_BENCHMARK=1 php-test php vendor/bin/pest tests/Integration/MonitorProjectionBenchmarkTest.php
+```

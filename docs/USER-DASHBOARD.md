@@ -2,11 +2,11 @@
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 
-**Stato al 2026-11-10:** UI.01 completo e UI.02.1 realizzato: AppLayout è adottato nella dashboard con sidebar/header/breadcrumb e menu account. Il prossimo sotto-task è **UI.02.2**, selettore dei team accessibili e gestione del cambio team. Regole e contratti in [UI-GUIDELINES.md](UI-GUIDELINES.md). Le altre pagine private restano da migrare; UI.02 non è ancora completato.
+**Stato al 2026-11-10:** UI.01 e UI.02.1–UI.02.2 completati. La dashboard usa AppLayout con ruolo e selettore dei team accessibili; Your teams adotta lo stesso form, account offre l’ingresso alla dashboard autorizzata. Il prossimo sotto-task è **UI.02.3**, menu mobile accessibile. Regole e contratti in [UI-GUIDELINES.md](UI-GUIDELINES.md). Le altre pagine private restano da migrare in UI.02.4; UI.02 non è ancora chiuso.
 
 ## Ripartenza della prossima sessione
 
-Leggere inventario, flussi e guida dei componenti, poi partire in UI.02.2 dalle proiezioni membership correnti e dagli endpoint di selezione esistenti. AppLayout riceve già il team della rotta e non usa la preferenza salvata; non mostra ancora ruolo o selettore. Implementare caricamento/errore/cambio confermato, account senza team e revoca, con redirect alla dashboard del team selezionato come deciso in UI.01.2. Dialogo mobile e migrazione generale restano UI.02.3/UI.02.4; la navigazione sotto 1024 px è attualmente visibile e va a capo.
+In UI.02.3 sostituire la navigazione attualmente visibile/a capo sotto 1024 px con il dialogo mobile previsto, gestendo focus iniziale/ripristino, Escape, cambio breakpoint e navigazione. Conservare selettore nativo, pending/errori e sospensione del contenuto privato. Il team della rotta rimane autorevole; nessun ritorno di dati/listener precedenti dopo cambio o diniego. Poi UI.02.4 migrerà le altre viste e collegherà i form con guardie per draft/invii in corso.
 
 La stima della fase A è 73–108 h incluso inventario, non un consuntivo. Le correzioni del collaudo sono implementate e l’utente conferma A–K conclusi; AppLayout e nuova dashboard non sono certificati da tali risultati.
 
@@ -303,3 +303,10 @@ Token semantici scuri in `app.css` con colori, focus, scala tipografica/spaziatu
 Implementati AppLayout, AccountMenu e destinazioni team tipizzate in `components/app`, con stili semantici in `app.css`. La dashboard adotta la shell ed elimina il menu locale; conserva dati, report, grafici e recupero realtime. Sidebar desktop da 1024 px, intestazione con nome prodotto configurato/team esplicito, breadcrumb, unico h1 e skip link. Il menu account offre account/sicurezza/team, Admin solo con flag operatore e logout POST disabilitato durante pending; Escape e chiusura esterna gestiscono il focus.
 
 Nessuna nuova proiezione backend o inferenza del team dalla preferenza, nessuna voce di funzioni non implementate. Le altre viste restano nello stato dell’inventario: la navigazione comune tra tutte le sezioni non è ancora certificata. I vecchi testi che descrivono l’assenza di AppLayout sono storici e superati da questa consegna; UI.02.2 selettore/ruolo, UI.02.3 menu mobile e UI.02.4 migrazione rimangono aperti. Test e verifiche effettive nel piano; nessun PASS browser/L attribuito dalla build.
+
+
+## Selezione del team realizzata — UI.02.2, 2026-11-10
+
+Proiezione privata TeamNavigation con soli team accessibili e ruolo per membership; preferenza assente/revocata resta null. La dashboard mostra ruolo del team della rotta e selettore condiviso con Your teams. POST di selezione confermato dal server e nuova visita alla dashboard senza trascinare ID/filtri di origine; account riceve ID autorizzato per “Open dashboard”. Rotte pubbliche/operatori non ricevono l’elenco membership; le status page private sono no-store.
+
+Sospensione e smontaggio dei dati realtime precedenti prima del cambio, blocco duplicati, timeout e recupero tramite lettura esplicita senza replay. Diniego autorevole nasconde dati e ruolo della dashboard, anche quando la pagina era già aperta. Nessun polling di revoca introdotto; valgono i controlli autorizzati del recupero esistente. Gli stati storici sopra sull’assenza del selettore o sul redirect account sono superati da questa consegna. Risultati effettivi nel piano; collaudo browser/L non dedotto dai test. Prossimo: **UI.02.3**.

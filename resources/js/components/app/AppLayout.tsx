@@ -1,10 +1,12 @@
 /** Render the private team shell with explicit route identity, section navigation and account controls. */
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import type { AuthProps } from '../auth/AuthLayout';
+import LiveUpdates from '../LiveUpdates';
 import Alert from '../ui/Alert';
 import { PageHeading } from '../ui/Panel';
 import AccountMenu from './AccountMenu';
+import TeamSwitcher from './TeamSwitcher';
 import {
     teamDestinations,
     type AppTeam,
@@ -26,6 +28,8 @@ interface AppLayoutProps {
     ancestors?: BreadcrumbAncestor[];
     /** Caller-authorized page actions. */
     actions?: ReactNode;
+    /** Authoritative denial from page-owned recovery removes all old team content. */
+    accessDenied?: boolean;
     /** Existing page content and page-owned realtime state. */
     children: ReactNode;
 }
@@ -40,11 +44,16 @@ export default function AppLayout({
     section,
     description,
     ancestors = [],
+    accessDenied = false,
     actions,
     children,
 }: AppLayoutProps) {
-    const { appName, auth, status } = usePage<AuthProps>().props;
+    const { appName, auth, status, teamNavigation } = usePage<AuthProps>().props;
     const mainId = useId();
+    const [suspended, setSuspended] = useState(false);
+    const membership = teamNavigation?.teams.find((choice) => choice.id === team.id);
+    const inaccessible = teamNavigation != null && membership === undefined;
+    const hidden = suspended || inaccessible || accessDenied;
     const user = auth?.user;
 
     return (
@@ -54,14 +63,28 @@ export default function AppLayout({
                 Skip to content
             </a>
             <header className="ui-app-header">
-                <Link className="ui-brand ui-link" href={`/teams/${team.id}/dashboard`}>
+                <Link
+                    className="ui-brand ui-link"
+                    href={hidden ? '/teams' : `/teams/${team.id}/dashboard`}
+                >
                     {appName}
                 </Link>
                 <div className="ui-team-identity">
                     <span className="ui-help">Current team</span>
-                    <p className="ui-team-name">{team.name}</p>
+                    <p className="ui-team-name">
+                        {hidden ? 'Team content unavailable' : team.name}
+                    </p>
                 </div>
-                {user && (
+                {membership && !hidden && <p className="ui-help">Role: {membership.role}</p>}
+                {teamNavigation && !accessDenied && (
+                    <TeamSwitcher
+                        key={`${team.id}:${user?.email ?? ''}`}
+                        navigation={teamNavigation}
+                        activeTeamId={team.id}
+                        onSuspend={() => setSuspended(true)}
+                    />
+                )}
+                {user && !hidden && (
                     <AccountMenu
                         key={team.id}
                         name={user.name}
@@ -70,54 +93,71 @@ export default function AppLayout({
                 )}
             </header>
             <div className="ui-app-frame">
-                <aside className="ui-sidebar">
-                    <nav aria-label="Team navigation">
-                        <ul className="ui-team-links">
-                            {teamDestinations(team.id).map((destination) => (
-                                <li key={destination.section}>
-                                    <Link
-                                        className="ui-shell-link"
-                                        href={destination.href}
-                                        aria-current={
-                                            section === destination.section ? 'page' : undefined
-                                        }
-                                    >
-                                        {destination.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
-                </aside>
-                <main id={mainId} tabIndex={-1} className="ui-app-main">
-                    <nav aria-label="Breadcrumb" className="ui-breadcrumb">
-                        <ol>
-                            <li>
-                                <Link className="ui-link" href={`/teams/${team.id}`}>
-                                    {team.name}
+                {!hidden && (
+                    <aside className="ui-sidebar">
+                        <nav aria-label="Team navigation">
+                            <ul className="ui-team-links">
+                                {teamDestinations(team.id).map((destination) => (
+                                    <li key={destination.section}>
+                                        <Link
+                                            className="ui-shell-link"
+                                            href={destination.href}
+                                            aria-current={
+                                                section === destination.section ? 'page' : undefined
+                                            }
+                                        >
+                                            {destination.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    </aside>
+                )}
+                <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">
+                    {hidden ? (
+                        <>
+                            <h1 className="ui-page-title">Team selection</h1>
+                            {accessDenied && <LiveUpdates phase="denied" retry={() => undefined} />}
+                            <Alert title="Team data hidden" tone="warning">
+                                <p>Check your current teams to continue.</p>
+                                <Link className="ui-link" href="/teams">
+                                    Your teams
                                 </Link>
-                            </li>
-                            {ancestors.map((ancestor) => (
-                                <li key={ancestor.href}>
-                                    <Link className="ui-link" href={ancestor.href}>
-                                        {ancestor.label}
-                                    </Link>
-                                </li>
-                            ))}
-                            <li aria-current="page">{title}</li>
-                        </ol>
-                    </nav>
-                    <PageHeading
-                        title={title}
-                        {...(description === undefined ? {} : { description })}
-                        actions={actions}
-                    />
-                    {status && (
-                        <Alert title="Update" tone="success" announce="polite">
-                            {status}
-                        </Alert>
+                            </Alert>
+                        </>
+                    ) : (
+                        <>
+                            <nav aria-label="Breadcrumb" className="ui-breadcrumb">
+                                <ol>
+                                    <li>
+                                        <Link className="ui-link" href={`/teams/${team.id}`}>
+                                            {team.name}
+                                        </Link>
+                                    </li>
+                                    {ancestors.map((ancestor) => (
+                                        <li key={ancestor.href}>
+                                            <Link className="ui-link" href={ancestor.href}>
+                                                {ancestor.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                    <li aria-current="page">{title}</li>
+                                </ol>
+                            </nav>
+                            <PageHeading
+                                title={title}
+                                {...(description === undefined ? {} : { description })}
+                                actions={actions}
+                            />
+                            {status && (
+                                <Alert title="Update" tone="success" announce="polite">
+                                    {status}
+                                </Alert>
+                            )}
+                            <div className="ui-page-content">{children}</div>
+                        </>
                     )}
-                    <div className="ui-page-content">{children}</div>
                 </main>
             </div>
         </div>

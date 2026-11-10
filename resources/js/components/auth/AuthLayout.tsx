@@ -1,6 +1,7 @@
 /** Provide the shared accessible layout and server status for authentication screens. */
 import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
+import type { TeamNavigationView } from '../app/navigation';
 
 /** Minimal explicit identity projection shared by Laravel. */
 export interface AuthProps {
@@ -10,6 +11,8 @@ export interface AuthProps {
     auth?: { user: { name: string; email: string; isPlatformAdmin?: boolean } | null };
     /** Safe server acknowledgement after an authentication transition. */
     status?: string | null;
+    /** Current private membership choices; absent/null on public and platform contexts. */
+    teamNavigation?: TeamNavigationView | null;
     /** Additional page-specific protocol data. */
     [key: string]: unknown;
 }

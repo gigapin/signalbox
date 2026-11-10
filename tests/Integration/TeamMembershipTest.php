@@ -268,7 +268,7 @@ it('selects only accessible teams and clears the preference on departure', funct
     $user = User::factory()->create();
     $first->users()->attach($user->id, ['role' => 'viewer']);
     $second->users()->attach($user->id, ['role' => 'member']);
-    $this->actingAs($user)->post("/teams/{$first->id}/select")->assertRedirect('/account');
+    $this->actingAs($user)->post("/teams/{$first->id}/select")->assertRedirect("/teams/{$first->id}/dashboard");
     expect($user->resolveCurrentTeam()?->id)->toBe($first->id);
     $this->delete("/teams/{$first->id}/members/{$user->id}")->assertRedirect('/teams');
     expect($user->fresh()->current_team_id)->toBeNull()->and($user->resolveCurrentTeam())->toBeNull();

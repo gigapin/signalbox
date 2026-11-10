@@ -1,6 +1,8 @@
 /** Show current tenant operations and measured historical latency, with live recovery and explicit unavailable SLA. */
 import { Link, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import AppLayout from '../../components/app/AppLayout';
+import Alert from '../../components/ui/Alert';
 import LiveUpdates from '../../components/LiveUpdates';
 import MonthlyReportDownload from '../../components/dashboard/MonthlyReportDownload';
 import TimeSeriesChart from '../../components/dashboard/TimeSeriesChart';
@@ -29,20 +31,52 @@ function duration(seconds: number): string {
     return minutes > 0 ? `${minutes}m ${rest}s` : `${rest}s`;
 }
 
-/** Render one route team's dashboard; URL selection is carried unchanged into event-driven recovery. */
+/** Render the route shell; suspending its children disposes the dashboard's live session. */
 export default function Show() {
-    const { team, reportTimezone } = usePage<DashboardProps>().props;
-    const live = useLivePage<DashboardProps>(team.id, 'Dashboard/Show');
-    const { dashboard, rejectedFilters } = live.props;
-    const { counts, monitors, selectedMonitor, latency, uptime } = dashboard;
-
+    const { team } = usePage<DashboardProps>().props;
+    const [accessDenied, setAccessDenied] = useState(false);
     return (
         <AppLayout
             title="Dashboard"
             team={team}
             section="dashboard"
+            accessDenied={accessDenied}
             description={`${team.name} · application monitoring`}
         >
+            <DashboardContent onAccessDenied={setAccessDenied} />
+        </AppLayout>
+    );
+}
+
+/** Denial callback supplied by the outer shell boundary. */
+interface DashboardContentProps {
+    /** Remove the old team shell after authoritative recovery denies access. */
+    onAccessDenied: (denied: boolean) => void;
+}
+
+/** Keep live reads inside the removable private-content boundary during a team switch. */
+function DashboardContent({ onAccessDenied }: DashboardContentProps) {
+    const { team, reportTimezone } = usePage<DashboardProps>().props;
+    const live = useLivePage<DashboardProps>(team.id, 'Dashboard/Show');
+    useEffect(() => {
+        if (live.phase === 'denied') onAccessDenied(true);
+    }, [live.phase, onAccessDenied]);
+    const { dashboard, rejectedFilters } = live.props;
+    const { counts, monitors, selectedMonitor, latency, uptime } = dashboard;
+
+    if (live.phase === 'denied') {
+        return (
+            <Alert title="Team access unavailable" tone="warning" announce="assertive">
+                <p>Private data has been hidden. Check your current teams to continue.</p>
+                <Link className="ui-link" href="/teams">
+                    Your teams
+                </Link>
+            </Alert>
+        );
+    }
+
+    return (
+        <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
             <section aria-label="Reports" className="mb-6 text-sm text-emerald-300">
                 <MonthlyReportDownload teamId={team.id} timezone={reportTimezone} />
@@ -252,6 +286,6 @@ export default function Show() {
                     </div>
                 </dl>
             )}
-        </AppLayout>
+        </>
     );
 }

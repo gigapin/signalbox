@@ -12,7 +12,7 @@ use App\Http\Middleware\StatusPageIndexing;
 use App\Models\StatusPage;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', EstablishTeamContext::class])
+Route::middleware(['auth', 'verified', EstablishTeamContext::class, NoStoreAuthentication::class])
     ->group(function (): void {
         Route::get('/teams/{team}/status-pages', [StatusPageController::class, 'index'])
             ->whereNumber('team')

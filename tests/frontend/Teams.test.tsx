@@ -19,9 +19,13 @@ const auth = { user: { name: 'Invited User', email: 'invitee@example.test' } };
 async function switchesTeam(): Promise<void> {
     const user = userEvent.setup();
 
-    const post = vi.spyOn(router, 'post').mockImplementation((_url, _data, options) => {
-        options?.onStart?.({} as Parameters<NonNullable<typeof options.onStart>>[0]);
-    });
+    document.cookie = 'XSRF-TOKEN=synthetic';
+    const request = vi
+        .mocked(fetch)
+        .mockResolvedValue(
+            new Response(JSON.stringify({ destination: '/teams/13/dashboard' }), { status: 200 }),
+        );
+    const visit = vi.spyOn(router, 'visit').mockImplementation(() => undefined);
     renderInertia('Signalbox', Index, {
         teams: [
             { id: 12, name: 'Alpha', role: 'viewer' },
@@ -29,11 +33,15 @@ async function switchesTeam(): Promise<void> {
         ],
         currentTeamId: 12,
     });
-    expect(screen.queryByRole('button', { name: 'Switch to Alpha' })).not.toBeInTheDocument();
-    await user.tab();
-    await user.click(screen.getByRole('button', { name: 'Switch to Beta' }));
-    expect(post).toHaveBeenCalledWith('/teams/13/select', {}, expect.any(Object));
-    expect(screen.getByRole('button', { name: 'Switching…' })).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: 'Team' })).toHaveValue('12');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Team' }), '13');
+    await user.click(screen.getByRole('button', { name: 'Switch team' }));
+    expect(request).toHaveBeenCalledWith(
+        '/teams/13/select',
+        expect.objectContaining({ method: 'POST' }),
+    );
+    expect(visit).toHaveBeenCalledWith('/teams/13/dashboard', expect.any(Object));
+    expect(screen.getByRole('button', { name: 'Switching team…' })).toBeDisabled();
 }
 
 /** An invited account with no accepted membership sees a truthful empty state. */

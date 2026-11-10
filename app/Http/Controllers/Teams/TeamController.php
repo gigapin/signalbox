@@ -13,6 +13,8 @@ use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Services\Identity\TeamAccess;
+use App\Services\Identity\TeamNavigation;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -22,8 +24,11 @@ use Inertia\Response;
 /** Keep browser orchestration separate from lock-aware domain transitions. */
 final class TeamController extends Controller
 {
-    /** @param TeamAccess $access Shared membership permissions, always resolved from current state. */
-    public function __construct(private readonly TeamAccess $access)
+    /**
+     * @param TeamAccess $access Shared fresh membership permissions.
+     * @param TeamNavigation $navigation Safe membership selector projection.
+     */
+    public function __construct(private readonly TeamAccess $access, private readonly TeamNavigation $navigation)
     {
     }
 
@@ -36,14 +41,11 @@ final class TeamController extends Controller
     public function index(Request $request): Response
     {
         $actor = $this->authenticatedUser($request);
-        $teams = $actor->teams()
-            ->orderBy('teams.name')
-            ->get()
-            ->map(fn (Team $team): array => $this->teamSummary($actor, $team));
+        $navigation = $this->navigation->forUser($actor);
 
         return Inertia::render('Teams/Index', [
-            'teams' => $teams,
-            'currentTeamId' => $actor->resolveCurrentTeam()?->id,
+            'teams' => $navigation['teams'],
+            'currentTeamId' => $navigation['selectedTeamId'],
         ]);
     }
 
@@ -94,14 +96,21 @@ final class TeamController extends Controller
      * @param Request $request Verified preference owner.
      * @param int $team Accessible destination checked by the action.
      * @param SwitchTeam $switch Preference transition coordinated with membership revocation.
-     * @return RedirectResponse Account showing the new selection.
+     * @return RedirectResponse|JsonResponse Explicit destination dashboard or JSON acknowledgement with the same relative destination.
      */
-    public function select(Request $request, int $team, SwitchTeam $switch): RedirectResponse
+    public function select(Request $request, int $team, SwitchTeam $switch): RedirectResponse|JsonResponse
     {
         Gate::authorize('view', Team::query()->findOrFail($team));
         $switch($this->authenticatedUser($request), $team);
 
-        return redirect()->route('account')->with('status', 'team-switched');
+        $destination = route('teams.dashboard', $team, false);
+
+        if ($request->wantsJson()) {
+            return response()->json(['destination' => $destination])
+                ->header('Cache-Control', 'no-store, private');
+        }
+
+        return redirect()->to($destination)->with('status', 'team-switched');
     }
 
     /**
@@ -218,22 +227,6 @@ final class TeamController extends Controller
         $members->transfer($this->authenticatedUser($request), $team, $request->integer('user_id'));
 
         return redirect()->route('teams.show', $team)->with('status', 'ownership-transferred');
-    }
-
-    /**
-     * Build a list item without serializing a team or its membership model.
-     *
-     * @param User $actor Current member.
-     * @param Team $team Accessible team.
-     * @return array{id: int, name: string, role: string} Minimal team identity.
-     */
-    private function teamSummary(User $actor, Team $team): array
-    {
-        return [
-            'id' => $team->id,
-            'name' => $team->name,
-            'role' => $this->access->membership($actor, $team->id)->role->value,
-        ];
     }
 
     /**

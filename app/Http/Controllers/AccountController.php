@@ -25,7 +25,7 @@ final class AccountController extends Controller
 
         return Inertia::render('Account/Overview', [
             'hasPendingInvitation' => $invitations->resolve($request)?->isPending() ?? false,
-            'currentTeam' => $team === null ? null : ['name' => $team->name]
+            'currentTeam' => $team === null ? null : ['id' => $team->id, 'name' => $team->name]
         ]);
     }
 

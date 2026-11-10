@@ -7,12 +7,10 @@ import Alert from '../ui/Alert';
 import { PageHeading } from '../ui/Panel';
 import AccountMenu from './AccountMenu';
 import TeamSwitcher from './TeamSwitcher';
-import {
-    teamDestinations,
-    type AppTeam,
-    type BreadcrumbAncestor,
-    type TeamSection,
-} from './navigation';
+import TeamLinks from './TeamLinks';
+import MobileNavigation from './MobileNavigation';
+import { useDesktopNavigation } from './useDesktopNavigation';
+import { type AppTeam, type BreadcrumbAncestor, type TeamSection } from './navigation';
 
 /** Inputs deliberately supplied by an authorized team page instead of global preference inference. */
 interface AppLayoutProps {
@@ -50,6 +48,7 @@ export default function AppLayout({
 }: AppLayoutProps) {
     const { appName, auth, status, teamNavigation } = usePage<AuthProps>().props;
     const mainId = useId();
+    const desktop = useDesktopNavigation();
     const [suspended, setSuspended] = useState(false);
     const membership = teamNavigation?.teams.find((choice) => choice.id === team.id);
     const inaccessible = teamNavigation != null && membership === undefined;
@@ -75,6 +74,14 @@ export default function AppLayout({
                         {hidden ? 'Team content unavailable' : team.name}
                     </p>
                 </div>
+                {!hidden && !desktop && (
+                    <MobileNavigation
+                        key={`mobile:${team.id}`}
+                        teamId={team.id}
+                        section={section}
+                        mainId={mainId}
+                    />
+                )}
                 {membership && !hidden && <p className="ui-help">Role: {membership.role}</p>}
                 {teamNavigation && !accessDenied && (
                     <TeamSwitcher
@@ -86,32 +93,16 @@ export default function AppLayout({
                 )}
                 {user && !hidden && (
                     <AccountMenu
-                        key={team.id}
+                        key={`account:${team.id}`}
                         name={user.name}
                         isPlatformAdmin={user.isPlatformAdmin === true}
                     />
                 )}
             </header>
             <div className="ui-app-frame">
-                {!hidden && (
+                {!hidden && desktop && (
                     <aside className="ui-sidebar">
-                        <nav aria-label="Team navigation">
-                            <ul className="ui-team-links">
-                                {teamDestinations(team.id).map((destination) => (
-                                    <li key={destination.section}>
-                                        <Link
-                                            className="ui-shell-link"
-                                            href={destination.href}
-                                            aria-current={
-                                                section === destination.section ? 'page' : undefined
-                                            }
-                                        >
-                                            {destination.label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
+                        <TeamLinks teamId={team.id} section={section} />
                     </aside>
                 )}
                 <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">

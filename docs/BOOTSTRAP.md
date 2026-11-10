@@ -4,6 +4,16 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## Mobile navigation handoff — 2026-11-10
+
+**Next: UI.02.4, remaining private-page migration and explicit account/platform contexts.** UI.02.3 adds MobileNavigation (native dialog), shared TeamLinks and a matchMedia/useSyncExternalStore breakpoint hook. AppLayout renders only one team navigation: sidebar at 1024 CSS pixels and above, header trigger/dialog below. Team selection remains one header-owned instance. Earlier restart points naming UI.02.3 are historical.
+
+Opening focuses Close; Escape and Close restore the trigger. Native modal focus containment/inert background are used, with root scrolling restored exactly on close. Same-tab links close then focus the destination h1 after successful navigation; modified clicks preserve normal browser behavior. Desktop transition, access denial and switching remove the modal safely and focus visible main content. AccountMenu also closes on outside focus, preventing its Escape listener from conflicting with the modal. Native dialog support is exercised in the current Brave fixture probe; no new library or backend behavior.
+
+Final host `npm run verify` passes: lint/Prettier/TypeScript, **5 quality tests**, **270 DOM tests in 27 files**, Vite build. Ten new DOM tests cover lifecycle and focus integration; jsdom prototypes are restored after fixture cleanup. A real Brave headless probe (Chromium 157.0.8103.39) with temporary profile and synthetic-only Inertia server verifies :modal, nine Tab/Shift+Tab containment, inert background, Escape, desktop transition and destination-heading focus; document widths equal viewport at 390 and 195 CSS pixels, zero JS exceptions. Separate native default zoom 200% changes CSS viewport 780→390 and DPR 1→2, without overflow; dialog width 352 and Close visible. Temporary zoom restored to 100%, browser and server stopped, scratch artifacts removed. No screenshots or user browser settings touched.
+
+This is targeted synthetic frontend evidence, not backend/session acceptance or PASS for the final L matrix. Firefox and VoiceOver still belong to UI.06 after page migration. No PHP changed, so PHP-CS-Fixer/Larastan/backend suites were not rerun; remote CI/PHP 8.5 not run. No Git/gh, dependency, environment, development data or application process changes. UI.02.4 must preserve drafts/in-flight guards, tenant boundaries, filtered return paths and separate public/auth/platform layouts; the dashboard is still the only migrated resource page.
+
 ## Team selector handoff — 2026-11-10
 
 **Next: UI.02.3, accessible mobile navigation.** UI.02.2 adds private membership choices, per-team roles and confirmed switching to the dashboard shell and Your teams. Account's accessible currentTeam includes an ID for Open dashboard. See [UI-GUIDELINES.md](UI-GUIDELINES.md) and [TEAMS.md](TEAMS.md) for the new JSON acknowledgement and privacy boundaries. Earlier UI.02.2 restart points are historical.

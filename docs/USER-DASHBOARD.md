@@ -2,11 +2,11 @@
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 
-**Stato al 2026-11-10:** UI.01 e UI.02.1–UI.02.2 completati. La dashboard usa AppLayout con ruolo e selettore dei team accessibili; Your teams adotta lo stesso form, account offre l’ingresso alla dashboard autorizzata. Il prossimo sotto-task è **UI.02.3**, menu mobile accessibile. Regole e contratti in [UI-GUIDELINES.md](UI-GUIDELINES.md). Le altre pagine private restano da migrare in UI.02.4; UI.02 non è ancora chiuso.
+**Stato al 2026-11-10:** UI.01 e UI.02.1–UI.02.3 completati. La dashboard usa AppLayout con ruolo, selettore e navigazione mobile modale sotto 1024 CSS px; Your teams riusa il selettore e account offre l’ingresso alla dashboard. Il prossimo sotto-task è **UI.02.4**, migrazione delle altre viste private e integrazione dei contesti account/piattaforma. Regole e contratti in [UI-GUIDELINES.md](UI-GUIDELINES.md). UI.02 resta aperto fino alla migrazione e alle relative verifiche.
 
 ## Ripartenza della prossima sessione
 
-In UI.02.3 sostituire la navigazione attualmente visibile/a capo sotto 1024 px con il dialogo mobile previsto, gestendo focus iniziale/ripristino, Escape, cambio breakpoint e navigazione. Conservare selettore nativo, pending/errori e sospensione del contenuto privato. Il team della rotta rimane autorevole; nessun ritorno di dati/listener precedenti dopo cambio o diniego. Poi UI.02.4 migrerà le altre viste e collegherà i form con guardie per draft/invii in corso.
+In UI.02.4 migrare le viste private dal vecchio AuthLayout, eliminando menu duplicati e preservando ingressi, link diretti, cronologia, filtri e recupero realtime. Collegare i form alle guardie per draft/invii in corso prima di offrire il cambio team; account e piattaforma devono conservare contesti distinti. Riutilizzare il dialogo nativo, TeamLinks e il selettore esistenti, senza duplicare listener/stato. Auth e pagine pubbliche mantengono layout dedicati. La prova browser mirata di UI.02.3 non certifica le viste ancora da migrare o il collaudo finale L.
 
 La stima della fase A è 73–108 h incluso inventario, non un consuntivo. Le correzioni del collaudo sono implementate e l’utente conferma A–K conclusi; AppLayout e nuova dashboard non sono certificati da tali risultati.
 
@@ -310,3 +310,10 @@ Nessuna nuova proiezione backend o inferenza del team dalla preferenza, nessuna 
 Proiezione privata TeamNavigation con soli team accessibili e ruolo per membership; preferenza assente/revocata resta null. La dashboard mostra ruolo del team della rotta e selettore condiviso con Your teams. POST di selezione confermato dal server e nuova visita alla dashboard senza trascinare ID/filtri di origine; account riceve ID autorizzato per “Open dashboard”. Rotte pubbliche/operatori non ricevono l’elenco membership; le status page private sono no-store.
 
 Sospensione e smontaggio dei dati realtime precedenti prima del cambio, blocco duplicati, timeout e recupero tramite lettura esplicita senza replay. Diniego autorevole nasconde dati e ruolo della dashboard, anche quando la pagina era già aperta. Nessun polling di revoca introdotto; valgono i controlli autorizzati del recupero esistente. Gli stati storici sopra sull’assenza del selettore o sul redirect account sono superati da questa consegna. Risultati effettivi nel piano; collaudo browser/L non dedotto dai test. Prossimo: **UI.02.3**.
+
+
+## Navigazione mobile realizzata — UI.02.3, 2026-11-10
+
+Un’unica navigazione attiva per breakpoint: sidebar da 1024 px, dialogo nativo con trigger nell’header sotto soglia. TeamLinks condivide destinazioni/voce corrente; apertura su Close, Escape/ripristino, chiusura su navigazione e focus h1 al successo. Passaggio desktop, sospensione o diniego chiudono il dialogo senza lasciare focus in elementi rimossi. Selettore team unico nell’header, nessun nuovo listener realtime o mutazione da menu. AccountMenu si chiude anche all’uscita del focus.
+
+Dieci nuovi test DOM e prova Brave headless su fixture sintetiche con focus modale nativo, 390/195 CSS px, navigazione/breakpoint e zoom nativo 200%, senza overflow; risultati e limiti nel piano e nella guida. Non sono prove di backend/sessioni reali né PASS L. Browser/server temporanei chiusi e zoom del solo profilo temporaneo ripristinato. I precedenti riferimenti alla navigazione mobile ancora visibile/a capo sono storici e superati. Prossimo sotto-task **UI.02.4**; le altre viste private restano da migrare.

@@ -319,7 +319,7 @@
     }
 }
 
-/* Private team shell: narrow viewports keep a wrapping navigation until the mobile-dialog task. */
+/* Private team shell: a single responsive navigation surface shares route identity and link styles. */
 @layer components {
     .ui-app-shell {
         min-height: 100vh;
@@ -509,5 +509,39 @@
 @layer components {
     .ui-app-main[data-suspended='true'] {
         grid-column: 1 / -1;
+    }
+}
+
+/* Native modal navigation uses an opaque surface in the top layer; only its non-content backdrop is translucent. */
+@layer components {
+    .ui-mobile-navigation {
+        width: min(22rem, 100vw);
+        height: 100dvh;
+        max-width: 100vw;
+        max-height: 100dvh;
+        margin: 0;
+        padding: var(--spacing-ui-6);
+        border: 0;
+        border-right: 1px solid var(--color-ui-border);
+        color: var(--color-ui-text);
+        background: var(--color-ui-surface);
+        overflow-y: auto;
+    }
+
+    .ui-mobile-navigation::backdrop {
+        background: rgb(0 0 0 / 65%);
+    }
+
+    .ui-mobile-navigation-heading {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--spacing-ui-3);
+        margin-bottom: var(--spacing-ui-6);
+    }
+
+    .ui-mobile-navigation .ui-team-links {
+        display: grid;
     }
 }

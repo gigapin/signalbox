@@ -33,8 +33,8 @@ export default function AccountMenu({ name, isPlatformAdmin }: AccountMenuProps)
             trigger.current?.focus();
         }
 
-        /** Close outside the disclosure while preserving focus at the user's chosen destination. */
-        function outside(event: PointerEvent): void {
+        /** Close on outside pointer or focus interaction without stealing the chosen destination's focus. */
+        function outside(event: Event): void {
             if (event.target instanceof Node && !root.current?.contains(event.target)) {
                 setOpen(false);
             }
@@ -42,10 +42,12 @@ export default function AccountMenu({ name, isPlatformAdmin }: AccountMenuProps)
 
         document.addEventListener('keydown', escape);
         document.addEventListener('pointerdown', outside);
+        document.addEventListener('focusin', outside);
 
         return () => {
             document.removeEventListener('keydown', escape);
             document.removeEventListener('pointerdown', outside);
+            document.removeEventListener('focusin', outside);
         };
     }, [open]);
 

@@ -4,3 +4,317 @@
 /* Scan application source files explicitly rather than traversing vendor output. */
 @source '../js';
 @source '../views';
+
+/* Semantic dark-theme tokens; prefixed names avoid changing existing Tailwind/public themes. */
+@theme {
+    /* Canvas, raised surfaces, text, separators and keyboard focus colors. */
+    --color-ui-canvas: #0b1220;
+    --color-ui-surface: #152033;
+    --color-ui-raised: #202e44;
+    --color-ui-text: #f1f5fb;
+    --color-ui-muted: #b5c3d8;
+    --color-ui-border: #72849e;
+    --color-ui-focus: #b9a4ff;
+    /* Primary actions use dark text over a pale indigo background, including hover. */
+    --color-ui-accent: #b9a4ff;
+    --color-ui-accent-hover: #cbbcff;
+    --color-ui-on-accent: #15102a;
+    /* Semantic foregrounds are paired with opaque backgrounds, never translucent overlays. */
+    --color-ui-success: #9be2ba;
+    --color-ui-success-bg: #12352b;
+    --color-ui-warning: #f9d48a;
+    --color-ui-warning-bg: #3d2c17;
+    --color-ui-danger: #ffb4bb;
+    --color-ui-danger-bg: #44202c;
+    --color-ui-info: #a8d8ff;
+    --color-ui-info-bg: #172f49;
+    /* System typography requires no remote font or extra asset request. */
+    --font-ui: ui-sans-serif, system-ui, sans-serif;
+    --text-ui-body: 1rem;
+    --text-ui-small: 0.875rem;
+    --text-ui-section: 1.25rem;
+    --text-ui-title: 1.875rem;
+    /* Four-pixel spacing scale; controls keep a 44-pixel minimum target at default root size. */
+    --spacing-ui-1: 0.25rem;
+    --spacing-ui-2: 0.5rem;
+    --spacing-ui-3: 0.75rem;
+    --spacing-ui-4: 1rem;
+    --spacing-ui-6: 1.5rem;
+    --spacing-ui-8: 2rem;
+    --spacing-ui-control: 2.75rem;
+    --radius-ui: 0.625rem;
+}
+
+/* Opt-in primitives: no global element selectors or overrides of public status-page themes. */
+@layer components {
+    .ui-theme {
+        color: var(--color-ui-text);
+        background: var(--color-ui-canvas);
+        font-family: var(--font-ui);
+        font-size: var(--text-ui-body);
+        line-height: 1.5;
+    }
+
+    /* Every actionable primitive has an offset focus ring, also visible in forced-color modes. */
+    .ui-button:focus-visible,
+    .ui-input:focus-visible,
+    .ui-link:focus-visible,
+    .ui-table-viewport:focus-visible {
+        outline: 2px solid var(--color-ui-focus);
+        outline-offset: 3px;
+    }
+
+    .ui-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: var(--spacing-ui-control);
+        gap: var(--spacing-ui-2);
+        padding: var(--spacing-ui-2) var(--spacing-ui-4);
+        border: 1px solid var(--color-ui-accent);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-accent);
+        color: var(--color-ui-on-accent);
+        font: inherit;
+        font-weight: 600;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+        cursor: pointer;
+    }
+
+    .ui-button:hover:not(:disabled) {
+        background: var(--color-ui-accent-hover);
+    }
+
+    .ui-button[data-variant='secondary'] {
+        border-color: var(--color-ui-border);
+        color: var(--color-ui-text);
+        background: var(--color-ui-surface);
+    }
+
+    .ui-button[data-variant='secondary']:hover:not(:disabled) {
+        background: var(--color-ui-raised);
+    }
+
+    .ui-button[data-variant='danger'] {
+        border-color: var(--color-ui-danger);
+        color: var(--color-ui-danger);
+        background: var(--color-ui-danger-bg);
+    }
+
+    .ui-button[data-variant='danger']:hover:not(:disabled) {
+        text-decoration: underline;
+    }
+
+    .ui-button:disabled,
+    .ui-input:disabled {
+        cursor: not-allowed;
+        /* Keep readable colors instead of fading the entire control. */
+        border-style: dashed;
+    }
+
+    .ui-link {
+        color: var(--color-ui-accent);
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+        overflow-wrap: anywhere;
+    }
+
+    .ui-field {
+        display: grid;
+        gap: var(--spacing-ui-2);
+        min-width: 0;
+    }
+
+    .ui-label,
+    .ui-alert-title {
+        font-weight: 600;
+    }
+
+    .ui-label {
+        color: var(--color-ui-text);
+    }
+
+    .ui-input {
+        width: 100%;
+        min-width: 0;
+        min-height: var(--spacing-ui-control);
+        padding: var(--spacing-ui-2) var(--spacing-ui-3);
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-canvas);
+        color: var(--color-ui-text);
+        font: inherit;
+        line-height: 1.5;
+        color-scheme: dark;
+    }
+
+    .ui-input::placeholder {
+        color: var(--color-ui-muted);
+        opacity: 1;
+    }
+
+    .ui-input[aria-invalid='true'] {
+        border-color: var(--color-ui-danger);
+    }
+
+    .ui-help,
+    .ui-description {
+        color: var(--color-ui-muted);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-help,
+    .ui-field-error {
+        font-size: var(--text-ui-small);
+    }
+
+    .ui-field-error {
+        color: var(--color-ui-danger);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-field-error:empty {
+        display: none;
+    }
+
+    .ui-panel {
+        min-width: 0;
+        padding: var(--spacing-ui-6);
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        color: var(--color-ui-text);
+        background: var(--color-ui-surface);
+    }
+
+    .ui-section-title {
+        font-size: var(--text-ui-section);
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .ui-panel-content {
+        margin-top: var(--spacing-ui-4);
+    }
+
+    .ui-page-heading,
+    .ui-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--spacing-ui-3);
+    }
+
+    .ui-page-heading {
+        justify-content: space-between;
+        gap: var(--spacing-ui-4);
+    }
+
+    .ui-heading-copy {
+        min-width: 0;
+    }
+
+    .ui-page-title {
+        color: var(--color-ui-text);
+        font-size: var(--text-ui-title);
+        font-weight: 600;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+
+    /* Neutral is the fallback for unknown states; tones never choose domain labels. */
+    .ui-badge,
+    .ui-alert {
+        --ui-tone-text: var(--color-ui-text);
+        --ui-tone-bg: var(--color-ui-raised);
+        color: var(--ui-tone-text);
+        background: var(--ui-tone-bg);
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-badge {
+        display: inline-block;
+        padding: var(--spacing-ui-1) var(--spacing-ui-2);
+        font-size: var(--text-ui-small);
+        font-weight: 600;
+    }
+
+    .ui-alert {
+        padding: var(--spacing-ui-4);
+    }
+
+    .ui-alert-content {
+        margin-top: var(--spacing-ui-2);
+    }
+
+    .ui-badge[data-tone='success'],
+    .ui-alert[data-tone='success'] {
+        --ui-tone-text: var(--color-ui-success);
+        --ui-tone-bg: var(--color-ui-success-bg);
+        border-color: var(--color-ui-success);
+    }
+
+    .ui-badge[data-tone='warning'],
+    .ui-alert[data-tone='warning'] {
+        --ui-tone-text: var(--color-ui-warning);
+        --ui-tone-bg: var(--color-ui-warning-bg);
+        border-color: var(--color-ui-warning);
+    }
+
+    .ui-badge[data-tone='danger'],
+    .ui-alert[data-tone='danger'] {
+        --ui-tone-text: var(--color-ui-danger);
+        --ui-tone-bg: var(--color-ui-danger-bg);
+        border-color: var(--color-ui-danger);
+    }
+
+    .ui-badge[data-tone='info'],
+    .ui-alert[data-tone='info'] {
+        --ui-tone-text: var(--color-ui-info);
+        --ui-tone-bg: var(--color-ui-info-bg);
+        border-color: var(--color-ui-info);
+    }
+
+    .ui-table-container,
+    .ui-table-viewport {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .ui-table-viewport {
+        overflow-x: auto;
+    }
+
+    .ui-table {
+        width: 100%;
+        color: var(--color-ui-text);
+        background: var(--color-ui-surface);
+        text-align: left;
+        border-collapse: collapse;
+    }
+
+    .ui-table caption {
+        padding: var(--spacing-ui-3);
+        color: var(--color-ui-muted);
+        text-align: left;
+    }
+
+    .ui-table th,
+    .ui-table td {
+        padding: var(--spacing-ui-3) var(--spacing-ui-4);
+        border-bottom: 1px solid var(--color-ui-border);
+        vertical-align: top;
+    }
+}
+
+/* Preserve OS-selected contrast; no forced-color-adjust:none or decorative motion is needed. */
+@media (forced-colors: active) {
+    .ui-button:focus-visible,
+    .ui-input:focus-visible,
+    .ui-link:focus-visible,
+    .ui-table-viewport:focus-visible {
+        outline-color: Highlight;
+    }
+}

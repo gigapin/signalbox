@@ -7,6 +7,8 @@ interface TableScrollAreaProps {
     label: string;
     /** Table and its caption; native table semantics remain intact. */
     children: ReactNode;
+    /** Optional scroll guidance associated with this viewport. */
+    describedBy?: string;
 }
 
 /**
@@ -14,13 +16,14 @@ interface TableScrollAreaProps {
  * @param props Accessible label and native table content.
  * @returns A named, focusable viewport that retains its child's table semantics.
  */
-export default function TableScrollArea({ label, children }: TableScrollAreaProps) {
+export default function TableScrollArea({ label, children, describedBy }: TableScrollAreaProps) {
     return (
         <div
             role="region"
             aria-label={label}
+            aria-describedby={describedBy}
             tabIndex={0}
-            className="max-w-full overflow-x-auto focus:outline-2 focus:outline-emerald-400"
+            className="ui-table-viewport"
         >
             {children}
         </div>

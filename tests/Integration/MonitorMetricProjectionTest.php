@@ -268,3 +268,67 @@ it('computes whole-window statistics from observations rather than averaging buc
     $view = projectedMetrics($this->team, $this->monitor);
     expect($view['latency']['summary']['eu'])->toBe(['meanMs' => 66.67, 'p50Ms' => 100, 'p95Ms' => 100, 'samples' => 3]);
 });
+
+it('serves the detail metric cards through the existing authorized partial recovery protocol', function (): void {
+    metricObservation($this->monitor, 10);
+    $this->actingAs($this->team->owner)->get('/teams/'.$this->team->id.'/monitors/'.$this->monitor->id, [
+        'X-Inertia-Partial-Component' => 'Monitors/Show',
+        'X-Inertia-Partial-Data' => 'monitor,recentIncidents,maintenance,escalation,can,metrics,team,auth,realtime',
+    ])->assertOk()->assertHeader('Cache-Control', 'no-store, private')
+        ->assertJsonPath('props.monitor.id', $this->monitor->id)
+        ->assertJsonPath('props.team.id', $this->team->id)
+        ->assertJsonCount(24, 'props.metrics.recent')
+        ->assertJsonPath('props.metrics.latency.summary.eu.samples', 1)
+        ->assertJsonPath('props.metrics.periods.24h.available', true)
+        ->assertJsonMissingPath('props.monitorContext');
+});
+
+it('projects the selected rolling window for both regional latency and agreed uptime', function (string $period, int $buckets): void {
+    metricObservation($this->monitor, 0);
+    $view = projectedMetrics($this->team, $this->monitor, $period, 'eu');
+    expect($view['supportedPeriods'])->toBe(['24h', '7d', '30d'])
+        ->and($view['uptime']['available'])->toBeTrue()
+        ->and($view['uptime']['series'])->toHaveCount($buckets)
+        ->and($view['latency']['series'])->toHaveCount($buckets)
+        ->and($view['uptime']['series'][0]['startsAt'])->toBe($view['latency']['series'][0]['startsAt'])
+        ->and($view['uptime']['series'][$buckets - 1]['endsAt'])->toBe($view['latency']['series'][$buckets - 1]['endsAt']);
+    expect(projectedMetrics($this->team, $this->monitor, $period, 'us')['uptime'])->toBe($view['uptime']);
+})->with([['24h', 24], ['7d', 7], ['30d', 30]]);
+
+it('splits extended availability with one shared timeline and no query per daily bucket', function (): void {
+    metricObservation($this->monitor, 10);
+    app(TenantContext::class)->run($this->team->id, function (): void {
+        $now = CarbonImmutable::now();
+        $availability = app(\App\Services\Metrics\MonitorAvailability::class);
+        $queries = [];
+        foreach ([7, 30] as $days) {
+            $window = new \App\Data\Metrics\TimeInterval($now->subDays($days), $now);
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $reports = $availability->daily($this->monitor, $window);
+            $queries[] = count(DB::getQueryLog());
+            DB::disableQueryLog();
+            expect($reports)->toHaveCount($days);
+            expect(\App\Data\Metrics\AvailabilityReport::combined($reports)->durations)
+                ->toEqual($availability->between($this->monitor, $window)->durations);
+        }
+        expect($queries[0])->toBe($queries[1])->toBeLessThan(12);
+        expect(fn () => $availability->daily($this->monitor, new \App\Data\Metrics\TimeInterval($now->subDays(31), $now)))
+            ->toThrow(InvalidArgumentException::class);
+    });
+});
+
+it('restricts chart options to readable monitored life and current plan history', function (): void {
+    config(['plans.business.rollup_retention_days' => 7]);
+    $view = projectedMetrics($this->team, $this->monitor, '30d');
+    expect($view['supportedPeriods'])->toBe(['24h', '7d'])
+        ->and($view['uptime']['available'])->toBeFalse()
+        ->and($view['uptime']['series'])->toBeEmpty();
+    app(TenantContext::class)->run($this->team->id, function (): void {
+        $this->monitor->forceFill(['created_at' => now()->subHour()])->save();
+    });
+    $view = projectedMetrics($this->team, $this->monitor, '30d');
+    expect($view['supportedPeriods'])->toBe(['24h', '7d', '30d'])
+        ->and($view['uptime']['series'][0]['durations']['upSeconds'])->toEqual(0)
+        ->and($view['uptime']['series'][0]['observedPercent'])->toBeNull();
+});

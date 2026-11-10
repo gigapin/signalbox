@@ -68,3 +68,23 @@ export function withMonitorListReturn(path: string, teamId: number, returnTo: st
     if (returnTo === monitorsPath(teamId)) return path;
     return `${path}?${new URLSearchParams({ returnTo }).toString()}`;
 }
+
+/**
+ * @param teamId Authorized route team.
+ * @param monitorId Authorized monitor.
+ * @param period Allowlisted metric period.
+ * @param region Allowlisted latency region, independent of agreed availability.
+ * @param returnTo Server-normalized list context to preserve through a metric visit.
+ * @returns A GET-only metric selection with no forwarded unknown query or domain payload.
+ */
+export function monitorMetricsUrl(
+    teamId: number,
+    monitorId: number,
+    period: '24h' | '7d' | '30d',
+    region: 'all' | 'eu' | 'us',
+    returnTo: string,
+): string {
+    const query = new URLSearchParams({ period, region });
+    if (returnTo !== monitorsPath(teamId)) query.set('returnTo', returnTo);
+    return `${monitorPath(teamId, monitorId)}?${query.toString()}`;
+}

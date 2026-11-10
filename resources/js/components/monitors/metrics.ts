@@ -43,7 +43,7 @@ export interface MonitorLatencyStatistics {
     samples: number;
 }
 
-/** Bounded read projection used by the future monitor cards and charts. */
+/** Bounded read projection used by monitor availability cards and subsequent chart controls. */
 export interface MonitorMetricsView {
     /** Projection generation time, distinct from an observation time. */
     generatedAt: string;
@@ -51,6 +51,10 @@ export interface MonitorMetricsView {
     timezone: 'UTC';
     /** Current plan's maximum readable rollup history in days. */
     historyDays: number;
+    /** Logically readable raw-chart periods; absent only in older history entries. */
+    supportedPeriods?: ('24h' | '7d' | '30d')[];
+    /** Selected-window agreed availability, independent of latency region; absent in older history entries. */
+    uptime?: { available: boolean; series: MonitorAvailabilityBucket[] };
     /** Validated controls; region only filters latency observations. */
     selection: { period: '24h' | '7d' | '30d'; region: 'all' | 'eu' | 'us' };
     /** Whole-window availability from the existing SLA authority. */

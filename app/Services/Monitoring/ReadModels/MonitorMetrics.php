@@ -65,10 +65,30 @@ final readonly class MonitorMetrics
         $window = new TimeInterval($now->subDays($days), $now);
         $permitted = !$window->start->max($monitor->created_at ?? $window->start)->isBefore($now->subDays($history));
 
+        $supported = [];
+        foreach (['24h' => 1, '7d' => 7, '30d' => 30] as $key => $span) {
+            $earliest = $now->subDays($span)->max($monitor->created_at ?? $now->subDays($span));
+            if (!$earliest->isBefore($now->subDays(min($history, MonitorAvailability::RAW_RETENTION_DAYS)))) {
+                $supported[] = $key;
+            }
+        }
+        $chart = $period === '24h' ? $bars : [];
+        if ($period !== '24h' && in_array($period, $supported, true)) {
+            foreach ($this->availability->daily($monitor, $window) as $index => $report) {
+                $chart[] = [...$this->report($report), 'startsAt' => $window->start->addDays($index)->toISOString(), 'endsAt' => $window->start->addDays($index + 1)->min($now)->toISOString()];
+            }
+        }
+        $chartAvailable = $chart !== [];
+        foreach ($chart as $point) {
+            $chartAvailable = $chartAvailable && $point['available'];
+        }
+
         return [
             'generatedAt' => $now->toISOString(),
             'timezone' => 'UTC',
             'historyDays' => $history,
+            'supportedPeriods' => $supported,
+            'uptime' => ['available' => $chartAvailable, 'series' => $chart],
             'selection' => ['period' => $period, 'region' => $region],
             'periods' => $periods,
             'recent' => $bars,

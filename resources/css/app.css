@@ -676,3 +676,147 @@
         overflow-wrap: anywhere;
     }
 }
+
+/* Monitor details preserve unknown/excluded/outside-life time instead of painting partially observed hours green. */
+@layer components {
+    .ui-monitor-detail-stack {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        min-width: 0;
+        gap: var(--spacing-ui-6);
+    }
+
+    .ui-monitor-destination-heading {
+        display: grid;
+        min-width: 0;
+        gap: var(--spacing-ui-2);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-monitor-snapshot,
+    .ui-availability-periods {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+        gap: var(--spacing-ui-4);
+    }
+
+    .ui-monitor-facts {
+        display: grid;
+        gap: var(--spacing-ui-3);
+        min-width: 0;
+    }
+
+    .ui-monitor-facts dt {
+        color: var(--color-ui-muted);
+        font-size: var(--text-ui-small);
+    }
+
+    .ui-monitor-facts dd {
+        overflow-wrap: anywhere;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ui-metric-value {
+        font-size: var(--text-ui-title);
+        font-weight: 600;
+    }
+
+    .ui-availability-card {
+        min-width: 0;
+        padding: var(--spacing-ui-4);
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-canvas);
+    }
+
+    .ui-availability-card > * + * {
+        margin-top: var(--spacing-ui-3);
+    }
+
+    .ui-availability-bars {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: repeat(24, minmax(0, 1fr));
+        gap: 2px;
+    }
+
+    .ui-availability-bar {
+        display: flex;
+        flex-direction: column-reverse;
+        height: 4rem;
+        overflow: hidden;
+        border: 1px solid var(--color-ui-border);
+        background: var(--color-ui-canvas);
+    }
+
+    .ui-availability-bar > span {
+        width: 100%;
+        flex-shrink: 0;
+    }
+
+    .ui-availability-boundaries,
+    .ui-availability-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-ui-3);
+        margin-block: var(--spacing-ui-3);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-availability-boundaries {
+        justify-content: space-between;
+    }
+
+    .ui-availability-legend li {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-ui-2);
+    }
+
+    .ui-availability-key {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+        border: 1px solid var(--color-ui-border);
+    }
+
+    .ui-availability-bar [data-kind='up'],
+    .ui-availability-key[data-kind='up'] {
+        background: var(--color-ui-success);
+    }
+
+    .ui-availability-bar [data-kind='down'],
+    .ui-availability-key[data-kind='down'] {
+        background: var(--color-ui-danger);
+    }
+
+    .ui-availability-bar [data-kind='unknown'],
+    .ui-availability-key[data-kind='unknown'] {
+        background: repeating-linear-gradient(
+            135deg,
+            var(--color-ui-muted) 0 3px,
+            var(--color-ui-raised) 3px 6px
+        );
+    }
+
+    .ui-availability-bar [data-kind='excluded'],
+    .ui-availability-key[data-kind='excluded'] {
+        background: var(--color-ui-info);
+    }
+
+    .ui-availability-bar [data-kind='outside'],
+    .ui-availability-key[data-kind='outside'] {
+        background: var(--color-ui-canvas);
+    }
+
+    .ui-availability-bar[data-unavailable],
+    .ui-availability-key[data-kind='unavailable'] {
+        border-style: dashed;
+        background: repeating-linear-gradient(
+            45deg,
+            var(--color-ui-canvas) 0 4px,
+            var(--color-ui-border) 4px 5px
+        );
+    }
+}

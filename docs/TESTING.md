@@ -600,3 +600,28 @@ Monitors.test adds destination/context links, distinct empty pages, retained dra
 docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorPagesTest.php tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorProjectionBenchmarkTest.php tests/Integration/TeamAuthorizationMatrixTest.php
 npx vitest run tests/frontend/Monitors.test.tsx tests/frontend/RealtimePages.test.tsx tests/frontend/NavigationGuard.test.tsx
 ```
+
+## Monitor detail availability — UI.03.4
+
+MonitorDetail.test exercises the actual detail page plus pure formatting and duration-bar boundaries: safe destination, permitted actions/return URL, observed versus operational/maintenance state, null/zero/unavailable/excluded/pre-creation time, partial observed hours, equivalent table, old-history fallback and live card/title refresh followed by access denial. Metrics fixture totals match the monitor's 23.5-hour lifetime; it contains only synthetic redacted data. Near-100 precision is preserved instead of rounding a partial value to full success. The existing Monitors suite retains action/confirmation/draft coverage.
+
+MonitorMetricProjectionTest adds the existing authorized detail partial-read protocol with metrics, while MonitorPages/MonitorAvailability retain permission, tenant, projection and time-weighting regression coverage. No PHP application rule changed. The browser fixture probe checks 390/195 CSS-pixel reflow, bar proportions, native Enter/Tab disclosure/table access, local table scrolling, long identity/manager controls at 390 and missing/maintenance views; this remains separate from backend-session and final L acceptance.
+
+```sh
+npx vitest run tests/frontend/MonitorDetail.test.tsx tests/frontend/Monitors.test.tsx tests/frontend/RealtimePages.test.tsx
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorPagesTest.php tests/Integration/MonitorAvailabilityTest.php
+```
+
+Final actual counts and unexecuted checks are recorded in [TASKS.md](TASKS.md). UI.03.5 continues with charts and period/region controls rather than duplicating the duration history or SLA formulas.
+
+
+## Monitor charts — UI.03.5
+
+MonitorCharts.test.tsx adds eight cases covering regional measurements/zero/gaps, exact whole-window summaries, percentile and coverage/SLA selection, unavailable/unsupported history, single GET and explicit retry, 401/403/404 removal, and the real draft guard's Stay/Discard behavior. The shared read lifecycle is also exercised by existing monitor-list tests, and TimeSeriesChart retains dashboard regression coverage. MonitorMetricProjectionTest adds five cases (including three period dataset cases) for aligned hour/day windows, region-independent availability, authoritative duration equivalence, bounded query count, overlong-window rejection, plan and monitor-life support.
+
+```sh
+npm run verify
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorAvailabilityTest.php tests/Integration/MetricBoundaryMatrixTest.php tests/Integration/MonitorPagesTest.php tests/Integration/DashboardTest.php tests/Integration/CheckRollupsTest.php
+```
+
+The benchmark's optional `RUN_CHART_DENSE_BENCHMARK=1` uses 172800 dual-region results at 30-second cadence instead of 1440 hourly results. Fixture statistics are analyzed before measurements. Reproduction, actual cost and memory limitations are in [MONITOR-METRICS.md](MONITOR-METRICS.md); this opt-in run does not establish a production or concurrency SLO. Final gates and native browser evidence are recorded in [TASKS.md](TASKS.md).

@@ -1,4 +1,5 @@
 /** Confirm a password inline without navigating away from a pending, explicitly requested operation. */
+import { useLeaveProtection } from '../app/NavigationGuard';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { csrfHeader } from '../csrf';
 
@@ -21,6 +22,7 @@ export default function PasswordConfirmationForm({
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
+    useLeaveProtection(password !== '', busy);
     const input = useRef<HTMLInputElement>(null);
     const pending = useRef<AbortController | null>(null);
 

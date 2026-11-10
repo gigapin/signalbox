@@ -79,7 +79,7 @@ beforeEach(() => {
     document.cookie = 'XSRF-TOKEN=fixture-csrf; path=/';
 });
 
-test('lists teams with their effective plan and shows the admin link', () => {
+test('lists teams with their effective plan and shows the admin link', async () => {
     renderInertia(
         'Signalbox',
         Index,
@@ -97,6 +97,7 @@ test('lists teams with their effective plan and shows the admin link', () => {
 
     expect(row).toHaveTextContent('Internal (unlimited testing)');
     expect(row).toHaveTextContent('Unlimited testing override');
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Account menu' }));
     expect(screen.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin/teams');
 });
 

@@ -1,4 +1,5 @@
 /** Configure daily channel silencing separately from provider credentials and verification. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import type { QuietHoursView } from './types';
@@ -37,6 +38,7 @@ export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursForm
         end: hours?.end ?? '07:00',
         timezone: hours?.timezone ?? 'UTC',
     });
+    useFormProtection(form);
     const errors = form.errors as Record<string, string | undefined>;
 
     /** Submit a complete interval or explicit removal; retain values after a server refusal. */

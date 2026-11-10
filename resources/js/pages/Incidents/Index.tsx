@@ -3,7 +3,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
 import { useState, type FormEvent } from 'react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 import IncidentTable from '../../components/incidents/IncidentTable';
 import { incidentStateLabel, severityLabel } from '../../components/incidents/labels';
 import type {
@@ -14,7 +14,6 @@ import type {
 } from '../../components/incidents/types';
 import { incidentListQuery, incidentListUrl, incidentsPath } from '../../components/incidents/urls';
 import Pagination from '../../components/monitors/Pagination';
-import { monitorsPath } from '../../components/monitors/urls';
 
 /** List page response from IncidentPageController::index. */
 interface IndexProps extends IncidentPageProps {
@@ -35,7 +34,7 @@ const INPUT =
     'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
 
 /** Filter through GET navigation so results stay bookmarkable and keyboard-operable. */
-export default function Index() {
+function PageContent() {
     const { team } = usePage<IndexProps>().props;
     const live = useLivePage<IndexProps>(team.id, 'Incidents/Index');
     const { incidents, filters, filtered, rejectedFilters, options } = live.props;
@@ -66,17 +65,8 @@ export default function Index() {
     }
 
     return (
-        <AuthLayout title="Incidents" description={`Incidents of ${team.name}.`} wide>
+        <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <nav
-                aria-label="Team navigation"
-                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
-            >
-                <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
-                <Link href={monitorsPath(team.id)}>Monitors</Link>
-                <Link href={`/teams/${team.id}`}>Team members</Link>
-            </nav>
-
             <form
                 aria-label="Filter incidents"
                 onSubmit={submit}
@@ -197,6 +187,21 @@ export default function Index() {
                     href={(page) => incidentListUrl(team.id, filters, page)}
                 />
             </section>
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team } = usePage<IndexProps>().props;
+    return (
+        <AppLayout
+            team={team}
+            section="incidents"
+            title="Incidents"
+            description={`Incidents of ${team.name}.`}
+        >
+            <PageContent />
+        </AppLayout>
     );
 }

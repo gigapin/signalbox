@@ -1,7 +1,9 @@
 /** Transfer primary ownership explicitly to an existing owner after recent-password confirmation. */
+import { useFormProtection } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import AuthLayout, { type AuthProps } from '../../components/auth/AuthLayout';
+import type { AuthProps } from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 
 /** Server-authorized ownership transfer response. */
 interface OwnershipProps extends AuthProps {
@@ -12,10 +14,11 @@ interface OwnershipProps extends AuthProps {
 }
 
 /** Keep the previous primary owner as an owner; transfer does not remove membership. */
-export default function Ownership() {
+function PageContent() {
     const { team, owners } = usePage<OwnershipProps>().props;
 
     const form = useForm({ user_id: '' });
+    useFormProtection(form);
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -30,10 +33,7 @@ export default function Ownership() {
     }
 
     return (
-        <AuthLayout
-            title="Transfer primary ownership"
-            description="Choose another existing owner. You will retain your owner role."
-        >
+        <>
             {owners.length === 0 ? (
                 <p>Promote another member to owner before transferring primary ownership.</p>
             ) : (
@@ -65,6 +65,21 @@ export default function Ownership() {
             <Link className="mt-6 block text-emerald-300" href={`/teams/${team.id}`}>
                 Back to team
             </Link>
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team } = usePage<OwnershipProps>().props;
+    return (
+        <AppLayout
+            team={team}
+            section="team"
+            title="Transfer primary ownership"
+            description="Choose another existing owner. You will retain your owner role."
+        >
+            <PageContent />
+        </AppLayout>
     );
 }

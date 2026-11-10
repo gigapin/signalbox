@@ -1,4 +1,5 @@
 /** Manage a page's custom hostname, public DNS proof and expiring ownership verification. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import type { ManagedStatusDomain } from './types';
@@ -16,8 +17,11 @@ interface StatusDomainFormProps {
 /** Keep the DNS claim editor independent of the page/component replacement form. */
 export default function StatusDomainForm({ path, domain, pageId }: StatusDomainFormProps) {
     const claim = useForm({ domain: domain?.hostname ?? '' });
+    useFormProtection(claim);
     const verify = useForm({});
+    useFormProtection(verify);
     const remove = useForm({});
+    useFormProtection(remove);
     const pending = claim.processing || verify.processing || remove.processing;
     const error =
         claim.errors.domain ?? (verify.errors as Record<string, string | undefined>).domain;

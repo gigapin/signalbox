@@ -1,29 +1,18 @@
 /** Manage the team's public status pages. */
-import { Link, usePage } from '@inertiajs/react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import { usePage } from '@inertiajs/react';
+import AppLayout from '../../components/app/AppLayout';
 import StatusPageForm from '../../components/status-pages/StatusPageForm';
 import StatusPageRow from '../../components/status-pages/StatusPageRow';
 import type { StatusPagesPageProps } from '../../components/status-pages/types';
 
 /** Every member sees the pages; owners and admins get the forms. Domain refusals arrive on the `page` key. */
-export default function Index() {
+function PageContent() {
     const { team, pages, monitors, themeChoices, limits, can, errors } =
         usePage<StatusPagesPageProps>().props;
     const collectionPath = `/teams/${team.id}/status-pages`;
 
     return (
-        <AuthLayout title="Status pages" description={`Public pages of ${team.name}.`} wide>
-            <nav
-                aria-label="Team navigation"
-                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
-            >
-                <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
-                <Link href={`/teams/${team.id}`}>Team members</Link>
-                <Link href={`/teams/${team.id}/monitors`}>Monitors</Link>
-                <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
-                <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
-            </nav>
-
+        <>
             <p className="mb-4 text-sm text-slate-300">
                 {limits.used} of {limits.pages} status pages used, drafts included. Visitors see the
                 names of the components, never the names of the monitors inside them.
@@ -75,6 +64,21 @@ export default function Index() {
                     Only owners and admins can change status pages.
                 </p>
             )}
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team } = usePage<StatusPagesPageProps>().props;
+    return (
+        <AppLayout
+            team={team}
+            section="status-pages"
+            title="Status pages"
+            description={`Public pages of ${team.name}.`}
+        >
+            <PageContent />
+        </AppLayout>
     );
 }

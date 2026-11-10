@@ -1,4 +1,5 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
@@ -255,6 +256,7 @@ export default function MonitorForm({
     submitLabel,
 }: MonitorFormProps) {
     const form = useForm<MonitorFormData>(initial);
+    useFormProtection(form);
     const formElement = useRef<HTMLFormElement>(null);
     const [serverFocusAttempt, setServerFocusAttempt] = useState(0);
     const data = form.data;

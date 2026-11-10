@@ -1,9 +1,10 @@
 /** Show one monitor's safe configuration, recent incidents and maintenance; offer management when permitted. */
+import { useFormProtection } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
 import type { ReactNode } from 'react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 import IncidentTable from '../../components/incidents/IncidentTable';
 import MaintenancePanel from '../../components/incidents/MaintenancePanel';
 import type { IncidentSummary, MaintenanceView } from '../../components/incidents/types';
@@ -137,11 +138,12 @@ function Configuration({ configuration }: ConfigurationProps) {
 }
 
 /** Keep actions in one form so their shared processing state prevents concurrent submissions. */
-export default function Show() {
+function PageContent() {
     const initial = usePage<ShowProps>().props;
     const live = useLivePage<ShowProps>(initial.team.id, 'Monitors/Show', initial.monitor.id);
     const { team, monitor, recentIncidents, maintenance, escalation, can } = live.props;
     const form = useForm<Record<string, never>>({});
+    useFormProtection(form);
     const path = monitorPath(team.id, monitor.id);
 
     function pause() {
@@ -161,7 +163,7 @@ export default function Show() {
     }
 
     return (
-        <AuthLayout title={monitor.name} description={`${typeLabel(monitor.type)} monitor`} wide>
+        <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
             <nav
                 aria-label="Monitor navigation"
@@ -280,6 +282,22 @@ export default function Show() {
                     </button>
                 )}
             </div>
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team, monitor } = usePage<ShowProps>().props;
+    return (
+        <AppLayout
+            team={team}
+            section="monitors"
+            ancestors={[{ label: 'Monitors', href: `/teams/${team.id}/monitors` }]}
+            title={monitor.name}
+            description={`${typeLabel(monitor.type)} monitor`}
+        >
+            <PageContent />
+        </AppLayout>
     );
 }

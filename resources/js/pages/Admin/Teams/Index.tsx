@@ -3,7 +3,8 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { planLabel, sourceLabel } from '../../../components/admin/labels';
 import type { AdminTeamPage } from '../../../components/admin/types';
-import AuthLayout, { type AuthProps } from '../../../components/auth/AuthLayout';
+import type { AuthProps } from '../../../components/auth/AuthLayout';
+import PrivateContextLayout from '../../../components/app/PrivateContextLayout';
 import Pagination from '../../../components/monitors/Pagination';
 
 /** Directory response from TeamDirectoryController::index. */
@@ -56,10 +57,10 @@ export default function Index() {
     }
 
     return (
-        <AuthLayout
+        <PrivateContextLayout
+            context="platform"
             title="Platform admin"
             description="Every team on the platform, with the plan that currently applies."
-            wide
         >
             <form
                 role="search"
@@ -67,7 +68,7 @@ export default function Index() {
                 onSubmit={submit}
                 className="flex flex-wrap items-end gap-4 rounded border border-slate-700 p-4"
             >
-                <div className="min-w-64 flex-1">
+                <div className="min-w-0 flex-1 sm:min-w-64">
                     <label htmlFor="team-search" className="mb-2 block text-sm font-medium">
                         Search
                     </label>
@@ -155,6 +156,6 @@ export default function Index() {
                     href={(page) => directoryUrl(filters.q, page)}
                 />
             </section>
-        </AuthLayout>
+        </PrivateContextLayout>
     );
 }

@@ -1,4 +1,5 @@
 /** Show one escalation policy with its steps and offer editing and deletion to managers. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { delayLabel } from './labels';
@@ -23,6 +24,7 @@ interface PolicyRowProps {
 export default function PolicyRow({ path, policy, channels, limits, canManage }: PolicyRowProps) {
     const [editing, setEditing] = useState(false);
     const remove = useForm<Record<string, never>>({});
+    useFormProtection(remove);
 
     function destroy() {
         const usage =

@@ -1,4 +1,5 @@
 /** Let a monitor manager choose the escalation policy of one monitor. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import type { MonitorEscalationView } from './types';
@@ -27,6 +28,7 @@ export default function EscalationPanel({
     const form = useForm({
         escalation_policy_id: escalation.policyId === null ? '' : String(escalation.policyId),
     });
+    useFormProtection(form);
     const fallback = escalation.options.find((option) => option.isDefault);
 
     function submit(event: FormEvent<HTMLFormElement>) {

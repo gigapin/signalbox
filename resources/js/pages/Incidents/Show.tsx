@@ -1,9 +1,10 @@
 /** Show one incident with its timeline and let managers take responsibility, post, classify and publish. */
+import { useFormProtection } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
 import type { FormEvent, ReactNode } from 'react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 import { IncidentStatusBadge, SeverityBadge } from '../../components/incidents/IncidentBadges';
 import {
     causeLabel,
@@ -107,6 +108,7 @@ function Detail({ term, children }: DetailProps) {
 /** Add a private entry; choosing `resolved` on an open incident resolves it. */
 function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps) {
     const form = useForm({ status: incident.status, message: '' });
+    useFormProtection(form);
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -189,6 +191,7 @@ function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps
 /** Change the impact; an unchanged value records nothing. */
 function SeverityForm({ path, incident, severities }: SeverityProps) {
     const form = useForm({ severity: incident.severity });
+    useFormProtection(form);
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -231,6 +234,7 @@ function SeverityForm({ path, incident, severities }: SeverityProps) {
 /** Declare or clear the cause; the timeline records only that it changed, never the note itself. */
 function RootCauseForm({ path, incident, maxLength }: RootCauseProps) {
     const form = useForm({ root_cause_note: incident.rootCauseNote ?? '' });
+    useFormProtection(form);
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -275,6 +279,7 @@ function RootCauseForm({ path, incident, maxLength }: RootCauseProps) {
 /** Show one entry with its visibility; private entries can be published once, after confirmation. */
 function Entry({ path, entry, canPublish }: EntryProps) {
     const form = useForm<Record<string, never>>({});
+    useFormProtection(form);
 
     function publish() {
         const question =
@@ -318,7 +323,7 @@ function Entry({ path, entry, canPublish }: EntryProps) {
 }
 
 /** Responsibility is offered only while open; forms re-render from the server after every change. */
-export default function Show() {
+function PageContent() {
     const initial = usePage<ShowProps>().props;
     const live = useLivePage<ShowProps>(
         initial.team.id,
@@ -328,6 +333,7 @@ export default function Show() {
     const { team, incident, deliveries, postableStatuses, options, textMaxLength, can, errors } =
         live.props;
     const acknowledge = useForm<Record<string, never>>({});
+    useFormProtection(acknowledge);
     const path = incidentPath(team.id, incident.id);
     const open = incident.status !== 'resolved';
 
@@ -336,11 +342,7 @@ export default function Show() {
     }
 
     return (
-        <AuthLayout
-            title={`Incident #${incident.id}`}
-            description={`${incident.monitor.name} · ${causeLabel(incident.cause)}`}
-            wide
-        >
+        <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
             <nav
                 aria-label="Incident navigation"
@@ -454,6 +456,22 @@ export default function Show() {
                     Your role has read-only access to incidents.
                 </p>
             )}
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team, incident } = usePage<ShowProps>().props;
+    return (
+        <AppLayout
+            team={team}
+            section="incidents"
+            ancestors={[{ label: 'Incidents', href: `/teams/${team.id}/incidents` }]}
+            title={`Incident #${incident.id}`}
+            description={`${incident.monitor.name} · ${causeLabel(incident.cause)}`}
+        >
+            <PageContent />
+        </AppLayout>
     );
 }

@@ -1,6 +1,7 @@
 /** Bind a disposable team live-page store to Inertia identity and React's external-store lifecycle. */
 import { usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useContext, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { TeamAccessContext } from '../components/app/TeamAccessContext';
 import type { AuthProps } from '../components/auth/AuthLayout';
 import { LivePageSession } from '../realtime/LivePageSession';
 import type { ReverbConfiguration } from '../realtime/types';
@@ -32,6 +33,7 @@ export function useLivePage<P extends LiveProps>(
     monitorId?: number,
 ) {
     const page = usePage<P>();
+    const deny = useContext(TeamAccessContext);
     const session = useMemo(
         () =>
             new LivePageSession({
@@ -53,5 +55,8 @@ export function useLivePage<P extends LiveProps>(
         session.getSnapshot,
         session.getSnapshot,
     );
+    useEffect(() => {
+        if (snapshot.phase === 'denied') deny();
+    }, [snapshot.phase, deny]);
     return { ...snapshot, retry: session.retry };
 }

@@ -1,7 +1,10 @@
 /** Manage optional authenticator security without putting secrets into Inertia props or history. */
+import { useNavigationGuard, useLeaveProtection } from '../../components/app/NavigationGuard';
+import { useFormProtection } from '../../components/app/NavigationGuard';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
-import AuthLayout, { type AuthProps } from '../../components/auth/AuthLayout';
+import type { AuthProps } from '../../components/auth/AuthLayout';
+import PrivateContextLayout from '../../components/app/PrivateContextLayout';
 
 /** Non-secret enrollment status from the authenticated account page. */
 interface SecurityProps extends AuthProps {
@@ -20,7 +23,7 @@ interface Setup {
 }
 
 /** Retrieve a sensitive JSON response without caching or persisting it in navigation state. */
-async function readSecurity(path: string): Promise<unknown> {
+async function readSecurity(path: string, onAccessLoss: () => void): Promise<unknown> {
     /** Same-origin response; no external QR or authenticator service is contacted. */
     const response = await fetch(path, {
         credentials: 'same-origin',
@@ -29,7 +32,7 @@ async function readSecurity(path: string): Promise<unknown> {
         headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
     });
     if (response.status === 423 || response.status === 401 || response.redirected) {
-        router.visit('/account/security');
+        onAccessLoss();
         throw new Error('Please confirm your password again.');
     }
     if (!response.ok) throw new Error('Unable to load security details. Please try again.');
@@ -39,6 +42,8 @@ async function readSecurity(path: string): Promise<unknown> {
 /** Enable, confirm and disable optional 2FA, with explicit recovery-code access. */
 export default function Security() {
     /** Enrollment flags contain no recoverable credential material. */
+    const { runAuthorizedNavigation } = useNavigationGuard();
+    const reconfirm = () => runAuthorizedNavigation(() => router.visit('/account/security'));
     const { twoFactorEnabled, twoFactorPending } = usePage<SecurityProps>().props;
     /** Pending authenticator setup, never remembered by Inertia. */
     const [setup, setSetup] = useState<Setup | null>(null);
@@ -46,10 +51,12 @@ export default function Security() {
     const [codes, setCodes] = useState<string[]>([]);
     /** Local loading state for the sensitive GET endpoints. */
     const [loading, setLoading] = useState(false);
+    useLeaveProtection(false, loading);
     /** Safe local request error; raw responses are never displayed. */
     const [error, setError] = useState('');
     /** CSRF-protected transition requests and field validation. */
     const form = useForm({ code: '' });
+    useFormProtection(form);
 
     /** Fetch and validate the two independent setup response shapes. */
     async function loadSetup() {
@@ -58,8 +65,8 @@ export default function Security() {
         try {
             /** Explicit QR and manual-key responses from the authenticated server. */
             const [qr, key] = await Promise.all([
-                readSecurity('/user/two-factor-qr-code'),
-                readSecurity('/user/two-factor-secret-key'),
+                readSecurity('/user/two-factor-qr-code', reconfirm),
+                readSecurity('/user/two-factor-secret-key', reconfirm),
             ]);
             if (
                 typeof qr !== 'object' ||
@@ -89,7 +96,7 @@ export default function Security() {
         setCodes([]);
         try {
             /** Unknown server payload checked before showing any credential value. */
-            const body = await readSecurity('/user/two-factor-recovery-codes');
+            const body = await readSecurity('/user/two-factor-recovery-codes', reconfirm);
             if (!Array.isArray(body)) throw new Error('Invalid recovery response.');
             /** Only validated string values may enter the rendered recovery list. */
             const values = (body as unknown[]).filter(
@@ -125,7 +132,7 @@ export default function Security() {
     }
 
     return (
-        <AuthLayout
+        <PrivateContextLayout
             title="Account security"
             description="Protect your account with an authenticator app and single-use recovery codes."
         >
@@ -281,6 +288,6 @@ export default function Security() {
             <Link href="/account" className="mt-8 inline-block text-emerald-300">
                 Back to account
             </Link>
-        </AuthLayout>
+        </PrivateContextLayout>
     );
 }

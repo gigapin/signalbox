@@ -1,7 +1,9 @@
 /** Manage one authorized team's membership and invitation lifecycles. */
+import { useFormProtection } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import AuthLayout, { type AuthProps } from '../../components/auth/AuthLayout';
+import type { AuthProps } from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 
 /** Member projection containing no account credentials. */
 interface Member {
@@ -85,6 +87,7 @@ function Errors({ errors }: ErrorsProps) {
 /** Keep one member's edit and removal state independent of adjacent rows. */
 function MemberRow({ member, teamId, roles }: MemberRowProps) {
     const form = useForm({ role: member.role });
+    useFormProtection(form);
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -135,6 +138,7 @@ function MemberRow({ member, teamId, roles }: MemberRowProps) {
 /** Rotate or revoke only the invitation represented by this row. */
 function InvitationRow({ invitation, teamId }: InvitationRowProps) {
     const form = useForm<Record<string, string>>({});
+    useFormProtection(form);
 
     function revokeInvitation() {
         if (!window.confirm(`Revoke the invitation for ${invitation.email}?`)) {
@@ -173,12 +177,14 @@ function InvitationRow({ invitation, teamId }: InvitationRowProps) {
 }
 
 /** Compose readable member lists and narrowly authorized management forms. */
-export default function Team() {
+function PageContent() {
     const { team, actorId, roles, members, invitations } = usePage<TeamProps>().props;
 
     const invite = useForm({ email: '', role: 'member' });
+    useFormProtection(invite);
 
     const leave = useForm<Record<string, string>>({});
+    useFormProtection(leave);
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -194,7 +200,7 @@ export default function Team() {
     }
 
     return (
-        <AuthLayout title={team.name}>
+        <>
             <h2 className="text-xl">Members</h2>
             <ul className="mt-4 space-y-3">
                 {members.map((member) => (
@@ -257,16 +263,7 @@ export default function Team() {
                     )}
                 </>
             )}
-            <nav
-                className="mt-8 flex flex-wrap gap-4 text-emerald-300"
-                aria-label="Team navigation"
-            >
-                <Link href="/teams">Your teams</Link>
-                <Link href={`/teams/${team.id}/monitors`}>Monitors</Link>
-                <Link href={`/teams/${team.id}/dashboard`}>Dashboard</Link>
-                <Link href={`/teams/${team.id}/incidents`}>Incidents</Link>
-                <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
-                <Link href={`/teams/${team.id}/status-pages`}>Status pages</Link>
+            <div className="ui-actions">
                 {team.ownerId === actorId ? (
                     <Link href={`/teams/${team.id}/ownership`}>Transfer primary ownership</Link>
                 ) : (
@@ -274,8 +271,18 @@ export default function Team() {
                         Leave team
                     </button>
                 )}
-            </nav>
+            </div>
             <Errors errors={leave.errors} />
-        </AuthLayout>
+        </>
+    );
+}
+
+/** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
+export default function Page() {
+    const { team } = usePage<TeamProps>().props;
+    return (
+        <AppLayout team={team} section="team" title={team.name}>
+            <PageContent />
+        </AppLayout>
     );
 }

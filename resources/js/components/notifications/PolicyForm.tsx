@@ -1,4 +1,5 @@
 /** Create or change an escalation policy: ordered delays, each notifying a set of channels. */
+import { useFormProtection } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import type { ChannelView, NotificationLimits, PolicyView } from './types';
@@ -76,6 +77,7 @@ export default function PolicyForm({
     onSaved,
 }: PolicyFormProps) {
     const form = useForm<PolicyFields>(initialFields(policy));
+    useFormProtection(form);
     const errors = form.errors as Record<string, string | undefined>;
 
     /**

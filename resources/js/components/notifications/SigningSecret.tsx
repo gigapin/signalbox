@@ -1,4 +1,5 @@
 /** Rotate and reveal a webhook signing secret once, keeping it in ephemeral component state only. */
+import { useLeaveProtection } from '../app/NavigationGuard';
 import { useEffect, useRef, useState } from 'react';
 import { csrfHeader } from '../csrf';
 
@@ -18,6 +19,7 @@ const FAILURE = 'Unable to rotate the signing secret. Reload the page and check 
 export default function SigningSecret({ path }: SigningSecretProps) {
     const [secret, setSecret] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    useLeaveProtection(false, busy);
     const [error, setError] = useState('');
     const pending = useRef<AbortController | null>(null);
 

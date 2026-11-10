@@ -1,5 +1,7 @@
 /** Platform operator view of one team: effective plan, override form and audit history. */
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { useLeaveProtection } from '../../../components/app/NavigationGuard';
+import { useFormProtection } from '../../../components/app/NavigationGuard';
+import { useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { planLabel, sourceLabel, utcLabel } from '../../../components/admin/labels';
 import {
@@ -8,7 +10,8 @@ import {
     type OverrideForm,
 } from '../../../components/admin/overrideForm';
 import type { AdminTeamDetail } from '../../../components/admin/types';
-import AuthLayout, { type AuthProps } from '../../../components/auth/AuthLayout';
+import type { AuthProps } from '../../../components/auth/AuthLayout';
+import PrivateContextLayout from '../../../components/app/PrivateContextLayout';
 import PasswordConfirmationForm from '../../../components/auth/PasswordConfirmationForm';
 
 /** Detail response from TeamDirectoryController::show. */
@@ -72,6 +75,7 @@ export default function Show() {
         valid_through: validThrough(team.override?.expiresAt ?? null),
         reason: '',
     });
+    useFormProtection(form);
     const path = `/admin/teams/${team.id}/plan-override`;
     const fieldErrors = form.errors as Record<string, string | undefined>;
     const general = ['kind', 'plan']
@@ -84,6 +88,7 @@ export default function Show() {
     const passwordCheck = useRef<AbortController | null>(null);
     const saveButton = useRef<HTMLButtonElement>(null);
     const locked = form.processing || checkingPassword || pendingDraft !== null;
+    useLeaveProtection(false, checkingPassword || pendingDraft !== null);
     let saveLabel = 'Save override';
     if (checkingPassword) saveLabel = 'Checking password…';
     else if (form.processing) saveLabel = 'Saving…';
@@ -167,11 +172,11 @@ export default function Show() {
     }
 
     return (
-        <AuthLayout title={team.name} description={`Team ${team.slug}.`} wide>
-            <nav aria-label="Admin navigation" className="mb-6 text-sm text-emerald-300">
-                <Link href="/admin/teams">All teams</Link>
-            </nav>
-
+        <PrivateContextLayout
+            context="platform"
+            title={team.name}
+            description={`Team ${team.slug}.`}
+        >
             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 <div>
                     <dt className="text-sm text-slate-400">Owner</dt>
@@ -366,6 +371,6 @@ export default function Show() {
                     </ol>
                 )}
             </section>
-        </AuthLayout>
+        </PrivateContextLayout>
     );
 }

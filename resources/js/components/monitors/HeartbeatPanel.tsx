@@ -1,4 +1,5 @@
 /** Manage one-time heartbeat credentials in ephemeral component state, outside Inertia props and history. */
+import { useLeaveProtection } from '../app/NavigationGuard';
 import { useEffect, useRef, useState } from 'react';
 import { csrfHeader } from '../csrf';
 import type { HeartbeatView } from './types';
@@ -47,6 +48,7 @@ function HeartbeatControls({ path, heartbeat, canManage }: HeartbeatPanelProps) 
     const [credential, setCredential] = useState<IssuedCredential | null>(null);
     const [configured, setConfigured] = useState(heartbeat.configured);
     const [busy, setBusy] = useState(false);
+    useLeaveProtection(false, busy);
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
     const pending = useRef<AbortController | null>(null);

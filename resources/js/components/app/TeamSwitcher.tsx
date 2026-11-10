@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { csrfHeader } from '../csrf';
 import Alert from '../ui/Alert';
 import Button from '../ui/Button';
+import { useLeaveProtection, useNavigationGuard } from './NavigationGuard';
 import type { TeamNavigationView } from './navigation';
 
 /** Membership choices and caller-controlled suspension of private page content. */
@@ -25,10 +26,12 @@ const FAILURE =
  * @returns An explicit native selection form; failed requests are never automatically replayed.
  */
 export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: TeamSwitcherProps) {
+    const guard = useNavigationGuard();
     const [choice, setChoice] = useState(
         navigation.teams.some((team) => team.id === activeTeamId) ? String(activeTeamId) : '',
     );
     const [phase, setPhase] = useState<'idle' | 'pending' | 'error'>('idle');
+    useLeaveProtection(false, phase === 'pending');
     const operation = useRef<AbortController | null>(null);
     const alive = useRef(false);
     const fieldId = useId();
@@ -46,6 +49,8 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
         event.preventDefault();
         const target = navigation.teams.find((team) => String(team.id) === choice);
         if (!target || target.id === activeTeamId || operation.current || phase !== 'idle') return;
+
+        if (!(await guard.confirmLeave()) || !alive.current || operation.current) return;
 
         const controller = new AbortController();
         operation.current = controller;
@@ -79,13 +84,15 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
             if (!alive.current) return;
             if (controller.signal.aborted) throw new Error(FAILURE);
 
-            router.visit(destination, {
-                preserveState: false,
-                preserveScroll: false,
-                onFinish: () => {
-                    if (alive.current) setPhase('error');
-                },
-            });
+            guard.runAuthorizedNavigation(() =>
+                router.visit(destination, {
+                    preserveState: false,
+                    preserveScroll: false,
+                    onFinish: () => {
+                        if (alive.current) setPhase('error');
+                    },
+                }),
+            );
         } catch {
             if (alive.current) setPhase('error');
         } finally {
@@ -147,10 +154,11 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
                 variant="secondary"
                 busy={phase === 'pending'}
                 busyLabel="Switching team…"
-                disabled={choice === '' || choice === String(activeTeamId)}
+                disabled={guard.busy || choice === '' || choice === String(activeTeamId)}
             >
                 Switch team
             </Button>
+            {guard.busy && <p role="status">Finish the current request before switching teams.</p>}
             {phase === 'pending' && <p role="status">Switching team…</p>}
         </form>
     );

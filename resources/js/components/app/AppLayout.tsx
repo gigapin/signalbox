@@ -1,11 +1,12 @@
 /** Render the private team shell with explicit route identity, section navigation and account controls. */
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useId, useState, type ReactNode } from 'react';
+import { useCallback, useId, useState, type ReactNode } from 'react';
 import type { AuthProps } from '../auth/AuthLayout';
 import LiveUpdates from '../LiveUpdates';
 import Alert from '../ui/Alert';
 import { PageHeading } from '../ui/Panel';
 import AccountMenu from './AccountMenu';
+import { TeamAccessContext } from './TeamAccessContext';
 import TeamSwitcher from './TeamSwitcher';
 import TeamLinks from './TeamLinks';
 import MobileNavigation from './MobileNavigation';
@@ -50,107 +51,113 @@ export default function AppLayout({
     const mainId = useId();
     const desktop = useDesktopNavigation();
     const [suspended, setSuspended] = useState(false);
+    const [revoked, setRevoked] = useState(false);
+    const deny = useCallback(() => setRevoked(true), []);
     const membership = teamNavigation?.teams.find((choice) => choice.id === team.id);
     const inaccessible = teamNavigation != null && membership === undefined;
-    const hidden = suspended || inaccessible || accessDenied;
+    const hidden = suspended || inaccessible || accessDenied || revoked;
     const user = auth?.user;
 
     return (
-        <div className="ui-theme ui-app-shell">
-            <Head title={title} />
-            <a className="ui-skip-link ui-link" href={`#${mainId}`}>
-                Skip to content
-            </a>
-            <header className="ui-app-header">
-                <Link
-                    className="ui-brand ui-link"
-                    href={hidden ? '/teams' : `/teams/${team.id}/dashboard`}
-                >
-                    {appName}
-                </Link>
-                <div className="ui-team-identity">
-                    <span className="ui-help">Current team</span>
-                    <p className="ui-team-name">
-                        {hidden ? 'Team content unavailable' : team.name}
-                    </p>
-                </div>
-                {!hidden && !desktop && (
-                    <MobileNavigation
-                        key={`mobile:${team.id}`}
-                        teamId={team.id}
-                        section={section}
-                        mainId={mainId}
-                    />
-                )}
-                {membership && !hidden && <p className="ui-help">Role: {membership.role}</p>}
-                {teamNavigation && !accessDenied && (
-                    <TeamSwitcher
-                        key={`${team.id}:${user?.email ?? ''}`}
-                        navigation={teamNavigation}
-                        activeTeamId={team.id}
-                        onSuspend={() => setSuspended(true)}
-                    />
-                )}
-                {user && !hidden && (
-                    <AccountMenu
-                        key={`account:${team.id}`}
-                        name={user.name}
-                        isPlatformAdmin={user.isPlatformAdmin === true}
-                    />
-                )}
-            </header>
-            <div className="ui-app-frame">
-                {!hidden && desktop && (
-                    <aside className="ui-sidebar">
-                        <TeamLinks teamId={team.id} section={section} />
-                    </aside>
-                )}
-                <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">
-                    {hidden ? (
-                        <>
-                            <h1 className="ui-page-title">Team selection</h1>
-                            {accessDenied && <LiveUpdates phase="denied" retry={() => undefined} />}
-                            <Alert title="Team data hidden" tone="warning">
-                                <p>Check your current teams to continue.</p>
-                                <Link className="ui-link" href="/teams">
-                                    Your teams
-                                </Link>
-                            </Alert>
-                        </>
-                    ) : (
-                        <>
-                            <nav aria-label="Breadcrumb" className="ui-breadcrumb">
-                                <ol>
-                                    <li>
-                                        <Link className="ui-link" href={`/teams/${team.id}`}>
-                                            {team.name}
-                                        </Link>
-                                    </li>
-                                    {ancestors.map((ancestor) => (
-                                        <li key={ancestor.href}>
-                                            <Link className="ui-link" href={ancestor.href}>
-                                                {ancestor.label}
+        <TeamAccessContext.Provider value={deny}>
+            <div className="ui-theme ui-app-shell">
+                <Head title={title} />
+                <a className="ui-skip-link ui-link" href={`#${mainId}`}>
+                    Skip to content
+                </a>
+                <header className="ui-app-header">
+                    <Link
+                        className="ui-brand ui-link"
+                        href={hidden ? '/teams' : `/teams/${team.id}/dashboard`}
+                    >
+                        {appName}
+                    </Link>
+                    <div className="ui-team-identity">
+                        <span className="ui-help">Current team</span>
+                        <p className="ui-team-name">
+                            {hidden ? 'Team content unavailable' : team.name}
+                        </p>
+                    </div>
+                    {!hidden && !desktop && (
+                        <MobileNavigation
+                            key={`mobile:${team.id}`}
+                            teamId={team.id}
+                            section={section}
+                            mainId={mainId}
+                        />
+                    )}
+                    {membership && !hidden && <p className="ui-help">Role: {membership.role}</p>}
+                    {teamNavigation && !accessDenied && !revoked && (
+                        <TeamSwitcher
+                            key={`${team.id}:${user?.email ?? ''}`}
+                            navigation={teamNavigation}
+                            activeTeamId={team.id}
+                            onSuspend={() => setSuspended(true)}
+                        />
+                    )}
+                    {user && !hidden && (
+                        <AccountMenu
+                            key={`account:${team.id}`}
+                            name={user.name}
+                            isPlatformAdmin={user.isPlatformAdmin === true}
+                        />
+                    )}
+                </header>
+                <div className="ui-app-frame">
+                    {!hidden && desktop && (
+                        <aside className="ui-sidebar">
+                            <TeamLinks teamId={team.id} section={section} />
+                        </aside>
+                    )}
+                    <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">
+                        {hidden ? (
+                            <>
+                                <h1 className="ui-page-title">Team selection</h1>
+                                {(accessDenied || revoked) && (
+                                    <LiveUpdates phase="denied" retry={() => undefined} />
+                                )}
+                                <Alert title="Team data hidden" tone="warning">
+                                    <p>Check your current teams to continue.</p>
+                                    <Link className="ui-link" href="/teams">
+                                        Your teams
+                                    </Link>
+                                </Alert>
+                            </>
+                        ) : (
+                            <>
+                                <nav aria-label="Breadcrumb" className="ui-breadcrumb">
+                                    <ol>
+                                        <li>
+                                            <Link className="ui-link" href={`/teams/${team.id}`}>
+                                                {team.name}
                                             </Link>
                                         </li>
-                                    ))}
-                                    <li aria-current="page">{title}</li>
-                                </ol>
-                            </nav>
-                            <PageHeading
-                                title={title}
-                                {...(description === undefined ? {} : { description })}
-                                actions={actions}
-                            />
-                            {status && (
-                                <Alert title="Update" tone="success" announce="polite">
-                                    {status}
-                                </Alert>
-                            )}
-                            <div className="ui-page-content">{children}</div>
-                        </>
-                    )}
-                </main>
+                                        {ancestors.map((ancestor) => (
+                                            <li key={ancestor.href}>
+                                                <Link className="ui-link" href={ancestor.href}>
+                                                    {ancestor.label}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                        <li aria-current="page">{title}</li>
+                                    </ol>
+                                </nav>
+                                <PageHeading
+                                    title={title}
+                                    {...(description === undefined ? {} : { description })}
+                                    actions={actions}
+                                />
+                                {status && (
+                                    <Alert title="Update" tone="success" announce="polite">
+                                        {status}
+                                    </Alert>
+                                )}
+                                <div className="ui-page-content">{children}</div>
+                            </>
+                        )}
+                    </main>
+                </div>
             </div>
-        </div>
+        </TeamAccessContext.Provider>
     );
 }

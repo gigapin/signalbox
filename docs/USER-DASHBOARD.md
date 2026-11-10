@@ -2,11 +2,11 @@
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 
-**Stato al 2026-11-10:** UI.01.1–UI.01.3 completano inventario, flussi e primitive condivise. Regole e contratti in [UI-GUIDELINES.md](UI-GUIDELINES.md). Il prossimo sotto-task è **UI.02.1**, AppLayout e navigazione persistente. La nuova shell e le nuove schermate rimangono da implementare; badge e viewport tabelle esistenti adottano già la base condivisa.
+**Stato al 2026-11-10:** UI.01 completo e UI.02.1 realizzato: AppLayout è adottato nella dashboard con sidebar/header/breadcrumb e menu account. Il prossimo sotto-task è **UI.02.2**, selettore dei team accessibili e gestione del cambio team. Regole e contratti in [UI-GUIDELINES.md](UI-GUIDELINES.md). Le altre pagine private restano da migrare; UI.02 non è ancora completato.
 
 ## Ripartenza della prossima sessione
 
-Leggere inventario UI.01.1, progetto UI.01.2, [guida dei componenti UI.01.3](UI-GUIDELINES.md), piano e handoff. Partire in UI.02.1 da AppLayout separato da AuthLayout, sidebar/header/breadcrumb e destinazioni reali. Poi selettore team, menu mobile e migrazione pagine seguono UI.02.2–UI.02.4. Riutilizzare token e primitive, mantenendo le policy backend e le root realtime esistenti. Nessuna nuova schermata è certificata dal solo completamento delle primitive.
+Leggere inventario, flussi e guida dei componenti, poi partire in UI.02.2 dalle proiezioni membership correnti e dagli endpoint di selezione esistenti. AppLayout riceve già il team della rotta e non usa la preferenza salvata; non mostra ancora ruolo o selettore. Implementare caricamento/errore/cambio confermato, account senza team e revoca, con redirect alla dashboard del team selezionato come deciso in UI.01.2. Dialogo mobile e migrazione generale restano UI.02.3/UI.02.4; la navigazione sotto 1024 px è attualmente visibile e va a capo.
 
 La stima della fase A è 73–108 h incluso inventario, non un consuntivo. Le correzioni del collaudo sono implementate e l’utente conferma A–K conclusi; AppLayout e nuova dashboard non sono certificati da tali risultati.
 
@@ -296,3 +296,10 @@ UI.01.2 è una consegna documentale: i casi sopra sono criteri futuri, non test 
 Token semantici scuri in `app.css` con colori, focus, scala tipografica/spaziatura e controlli leggibili anche disabled; classi opt-in senza override globali dei temi pubblici. Sei moduli in `components/ui` forniscono Button, InputField, Panel/PageHeading, Badge, Alert e DataTable. TableScrollArea mantiene il contratto preesistente con descrizione opzionale; badge monitor/incidenti adottano toni comuni senza cambiare etichette, dati o permessi. Nessuna nuova dipendenza.
 
 [UI-GUIDELINES.md](UI-GUIDELINES.md) documenta API, combinazioni AA, label, unità/date, focus, tabelle e stati; due suite nuove verificano interazioni e contrasto dei token CSS. Il contrasto numerico e i test DOM non sostituiscono il collaudo browser/VoiceOver di UI.06. Esiti effettivi nel piano. Le sezioni di inventario/progetto sopra descrivono lo stato al proprio completamento e le implementazioni future: i riferimenti alle primitive mancanti sono ora superati da questa consegna. AppLayout, nuovo selettore e letture metriche rimangono in UI.02/UI.03; prossimo sotto-task **UI.02.1**. Stima di perimetro invariata.
+
+
+## Prima shell applicativa — UI.02.1, 2026-11-10
+
+Implementati AppLayout, AccountMenu e destinazioni team tipizzate in `components/app`, con stili semantici in `app.css`. La dashboard adotta la shell ed elimina il menu locale; conserva dati, report, grafici e recupero realtime. Sidebar desktop da 1024 px, intestazione con nome prodotto configurato/team esplicito, breadcrumb, unico h1 e skip link. Il menu account offre account/sicurezza/team, Admin solo con flag operatore e logout POST disabilitato durante pending; Escape e chiusura esterna gestiscono il focus.
+
+Nessuna nuova proiezione backend o inferenza del team dalla preferenza, nessuna voce di funzioni non implementate. Le altre viste restano nello stato dell’inventario: la navigazione comune tra tutte le sezioni non è ancora certificata. I vecchi testi che descrivono l’assenza di AppLayout sono storici e superati da questa consegna; UI.02.2 selettore/ruolo, UI.02.3 menu mobile e UI.02.4 migrazione rimangono aperti. Test e verifiche effettive nel piano; nessun PASS browser/L attribuito dalla build.

@@ -318,3 +318,173 @@
         outline-color: Highlight;
     }
 }
+
+/* Private team shell: narrow viewports keep a wrapping navigation until the mobile-dialog task. */
+@layer components {
+    .ui-app-shell {
+        min-height: 100vh;
+    }
+
+    .ui-app-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--spacing-ui-4);
+        padding: var(--spacing-ui-4) var(--spacing-ui-6);
+        border-bottom: 1px solid var(--color-ui-border);
+        background: var(--color-ui-surface);
+    }
+
+    .ui-brand {
+        font-weight: 700;
+        font-size: var(--text-ui-section);
+    }
+
+    .ui-team-identity {
+        flex: 1 1 10rem;
+        min-width: 0;
+    }
+
+    .ui-team-name {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .ui-app-frame {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ui-sidebar {
+        min-width: 0;
+        padding: var(--spacing-ui-4);
+        border-bottom: 1px solid var(--color-ui-border);
+        background: var(--color-ui-surface);
+    }
+
+    .ui-team-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-ui-2);
+    }
+
+    .ui-shell-link {
+        display: flex;
+        align-items: center;
+        min-height: var(--spacing-ui-control);
+        padding: var(--spacing-ui-2) var(--spacing-ui-3);
+        border: 1px solid transparent;
+        border-radius: var(--radius-ui);
+        color: var(--color-ui-text);
+        overflow-wrap: anywhere;
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+    }
+
+    .ui-shell-link:hover,
+    .ui-shell-link[aria-current='page'] {
+        background: var(--color-ui-raised);
+    }
+
+    .ui-shell-link[aria-current='page'] {
+        border-color: var(--color-ui-border);
+        font-weight: 700;
+    }
+
+    .ui-shell-link:focus-visible {
+        outline: 2px solid var(--color-ui-focus);
+        outline-offset: 3px;
+    }
+
+    .ui-app-main {
+        display: grid;
+        align-content: start;
+        gap: var(--spacing-ui-6);
+        min-width: 0;
+        padding: var(--spacing-ui-6);
+    }
+
+    .ui-breadcrumb ol {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-ui-2);
+        color: var(--color-ui-muted);
+        font-size: var(--text-ui-small);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-breadcrumb li + li::before {
+        content: '/';
+        margin-right: var(--spacing-ui-2);
+    }
+
+    .ui-page-content {
+        min-width: 0;
+    }
+
+    .ui-account {
+        position: relative;
+        min-width: 0;
+    }
+
+    .ui-account-panel {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + var(--spacing-ui-2));
+        right: 0;
+        width: min(19rem, calc(100vw - 3rem));
+        padding: var(--spacing-ui-3);
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-surface);
+    }
+
+    .ui-account-panel form {
+        margin-top: var(--spacing-ui-3);
+    }
+
+    .ui-skip-link {
+        position: fixed;
+        z-index: 30;
+        top: var(--spacing-ui-2);
+        left: var(--spacing-ui-2);
+        padding: var(--spacing-ui-3);
+        background: var(--color-ui-surface);
+        transform: translateY(-200%);
+    }
+
+    .ui-skip-link:focus {
+        transform: translateY(0);
+    }
+}
+
+/* The desktop sidebar remains in normal grid flow and scrolls locally on short screens. */
+@media (min-width: 1024px) {
+    .ui-app-frame {
+        grid-template-columns: 15rem minmax(0, 1fr);
+    }
+
+    .ui-sidebar {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        max-height: 100vh;
+        overflow-y: auto;
+        border-bottom: 0;
+        border-right: 1px solid var(--color-ui-border);
+    }
+
+    .ui-team-links {
+        display: grid;
+    }
+
+    .ui-app-main {
+        padding: var(--spacing-ui-8);
+    }
+}
+
+@media (forced-colors: active) {
+    .ui-shell-link:focus-visible {
+        outline-color: Highlight;
+    }
+}

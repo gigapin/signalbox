@@ -8,6 +8,7 @@ namespace App\Http\Controllers\Monitoring;
 
 use App\Actions\Incidents\ManageMaintenanceWindows;
 use App\Http\Controllers\Controller;
+use App\Http\Navigation\MonitorListReturn;
 use App\Http\Presenters\Incidents\IncidentPresenter;
 use App\Http\Presenters\Incidents\MaintenanceWindowPresenter;
 use App\Http\Presenters\Monitoring\MonitorPresenter;
@@ -25,6 +26,7 @@ use App\Services\Monitoring\MonitorListing;
 use App\Services\Monitoring\ReadModels\MonitorContext;
 use App\Services\Monitoring\ReadModels\MonitorMetrics;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,11 +47,13 @@ final class MonitorPageController extends Controller
      * @param MonitorPresenter $presenter Safe page projections.
      * @param MonitorLimits $limits Plan quota and cadence minimums.
      * @param MonitorInputLimits $inputLimits Operational bounds shared with server-side validation.
+     * @param MonitorListReturn $returnLocation Canonical same-team GET navigation context.
      */
     public function __construct(
         private readonly MonitorPresenter $presenter,
         private readonly MonitorLimits $limits,
         private readonly MonitorInputLimits $inputLimits,
+        private readonly MonitorListReturn $returnLocation,
     ) {
     }
 
@@ -77,16 +81,18 @@ final class MonitorPageController extends Controller
     }
 
     /**
+     * @param Request $request Optional untrusted navigation hint, normalized before projection.
      * @param int $team Route team.
      * @return Response Empty creation form with defaults raised to the plan's minimum interval.
      */
-    public function create(int $team): Response
+    public function create(Request $request, int $team): Response
     {
         Gate::authorize('create', Monitor::class);
         $identity = $this->team($team);
         $usage = $this->limits->usage($identity);
 
         return Inertia::render('Monitors/Create', [
+            'monitorListUrl' => $this->returnLocation->resolve($request, $team),
             'team' => $this->teamSummary($identity),
             'defaults' => MonitorPresenter::defaults($usage->minimumIntervalSeconds),
             'maximumIntervalSeconds' => $this->inputLimits->get('interval_max_seconds'),
@@ -145,6 +151,7 @@ final class MonitorPageController extends Controller
         }
 
         return Inertia::render('Monitors/Show', [
+            'monitorListUrl' => $this->returnLocation->resolve($request, $team),
             'team' => $this->teamSummary($identity),
             'monitor' => $this->presenter->detail($monitor, $this->limits->isWithinQuota($identity, $monitor)),
             'metrics' => fn (): array => $metrics->read($monitor, $identity, $selection['period'], $selection['region']),
@@ -167,17 +174,19 @@ final class MonitorPageController extends Controller
     }
 
     /**
+     * @param Request $request Optional untrusted navigation hint, normalized before projection.
      * @param int $team Route team.
      * @param Monitor $monitor Monitor bound inside the route team.
      * @return Response Edit form prefilled from the safe projection only; secrets require explicit replacement.
      */
-    public function edit(int $team, Monitor $monitor): Response
+    public function edit(Request $request, int $team, Monitor $monitor): Response
     {
         Gate::authorize('update', $monitor);
         $identity = $this->team($team);
         $usage = $this->limits->usage($identity);
 
         return Inertia::render('Monitors/Edit', [
+            'monitorListUrl' => $this->returnLocation->resolve($request, $team),
             'team' => $this->teamSummary($identity),
             'monitor' => $this->presenter->detail($monitor, $this->limits->isWithinQuota($identity, $monitor)),
             'defaults' => MonitorPresenter::defaults($usage->minimumIntervalSeconds),

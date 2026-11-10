@@ -57,3 +57,14 @@ export function listUrl(teamId: number, filters: MonitorFilters, page = 1): stri
 
     return search === '' ? monitorsPath(teamId) : `${monitorsPath(teamId)}?${search}`;
 }
+
+/**
+ * @param path Internal monitor GET destination built by this application.
+ * @param teamId Authorized route team.
+ * @param returnTo Canonical same-team list URL supplied by the server or built from accepted list filters.
+ * @returns A link carrying GET navigation context; the server independently normalizes it.
+ */
+export function withMonitorListReturn(path: string, teamId: number, returnTo: string): string {
+    if (returnTo === monitorsPath(teamId)) return path;
+    return `${path}?${new URLSearchParams({ returnTo }).toString()}`;
+}

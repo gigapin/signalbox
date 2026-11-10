@@ -21,7 +21,7 @@ import type {
     MonitorDetail,
     MonitorPageProps,
 } from '../../components/monitors/types';
-import { monitorPath, monitorsPath } from '../../components/monitors/urls';
+import { monitorPath, monitorsPath, withMonitorListReturn } from '../../components/monitors/urls';
 
 /** Detail page response from MonitorPageController::show. */
 interface ShowProps extends MonitorPageProps {
@@ -148,7 +148,8 @@ function Configuration({ configuration }: ConfigurationProps) {
 function PageContent() {
     const initial = usePage<ShowProps>().props;
     const live = useLivePage<ShowProps>(initial.team.id, 'Monitors/Show', initial.monitor.id);
-    const { team, monitor, recentIncidents, maintenance, escalation, can } = live.props;
+    const { team, monitor, recentIncidents, maintenance, escalation, can, monitorListUrl } =
+        live.props;
     const form = useForm<Record<string, never>>({});
     useFormProtection(form);
     const path = monitorPath(team.id, monitor.id);
@@ -176,9 +177,19 @@ function PageContent() {
                 aria-label="Monitor navigation"
                 className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
             >
-                <Link href={monitorsPath(team.id)}>Back to monitors</Link>
+                <Link href={monitorListUrl ?? monitorsPath(team.id)}>Back to monitors</Link>
                 <Link href={incidentsPath(team.id)}>All incidents</Link>
-                {can.update && <Link href={`${path}/edit`}>Edit monitor</Link>}
+                {can.update && (
+                    <Link
+                        href={withMonitorListReturn(
+                            `${path}/edit`,
+                            team.id,
+                            monitorListUrl ?? monitorsPath(team.id),
+                        )}
+                    >
+                        Edit monitor
+                    </Link>
+                )}
             </nav>
 
             {Object.entries(form.errors).map(([key, message]) => (
@@ -295,12 +306,12 @@ function PageContent() {
 
 /** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
 export default function Page() {
-    const { team, monitor } = usePage<ShowProps>().props;
+    const { team, monitor, monitorListUrl } = usePage<ShowProps>().props;
     return (
         <AppLayout
             team={team}
             section="monitors"
-            ancestors={[{ label: 'Monitors', href: `/teams/${team.id}/monitors` }]}
+            ancestors={[{ label: 'Monitors', href: monitorListUrl ?? monitorsPath(team.id) }]}
             title={monitor.name}
             description={`${typeLabel(monitor.type)} monitor`}
         >

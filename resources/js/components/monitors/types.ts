@@ -196,6 +196,8 @@ export interface MonitorDefaults {
 
 /** Props shared by every monitor page. */
 export interface MonitorPageProps extends AuthProps {
+    /** Server-normalized same-team list context; absent only on older history entries or list pages. */
+    monitorListUrl?: string;
     /** Route team. */
     team: TeamSummary;
 }

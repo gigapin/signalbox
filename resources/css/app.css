@@ -653,3 +653,26 @@
         padding-block: var(--spacing-ui-4);
     }
 }
+
+/* Monitor filters reflow independently of the locally scrollable result table. */
+@layer components {
+    .ui-monitor-filters {
+        display: grid;
+        min-width: 0;
+        gap: var(--spacing-ui-4);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    }
+
+    .ui-monitor-filters > div {
+        min-width: 0;
+    }
+
+    .ui-monitor-filter-actions {
+        grid-column: 1 / -1;
+    }
+
+    .ui-monitor-destination {
+        max-width: 24rem;
+        overflow-wrap: anywhere;
+    }
+}

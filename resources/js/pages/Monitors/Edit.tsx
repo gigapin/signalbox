@@ -10,7 +10,7 @@ import type {
     MonitorPageProps,
     MonitorUsage,
 } from '../../components/monitors/types';
-import { monitorPath } from '../../components/monitors/urls';
+import { monitorPath, monitorsPath, withMonitorListReturn } from '../../components/monitors/urls';
 
 /** Edit page response from MonitorPageController::edit. */
 interface EditProps extends MonitorPageProps {
@@ -28,12 +28,20 @@ interface EditProps extends MonitorPageProps {
 
 /** Submit a PATCH whose secrets are present only when the user chose to replace them. */
 function PageContent() {
-    const { team, monitor, defaults, options, usage, maximumIntervalSeconds } =
+    const { team, monitor, defaults, options, usage, maximumIntervalSeconds, monitorListUrl } =
         usePage<EditProps>().props;
     return (
         <>
             <nav aria-label="Monitor navigation" className="mb-6 text-sm text-emerald-300">
-                <Link href={monitorPath(team.id, monitor.id)}>Back to monitor</Link>
+                <Link
+                    href={withMonitorListReturn(
+                        monitorPath(team.id, monitor.id),
+                        team.id,
+                        monitorListUrl ?? monitorsPath(team.id),
+                    )}
+                >
+                    Back to monitor
+                </Link>
             </nav>
             <MonitorForm
                 initial={editFormData(monitor, defaults)}

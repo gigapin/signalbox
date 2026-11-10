@@ -2,9 +2,15 @@
 
 Esecuzione dell’agente su richiesta dell’utente, da H13 della [guida browser](BROWSER-TESTS.md). I risultati precedenti fino a H12 restano quelli comunicati dall’utente; non vengono promossi a PASS. M9.01 non iniziato.
 
-## Risultato
+## Stato successivo e ripartenza
 
-**49 PASS, 0 FAIL, 18 BLOCCATO, 5 NON ESEGUITO su 72 casi**, dopo la correzione e ripetizione BT.08 (68 obbligatori e 4 facoltativi H43–H46). La prima esecuzione aveva 47 PASS e 2 FAIL per lo stesso difetto offline; la cronologia sotto conserva il problema iniziale e la verifica della correzione. Il collaudo resta in corso per i prerequisiti mancanti.
+A chiusura della sessione del 2026-11-09, dopo BT.12–BT.14, l’utente conferma completati tutti i blocchi obbligatori A–K. Richiede di realizzare prima la dashboard/navigazione utenti e rinvia L01–L08 alla nuova interfaccia, in UI.06. **Prossimo sotto-task UI.01.1**, inventario e mappa dei dati/gap; UI.PLAN è completato, nessuna nuova schermata dichiarata implementata. Ordine e consegna in [TASKS.md](TASKS.md), riferimento in [USER-DASHBOARD.md](USER-DASHBOARD.md).
+
+I 72 esiti sotto restano quelli osservati dall’agente nella versione precedente: i blocchi mancanti risolti successivamente dall’utente non sono riscritti come nuove esecuzioni dell’agente. Le opzioni realtime/dominio conservano lo stato precedente e nessun PASS L viene attribuito alla UI futura. Ultima baseline delle correzioni: 212 test DOM e 101 backend / 725 asserzioni, formatter/analisi/build e prove Brave/Firefox superati; dettagli in BT.14 e nel piano. Il solo aggiornamento di chiusura non riesegue questi controlli.
+
+## Risultato storico dell’esecuzione delegata
+
+**49 PASS, 0 FAIL, 18 BLOCCATO, 5 NON ESEGUITO su 72 casi**, dopo la correzione e ripetizione BT.08 (68 obbligatori e 4 facoltativi H43–H46). La prima esecuzione aveva 47 PASS e 2 FAIL per lo stesso difetto offline; la cronologia sotto conserva il problema iniziale e la verifica della correzione. Al momento di questa esecuzione il collaudo restava aperto per i prerequisiti mancanti; la sezione precedente registra la conferma successiva dell’utente e il nuovo ordine operativo.
 
 Browser reali: **Brave / Chromium 157.0.8103.39** su macOS; **Firefox 159.0** della distribuzione Playwright per il confronto L08. Playwright installato solo in una cartella temporanea, senza modificare manifest o lockfile. Le azioni sono passate dalle pagine e dai form reali, con richieste HTTP, PostgreSQL, Redis, scheduler, Horizon e Reverb reali. Nessun fake di risultati, inviti, conferme o abbonamenti nel database.
 
@@ -175,8 +181,10 @@ Le ore osservate sono italiane, CET (UTC+1). Una riga senza ora indica un prereq
 - Tester Team: **0 monitor e 0 status page**, come all’inizio. Cancellate soltanto le fixture Free create per J.
 - I sei servizi di sviluppo avviati per il collaudo sono stati arrestati per ripristinare lo stato iniziale. Volumi e `.env` conservati. Le finestre temporanee di login ancora in attesa sono state chiuse: alla ripresa riavviare i servizi e accedere direttamente alle schede richieste.
 
-## Consegna e ripresa
+## Consegna e ripresa storica BT.08
 
-Riprendere da **H28**, usando l’ultima richiesta di conferma di H27 dopo il ripristino H26 (circa **10:45 italiane**); le email precedenti ai cambi password possono riferirsi a una generazione revocata. Mailtrap va aperto e verificato direttamente: configurazione SMTP o job eseguito non provano una consegna osservata. Completare poi H29–H37 e I14–I17, la riconferma password/2FA di K02–K04, VoiceOver e zoom nativo. H43–H46 restano facoltativi con un dominio reale disponibile. L05/L07 corretti e ripetuti con PASS in BT.08; mantenere aperti soltanto i casi indicati come BLOCCATO/NON ESEGUITO.
+Questa consegna descrive lo stato al termine della prima esecuzione e non è la ripartenza attuale: seguire **UI.01.1** e la sezione iniziale.
+
+Allora la ripresa era da **H28**, usando l’ultima richiesta di conferma di H27 dopo il ripristino H26 (circa **10:45 italiane**); le email precedenti ai cambi password possono riferirsi a una generazione revocata. Mailtrap va aperto e verificato direttamente: configurazione SMTP o job eseguito non provano una consegna osservata. Completare poi H29–H37 e I14–I17, la riconferma password/2FA di K02–K04, VoiceOver e zoom nativo. H43–H46 restano facoltativi con un dominio reale disponibile. L05/L07 corretti e ripetuti con PASS in BT.08; mantenere aperti soltanto i casi indicati come BLOCCATO/NON ESEGUITO.
 
 Nel primo collaudo non erano stati rieseguiti i gate applicativi perché cambiavano soltanto documenti. In BT.08 il gate frontend completo è stato eseguito e superato, compresa la build degli asset corretti. Pest, PHP-CS-Fixer, Larastan e CI remota non rieseguiti: nessun file PHP/backend cambiato. Nessun comando Git/gh eseguito, nessuna migrazione o reset, nessuna modifica a `.env`, ruoli, 2FA, DNS o file hosts.

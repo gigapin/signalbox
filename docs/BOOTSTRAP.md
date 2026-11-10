@@ -4,6 +4,30 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## UI inventory handoff — 2026-11-10
+
+**Next: UI.01.2, flows and desktop/mobile hierarchy.** UI.01.1 is complete as a static inventory in [USER-DASHBOARD.md](USER-DASHBOARD.md): routes/screens, role and action matrix, reusable components, card-to-data mapping, gaps and implementation order. The older 2026-11-09 handoffs below are historical where they name UI.01.1 as the next task.
+
+Key gaps: private screens still use AuthLayout with local menus; accessible memberships/current role are not shared globally; team selection currently redirects to account; no standalone team-creation route exists; maintenance has monitor actions but no team list; charts remain on the dashboard. TLS expiry is stored but not projected, and the last check does not prove a fresh certificate observation. Longer metric windows and effective notification channels need deliberate read projections. Preserve existing dashboard chart URLs, filter context, server gates, drafts and event-driven recovery.
+
+Estimated phase A: **73–108 hours**, including inventory, documentation and checks; this is an estimate, not measured effort. No application code, API, dependencies or data changed. No application suites, browser acceptance, build, PHP analysis or CI were rerun for this documentation-only task; the 2026-11-09 baseline below remains historical. Markdown parsing, local links and roadmap consistency are checked for the three changed documents. No Git/gh, screenshots, environment or process changes.
+
+Sequence remains UI.01.2 → UI.01.3 → UI.02 → UI.03/UI.04.1–UI.04.4 → UI.06 including L01–L08 → M9. Naming/logo UI.07 and later billing/API/public refinements keep their existing dependencies.
+
+## Session close and next start — 2026-11-09
+
+**Start at UI.01.1.** The user completed mandatory acceptance blocks A–K, then requested a usable dashboard/application navigation based on the supplied monitor-detail screenshot. The expanded UI macro has seven preserved parent IDs and 27 pending subtasks. It is planned, not implemented. Read [the latest session closure and roadmap](TASKS.md), [the dashboard brief](USER-DASHBOARD.md) and AGENTS/spec/dependency references before implementation.
+
+The next deliverable is an inventory of current routes, layouts, role gates, read models and reusable components, mapping each proposed card/chart/action to real data and identifying gaps. Start with `AuthLayout`, `Dashboard/Show`, Monitors pages, `DashboardOverview`, `DashboardLatency`, `MonitorAvailability`, presenters/policies and `useLivePage`. Record scope, dependencies, first implementation slices and an updated estimate. Then continue with UI.01.2/UI.01.3, AppLayout and dashboard/monitor views.
+
+The session fixed network/offline feedback and mobile overflow, host Echo/Pusher installation, live monitor interval validation with invalid submission blocked, 2FA/override redirects, and inline operator-password confirmation that applies the requested change once. The user subsequently confirmed completion through K. Existing intervals, redirects and password behaviors are regression constraints for the new UI; preserve tenant checks, real metric semantics and realtime recovery.
+
+Last actual local checks: frontend **212 DOM / 5 quality**, lint/format/TypeScript/build; four pertinent backend suites **101 tests / 725 assertions** on isolated PostgreSQL/Redis; PHP-CS-Fixer and Larastan passed. Brave/Firefox verified failed and successful password confirmation, cancellation and single override mutations. These results concern the current implementation, not the future redesign. Full backend suite, remote CI/PHP 8.5 and benchmarks were not run in this session. This documentation-only close does not rerun them.
+
+Sequence: **UI phase A → UI.06 with L01–L08 on the new interface → M9**. The tests in L are deferred, not completed; previous PASS results remain historical. Later billing/API/public refinements keep their dependencies and UI.07 naming/logo remains open without blocking phase A. Optional realtime/custom-domain acceptance is not inferred.
+
+Temporary browser servers on port 18001 were stopped and their test-only identities/teams/audit fixtures removed. Development services, user sessions and Vite were left under user control; recheck their state when needed. Host Vite last used 127.0.0.1:5173 and a separate host node_modules installation. Do not infer current team/monitor/override state from older fixture snapshots. The screenshot stays in the conversation and its structure is described in the brief; no screenshots belong in the repository. Git/gh are user-only. The dated handoffs below preserve history and are superseded by this section where their next step differs.
+
 ## Browser acceptance handoff — 2026-11-09
 
 The user confirms all mandatory browser blocks through K and then explicitly prioritizes a usable user dashboard and application navigation before the final accessibility checks. **Next task: UI.01.1**, inventory and design under the expanded UI macro, now scheduled before M9. Start from the monitor-detail screenshot supplied in the conversation, reusing M6/M7 data and existing actions. See [USER-DASHBOARD.md](USER-DASHBOARD.md) and [TASKS.md](TASKS.md). This handoff records planning, not an implemented redesign.

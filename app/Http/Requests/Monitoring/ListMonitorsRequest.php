@@ -7,9 +7,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Monitoring;
 
 use App\Data\Monitoring\MonitorListFilter;
-use App\Enums\Monitoring\MonitorOperationalState;
-use App\Enums\Monitoring\MonitorStatus;
-use App\Enums\Monitoring\MonitorType;
+use App\Data\Monitoring\MonitorListSelection;
 use App\Models\Monitor;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
@@ -39,15 +37,10 @@ final class ListMonitorsRequest extends FormRequest
     /** @return MonitorListFilter Accepted values only; rejected keys are available from rejectedFilters(). */
     public function filter(): MonitorListFilter
     {
-        $this->rejected = [];
+        $selection = MonitorListSelection::fromInput($this->query());
+        $this->rejected = $selection->rejected;
 
-        return new MonitorListFilter(
-            query: $this->searchText(),
-            type: $this->enumValue('type', MonitorType::class),
-            status: $this->enumValue('status', MonitorStatus::class),
-            state: $this->enumValue('state', MonitorOperationalState::class),
-            page: $this->pageNumber(),
-        );
+        return $selection->filter;
     }
 
     /** @return list<string> Keys ignored by the latest filter() call because their values were invalid. */
@@ -56,63 +49,4 @@ final class ListMonitorsRequest extends FormRequest
         return $this->rejected;
     }
 
-    /** @return string Trimmed search text, or empty when absent, not a string or too long. */
-    private function searchText(): string
-    {
-        $value = $this->query('q');
-
-        if ($value === null) {
-            return '';
-        }
-
-        if (!is_string($value) || mb_strlen(trim($value)) > MonitorListFilter::QUERY_MAX_LENGTH) {
-            $this->rejected[] = 'q';
-
-            return '';
-        }
-
-        return trim($value);
-    }
-
-    /**
-     * @template TEnum of MonitorType|MonitorStatus|MonitorOperationalState
-     *
-     * @param string $key Query key holding a backed enum value.
-     * @param class-string<TEnum> $enum Accepted enum.
-     * @return TEnum|null Matching case, or null when absent or unsupported.
-     */
-    private function enumValue(string $key, string $enum): MonitorType|MonitorStatus|MonitorOperationalState|null
-    {
-        $value = $this->query($key);
-
-        if ($value === null) {
-            return null;
-        }
-
-        $case = is_string($value) ? $enum::tryFrom($value) : null;
-
-        if ($case === null) {
-            $this->rejected[] = $key;
-        }
-
-        return $case;
-    }
-
-    /** @return int Positive page number; invalid values fall back to the first page. */
-    private function pageNumber(): int
-    {
-        $value = $this->query('page');
-
-        if ($value === null) {
-            return 1;
-        }
-
-        if (!is_string($value) || preg_match('/^[1-9][0-9]{0,8}$/D', $value) !== 1) {
-            $this->rejected[] = 'page';
-
-            return 1;
-        }
-
-        return (int) $value;
-    }
 }

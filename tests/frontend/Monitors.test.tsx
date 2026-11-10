@@ -301,7 +301,7 @@ function showsNoMatchesAndRejectedFilters(): void {
         }),
     );
 
-    expect(screen.getByText('No monitors match these filters on this page.')).toBeInTheDocument();
+    expect(screen.getByText('No monitors match these filters.')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('invalid and have been ignored: type');
     expect(screen.getByRole('button', { name: 'Clear filters' })).toBeInTheDocument();
     expect(screen.queryByText(/No monitors yet/)).not.toBeInTheDocument();
@@ -323,7 +323,7 @@ async function submitsFilters(): Promise<void> {
     expect(get).toHaveBeenCalledWith(
         '/teams/7/monitors',
         { q: 'alpha', state: 'paused' },
-        expect.any(Object),
+        expect.objectContaining({ replace: false }),
     );
     expect(screen.getByRole('button', { name: 'Searching…' })).toBeDisabled();
     expect(screen.getByRole('region', { name: 'Monitor results' })).toHaveAttribute(
@@ -694,3 +694,211 @@ test('shows validation errors inline and focuses the first problem', showsValida
 test('keeps typed input after a quota refusal and allows a retry', keepsInputAfterQuotaRefusal);
 test('shows safe details and confirms deletion', showsDetailAndConfirmsDeletion);
 test('explains plan suspension without pause or resume controls', explainsSuspension);
+
+test('renders safe destinations and carries accepted filters and page into detail links', () => {
+    const props = indexProps(
+        [{ ...row(11, 'Checkout'), destination: 'https://example.test/health?key=[REDACTED]' }],
+        {
+            filters: { ...noFilters, q: 'api', type: 'http' },
+            filtered: true,
+        },
+    );
+    props.monitors.currentPage = 2;
+    renderInertia('Signalbox', Index, props);
+    const detail = screen.getByRole('link', { name: 'Checkout' });
+    expect(
+        new URL(detail.getAttribute('href')!, 'https://signalbox.test').searchParams.get(
+            'returnTo',
+        ),
+    ).toBe('/teams/7/monitors?q=api&type=http&page=2');
+    expect(screen.getByText('https://example.test/health?key=[REDACTED]')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /https:\/\// })).not.toBeInTheDocument();
+});
+
+test('distinguishes missing destinations and heartbeat ingress without creating endpoint links', () => {
+    renderInertia(
+        'Signalbox',
+        Index,
+        indexProps([row(1, 'HTTP'), { ...row(2, 'Cron'), type: 'heartbeat' }]),
+    );
+    expect(screen.getByText('Destination unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Receives heartbeat signals')).toBeInTheDocument();
+    expect(screen.getAllByText('No check recorded')).toHaveLength(2);
+});
+
+test('distinguishes an empty page from an empty filter result while preserving applied filters', () => {
+    const props = indexProps([], { filters: { ...noFilters, q: 'api' }, filtered: true });
+    props.monitors = { ...props.monitors, currentPage: 9, lastPage: 2, total: 21 };
+    renderInertia('Signalbox', Index, props);
+    expect(screen.getByText('No monitors on this page.')).toBeInTheDocument();
+    expect(screen.queryByText('No monitors match these filters.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to the first page' })).toHaveAttribute(
+        'href',
+        '/teams/7/monitors?q=api',
+    );
+});
+
+test('keeps typed filters and prior rows after a refused search and retries only on explicit submission', async () => {
+    const user = userEvent.setup();
+    let callbacks: VisitOptions | undefined;
+    const get = vi.spyOn(router, 'get').mockImplementation((_path, _data, options) => {
+        callbacks = options;
+        callbacks?.onStart?.({} as never);
+    });
+    renderInertia('Signalbox', Index, indexProps([row(1, 'Previous')]));
+    await user.type(screen.getByLabelText('Search'), 'new query');
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    expect(screen.getByLabelText('Search')).toBeDisabled();
+    act(() => {
+        callbacks?.onError?.({ search: 'Refused' });
+        callbacks?.onFinish?.({} as never);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Previous results are still shown');
+    expect(screen.getByLabelText('Search')).toHaveValue('new query');
+    expect(screen.getByRole('link', { name: 'Previous' })).toBeInTheDocument();
+    expect(get).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    expect(get).toHaveBeenCalledTimes(2);
+});
+
+test.each(['exception', 'invalid'])(
+    'handles only its active search %s and removes handlers on unmount',
+    async (eventName) => {
+        const user = userEvent.setup();
+        vi.spyOn(router, 'get').mockImplementation((_path, _data, callbacks) =>
+            callbacks?.onStart?.({} as never),
+        );
+        const view = renderInertia('Signalbox', Index, indexProps([row(1, 'Previous')]));
+        await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+        const failure = new CustomEvent(`inertia:${eventName}`, {
+            cancelable: true,
+            detail: { exception: new Error('private diagnostic'), response: { status: 500 } },
+        });
+        act(() => {
+            document.dispatchEvent(failure);
+        });
+        expect(failure.defaultPrevented).toBe(true);
+        expect(screen.getByRole('alert')).toHaveTextContent('Search could not be completed');
+        expect(screen.queryByText('private diagnostic')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Apply filters' })).toBeEnabled();
+        view.unmount();
+        const unrelated = new CustomEvent(`inertia:${eventName}`, { cancelable: true });
+        document.dispatchEvent(unrelated);
+        expect(unrelated.defaultPrevented).toBe(false);
+    },
+);
+
+test('cancels only its owned pending read when leaving the list', async () => {
+    const user = userEvent.setup();
+    const cancel = vi.fn();
+    vi.spyOn(router, 'get').mockImplementation((_path, _data, callbacks) => {
+        callbacks?.onCancelToken?.({ cancel });
+        callbacks?.onStart?.({} as never);
+    });
+    const view = renderInertia('Signalbox', Index, indexProps([row(1, 'Previous')]));
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    view.unmount();
+    expect(cancel).toHaveBeenCalledOnce();
+});
+
+test('uses the normalized list context in detail navigation breadcrumb and editor links', () => {
+    const monitorListUrl = '/teams/7/monitors?q=api&type=http&page=2';
+    renderInertia('Signalbox', Show, {
+        ...quietHistory,
+        team,
+        monitor: httpDetail,
+        monitorListUrl,
+        can: { update: true, delete: false, pause: false, resume: false },
+    });
+    expect(screen.getByRole('link', { name: 'Back to monitors' })).toHaveAttribute(
+        'href',
+        monitorListUrl,
+    );
+    const edit = new URL(
+        screen.getByRole('link', { name: 'Edit monitor' }).getAttribute('href')!,
+        'https://signalbox.test',
+    );
+    expect(edit.pathname).toBe('/teams/7/monitors/11/edit');
+    expect(edit.searchParams.get('returnTo')).toBe(monitorListUrl);
+    expect(
+        within(screen.getByRole('navigation', { name: 'Breadcrumb' })).getByRole('link', {
+            name: 'Monitors',
+        }),
+    ).toHaveAttribute('href', monitorListUrl);
+});
+
+test('preserves list context on creation cancellation and editor return without putting it in mutation payloads', async () => {
+    const monitorListUrl = '/teams/7/monitors?state=paused&page=2';
+    const view = renderInertia('Signalbox', Create, {
+        team,
+        monitorListUrl,
+        defaults,
+        options,
+        usage,
+        maximumIntervalSeconds,
+    });
+    expect(screen.getByRole('link', { name: 'Back to monitors' })).toHaveAttribute(
+        'href',
+        monitorListUrl,
+    );
+    view.unmount();
+    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Edit, {
+        team,
+        monitor: httpDetail,
+        monitorListUrl,
+        defaults,
+        options,
+        usage,
+        maximumIntervalSeconds,
+    });
+    const target = new URL(
+        screen.getByRole('link', { name: 'Back to monitor' }).getAttribute('href')!,
+        'https://signalbox.test',
+    );
+    expect(target.searchParams.get('returnTo')).toBe(monitorListUrl);
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(patch.mock.calls[0]?.[0]).toBe('/teams/7/monitors/11');
+    expect(patch.mock.calls[0]?.[1]).not.toHaveProperty('returnTo');
+});
+
+test('ignores a late finish from an earlier failed search after an explicit retry starts', async () => {
+    const user = userEvent.setup();
+    const attempts: VisitOptions[] = [];
+    const get = vi.spyOn(router, 'get').mockImplementation((_path, _data, callbacks) => {
+        attempts.push(callbacks ?? {});
+        callbacks?.onStart?.({} as never);
+    });
+    renderInertia('Signalbox', Index, indexProps([row(1, 'Previous')]));
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    act(() => attempts[0]?.onError?.({ search: 'Refused' }));
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    act(() => attempts[0]?.onFinish?.({} as never));
+    expect(screen.getByRole('button', { name: 'Searching…' })).toBeDisabled();
+    expect(get).toHaveBeenCalledTimes(2);
+    act(() => attempts[1]?.onFinish?.({} as never));
+    expect(screen.getByRole('button', { name: 'Apply filters' })).toBeEnabled();
+});
+
+test.each([401, 403, 404])(
+    'hides private rows and filters when its search returns authoritative access loss %s',
+    async (status) => {
+        const user = userEvent.setup();
+        vi.spyOn(router, 'get').mockImplementation((_path, _data, callbacks) =>
+            callbacks?.onStart?.({} as never),
+        );
+        renderInertia('Signalbox', Index, indexProps([row(1, 'Private monitor')]));
+        await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+        act(() => {
+            document.dispatchEvent(
+                new CustomEvent('inertia:invalid', {
+                    cancelable: true,
+                    detail: { response: { status } },
+                }),
+            );
+        });
+        expect(screen.queryByRole('link', { name: 'Private monitor' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('search')).not.toBeInTheDocument();
+        expect(screen.getByText(/Live access is no longer available/)).toBeInTheDocument();
+    },
+);

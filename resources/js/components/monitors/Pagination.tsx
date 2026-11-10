@@ -16,7 +16,7 @@ interface PaginationProps {
 }
 
 /** Link styling shared by page links. */
-const LINK = 'rounded border border-slate-700 px-3 py-1 focus:outline-2 focus:outline-emerald-400';
+const LINK = 'ui-button';
 
 /** Show previous/next and numbered links; renders nothing when a single page exists. */
 export default function Pagination({ current, last, href }: PaginationProps) {
@@ -31,7 +31,12 @@ export default function Pagination({ current, last, href }: PaginationProps) {
             <ul className="flex flex-wrap gap-2">
                 {current > 1 && (
                     <li>
-                        <Link href={href(current - 1)} className={LINK} preserveScroll>
+                        <Link
+                            href={href(current - 1)}
+                            className={LINK}
+                            data-variant="secondary"
+                            preserveScroll
+                        >
                             Previous
                         </Link>
                     </li>
@@ -42,9 +47,8 @@ export default function Pagination({ current, last, href }: PaginationProps) {
                             href={href(page)}
                             aria-label={`Page ${page}`}
                             aria-current={page === current ? 'page' : undefined}
-                            className={
-                                page === current ? `${LINK} bg-emerald-400 text-slate-950` : LINK
-                            }
+                            className={LINK}
+                            data-variant={page === current ? 'primary' : 'secondary'}
                         >
                             {page}
                         </Link>
@@ -52,7 +56,12 @@ export default function Pagination({ current, last, href }: PaginationProps) {
                 ))}
                 {current < last && (
                     <li>
-                        <Link href={href(current + 1)} className={LINK} preserveScroll>
+                        <Link
+                            href={href(current + 1)}
+                            className={LINK}
+                            data-variant="secondary"
+                            preserveScroll
+                        >
                             Next
                         </Link>
                     </li>

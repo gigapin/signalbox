@@ -589,3 +589,14 @@ docker compose run --rm -e RUN_PROJECTION_BENCHMARK=1 php-test php vendor/bin/pe
 ```
 
 Fixture writes and warm-up are excluded from measurements, and data is rolled back in the isolated database. The workload uses hourly observations per region; it does not attest performance at maximum cadence or at thousands of monitors. Schema maintenance timestamps have whole-second precision; fractional bucket clipping is tested with the application clock rather than pretending the stored maintenance timestamps preserve fractions. Frontend changes in this portion are types, without new controls or chart interaction: the existing DOM gate verifies compatibility. Subsequent UI portions own presentation and final browser/VoiceOver/zoom acceptance.
+
+## Monitor list navigation and return context — UI.03.3
+
+MonitorPagesTest covers the shared filter parser, canonical same-team list context on detail/edit/create, external/foreign/non-list return refusal, duplicate outer parameters, array hints and removal of nested/unknown/invalid query fields. Existing authorization/redaction/pagination cases remain. MonitorMetricProjection/MonitorProjectionBenchmark/TeamAuthorizationMatrix provide the relevant regression gate.
+
+Monitors.test adds destination/context links, distinct empty pages, retained draft after failure, exception/invalid listener ownership/cleanup, owned request cancellation, late callbacks after retry, GET cancellation links without navigation fields in mutation payloads, and 401/403/404 private-data removal. The native browser probe is synthetic frontend evidence for URL/reload/history and explicit search/error flows, not authentication/session acceptance. Final results and limits are in [TASKS.md](TASKS.md); contracts are in [UI-GUIDELINES.md](UI-GUIDELINES.md).
+
+```sh
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorPagesTest.php tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorProjectionBenchmarkTest.php tests/Integration/TeamAuthorizationMatrixTest.php
+npx vitest run tests/frontend/Monitors.test.tsx tests/frontend/RealtimePages.test.tsx tests/frontend/NavigationGuard.test.tsx
+```

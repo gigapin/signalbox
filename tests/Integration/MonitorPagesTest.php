@@ -336,3 +336,47 @@ it('lands on the created monitor with a readable status message', function (): v
             ->where('monitor.name', 'Fresh')
             ->where('status', 'Monitor created.'));
 });
+
+it('preserves a canonical same-team list selection across detail edit and creation GET pages', function (string $page): void {
+    $team = Team::factory()->create();
+    $monitor = pageMonitor($team, 'Checkout');
+    $target = '/teams/'.$team->id.'/monitors?q=api%20test&type=http&status=up&state=active&page=2';
+    $suffix = match ($page) {
+        'show' => '/'.$monitor->id, 'edit' => '/'.$monitor->id.'/edit', default => '/create'
+    };
+    $this->actingAs($team->owner)->get('/teams/'.$team->id.'/monitors'.$suffix.'?'.http_build_query(['returnTo' => $target]))
+        ->assertOk()->assertInertia(fn (AssertableInertia $view) => $view->where('monitorListUrl', $target));
+})->with(['show', 'edit', 'create']);
+
+it('rejects return destinations outside the canonical route-team monitor list', function (string $value): void {
+    $team = Team::factory()->create();
+    $monitor = pageMonitor($team, 'Checkout');
+    $value = str_replace('{team}', (string) $team->id, $value);
+    $this->actingAs($team->owner)->get('/teams/'.$team->id.'/monitors/'.$monitor->id.'?'.http_build_query(['returnTo' => $value]))
+        ->assertOk()->assertInertia(fn (AssertableInertia $view) => $view->where('monitorListUrl', '/teams/'.$team->id.'/monitors'));
+})->with([
+    'https://evil.example/teams/{team}/monitors', '//evil.example/teams/{team}/monitors',
+    'javascript:alert(1)', '/teams/999999/monitors', '/teams/{team}/monitors/1',
+    '/teams/{team}/monitors/create', '/teams/{team}/incidents', '/teams/{team}/monitors/../monitors',
+    '/teams/{team}/monitors%2f', '/teams/{team}/monitors\\evil', '/logout', str_repeat('x', 2049),
+]);
+
+it('reconstructs return queries dropping invalid unknown nested fragmented and duplicated controls', function (): void {
+    $team = Team::factory()->create();
+    $monitor = pageMonitor($team, 'Checkout');
+    $base = '/teams/'.$team->id.'/monitors';
+    $target = $base.'?q=first&q=second&type=invalid&status=down&state=active&page=02&actor=99&returnTo=https%3A%2F%2Fevil.example#ignored';
+    $this->actingAs($team->owner)->get($base.'/'.$monitor->id.'?'.http_build_query(['returnTo' => $target]))
+        ->assertOk()->assertInertia(fn (AssertableInertia $view) => $view->where('monitorListUrl', $base.'?status=down&state=active'));
+});
+
+it('refuses duplicate outer return parameters and array navigation hints', function (bool $duplicate): void {
+    $team = Team::factory()->create();
+    $monitor = pageMonitor($team, 'Checkout');
+    $base = '/teams/'.$team->id.'/monitors';
+    $query = $duplicate
+        ? 'returnTo='.urlencode($base.'?page=2').'&returnTo='.urlencode($base.'?page=3')
+        : http_build_query(['returnTo' => [$base.'?page=2']]);
+    $this->actingAs($team->owner)->get($base.'/'.$monitor->id.'?'.$query)
+        ->assertOk()->assertInertia(fn (AssertableInertia $view) => $view->where('monitorListUrl', $base));
+})->with([true, false]);

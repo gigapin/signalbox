@@ -1,9 +1,12 @@
 /** List, search and filter one team's monitors with pagination and explicit empty and error states. */
-import TableScrollArea from '../../components/TableScrollArea';
-import { Link, router, usePage } from '@inertiajs/react';
+import DataTable from '../../components/ui/DataTable';
+import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
+import { useMonitorSearch } from '../../components/monitors/useMonitorSearch';
+import { Link, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
-import { useState, type FormEvent } from 'react';
+import type { FormEvent } from 'react';
 import AppLayout from '../../components/app/AppLayout';
 import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
 import Pagination from '../../components/monitors/Pagination';
@@ -21,7 +24,12 @@ import type {
     MonitorPageProps,
     MonitorUsage,
 } from '../../components/monitors/types';
-import { listQuery, listUrl, monitorPath, monitorsPath } from '../../components/monitors/urls';
+import {
+    listUrl,
+    monitorPath,
+    monitorsPath,
+    withMonitorListReturn,
+} from '../../components/monitors/urls';
 
 /** List page response from MonitorPageController::index. */
 interface IndexProps extends MonitorPageProps {
@@ -70,17 +78,18 @@ interface CreateControlProps {
     usage: MonitorUsage;
     /** Whether MonitorPolicy grants creation to the actor. */
     canCreate: boolean;
+    /** Canonical accepted list selection, used when cancelling creation. */
+    returnTo: string;
 }
 
 /** Field styling shared by the filter inputs. */
-const INPUT =
-    'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
+const INPUT = 'ui-input';
 
 /** Render a labelled select whose first option clears the filter. */
 function FilterSelect({ name, label, value, values, format, onChange }: FilterSelectProps) {
     return (
         <div>
-            <label htmlFor={`filter-${name}`} className="mb-2 block text-sm font-medium">
+            <label htmlFor={`filter-${name}`} className="ui-label mb-2 block">
                 {label}
             </label>
             <select
@@ -102,16 +111,14 @@ function FilterSelect({ name, label, value, values, format, onChange }: FilterSe
 }
 
 /** Explain quota and offer creation only when the actor may create and the plan has room. */
-function CreateControl({ teamId, usage, canCreate }: CreateControlProps) {
+function CreateControl({ teamId, usage, canCreate, returnTo }: CreateControlProps) {
     if (!canCreate) {
-        return (
-            <p className="text-sm text-slate-400">Your role has read-only access to monitors.</p>
-        );
+        return <p className="ui-help">Your role has read-only access to monitors.</p>;
     }
 
     if (usage.full) {
         return (
-            <p className="text-sm text-amber-200">
+            <p className="ui-description">
                 Your plan allows {usage.limit} monitors. Delete a monitor or upgrade to add another.
             </p>
         );
@@ -119,8 +126,8 @@ function CreateControl({ teamId, usage, canCreate }: CreateControlProps) {
 
     return (
         <Link
-            href={`${monitorsPath(teamId)}/create`}
-            className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 focus:outline-2 focus:outline-emerald-200"
+            href={withMonitorListReturn(`${monitorsPath(teamId)}/create`, teamId, returnTo)}
+            className="ui-button"
         >
             New monitor
         </Link>
@@ -132,122 +139,115 @@ function PageContent() {
     const { team } = usePage<IndexProps>().props;
     const live = useLivePage<IndexProps>(team.id, 'Monitors/Index');
     const { monitors, filters, filtered, rejectedFilters, options, usage, can } = live.props;
-    const [draft, setDraft] = useState<MonitorFilters>(filters);
-    const [loading, setLoading] = useState(false);
+    const { draft, setDraft, loading, failed, navigate, clear } = useMonitorSearch(
+        team.id,
+        filters,
+    );
+    const returnTo = listUrl(team.id, filters, monitors.currentPage);
 
-    /**
-     * @param next Filters to apply from the first page.
-     */
-    function navigate(next: MonitorFilters) {
-        router.get(monitorsPath(team.id), listQuery(next), {
-            preserveState: true,
-            replace: true,
-            onStart: () => setLoading(true),
-            onFinish: () => setLoading(false),
-        });
-    }
-
+    /** Submit only the current filter draft, beginning at the first page. */
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         navigate(draft);
     }
 
-    function clear() {
-        const empty: MonitorFilters = { q: '', type: null, status: null, state: null };
-        setDraft(empty);
-        navigate(empty);
-    }
-
     return (
         <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                <p className="text-sm text-slate-300">
+            <div className="ui-overview-toolbar mb-6">
+                <p className="ui-description">
                     {usage.used} of {usage.limit} monitors used. Minimum interval{' '}
                     {intervalLabel(usage.minimumIntervalSeconds)}.
                 </p>
-                <CreateControl teamId={team.id} usage={usage} canCreate={can.create} />
+                <CreateControl
+                    teamId={team.id}
+                    usage={usage}
+                    canCreate={can.create}
+                    returnTo={returnTo}
+                />
             </div>
 
-            <form
-                role="search"
-                aria-label="Search monitors"
-                onSubmit={submit}
-                className="grid gap-4 rounded border border-slate-700 p-4 md:grid-cols-5"
-            >
-                <div className="md:col-span-2">
-                    <label htmlFor="filter-q" className="mb-2 block text-sm font-medium">
-                        Search
-                    </label>
-                    <input
-                        id="filter-q"
-                        name="q"
-                        type="search"
-                        maxLength={100}
-                        value={draft.q}
-                        onChange={(event) => setDraft({ ...draft, q: event.target.value })}
-                        aria-describedby="filter-q-hint"
-                        className={INPUT}
+            <form role="search" aria-label="Search monitors" onSubmit={submit} className="ui-panel">
+                <fieldset disabled={loading} className="ui-monitor-filters">
+                    <legend className="ui-section-title mb-4">Find monitors</legend>
+                    <div className="ui-monitor-search">
+                        <label htmlFor="filter-q" className="ui-label mb-2 block">
+                            Search
+                        </label>
+                        <input
+                            id="filter-q"
+                            name="q"
+                            type="search"
+                            maxLength={100}
+                            value={draft.q}
+                            onChange={(event) => setDraft({ ...draft, q: event.target.value })}
+                            aria-describedby="filter-q-hint"
+                            className={INPUT}
+                        />
+                        <p id="filter-q-hint" className="ui-help mt-1">
+                            Matches name, TLS host or DNS name. HTTP URLs are stored encrypted and
+                            are not searchable.
+                        </p>
+                    </div>
+                    <FilterSelect
+                        name="type"
+                        label="Type"
+                        value={draft.type ?? ''}
+                        values={options.types}
+                        format={typeLabel}
+                        onChange={(value) =>
+                            setDraft({ ...draft, type: value === '' ? null : value })
+                        }
                     />
-                    <p id="filter-q-hint" className="mt-1 text-xs text-slate-400">
-                        Matches name, TLS host or DNS name. HTTP URLs are stored encrypted and are
-                        not searchable.
-                    </p>
-                </div>
-                <FilterSelect
-                    name="type"
-                    label="Type"
-                    value={draft.type ?? ''}
-                    values={options.types}
-                    format={typeLabel}
-                    onChange={(value) => setDraft({ ...draft, type: value === '' ? null : value })}
-                />
-                <FilterSelect
-                    name="status"
-                    label="Status"
-                    value={draft.status ?? ''}
-                    values={options.statuses}
-                    format={statusLabel}
-                    onChange={(value) =>
-                        setDraft({ ...draft, status: value === '' ? null : value })
-                    }
-                />
-                <FilterSelect
-                    name="state"
-                    label="State"
-                    value={draft.state ?? ''}
-                    values={options.states}
-                    format={stateLabel}
-                    onChange={(value) => setDraft({ ...draft, state: value === '' ? null : value })}
-                />
-                <div className="flex gap-3 md:col-span-5">
-                    <button
-                        disabled={loading}
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
-                        {loading ? 'Searching…' : 'Apply filters'}
-                    </button>
-                    {filtered && (
-                        <button
-                            type="button"
-                            disabled={loading}
-                            onClick={clear}
-                            className="underline"
-                        >
-                            Clear filters
-                        </button>
-                    )}
-                </div>
+                    <FilterSelect
+                        name="status"
+                        label="Status"
+                        value={draft.status ?? ''}
+                        values={options.statuses}
+                        format={statusLabel}
+                        onChange={(value) =>
+                            setDraft({ ...draft, status: value === '' ? null : value })
+                        }
+                    />
+                    <FilterSelect
+                        name="state"
+                        label="State"
+                        value={draft.state ?? ''}
+                        values={options.states}
+                        format={stateLabel}
+                        onChange={(value) =>
+                            setDraft({ ...draft, state: value === '' ? null : value })
+                        }
+                    />
+                    <div className="ui-actions ui-monitor-filter-actions">
+                        <Button type="submit" busy={loading} busyLabel="Searching…">
+                            Apply filters
+                        </Button>
+                        {filtered && (
+                            <Button variant="secondary" disabled={loading} onClick={clear}>
+                                Clear filters
+                            </Button>
+                        )}
+                    </div>
+                </fieldset>
             </form>
 
+            {failed && (
+                <Alert tone="danger" title="Search could not be completed" announce="assertive">
+                    <p>
+                        Previous results are still shown. Your filter inputs have been kept. Try
+                        Apply filters again.
+                    </p>
+                </Alert>
+            )}
             {rejectedFilters.length > 0 && (
-                <p role="alert" className="mt-4 text-red-300">
+                <p role="alert" className="mt-4 text-ui-warning">
                     Some filters were invalid and have been ignored: {rejectedFilters.join(', ')}.
                 </p>
             )}
 
             <section aria-label="Monitor results" aria-busy={loading} className="mt-6">
-                <p aria-live="polite" className="mb-3 text-sm text-slate-400">
+                <p aria-live="polite" className="mb-3 ui-help">
                     {monitors.total === 1 ? '1 monitor' : `${monitors.total} monitors`}
                     {monitors.from !== null && monitors.to !== null
                         ? `, showing ${monitors.from}–${monitors.to}`
@@ -255,80 +255,99 @@ function PageContent() {
                     .
                 </p>
 
-                {monitors.data.length === 0 && !filtered && monitors.currentPage === 1 && (
-                    <p className="rounded border border-slate-700 p-6 text-slate-300">
-                        No monitors yet.
-                        {can.create && !usage.full
-                            ? ' Create one to start tracking availability.'
-                            : ''}
-                    </p>
-                )}
+                {monitors.data.length === 0 &&
+                    !filtered &&
+                    monitors.currentPage === 1 &&
+                    monitors.total === 0 && (
+                        <p className="ui-panel">
+                            No monitors yet.
+                            {can.create && !usage.full
+                                ? ' Create one to start tracking availability.'
+                                : ''}
+                        </p>
+                    )}
 
-                {monitors.data.length === 0 && (filtered || monitors.currentPage > 1) && (
-                    <div className="rounded border border-slate-700 p-6 text-slate-300">
-                        <p>No monitors match these filters on this page.</p>
-                        <Link
-                            href={listUrl(team.id, filters)}
-                            className="mt-2 inline-block underline"
-                        >
-                            Back to the first page
-                        </Link>
-                    </div>
-                )}
+                {monitors.data.length === 0 &&
+                    (filtered || monitors.currentPage > 1 || monitors.total > 0) && (
+                        <div className="ui-panel">
+                            {monitors.total > 0 || monitors.currentPage > 1 ? (
+                                <p>No monitors on this page.</p>
+                            ) : (
+                                <p>No monitors match these filters.</p>
+                            )}
+                            {monitors.total === 0 && filtered && (
+                                <p className="ui-help">
+                                    Adjust or clear the filters to search again.
+                                </p>
+                            )}
+                            <Link
+                                href={listUrl(team.id, filters)}
+                                className="mt-2 inline-block ui-link"
+                            >
+                                Back to the first page
+                            </Link>
+                        </div>
+                    )}
 
                 {monitors.data.length > 0 && (
-                    <TableScrollArea label={`Monitors of ${team.name}`}>
-                        <table className="w-full text-left text-sm">
-                            <caption className="sr-only">Monitors of {team.name}</caption>
-                            <thead>
-                                <tr className="border-b border-slate-700">
-                                    <th scope="col" className="py-2">
-                                        Name
-                                    </th>
-                                    <th scope="col">Type</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">State</th>
-                                    <th scope="col">Interval</th>
-                                    <th scope="col">Regions</th>
-                                    <th scope="col">Last check</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {monitors.data.map((monitor) => (
-                                    <tr key={monitor.id} className="border-b border-slate-800">
-                                        <th scope="row" className="py-2 font-medium">
-                                            <Link
-                                                href={monitorPath(team.id, monitor.id)}
-                                                className="text-emerald-300 underline"
-                                            >
-                                                {monitor.name}
-                                            </Link>
-                                        </th>
-                                        <td>{typeLabel(monitor.type)}</td>
-                                        <td>
-                                            <StatusBadge status={monitor.lastStatus} />
-                                        </td>
-                                        <td>
-                                            <StateBadge state={monitor.state} />
-                                        </td>
-                                        <td>{intervalLabel(monitor.intervalSeconds)}</td>
-                                        <td>{monitor.regions.map(regionLabel).join(', ')}</td>
-                                        <td>
-                                            {monitor.lastCheckedAt === null ? (
-                                                'Never'
-                                            ) : (
-                                                <time dateTime={monitor.lastCheckedAt}>
-                                                    {new Date(
-                                                        monitor.lastCheckedAt,
-                                                    ).toLocaleString()}
-                                                </time>
+                    <DataTable caption={`Monitors of ${team.name}`}>
+                        <thead>
+                            <tr className="border-b border-slate-700">
+                                <th scope="col" className="py-2">
+                                    Name
+                                </th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Destination</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">State</th>
+                                <th scope="col">Interval</th>
+                                <th scope="col">Regions</th>
+                                <th scope="col">Last check (local time)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {monitors.data.map((monitor) => (
+                                <tr key={monitor.id} className="border-b border-slate-800">
+                                    <th scope="row" className="py-2 font-medium">
+                                        <Link
+                                            href={withMonitorListReturn(
+                                                monitorPath(team.id, monitor.id),
+                                                team.id,
+                                                returnTo,
                                             )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </TableScrollArea>
+                                            className="ui-link"
+                                        >
+                                            {monitor.name}
+                                        </Link>
+                                    </th>
+                                    <td>{typeLabel(monitor.type)}</td>
+                                    <td className="ui-monitor-destination">
+                                        {monitor.destination ??
+                                            (monitor.type === 'heartbeat'
+                                                ? 'Receives heartbeat signals'
+                                                : 'Destination unavailable')}
+                                    </td>
+                                    <td>
+                                        <StatusBadge status={monitor.lastStatus} />
+                                    </td>
+                                    <td>
+                                        <StateBadge state={monitor.state} />
+                                    </td>
+                                    <td>{intervalLabel(monitor.intervalSeconds)}</td>
+                                    <td>{monitor.regions.map(regionLabel).join(', ')}</td>
+                                    <td>
+                                        {monitor.lastCheckedAt === null ? (
+                                            'No check recorded'
+                                        ) : (
+                                            <time dateTime={monitor.lastCheckedAt}>
+                                                {new Date(monitor.lastCheckedAt).toLocaleString()}
+                                            </time>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </DataTable>
                 )}
 
                 <Pagination
@@ -343,7 +362,8 @@ function PageContent() {
 
 /** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
 export default function Page() {
-    const { team } = usePage<IndexProps>().props;
+    const page = usePage<IndexProps>();
+    const { team, filters } = page.props;
     return (
         <AppLayout
             team={team}
@@ -351,7 +371,7 @@ export default function Page() {
             title="Monitors"
             description={`Monitors of ${team.name}.`}
         >
-            <PageContent />
+            <PageContent key={`${page.url}:${JSON.stringify(filters)}`} />
         </AppLayout>
     );
 }

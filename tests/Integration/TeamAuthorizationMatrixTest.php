@@ -473,7 +473,7 @@ it('projects only accessible teams and never trusts revoked current-team prefere
 it('changes the selected team without carrying a previous teams role into the destination', function (): void {
     $fixture = TeamAuthorizationFixture::create();
     $fixture->foreign->users()->attach($fixture->actor->id, ['role' => 'viewer']);
-    $this->actingAs($fixture->actor)->post("/teams/{$fixture->foreign->id}/select", ['role' => 'owner'])->assertRedirect('/account');
+    $this->actingAs($fixture->actor)->post("/teams/{$fixture->foreign->id}/select", ['role' => 'owner'])->assertRedirect("/teams/{$fixture->foreign->id}/dashboard");
     expect($fixture->actor->resolveCurrentTeam()?->id)->toBe($fixture->foreign->id);
     Notification::fake();
     $before = $fixture->snapshot();

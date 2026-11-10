@@ -488,3 +488,26 @@
         outline-color: Highlight;
     }
 }
+
+/* Keep team selection explicit and usable within a wrapping private header. */
+@layer components {
+    .ui-team-switcher {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--spacing-ui-2);
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .ui-team-switcher select {
+        width: min(18rem, 100%);
+    }
+}
+
+/* A suspended route has no sidebar; its recovery message uses the entire grid width. */
+@layer components {
+    .ui-app-main[data-suspended='true'] {
+        grid-column: 1 / -1;
+    }
+}

@@ -7,14 +7,20 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Services\Identity\TeamNavigation;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
-/** Share product identity and explicit account projections without tenant or credential data. */
+/** Share product identity and explicit account projections with private membership choices restricted to team and account routes. */
 final class HandleInertiaRequests extends Middleware
 {
     /** @var string Blade view used for the initial HTML response. */
     protected $rootView = 'app';
+
+    /** @param TeamNavigation $navigation Private membership projection for authorized application contexts. */
+    public function __construct(private readonly TeamNavigation $navigation)
+    {
+    }
 
     /**
      * Combine standard protocol props with product name, minimal account identity and safe status.
@@ -30,6 +36,11 @@ final class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'appName' => config('app.name'),
             'realtime' => $this->realtime($request),
+            'teamNavigation' => $actor instanceof User
+                && $actor->hasVerifiedEmail()
+                && $request->routeIs('teams.*', 'account', 'account.security')
+                ? fn (): array => $this->navigation->forUser($actor)
+                : null,
             // Serialize a deliberate identity projection rather than the Eloquent user or its relationships.
             'auth' => ['user' => $actor === null ? null : [
                 'name' => $actor->name,

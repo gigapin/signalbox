@@ -46,3 +46,14 @@ export function teamDestinations(teamId: number): TeamDestination[] {
         { section: 'team', label: 'Team', href: base },
     ];
 }
+
+/** Current membership role projected by the server, not inferred from another team's privileges. */
+export type TeamRole = 'owner' | 'admin' | 'member' | 'viewer';
+
+/** Safe selector response, absent on public and platform routes. */
+export interface TeamNavigationView {
+    /** Only currently accessible teams with their own persisted role. */
+    teams: (AppTeam & { role: TeamRole })[];
+    /** Valid preference, or null without automatically selecting a membership. */
+    selectedTeamId: number | null;
+}

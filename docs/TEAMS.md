@@ -68,3 +68,11 @@ Private invitation reads and model writes now require explicit tenant context. H
 ## M1.05 isolation coverage
 
 [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md) records the parametrized HTTP contract, independent actor/target role hierarchy and tests for foreign nested IDs, revoked membership, account selection and capability entry. The test suite checks both authorization responses and persistent effects; no team-management behavior changes in this task.
+
+## Team selector and confirmation — UI.02.2
+
+Private team/account screens now receive `teamNavigation` with only accessible `{id, name, role}` choices and a fresh `selectedTeamId`, or null when the preference is absent/revoked. The payload is excluded from public/authentication/operator contexts. TeamNavigation reads choices and preference with two queries, regardless of membership count; no per-team role query or serialized team model is needed. The route team, rather than this preference, still determines the active context and displayed role in AppLayout.
+
+`POST /teams/{team}/select` retains fresh membership and lock-aware authorization. Its browser redirect now points explicitly to `/teams/{team}/dashboard`; JSON requests receive a no-store 200 acknowledgement `{ "destination": "/teams/{team}/dashboard" }` after persistence. Submitted role/redirect/team fields cannot override that route destination or promote membership. The shared native selector is used by the dashboard shell and Your teams. Account's accessible currentTeam projection now includes its ID for the dashboard entry.
+
+The client suspends old private content and its live session before switching, checks the acknowledgement before a new GET and never replays an uncertain request. Missing/expired authorization, transport failure or timeout requires a deliberate read of Your teams; no automatic fallback or optimistic rollback. Leaving the page aborts the pending operation and late responses cannot navigate. The existing selection/role matrix, new TeamNavigation integration tests and frontend selector/lifecycle tests cover this behavior; see [UI guidelines](UI-GUIDELINES.md) and [TASKS](TASKS.md) for contracts and actual verification.

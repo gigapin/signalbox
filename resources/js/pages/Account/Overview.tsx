@@ -7,10 +7,10 @@ interface OverviewProps extends AuthProps {
     /** Whether a valid invitation can be explicitly reviewed from this session. */
     hasPendingInvitation?: boolean;
     /** Team display name, or absence when the persisted selection is inaccessible. */
-    currentTeam?: { name: string } | null;
+    currentTeam?: { id?: number; name: string } | null;
 }
 
-/** Provide an honest account destination while later tenant features are implemented. */
+/** Provide account identity and explicit entries without inferring tenant authorization. */
 export default function Overview() {
     const { auth, currentTeam, hasPendingInvitation } = usePage<OverviewProps>().props;
 
@@ -26,6 +26,9 @@ export default function Overview() {
                     : 'No accessible team is currently selected.'}
             </p>
             <nav aria-label="Account navigation" className="mt-8 flex gap-6 text-emerald-300">
+                {currentTeam?.id && (
+                    <Link href={`/teams/${currentTeam.id}/dashboard`}>Open dashboard</Link>
+                )}
                 <Link href="/teams">Your teams</Link>
                 {hasPendingInvitation && <Link href="/invitations/accept">Review invitation</Link>}
                 <Link href="/account/security">Account security</Link>

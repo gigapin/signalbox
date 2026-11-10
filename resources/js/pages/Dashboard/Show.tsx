@@ -1,6 +1,6 @@
 /** Show current tenant operations and measured historical latency, with live recovery and explicit unavailable SLA. */
 import { Link, usePage } from '@inertiajs/react';
-import AuthLayout from '../../components/auth/AuthLayout';
+import AppLayout from '../../components/app/AppLayout';
 import LiveUpdates from '../../components/LiveUpdates';
 import MonthlyReportDownload from '../../components/dashboard/MonthlyReportDownload';
 import TimeSeriesChart from '../../components/dashboard/TimeSeriesChart';
@@ -37,17 +37,13 @@ export default function Show() {
     const { counts, monitors, selectedMonitor, latency, uptime } = dashboard;
 
     return (
-        <AuthLayout title="Dashboard" description={`${team.name} · application monitoring`} wide>
+        <AppLayout
+            title="Dashboard"
+            team={team}
+            section="dashboard"
+            description={`${team.name} · application monitoring`}
+        >
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <nav
-                aria-label="Team navigation"
-                className="mb-6 flex flex-wrap gap-4 text-sm text-emerald-300"
-            >
-                <Link href={monitorsPath(team.id)}>All monitors</Link>
-                <Link href={`/teams/${team.id}/incidents`}>All incidents</Link>
-                <Link href={`/teams/${team.id}/notifications`}>Notifications</Link>
-                <Link href={`/teams/${team.id}`}>Team members</Link>
-            </nav>
             <section aria-label="Reports" className="mb-6 text-sm text-emerald-300">
                 <MonthlyReportDownload teamId={team.id} timezone={reportTimezone} />
             </section>
@@ -256,6 +252,6 @@ export default function Show() {
                     </div>
                 </dl>
             )}
-        </AuthLayout>
+        </AppLayout>
     );
 }

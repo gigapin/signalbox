@@ -4,6 +4,16 @@ M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, T
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
 
+## AppLayout handoff — 2026-11-10
+
+**Next: UI.02.2, accessible team selector and confirmed switching.** UI.02.1 adds AppLayout, AccountMenu and typed team destinations in components/app, with semantic shell CSS. Dashboard/Show is the first adopted page and its duplicated local navigation is removed. Read [UI-GUIDELINES.md](UI-GUIDELINES.md) for the layout contract and [USER-DASHBOARD.md](USER-DASHBOARD.md) for flows. Earlier restart points naming UI.02.1 are historical.
+
+The shell takes the controller-authorized route team and section explicitly, uses configured appName, displays a desktop sidebar from 1024 CSS pixels, header, breadcrumb, one h1, skip link and shared status. Account disclosure has account/teams/security, operator-only Admin and a busy-protected logout POST; Escape restores trigger focus and outside interaction preserves the chosen focus. No role or team selector is fabricated; UI.02.2 must project fresh memberships/current role and implement the planned explicit team-selection redirect to its dashboard. No backend props, endpoints, policy or metric changes in UI.02.1.
+
+Below 1024 pixels the navigation is currently visible and wraps above content; UI.02.3 owns the modal mobile menu. The other private pages still use AuthLayout until UI.02.4: following links can therefore reach a legacy layout. Maintenance enters the menu only with UI.04.2; Billing/API and public/platform contexts keep their dependencies. Dashboard report/chart URLs and page-owned useLivePage recovery remain intact. Reload assets when evaluating the new dashboard or use the existing host Vite workflow; no environment reset is needed.
+
+Targeted frontend suites passed **32/32** (AppLayout, Dashboard, RealtimePages, UiContrast). Final host `npm run verify` exit 0: ESLint/Prettier/TypeScript, **5 quality tests**, **242 DOM tests in 25 files**, Vite build. Documentation links/IDs and emitted shell CSS checked. Full details are in the latest TASKS entry. No PHP changed, so PHP-CS-Fixer/Larastan/backend suites are not rerun; remote CI, real-browser/VoiceOver/native zoom remain unverified in this task and L stays in UI.06. No Git/gh, screenshots, data, process, environment, migration or dependency changes.
+
 ## UI primitives handoff — 2026-11-10
 
 **Next: UI.02.1, AppLayout and persistent navigation.** UI.01 is complete: inventory, flows and shared primitives. Read [UI-GUIDELINES.md](UI-GUIDELINES.md) for contracts and [USER-DASHBOARD.md](USER-DASHBOARD.md) for the route/data map and hierarchy. Earlier UI.01 restart points below are historical. AppLayout, team selector/mobile navigation and page migration remain UI.02 work.

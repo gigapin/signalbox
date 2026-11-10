@@ -59,3 +59,23 @@ Adozione iniziale: [MonitorBadges](../resources/js/components/monitors/MonitorBa
 [UiPrimitives.test.tsx](../tests/frontend/UiPrimitives.test.tsx) copre tastiera, submit esplicito e blocco busy, associazioni label/help/error, ref, conservazione valore in correzione, ID indipendenti, gerarchia heading, annunci espliciti, etichette stato/fallback e tabella navigabile. UiContrast verifica le coppie cromatiche con le soglie sopra. `npm run verify` esegue lint, Prettier, TypeScript, test qualità, suite DOM e build.
 
 UI.01.3 completa le primitive, non l’accettazione delle pagine: implementare AppLayout a partire da UI.02.1, poi selettore/mobile/migrazione e UI.03/UI.04. Gli scenari di UI.01.2 restano criteri per quelle porzioni. L01–L08, VoiceOver effettivo e confronto Brave/Firefox saranno eseguiti in UI.06; non attribuire PASS browser ai test jsdom. Per risultati realmente eseguiti e limiti leggere [TASKS.md](TASKS.md).
+
+## AppLayout — UI.02.1
+
+[AppLayout](../resources/js/components/app/AppLayout.tsx) è la shell privata per pagine di un team già autorizzato dal server. La prima adozione è [Dashboard/Show](../resources/js/pages/Dashboard/Show.tsx): il menu locale è stato rimosso e report, selezione grafici, metriche e hook realtime restano della pagina. Le altre viste mantengono temporaneamente AuthLayout fino alla migrazione UI.02.4; le pagine pubbliche e di autenticazione non vengono avvolte automaticamente dalla shell.
+
+| Input | Contratto |
+|---|---|
+| `team` | `{ id, name }` del team della rotta, obbligatorio; nessuna inferenza da `currentTeamId` o dal team preferito |
+| `section` | dashboard/monitors/incidents/notifications/status-pages/team; distingue la famiglia corrente anche per dettaglio e modifica |
+| `title`, `description`, `actions`, `children` | Unico h1/document title, contesto facoltativo, comandi già autorizzati e contenuto della pagina |
+| `ancestors` | Array facoltativo di `{ label, href }` costruito dall’applicazione; la shell antepone il team e aggiunge il titolo corrente non cliccabile. Non passare input `returnTo` grezzo |
+| Props condivise Inertia | `appName`, `auth.user`, `status` già esistenti. Il menu account si mostra quando l’identità è presente; Admin richiede `isPlatformAdmin === true`. Nessun nuovo campo backend |
+
+[navigation.ts](../resources/js/components/app/navigation.ts) costruisce sei destinazioni reali del team: Dashboard, Monitors, Incidents, Notifications, Status pages e Team. Una sola voce ha `aria-current="page"`; il breadcrumb ha separatamente il proprio elemento corrente. Non mostrare Maintenance, Billing o API prima delle rispettive pagine. Le voci sono collegamenti di lettura consentiti ai viewer: non implicano permessi di mutazione.
+
+La shell riusa `ui-theme`, PageHeading e Alert per lo status condiviso. Il nome prodotto è testuale da `appName`, con link alla dashboard del team corrente. Skip link verso il main focusabile, landmark e heading sono presenti. La sidebar da 1024 CSS px occupa una colonna di 15 rem, rimane nel flusso della griglia ed è scorrevole su schermi bassi. Sotto soglia, la stessa navigazione è per ora visibile sopra il contenuto e va a capo: è una fase intermedia funzionante, il dialogo mobile e la sua gestione focus appartengono a UI.02.3. Selettore, ruolo corrente e cambio team sono UI.02.2; la shell non li simula.
+
+[AccountMenu](../resources/js/components/app/AccountMenu.tsx) è una disclosure con button/aria-expanded/aria-controls, link nativi Inertia e normali Tab: non usa role menu. Contiene Your account, Your teams, Account security, Admin per operatori e un form POST Sign out. Escape chiude e ripristina il focus al trigger; click esterno chiude senza spostare il focus; navigazione chiude la disclosure. I listener sono rimossi alla chiusura/unmount. Logout usa `useForm`, payload vuoto e stato busy; nessuna GET di logout o replay automatico. La visibilità Admin è soltanto una proiezione: middleware/controlli server esistenti rimangono autorevoli, indipendentemente dal ruolo tenant.
+
+[AppLayout.test.tsx](../tests/frontend/AppLayout.test.tsx) copre team esplicito contro preferenza differente, tutte le sezioni correnti, breadcrumb, branding configurabile, skip link, conservazione bozza, tastiera/Escape/click esterno, diniego del link Admin per i quattro ruoli tenant, presenza per flag operatore, navigazione e logout POST singolo durante pending. Suite Dashboard e RealtimePages verificano anche il primo utilizzo reale della shell. Test DOM e CSS non attestano un collaudo browser o la navigazione uniforme sulle viste ancora da migrare.

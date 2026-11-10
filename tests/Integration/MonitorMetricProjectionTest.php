@@ -268,3 +268,17 @@ it('computes whole-window statistics from observations rather than averaging buc
     $view = projectedMetrics($this->team, $this->monitor);
     expect($view['latency']['summary']['eu'])->toBe(['meanMs' => 66.67, 'p50Ms' => 100, 'p95Ms' => 100, 'samples' => 3]);
 });
+
+it('serves the detail metric cards through the existing authorized partial recovery protocol', function (): void {
+    metricObservation($this->monitor, 10);
+    $this->actingAs($this->team->owner)->get('/teams/'.$this->team->id.'/monitors/'.$this->monitor->id, [
+        'X-Inertia-Partial-Component' => 'Monitors/Show',
+        'X-Inertia-Partial-Data' => 'monitor,recentIncidents,maintenance,escalation,can,metrics,team,auth,realtime',
+    ])->assertOk()->assertHeader('Cache-Control', 'no-store, private')
+        ->assertJsonPath('props.monitor.id', $this->monitor->id)
+        ->assertJsonPath('props.team.id', $this->team->id)
+        ->assertJsonCount(24, 'props.metrics.recent')
+        ->assertJsonPath('props.metrics.latency.summary.eu.samples', 1)
+        ->assertJsonPath('props.metrics.periods.24h.available', true)
+        ->assertJsonMissingPath('props.monitorContext');
+});

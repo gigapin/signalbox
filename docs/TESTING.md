@@ -600,3 +600,16 @@ Monitors.test adds destination/context links, distinct empty pages, retained dra
 docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorPagesTest.php tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorProjectionBenchmarkTest.php tests/Integration/TeamAuthorizationMatrixTest.php
 npx vitest run tests/frontend/Monitors.test.tsx tests/frontend/RealtimePages.test.tsx tests/frontend/NavigationGuard.test.tsx
 ```
+
+## Monitor detail availability — UI.03.4
+
+MonitorDetail.test exercises the actual detail page plus pure formatting and duration-bar boundaries: safe destination, permitted actions/return URL, observed versus operational/maintenance state, null/zero/unavailable/excluded/pre-creation time, partial observed hours, equivalent table, old-history fallback and live card/title refresh followed by access denial. Metrics fixture totals match the monitor's 23.5-hour lifetime; it contains only synthetic redacted data. Near-100 precision is preserved instead of rounding a partial value to full success. The existing Monitors suite retains action/confirmation/draft coverage.
+
+MonitorMetricProjectionTest adds the existing authorized detail partial-read protocol with metrics, while MonitorPages/MonitorAvailability retain permission, tenant, projection and time-weighting regression coverage. No PHP application rule changed. The browser fixture probe checks 390/195 CSS-pixel reflow, bar proportions, native Enter/Tab disclosure/table access, local table scrolling, long identity/manager controls at 390 and missing/maintenance views; this remains separate from backend-session and final L acceptance.
+
+```sh
+npx vitest run tests/frontend/MonitorDetail.test.tsx tests/frontend/Monitors.test.tsx tests/frontend/RealtimePages.test.tsx
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorPagesTest.php tests/Integration/MonitorAvailabilityTest.php
+```
+
+Final actual counts and unexecuted checks are recorded in [TASKS.md](TASKS.md). UI.03.5 continues with charts and period/region controls rather than duplicating the duration history or SLA formulas.

@@ -43,7 +43,7 @@ export interface MonitorLatencyStatistics {
     samples: number;
 }
 
-/** Bounded read projection used by the future monitor cards and charts. */
+/** Bounded read projection used by monitor availability cards and subsequent chart controls. */
 export interface MonitorMetricsView {
     /** Projection generation time, distinct from an observation time. */
     generatedAt: string;

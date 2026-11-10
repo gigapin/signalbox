@@ -1,18 +1,23 @@
-/** Show one monitor's safe configuration, recent incidents and maintenance; offer management when permitted. */
+/** Present authorized monitor operations and time-weighted availability without inventing observations or continuous uptime. */
 import type { MonitorMetricsView, MonitorContextView } from '../../components/monitors/metrics';
 import { useFormProtection } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
-import type { ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import Panel from '../../components/ui/Panel';
+import Alert from '../../components/ui/Alert';
+import Button from '../../components/ui/Button';
+import MonitorSnapshot, { monitorDestination } from '../../components/monitors/MonitorSnapshot';
+import AvailabilitySummary from '../../components/monitors/AvailabilitySummary';
+import AvailabilityHistory from '../../components/monitors/AvailabilityHistory';
 import AppLayout from '../../components/app/AppLayout';
 import IncidentTable from '../../components/incidents/IncidentTable';
 import MaintenancePanel from '../../components/incidents/MaintenancePanel';
 import type { IncidentSummary, MaintenanceView } from '../../components/incidents/types';
 import { incidentsPath, maintenancePath } from '../../components/incidents/urls';
-import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
 import HeartbeatPanel from '../../components/monitors/HeartbeatPanel';
-import { intervalLabel, regionLabel, typeLabel } from '../../components/monitors/labels';
+import { typeLabel } from '../../components/monitors/labels';
 import EscalationPanel from '../../components/notifications/EscalationPanel';
 import type { MonitorEscalationView } from '../../components/notifications/types';
 import { monitorEscalationPath } from '../../components/notifications/urls';
@@ -25,8 +30,8 @@ import { monitorPath, monitorsPath, withMonitorListReturn } from '../../componen
 
 /** Detail page response from MonitorPageController::show. */
 interface ShowProps extends MonitorPageProps {
-    /** Read-only metrics; rendering is introduced with the subsequent monitor cards/charts. */
-    metrics: MonitorMetricsView;
+    /** Current availability projection, absent only on older browser-history entries. */
+    metrics?: MonitorMetricsView;
     /** Certificate provenance and safe effective notification targets. */
     monitorContext: MonitorContextView;
     /** Names of malformed metric controls; raw values are never reflected. */
@@ -87,9 +92,6 @@ function Configuration({ configuration }: ConfigurationProps) {
     if (c.type === 'http' || c.type === 'keyword') {
         return (
             <>
-                <Detail term="URL">
-                    <code className="break-all">{c.url}</code>
-                </Detail>
                 <Detail term="Method">{c.method}</Detail>
                 <Detail term="Headers">
                     {c.header_names && c.header_names.length > 0
@@ -113,7 +115,6 @@ function Configuration({ configuration }: ConfigurationProps) {
     if (c.type === 'tls') {
         return (
             <>
-                <Detail term="Host">{`${c.tls_host ?? ''}:${c.tls_port ?? ''}`}</Detail>
                 <Detail term="Expiry warning">
                     {c.tls_expiry_warning_days === null || c.tls_expiry_warning_days === undefined
                         ? 'None'
@@ -126,7 +127,7 @@ function Configuration({ configuration }: ConfigurationProps) {
     if (c.type === 'dns') {
         return (
             <>
-                <Detail term="Query">{`${c.dns_name ?? ''} ${c.dns_record_type ?? ''}`}</Detail>
+                <Detail term="Record type">{c.dns_record_type}</Detail>
                 <Detail term="Expected values">
                     <ul>
                         {(c.dns_expected_values ?? []).map((value) => (
@@ -144,24 +145,47 @@ function Configuration({ configuration }: ConfigurationProps) {
     return <Detail term="Grace period">{`${c.heartbeat_grace_seconds ?? 0} seconds`}</Detail>;
 }
 
+/** Minimal header identity; redacted settings and form drafts remain in the removable content. */
+type MonitorHeading = Pick<MonitorDetail, 'id' | 'name' | 'type'>;
+
+/** Parent shell receives only identity changes from an authorized live snapshot. */
+interface PageContentProps {
+    /** Update the heading without moving the live session or forms out of the removable boundary. */
+    onIdentity: (identity: MonitorHeading) => void;
+}
+
 /** Keep actions in one form so their shared processing state prevents concurrent submissions. */
-function PageContent() {
+function PageContent({ onIdentity }: PageContentProps) {
     const initial = usePage<ShowProps>().props;
     const live = useLivePage<ShowProps>(initial.team.id, 'Monitors/Show', initial.monitor.id);
-    const { team, monitor, recentIncidents, maintenance, escalation, can, monitorListUrl } =
-        live.props;
+    const {
+        team,
+        monitor,
+        recentIncidents,
+        maintenance,
+        escalation,
+        can,
+        monitorListUrl,
+        metrics,
+    } = live.props;
+    useEffect(() => {
+        onIdentity({ id: monitor.id, name: monitor.name, type: monitor.type });
+    }, [monitor.id, monitor.name, monitor.type, onIdentity]);
     const form = useForm<Record<string, never>>({});
     useFormProtection(form);
     const path = monitorPath(team.id, monitor.id);
 
+    /** Submit one authorized pause; existing server policies and transaction rules remain authoritative. */
     function pause() {
         form.post(`${path}/pause`, { preserveScroll: true });
     }
 
+    /** Submit one resume, with quota rechecked by the existing server action. */
     function resume() {
         form.post(`${path}/resume`, { preserveScroll: true });
     }
 
+    /** Delete only after an explicit confirmation, using the existing empty mutation payload. */
     function destroy() {
         if (!window.confirm(`Delete ${monitor.name}? This cannot be undone.`)) {
             return;
@@ -173,14 +197,19 @@ function PageContent() {
     return (
         <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <nav
-                aria-label="Monitor navigation"
-                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
-            >
-                <Link href={monitorListUrl ?? monitorsPath(team.id)}>Back to monitors</Link>
-                <Link href={incidentsPath(team.id)}>All incidents</Link>
+            <nav aria-label="Monitor navigation" className="ui-actions mb-4">
+                <Link className="ui-link" href={monitorListUrl ?? monitorsPath(team.id)}>
+                    Back to monitors
+                </Link>
+                <Link className="ui-link" href={incidentsPath(team.id)}>
+                    All incidents
+                </Link>
+            </nav>
+            <div className="ui-actions mb-6" role="group" aria-label="Monitor actions">
                 {can.update && (
                     <Link
+                        className="ui-button"
+                        data-variant="secondary"
                         href={withMonitorListReturn(
                             `${path}/edit`,
                             team.id,
@@ -190,7 +219,37 @@ function PageContent() {
                         Edit monitor
                     </Link>
                 )}
-            </nav>
+                {monitor.state === 'active' && can.pause && (
+                    <Button
+                        variant="secondary"
+                        type="button"
+                        disabled={form.processing}
+                        onClick={pause}
+                    >
+                        Pause monitor
+                    </Button>
+                )}
+                {monitor.state === 'paused' && can.resume && (
+                    <Button
+                        variant="secondary"
+                        type="button"
+                        disabled={form.processing || !monitor.withinQuota}
+                        onClick={resume}
+                    >
+                        Resume monitor
+                    </Button>
+                )}
+                {can.delete && (
+                    <Button
+                        type="button"
+                        disabled={form.processing}
+                        onClick={destroy}
+                        variant="danger"
+                    >
+                        Delete monitor
+                    </Button>
+                )}
+            </div>
 
             {Object.entries(form.errors).map(([key, message]) => (
                 <p key={key} role="alert" className="mb-4 text-red-300">
@@ -199,106 +258,94 @@ function PageContent() {
             ))}
 
             {monitor.state === 'suspended' && (
-                <p className="mb-4 rounded border border-red-800 p-3 text-red-200">
+                <Alert title="Monitor suspended" tone="danger">
                     This monitor is suspended because the team&apos;s plan no longer covers it.
                     Resuming it requires a plan change.
-                </p>
+                </Alert>
             )}
             {!monitor.withinQuota && monitor.state !== 'suspended' && (
-                <p className="mb-4 rounded border border-amber-700 p-3 text-amber-200">
+                <Alert title="Monitor outside plan quota" tone="warning">
                     This monitor is outside the current plan quota and cannot be resumed until older
                     monitors are deleted or the plan is upgraded.
-                </p>
+                </Alert>
             )}
 
-            <div className="mb-6 flex flex-wrap gap-3">
-                <StatusBadge status={monitor.lastStatus} />
-                <StateBadge state={monitor.state} />
-            </div>
+            <div className="ui-monitor-detail-stack">
+                <section
+                    aria-label="Monitor destination"
+                    className="ui-monitor-destination-heading"
+                >
+                    <p className="ui-help">{typeLabel(monitor.type)} monitor · Destination</p>
+                    <p>
+                        <code>{monitorDestination(monitor.configuration)}</code>
+                    </p>
+                    {metrics && (
+                        <p className="ui-help">
+                            Metric snapshot generated{' '}
+                            <time dateTime={metrics.generatedAt}>
+                                {new Date(metrics.generatedAt).toLocaleString()}
+                            </time>{' '}
+                            (local time).
+                        </p>
+                    )}
+                </section>
+                <MonitorSnapshot monitor={monitor} maintenance={maintenance} />
+                <AvailabilityHistory metrics={metrics} />
+                <AvailabilitySummary metrics={metrics} />
+                <Panel
+                    title="Monitor settings"
+                    description="Stored configuration is shown with sensitive values redacted."
+                >
+                    <dl>
+                        <Detail term="Timeout">{`${monitor.timeoutMs} ms`}</Detail>
+                        <Detail term="Failures before alerting">
+                            {monitor.confirmationThreshold}
+                        </Detail>
+                        <Detail term="Created (local time)">
+                            {instant(monitor.createdAt, 'Unknown')}
+                        </Detail>
+                        <Configuration configuration={monitor.configuration} />
+                    </dl>
+                </Panel>
 
-            <dl>
-                <Detail term="Interval">{intervalLabel(monitor.intervalSeconds)}</Detail>
-                <Detail term="Timeout">{`${monitor.timeoutMs} ms`}</Detail>
-                <Detail term="Failures before alerting">{monitor.confirmationThreshold}</Detail>
-                <Detail term="Regions">{monitor.regions.map(regionLabel).join(', ')}</Detail>
-                <Detail term="Last check">{instant(monitor.lastCheckedAt, 'Never')}</Detail>
-                <Detail term="Next check">
-                    {instant(monitor.nextCheckAt, 'Not scheduled yet')}
-                </Detail>
-                <Detail term="Created">{instant(monitor.createdAt, 'Unknown')}</Detail>
-                <Configuration configuration={monitor.configuration} />
-            </dl>
-
-            {monitor.heartbeat && (
-                <HeartbeatPanel
-                    key={path}
-                    path={path}
-                    heartbeat={monitor.heartbeat}
-                    canManage={can.update}
-                />
-            )}
-
-            <section aria-labelledby="incidents-heading" className="mt-8">
-                <h2 id="incidents-heading" className="mb-2 text-lg font-semibold">
-                    Recent incidents
-                </h2>
-                {recentIncidents.length === 0 ? (
-                    <p className="text-slate-300">No incidents recorded for this monitor.</p>
-                ) : (
-                    <IncidentTable
-                        teamId={team.id}
-                        incidents={recentIncidents}
-                        caption={`Recent incidents of ${monitor.name}`}
-                        showMonitor={false}
+                {monitor.heartbeat && (
+                    <HeartbeatPanel
+                        key={path}
+                        path={path}
+                        heartbeat={monitor.heartbeat}
+                        canManage={can.update}
                     />
                 )}
-            </section>
 
-            <MaintenancePanel
-                path={maintenancePath(team.id, monitor.id)}
-                maintenance={maintenance}
-                canManage={can.update}
-            />
+                <section aria-labelledby="incidents-heading" className="mt-8">
+                    <h2 id="incidents-heading" className="mb-2 text-lg font-semibold">
+                        Recent incidents
+                    </h2>
+                    {recentIncidents.length === 0 ? (
+                        <p className="text-slate-300">No incidents recorded for this monitor.</p>
+                    ) : (
+                        <IncidentTable
+                            teamId={team.id}
+                            incidents={recentIncidents}
+                            caption={`Recent incidents of ${monitor.name}`}
+                            showMonitor={false}
+                        />
+                    )}
+                </section>
 
-            <EscalationPanel
-                key={`${monitor.id}:${escalation.policyId ?? 'default'}`}
-                teamId={team.id}
-                action={monitorEscalationPath(team.id, monitor.id)}
-                escalation={escalation}
-                canManage={can.update}
-            />
+                <MaintenancePanel
+                    path={maintenancePath(team.id, monitor.id)}
+                    maintenance={maintenance}
+                    canManage={can.update}
+                />
 
-            <div className="mt-8 flex flex-wrap gap-3">
-                {monitor.state === 'active' && can.pause && (
-                    <button
-                        type="button"
-                        disabled={form.processing}
-                        onClick={pause}
-                        className="rounded border border-slate-600 px-4 py-2"
-                    >
-                        Pause monitor
-                    </button>
-                )}
-                {monitor.state === 'paused' && can.resume && (
-                    <button
-                        type="button"
-                        disabled={form.processing}
-                        onClick={resume}
-                        className="rounded border border-slate-600 px-4 py-2"
-                    >
-                        Resume monitor
-                    </button>
-                )}
-                {can.delete && (
-                    <button
-                        type="button"
-                        disabled={form.processing}
-                        onClick={destroy}
-                        className="rounded border border-red-700 px-4 py-2 text-red-200"
-                    >
-                        Delete monitor
-                    </button>
-                )}
+                <EscalationPanel
+                    key={`${monitor.id}:${escalation.policyId ?? 'default'}`}
+                    teamId={team.id}
+                    action={monitorEscalationPath(team.id, monitor.id)}
+                    escalation={escalation}
+                    canManage={can.update}
+                />
             </div>
         </>
     );
@@ -307,15 +354,28 @@ function PageContent() {
 /** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
 export default function Page() {
     const { team, monitor, monitorListUrl } = usePage<ShowProps>().props;
+    const [heading, setHeading] = useState<MonitorHeading>({
+        id: monitor.id,
+        name: monitor.name,
+        type: monitor.type,
+    });
+    const onIdentity = useCallback((next: MonitorHeading) => {
+        setHeading((current) =>
+            current.id === next.id && current.name === next.name && current.type === next.type
+                ? current
+                : next,
+        );
+    }, []);
+    const identity = heading.id === monitor.id ? heading : monitor;
     return (
         <AppLayout
             team={team}
             section="monitors"
             ancestors={[{ label: 'Monitors', href: monitorListUrl ?? monitorsPath(team.id) }]}
-            title={monitor.name}
-            description={`${typeLabel(monitor.type)} monitor`}
+            title={identity.name}
+            description={`${typeLabel(identity.type)} monitor`}
         >
-            <PageContent />
+            <PageContent onIdentity={onIdentity} />
         </AppLayout>
     );
 }

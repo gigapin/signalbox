@@ -6,11 +6,12 @@ import Alert from '../../components/ui/Alert';
 import LiveUpdates from '../../components/LiveUpdates';
 import MonthlyReportDownload from '../../components/dashboard/MonthlyReportDownload';
 import TimeSeriesChart from '../../components/dashboard/TimeSeriesChart';
-import { dashboardUrl, type DashboardProps } from '../../components/dashboard/types';
+import type { DashboardProps } from '../../components/dashboard/types';
+import OverviewSummary from '../../components/dashboard/OverviewSummary';
+import MonitorOverview from '../../components/dashboard/MonitorOverview';
+import Panel from '../../components/ui/Panel';
 import IncidentTable from '../../components/incidents/IncidentTable';
-import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
-import Pagination from '../../components/monitors/Pagination';
-import { monitorPath, monitorsPath } from '../../components/monitors/urls';
+import { monitorPath } from '../../components/monitors/urls';
 import { useLivePage } from '../../hooks/useLivePage';
 
 /** Display nullable service percentages without coercing absent coverage/SLA to a numeric success. */
@@ -62,7 +63,7 @@ function DashboardContent({ onAccessDenied }: DashboardContentProps) {
         if (live.phase === 'denied') onAccessDenied(true);
     }, [live.phase, onAccessDenied]);
     const { dashboard, rejectedFilters } = live.props;
-    const { counts, monitors, selectedMonitor, latency, uptime } = dashboard;
+    const { counts, selectedMonitor, latency, uptime } = dashboard;
 
     if (live.phase === 'denied') {
         return (
@@ -78,214 +79,138 @@ function DashboardContent({ onAccessDenied }: DashboardContentProps) {
     return (
         <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <section aria-label="Reports" className="mb-6 text-sm text-emerald-300">
-                <MonthlyReportDownload teamId={team.id} timezone={reportTimezone} />
-            </section>
             {rejectedFilters.length > 0 && (
                 <p role="alert" className="mb-5 text-amber-200">
                     Some filters were invalid and ignored: {rejectedFilters.join(', ')}.
                 </p>
             )}
-            <p className="mb-4 text-sm text-slate-400">
-                {counts.total} monitors · Updated{' '}
-                <time dateTime={dashboard.generatedAt}>
-                    {new Date(dashboard.generatedAt).toLocaleString()}
-                </time>
-            </p>
-            <dl
-                aria-label="Monitor states"
-                className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
-            >
-                {(['up', 'down', 'unknown', 'paused', 'suspended'] as const).map((state) => (
-                    <div key={state} className="rounded border border-slate-700 p-4">
-                        <dt className="capitalize text-slate-400">{state}</dt>
-                        <dd className="mt-2 text-2xl font-semibold">{counts[state]}</dd>
-                    </div>
-                ))}
-                <div className="rounded border border-slate-700 p-4">
-                    <dt className="text-slate-400">Open incidents</dt>
-                    <dd className="mt-2 text-2xl font-semibold">{counts.openIncidents}</dd>
-                </div>
-            </dl>
-            <section aria-labelledby="dashboard-incidents" className="mb-8">
-                <h2 id="dashboard-incidents" className="mb-3 text-xl font-semibold">
-                    Open incidents
-                </h2>
-                {dashboard.incidents.length === 0 ? (
-                    <p className="text-slate-400">No open incidents.</p>
-                ) : (
-                    <div className="overflow-x-auto">
+            <div className="ui-dashboard-stack">
+                <OverviewSummary teamId={team.id} dashboard={dashboard} />
+                <Panel
+                    title="Open incidents"
+                    description="Most recent unresolved incidents. Review the timeline to investigate and coordinate a response."
+                >
+                    {dashboard.incidents.length === 0 ? (
+                        <>
+                            <p>No open incidents.</p>
+                            <p className="ui-help">
+                                Monitor status and incident confirmation are separate. Review Down
+                                and Unknown monitors even when no incident is open.
+                            </p>
+                        </>
+                    ) : (
                         <IncidentTable
                             teamId={team.id}
                             incidents={dashboard.incidents}
                             caption="Latest open incidents"
                             showMonitor
                         />
-                    </div>
-                )}
-                {counts.openIncidents > dashboard.incidents.length && (
-                    <Link
-                        href={`/teams/${team.id}/incidents?state=open`}
-                        className="mt-3 inline-block text-emerald-300 underline"
-                    >
+                    )}
+                    {counts.openIncidents > dashboard.incidents.length && (
+                        <p className="ui-description">
+                            Showing {dashboard.incidents.length} of {counts.openIncidents} open
+                            incidents.
+                        </p>
+                    )}
+                    <Link href={`/teams/${team.id}/incidents?state=open`} className="ui-link">
                         View all open incidents
                     </Link>
-                )}
-            </section>
-            <section aria-labelledby="dashboard-monitors" className="mb-8">
-                <h2 id="dashboard-monitors" className="mb-3 text-xl font-semibold">
-                    Monitors
-                </h2>
-                {counts.total === 0 ? (
-                    <p className="text-slate-300">
-                        No monitors yet.{' '}
-                        <Link href={monitorsPath(team.id)} className="text-emerald-300 underline">
-                            Manage monitors
+                </Panel>
+                <Panel
+                    title="Monitors"
+                    description="Current states and latest check times. Open a monitor for details or select its dashboard charts."
+                >
+                    <MonitorOverview team={team} dashboard={dashboard} />
+                </Panel>
+                {selectedMonitor !== null && (
+                    <section aria-labelledby="selected-monitor-charts" className="ui-panel">
+                        <h2 id="selected-monitor-charts" className="ui-section-title">
+                            Charts: {selectedMonitor.name}
+                        </h2>
+                        <p className="ui-description">
+                            Metrics for this monitor only, not a team-wide uptime percentage.
+                        </p>
+                        <Link className="ui-link" href={monitorPath(team.id, selectedMonitor.id)}>
+                            Open monitor details
                         </Link>
-                    </p>
-                ) : (
-                    <>
-                        {monitors.data.length === 0 ? (
-                            <p>
-                                No monitors on this page.{' '}
-                                <Link
-                                    className="text-emerald-300 underline"
-                                    href={dashboardUrl(team.id)}
-                                >
-                                    Back to the first page
-                                </Link>
-                            </p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <caption className="sr-only">Monitors of {team.name}</caption>
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Monitor</th>
-                                            <th scope="col">Status</th>
-                                            <th scope="col">State</th>
-                                            <th scope="col">Charts</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {monitors.data.map((monitor) => (
-                                            <tr
-                                                key={monitor.id}
-                                                className="border-b border-slate-800"
-                                            >
-                                                <th scope="row" className="py-3 font-normal">
-                                                    <Link
-                                                        href={monitorPath(team.id, monitor.id)}
-                                                        className="text-emerald-300 underline"
-                                                    >
-                                                        {monitor.name}
-                                                    </Link>
-                                                </th>
-                                                <td>
-                                                    <StatusBadge status={monitor.lastStatus} />
-                                                </td>
-                                                <td>
-                                                    <StateBadge state={monitor.state} />
-                                                </td>
-                                                <td>
-                                                    <Link
-                                                        href={dashboardUrl(
-                                                            team.id,
-                                                            monitors.currentPage,
-                                                            monitor.id,
-                                                        )}
-                                                        aria-current={
-                                                            selectedMonitor?.id === monitor.id
-                                                                ? 'true'
-                                                                : undefined
-                                                        }
-                                                        className="text-emerald-300 underline"
-                                                    >
-                                                        {selectedMonitor?.id === monitor.id
-                                                            ? 'Selected'
-                                                            : `View charts for ${monitor.name}`}
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        <p className="mb-5 ui-help">Last 24 hours · Hourly buckets · UTC</p>
+                        <div className="grid gap-5 lg:grid-cols-2">
+                            <TimeSeriesChart
+                                title="Response time"
+                                description="Hourly mean of measured checks, including failures with a measured response time. Regions are simulated."
+                                timestamps={latency.map((point) => point.at)}
+                                series={(['eu', 'us'] as const).map((region) => ({
+                                    id: region,
+                                    label: region.toUpperCase(),
+                                    values: latency.map((point) => point[region].meanMs),
+                                }))}
+                                unit="ms"
+                                empty="No measured response times for this region in the selected window."
+                            />
+                            <TimeSeriesChart
+                                title="Observed uptime"
+                                description="Availability weighted by time, with maintenance and paused periods excluded."
+                                timestamps={uptime.series.map((point) => point.at)}
+                                series={[
+                                    {
+                                        id: 'uptime',
+                                        label: 'Observed uptime',
+                                        values: uptime.series.map((point) => point.value),
+                                    },
+                                ]}
+                                unit="%"
+                                empty="Time-weighted uptime is unavailable for this window."
+                            />
+                        </div>
+                        <dl
+                            aria-label="Availability metrics"
+                            className="mt-5 grid gap-3 sm:grid-cols-3"
+                        >
+                            <div>
+                                <dt className="text-sm text-slate-400">Observed uptime</dt>
+                                <dd>{percentage(uptime.observedPercent)}</dd>
                             </div>
+                            <div>
+                                <dt className="text-sm text-slate-400">Data coverage</dt>
+                                <dd>{percentage(uptime.coveragePercent)}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-sm text-slate-400">SLA</dt>
+                                <dd>{percentage(uptime.slaPercent)}</dd>
+                            </div>
+                        </dl>
+                        {uptime.durations !== null && (
+                            <dl
+                                aria-label="Availability durations"
+                                className="mt-3 grid gap-3 sm:grid-cols-4"
+                            >
+                                <div>
+                                    <dt className="text-sm text-slate-400">Time up</dt>
+                                    <dd>{duration(uptime.durations.upSeconds)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm text-slate-400">Time down</dt>
+                                    <dd>{duration(uptime.durations.downSeconds)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm text-slate-400">Time unknown</dt>
+                                    <dd>{duration(uptime.durations.unknownSeconds)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm text-slate-400">Time excluded</dt>
+                                    <dd>{duration(uptime.durations.excludedSeconds)}</dd>
+                                </div>
+                            </dl>
                         )}
-                        <Pagination
-                            current={monitors.currentPage}
-                            last={monitors.lastPage}
-                            href={(page) => dashboardUrl(team.id, page, selectedMonitor?.id)}
-                        />
-                    </>
+                    </section>
                 )}
-            </section>
-            <h2 className="mb-2 text-xl font-semibold">
-                {selectedMonitor?.name ?? 'Monitor charts'}
-            </h2>
-            <p className="mb-5 text-sm text-slate-400">Last 24 hours · Hourly buckets · UTC</p>
-            <div className="grid gap-5 lg:grid-cols-2">
-                <TimeSeriesChart
-                    title="Response time"
-                    description="Hourly mean of measured checks, including failures with a measured response time. Regions are simulated."
-                    timestamps={latency.map((point) => point.at)}
-                    series={(['eu', 'us'] as const).map((region) => ({
-                        id: region,
-                        label: region.toUpperCase(),
-                        values: latency.map((point) => point[region].meanMs),
-                    }))}
-                    unit="ms"
-                    empty="No measured response times for this region in the selected window."
-                />
-                <TimeSeriesChart
-                    title="Observed uptime"
-                    description="Availability weighted by time, with maintenance and paused periods excluded."
-                    timestamps={uptime.series.map((point) => point.at)}
-                    series={[
-                        {
-                            id: 'uptime',
-                            label: 'Observed uptime',
-                            values: uptime.series.map((point) => point.value),
-                        },
-                    ]}
-                    unit="%"
-                    empty="Time-weighted uptime is unavailable for this window."
-                />
+                <Panel
+                    title="Monthly reports"
+                    description="Export a monthly SLA report using the team's reporting timezone."
+                >
+                    <MonthlyReportDownload teamId={team.id} timezone={reportTimezone} />
+                </Panel>
             </div>
-            <dl aria-label="Availability metrics" className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div>
-                    <dt className="text-sm text-slate-400">Observed uptime</dt>
-                    <dd>{percentage(uptime.observedPercent)}</dd>
-                </div>
-                <div>
-                    <dt className="text-sm text-slate-400">Data coverage</dt>
-                    <dd>{percentage(uptime.coveragePercent)}</dd>
-                </div>
-                <div>
-                    <dt className="text-sm text-slate-400">SLA</dt>
-                    <dd>{percentage(uptime.slaPercent)}</dd>
-                </div>
-            </dl>
-            {uptime.durations !== null && (
-                <dl aria-label="Availability durations" className="mt-3 grid gap-3 sm:grid-cols-4">
-                    <div>
-                        <dt className="text-sm text-slate-400">Time up</dt>
-                        <dd>{duration(uptime.durations.upSeconds)}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-sm text-slate-400">Time down</dt>
-                        <dd>{duration(uptime.durations.downSeconds)}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-sm text-slate-400">Time unknown</dt>
-                        <dd>{duration(uptime.durations.unknownSeconds)}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-sm text-slate-400">Time excluded</dt>
-                        <dd>{duration(uptime.durations.excludedSeconds)}</dd>
-                    </div>
-                </dl>
-            )}
         </>
     );
 }

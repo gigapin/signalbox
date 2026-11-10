@@ -9,6 +9,8 @@ export const timestamps = [
 ];
 /** Exact initial projection contract, with no made-up availability values. */
 export const dashboard: DashboardView = {
+    can: { create: true },
+    usage: { used: 1, limit: 5, minimumIntervalSeconds: 300, full: false },
     generatedAt: '2026-10-30T12:00:00+00:00',
     window: { startsAt: '2026-10-29T12:00:00+00:00', endsAt: '2026-10-30T12:00:00+00:00' },
     counts: { total: 1, up: 1, down: 0, unknown: 0, paused: 0, suspended: 0, openIncidents: 0 },

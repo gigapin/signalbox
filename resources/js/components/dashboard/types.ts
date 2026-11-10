@@ -1,7 +1,7 @@
 /** Describe the explicit operational dashboard projection without treating sample counts as time-weighted uptime. */
 import type { AuthProps } from '../auth/AuthLayout';
 import type { IncidentSummary } from '../incidents/types';
-import type { MonitorPage, TeamSummary } from '../monitors/types';
+import type { MonitorPage, MonitorUsage, TeamSummary } from '../monitors/types';
 
 /** One measured hourly mean; missing measurements remain null, including hours containing only absent work. */
 export interface RegionalLatency {
@@ -13,6 +13,10 @@ export interface RegionalLatency {
 
 /** Current data returned by the read-only dashboard service. */
 export interface DashboardView {
+    /** Fresh monitor creation permission; absent historical props must never imply permission. */
+    can?: { create: boolean };
+    /** Effective plan snapshot; optional only for existing browser-history entries. */
+    usage?: MonitorUsage;
     /** UTC instant at which the projection was generated. */
     generatedAt: string;
     /** Rolling 24-hour half-open UTC window. */

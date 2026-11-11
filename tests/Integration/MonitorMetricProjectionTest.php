@@ -273,14 +273,15 @@ it('serves the detail metric cards through the existing authorized partial recov
     metricObservation($this->monitor, 10);
     $this->actingAs($this->team->owner)->get('/teams/'.$this->team->id.'/monitors/'.$this->monitor->id, [
         'X-Inertia-Partial-Component' => 'Monitors/Show',
-        'X-Inertia-Partial-Data' => 'monitor,recentIncidents,maintenance,escalation,can,metrics,team,auth,realtime',
+        'X-Inertia-Partial-Data' => 'monitor,recentIncidents,maintenance,escalation,can,metrics,monitorContext,team,auth,realtime',
     ])->assertOk()->assertHeader('Cache-Control', 'no-store, private')
         ->assertJsonPath('props.monitor.id', $this->monitor->id)
         ->assertJsonPath('props.team.id', $this->team->id)
+        ->assertJsonPath('props.monitorContext.certificate.state', 'not_applicable')
+        ->assertJsonPath('props.monitorContext.notifications', null)
         ->assertJsonCount(24, 'props.metrics.recent')
         ->assertJsonPath('props.metrics.latency.summary.eu.samples', 1)
-        ->assertJsonPath('props.metrics.periods.24h.available', true)
-        ->assertJsonMissingPath('props.monitorContext');
+        ->assertJsonPath('props.metrics.periods.24h.available', true);
 });
 
 it('projects the selected rolling window for both regional latency and agreed uptime', function (string $period, int $buckets): void {

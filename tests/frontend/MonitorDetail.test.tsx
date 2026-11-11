@@ -239,6 +239,14 @@ test('refreshes cards and header identity through one scoped live read and dispo
                                   name: 'Checkout renamed',
                                   lastStatus: 'down',
                               },
+                              monitorContext: {
+                                  certificate: {
+                                      state: 'stale',
+                                      expiresAt: '2026-12-01T00:00:00Z',
+                                      observedAt: null,
+                                  },
+                                  notifications: null,
+                              },
                               metrics: {
                                   ...detailMetrics,
                                   periods: {
@@ -270,8 +278,10 @@ test('refreshes cards and header identity through one scoped live read and dispo
     ).toBeInTheDocument();
     expect(read.mock.calls[0]?.[1]?.headers).toMatchObject({
         'X-Inertia-Partial-Data':
-            'monitor,recentIncidents,maintenance,escalation,can,metrics,team,auth,realtime',
+            'monitor,recentIncidents,maintenance,escalation,can,metrics,monitorContext,team,auth,realtime',
     });
+    expect(screen.getByText('Stale observation')).toBeInTheDocument();
+    expect(screen.getByText('No effective notification policy configured.')).toBeInTheDocument();
     denied = true;
     act(() => signals?.state('disconnected'));
     act(() => signals?.subscribed());
@@ -282,6 +292,10 @@ test('refreshes cards and header identity through one scoped live read and dispo
         screen.queryByRole('region', { name: 'Availability by period' }),
     ).not.toBeInTheDocument();
     expect(screen.getByText(/Live access is no longer available/)).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'TLS certificate' })).not.toBeInTheDocument();
+    expect(
+        screen.queryByRole('region', { name: 'Effective notifications' }),
+    ).not.toBeInTheDocument();
     expect(close).toHaveBeenCalledOnce();
 });
 

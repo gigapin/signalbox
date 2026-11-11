@@ -13,7 +13,7 @@ import AvailabilitySummary from '../../components/monitors/AvailabilitySummary';
 import AvailabilityHistory from '../../components/monitors/AvailabilityHistory';
 import MonitorCharts from '../../components/monitors/MonitorCharts';
 import AppLayout from '../../components/app/AppLayout';
-import IncidentTable from '../../components/incidents/IncidentTable';
+import MonitorContextPanels from '../../components/monitors/MonitorContextPanels';
 import MaintenancePanel from '../../components/incidents/MaintenancePanel';
 import type { IncidentSummary, MaintenanceView } from '../../components/incidents/types';
 import { incidentsPath, maintenancePath } from '../../components/incidents/urls';
@@ -34,7 +34,7 @@ interface ShowProps extends MonitorPageProps {
     /** Current availability projection, absent only on older browser-history entries. */
     metrics?: MonitorMetricsView;
     /** Certificate provenance and safe effective notification targets. */
-    monitorContext: MonitorContextView;
+    monitorContext?: MonitorContextView;
     /** Names of malformed metric controls; raw values are never reflected. */
     rejectedMetricFilters: string[];
     /** Safe detail projection. */
@@ -168,6 +168,7 @@ function PageContent({ onIdentity }: PageContentProps) {
         can,
         monitorListUrl,
         metrics,
+        monitorContext,
         rejectedMetricFilters,
     } = live.props;
     useEffect(() => {
@@ -326,21 +327,12 @@ function PageContent({ onIdentity }: PageContentProps) {
                     />
                 )}
 
-                <section aria-labelledby="incidents-heading" className="mt-8">
-                    <h2 id="incidents-heading" className="mb-2 text-lg font-semibold">
-                        Recent incidents
-                    </h2>
-                    {recentIncidents.length === 0 ? (
-                        <p className="text-slate-300">No incidents recorded for this monitor.</p>
-                    ) : (
-                        <IncidentTable
-                            teamId={team.id}
-                            incidents={recentIncidents}
-                            caption={`Recent incidents of ${monitor.name}`}
-                            showMonitor={false}
-                        />
-                    )}
-                </section>
+                <MonitorContextPanels
+                    teamId={team.id}
+                    context={monitorContext}
+                    maintenance={maintenance}
+                    incidents={recentIncidents}
+                />
 
                 <MaintenancePanel
                     path={maintenancePath(team.id, monitor.id)}

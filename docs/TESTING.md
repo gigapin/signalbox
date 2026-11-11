@@ -1,5 +1,9 @@
 # Test infrastructure
 
+## Monitor context panel coverage — UI.03.6
+
+MonitorContextPanels.test.tsx mounts the actual detail page for old-history context, non-applicable/missing/stale/current TLS, server-phased overlapping maintenance and the next window, effective default/override policies, active/verified/stub flags, empty step targets, same-team incident links and zero final duration. MonitorDetail.test.tsx verifies context recovery through the existing partial request and removal after denial. Incidents.test.tsx checks the compact recent-incident region while retaining management-form regressions. MonitorMetricProjectionTest requests monitorContext through the authorized partial protocol; the legacy partial that omits it still excludes its queries. Verification counts and unexecuted checks are recorded in TASKS.md.
+
 M0.06 separates automated checks from application data and adds React DOM testing. The stack remains Pest 4/Laravel 13, PostgreSQL 16, Redis 7, Inertia 2, React 19, TypeScript and Vite 8. The official references used for configuration are [Laravel testing](https://laravel.com/docs/13.x/testing), [Vitest](https://vitest.dev/guide/), [React Testing Library setup](https://testing-library.com/docs/react-testing-library/setup/), and the [official PostgreSQL image](https://hub.docker.com/_/postgres). See [TASKS.md](TASKS.md) for remaining CI and product work.
 
 ## Complete verification
@@ -612,7 +616,7 @@ npx vitest run tests/frontend/MonitorDetail.test.tsx tests/frontend/Monitors.tes
 docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMetricProjectionTest.php tests/Integration/MonitorPagesTest.php tests/Integration/MonitorAvailabilityTest.php
 ```
 
-Final actual counts and unexecuted checks are recorded in [TASKS.md](TASKS.md). UI.03.5 continues with charts and period/region controls rather than duplicating the duration history or SLA formulas.
+Final actual counts and unexecuted checks are recorded in [TASKS.md](TASKS.md). UI.03.5 completes the charts and period/region controls; their added test coverage and dense-window benchmark are recorded below.
 
 
 ## Monitor charts — UI.03.5

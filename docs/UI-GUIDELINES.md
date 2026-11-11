@@ -1,5 +1,11 @@
 # UI guidelines — Signalbox
 
+## Context panels — UI.03.6
+
+Monitors/Show composes MonitorContextPanels into a responsive grid, with a single column at narrow widths and wrapping channel/policy/reason labels. TLS explicitly distinguishes not applicable, missing, stale and recent observations; cached expiry and retained observation provenance are separate. Freshness belongs to snapshot generation, never the browser clock or a generic last check. Local timestamps retain UTC machine values. No registration-domain expiry is inferred.
+
+Maintenance overview shows every ongoing server-phased window and the earliest upcoming window; full history and management stay in the existing Maintenance panel. Effective notifications show override/default, ordered minute delays, safe channel names/types and active/verified/stub flags. No destination, avatar or test-send action is added. Configuration does not guarantee delivery. Missing old-history context asks for reload instead of claiming an empty policy. Recent incidents use compact linked entries with actual status/severity/cause, local start, final duration (including zero) or explicit ongoing/unavailable duration and responsibility state. Existing forms remain mounted in the removable team boundary. monitorContext shares the existing authorized live partial read; denial removes the context with the rest of the page.
+
 UI.01.3 introduce token e primitive condivise, basate sui [percorsi UI.01.2](USER-DASHBOARD.md) e sull’inventario UI.01.1. Implementazione in [app.css](../resources/css/app.css) e [components/ui](../resources/js/components/ui). Non introduce AppLayout, nuove rotte, librerie o metriche. Le pagine saranno migrate in UI.02–UI.04; badge monitor/incidenti e viewport tabellare adottano già la base condivisa.
 
 ## Token e composizione

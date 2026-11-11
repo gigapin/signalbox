@@ -1,5 +1,15 @@
 # Private live pages (M6.03)
 
+## Monitor lifecycle audit — UI.03.8
+
+Monitor detail continues to use one useLivePage/LivePageSession and native Echo client. The exact accepted URL (period, region and list return) is reused for partial recovery. No polling, separate metric fetcher, event-to-status assignment or new event schema is introduced. In addition to team/account checks, a Monitors/Show snapshot must contain the exact numeric route monitor ID; mismatched/malformed resource identity closes the subscription and triggers the existing denial boundary.
+
+AppLayout now keys its private shell by route team and actor email. Even a same-component Inertia visit with preserveState true remounts the old private subtree, disposing readers and forms instead of carrying drafts into a different team/account. Explicit logout hides private content instead of merely rendering an offline connection label. Denial hides the resource title in the managed document head as well as DOM, navigation and controls. This applies when access loss is discovered; it does not add immediate server-side socket eviction or per-frame membership checks.
+
+EscalationPanel no longer remounts when the saved policy ID changes. Its authorized editor synchronizes a pristine form to the saved baseline while retaining dirty/pending choices; a changed saved policy has a notice, and a deleted draft option remains explicit and cannot silently submit a different policy. Losing update permission unmounts that editor and its departure registration. Maintenance editors disappear when update permission is lost or an upcoming window becomes ongoing/finished. The server policy and time-window rules remain authoritative.
+
+MonitorRealtimeLifecycle.test.tsx exercises the production detail, hook, session, native Echo adapter and Head through MemoryPusher/HTTP-only doubles. It checks reconnect/current-cookie admission, exact URL recovery, burst coalescing, no idle polling, stable cards and drafts, late JSON, preserved team/account/filter replacements, logout, denial, pending action cancellation and StrictMode cleanup. The user-event keyboard case drains only the controlled fake clock, including the DOM library's final async-wrapper task. This is in-process evidence, not a real browser/socket reconnection or deployment benchmark.
+
 The monitor/incident list/detail screens and M6.04's operational dashboard use native Laravel Echo through `useLivePage`. [BROADCASTING.md](BROADCASTING.md) owns the scalar event contract and subscription authorization; this document owns browser lifecycle and recovery. [DASHBOARD.md](DASHBOARD.md) records the delivered UI, latency chart and availability values. Integrated acceptance is M6.05.
 
 ## Configuration and installation

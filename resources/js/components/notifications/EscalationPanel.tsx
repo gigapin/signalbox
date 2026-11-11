@@ -1,7 +1,7 @@
 /** Let a monitor manager choose the escalation policy of one monitor. */
 import { useFormProtection } from '../app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import type { MonitorEscalationView } from './types';
 import { notificationsPath } from './urls';
 
@@ -25,20 +25,6 @@ export default function EscalationPanel({
     canManage,
 }: EscalationPanelProps) {
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
-    const form = useForm({
-        escalation_policy_id: escalation.policyId === null ? '' : String(escalation.policyId),
-    });
-    useFormProtection(form);
-    const fallback = escalation.options.find((option) => option.isDefault);
-
-    function submit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        form.transform((data) => ({
-            escalation_policy_id:
-                data.escalation_policy_id === '' ? null : Number(data.escalation_policy_id),
-        }));
-        form.patch(action, { preserveScroll: true });
-    }
 
     return (
         <section aria-labelledby="escalation-heading" className="mt-8">
@@ -55,48 +41,103 @@ export default function EscalationPanel({
                     {errors.policy}
                 </p>
             )}
-            {canManage && escalation.options.length > 0 && (
-                <form onSubmit={submit} noValidate className="mt-3 flex flex-wrap items-end gap-3">
-                    <div>
-                        <label
-                            htmlFor="monitor-escalation"
-                            className="mb-2 block text-sm font-medium"
-                        >
-                            Escalation policy
-                        </label>
-                        <select
-                            id="monitor-escalation"
-                            value={form.data.escalation_policy_id}
-                            onChange={(event) =>
-                                form.setData('escalation_policy_id', event.target.value)
-                            }
-                            className="rounded border border-slate-600 bg-slate-900 px-3 py-2"
-                        >
-                            <option value="">
-                                {fallback === undefined
-                                    ? 'Team default (none set)'
-                                    : `Team default (${fallback.name})`}
-                            </option>
-                            {escalation.options.map((option) => (
-                                <option key={option.id} value={String(option.id)}>
-                                    {option.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <button
-                        disabled={form.processing}
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
-                        {form.processing ? 'Saving…' : 'Save'}
-                    </button>
-                </form>
-            )}
+            {canManage && <EscalationEditor key={action} action={action} escalation={escalation} />}
             <p className="mt-2 text-sm">
                 <Link href={notificationsPath(teamId)} className="text-emerald-300 underline">
                     Manage channels and policies
                 </Link>
             </p>
         </section>
+    );
+}
+
+/** Only authorized editors own a form and its departure registration. */
+type EditorProps = Pick<EscalationPanelProps, 'action' | 'escalation'>;
+
+/**
+ * @param props Current saved policy and team-local options.
+ * @returns A stable editor that accepts clean server changes while preserving an unsent selection.
+ */
+function EscalationEditor({ action, escalation }: EditorProps) {
+    const form = useForm({
+        escalation_policy_id: escalation.policyId === null ? '' : String(escalation.policyId),
+    });
+    useFormProtection(form);
+    const [baseline, setBaseline] = useState(escalation.policyId);
+    const fallback = escalation.options.find((option) => option.isDefault);
+    const missingDraft =
+        form.data.escalation_policy_id !== '' &&
+        !escalation.options.some((option) => String(option.id) === form.data.escalation_policy_id);
+
+    // Sync only a clean baseline during render, before committing a selector with stale saved state.
+    if (!form.isDirty && !form.processing && baseline !== escalation.policyId) {
+        const saved = escalation.policyId === null ? '' : String(escalation.policyId);
+        setBaseline(escalation.policyId);
+        form.setData('escalation_policy_id', saved);
+        form.setDefaults({ escalation_policy_id: saved });
+    }
+
+    /** Submit an explicit draft only while its selected policy remains available. */
+    function submit(event: FormEvent<HTMLFormElement>): void {
+        event.preventDefault();
+        if (form.processing || missingDraft) return;
+        form.transform((data) => ({
+            escalation_policy_id:
+                data.escalation_policy_id === '' ? null : Number(data.escalation_policy_id),
+        }));
+        form.patch(action, { preserveScroll: true });
+    }
+
+    if (escalation.options.length === 0 && !form.isDirty) return null;
+
+    return (
+        <>
+            {form.isDirty && baseline !== escalation.policyId && (
+                <p role="status">The saved policy changed. Your unsent selection is preserved.</p>
+            )}
+            {missingDraft && (
+                <p role="status">
+                    The draft policy is no longer available. Choose another policy before saving.
+                </p>
+            )}
+            <form onSubmit={submit} noValidate className="mt-3 flex flex-wrap items-end gap-3">
+                <div>
+                    <label htmlFor="monitor-escalation" className="mb-2 block text-sm font-medium">
+                        Escalation policy
+                    </label>
+                    <select
+                        id="monitor-escalation"
+                        value={form.data.escalation_policy_id}
+                        disabled={form.processing}
+                        onChange={(event) =>
+                            form.setData('escalation_policy_id', event.target.value)
+                        }
+                        className="rounded border border-slate-600 bg-slate-900 px-3 py-2"
+                    >
+                        <option value="">
+                            {fallback === undefined
+                                ? 'Team default (none set)'
+                                : `Team default (${fallback.name})`}
+                        </option>
+                        {missingDraft && (
+                            <option value={form.data.escalation_policy_id} disabled>
+                                Draft policy unavailable
+                            </option>
+                        )}
+                        {escalation.options.map((option) => (
+                            <option key={option.id} value={String(option.id)}>
+                                {option.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <button
+                    disabled={form.processing || missingDraft}
+                    className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
+                >
+                    {form.processing ? 'Saving…' : 'Save'}
+                </button>
+            </form>
+        </>
     );
 }

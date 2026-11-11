@@ -233,7 +233,7 @@ function WindowRow({ path, window: item, canManage, reasonMaxLength }: WindowRow
                     </button>
                 </div>
             )}
-            {editing && (
+            {editing && canManage && upcoming && (
                 <div className="mt-3 rounded border border-slate-700 p-3">
                     <MaintenanceForm
                         idPrefix={`maintenance-${item.id}`}
@@ -283,7 +283,7 @@ export default function MaintenancePanel({ path, maintenance, canManage }: Maint
                 <ul aria-label="Current and upcoming maintenance">
                     {maintenance.current.map((item) => (
                         <WindowRow
-                            key={item.id}
+                            key={`${item.id}:${canManage}:${item.phase}`}
                             path={path}
                             window={item}
                             canManage={canManage}

@@ -1,5 +1,11 @@
 # UI guidelines — Signalbox
 
+## Realtime-safe monitor editors — UI.03.8
+
+A background snapshot updates server-owned display data, not unsent form values. A pristine escalation selection follows a new saved override and baseline; an unsent/pending selection survives, with a notice when the saved policy differs. If the chosen draft policy disappears, its option stays visibly unavailable and Save is disabled until a valid replacement is selected. Removing update permission discards the editor rather than leaving a hidden dirty/busy registration.
+
+An open maintenance editor is valid only while its server phase is upcoming and the actor can update. A permission/phase transition unmounts the editor and draft; returning to an allowed phase requires an explicit new edit. Heartbeat credentials retain their existing path/configuration/permission-remount boundary. AppLayout remounts every private page child on team/account identity change, while ordinary same-identity metric snapshots preserve those children. Authoritative denial and logout remove private DOM and managed document title. Final native-browser, zoom and assistive-technology acceptance remain UI.06.
+
 ## Monitor editor and action transitions — UI.03.7
 
 Create/Edit use shared semantic input/button/panel tokens, an explicit Cancel link, server-provided cadence bounds and the existing departure guard. Numeric text remains raw during typing; local cadence failures focus the interval without sending. Secret replacement remains explicit. Inputs are disabled while a write is pending so edits cannot silently become the baseline of an earlier submission. Server field errors focus after React commits and preserve the draft.

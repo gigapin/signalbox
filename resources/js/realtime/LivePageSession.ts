@@ -241,7 +241,12 @@ export class LivePageSession<P extends Record<string, unknown>> {
             if (!isRecord(body) || body.component !== this.scope.component || !isRecord(body.props))
                 throw new Error('Invalid page.');
             const props = body.props;
+            const wrongMonitor =
+                this.scope.component === 'Monitors/Show' &&
+                this.scope.monitorId !== undefined &&
+                (!isRecord(props.monitor) || props.monitor.id !== this.scope.monitorId);
             if (
+                wrongMonitor ||
                 !isRecord(props.team) ||
                 props.team.id !== this.scope.teamId ||
                 !isRecord(props.auth) ||

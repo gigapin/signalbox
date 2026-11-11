@@ -1,5 +1,15 @@
 # Realtime acceptance matrix (M6.05)
 
+## Monitor detail audit — UI.03.8
+
+MonitorRealtimeLifecycle.test.tsx extends the native Echo → authorization → session → real DOM approach to Monitors/Show with the delivered metric/context panels and editable operations. The transport doubles own only Pusher channels/connection events and HTTP responses. Controlled timers exercise coalescing, idle periods, retry and teardown; pending response JSON is completed after a new page identity to prove that stale data cannot reappear. Same-identity metric selection preserves drafts; team/account changes discard the old private subtree even with preserveState true.
+
+The audit reproduced unsent escalation reset, an open maintenance editor surviving permission/phase changes, and retained private drafts across identity-preserving navigation. Those cases now pass with stable dirty-policy forms, conditional maintenance editors and a shell keyed to route team/actor. Denial also replaces the managed private document title. The title test first removes the unmanaged test title created by the DOM setup; a deliberate restoration of the old production Head expression then fails both denial cases, and the fix is restored. Three resource-identity regressions failed before LivePageSession validated the route monitor ID.
+
+The shared Inertia test renderer now accepts an explicit page component/URL/version and resolves subsequent visits against the currently mounted fixture. The installed adapter initializes its singleton resolver once per test-file runtime, so a resolver closed over the first fixture previously caused misleading component substitutions. This change affects test scaffolding only.
+
+LivePageRecoveryTest now also requests all delivered monitor roots, changes a managing member/admin to viewer and then revokes membership while stale account relations remain loaded. Metrics/context and can hints remain current, foreign-team and revoked reads fail normally. Existing native protocol and delivery suites remain the signature/destination/commit-boundary proof. Counts and limitations are in TASKS.md; no live network, worker, production session or new PASS L is inferred.
+
 This records the concrete evidence for payloads, operational UI recovery, duplicate handling and private-channel boundaries. [BROADCASTING.md](BROADCASTING.md) owns producer/admission contracts, [REALTIME-CLIENT.md](REALTIME-CLIENT.md) owns browser lifecycle, and [DASHBOARD.md](DASHBOARD.md) owns operational/latency projections. Actual commands/results are recorded in [TASKS.md](TASKS.md).
 
 M6.05 covers the implemented realtime behavior. M7.03 later added the numerical availability/SLA values, which close M6.04 and the M6 exit; their rules and evidence are in [METRIC-ROLLUPS.md](METRIC-ROLLUPS.md#sla-service-m703).

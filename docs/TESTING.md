@@ -1,5 +1,11 @@
 # Test infrastructure
 
+## Realtime monitor lifecycle coverage — UI.03.8
+
+MonitorRealtimeLifecycle.test.tsx mounts the actual Monitors/Show with native Echo and MemoryPusher. Sixteen cases cover dirty/pristine/deleted escalation choices, maintenance permission/phase transitions, frames and exact-URL reconnect recovery, retained same-identity drafts versus discarded team/account drafts, delayed JSON and mutations, logout, socket/read denial, managed Head updates, keyboard retry and StrictMode cleanup. LivePageSession.test.ts adds three route-monitor identity cases. LivePageRecoveryTest adds two managing-role → viewer → revoked complete-root recoveries on PostgreSQL.
+
+The test renderer accepts optional actual page identity and uses the latest mounted fixture in the installed Inertia singleton resolver. Without that indirection, later test fixtures could navigate into the first component registered in that file, producing misleading assertions. Managed Head tests remove the unmanaged setup title before mounting. The keyboard test advances the fake clock through the DOM library async-wrapper cleanup instead of adding real waits or raising timeouts. Native protocol/delivery, frontend and PHP check results are in TASKS.md. No browser/VoiceOver/real Reverb network acceptance is implied.
+
 ## Monitor form/action transition coverage — UI.03.7
 
 MonitorMutations.test.tsx exercises inline confirmation/Cancel/Escape/focus, Pause/Resume, synchronous repeated create/edit submissions, draft retention, validation errors, the actual Inertia XHR error path, explicit uncertainty acknowledgement without replay, cancellation, known refusals versus 408/499/5xx/invalid-success uncertainty, unrelated-request isolation, authoritative denial, old callbacks and owned cleanup. The dirty Cancel path uses jsdom dialog shims and the actual departure guard; it is not a native-browser assertion. Existing Monitors tests now finish their intercepted requests before simulating later edits, since pending controls are intentionally disabled.

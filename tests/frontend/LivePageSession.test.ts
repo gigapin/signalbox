@@ -411,3 +411,17 @@ test('never sends a page recovery request to a different origin', async () => {
     expect(f.session.getSnapshot().phase).toBe('error');
     expect(f.read).not.toHaveBeenCalled();
 });
+
+test.each([{ id: 12 }, { id: '11' }, null])(
+    'denies a recovery projection whose monitor identity differs from the detail scope: %j',
+    async (monitor) => {
+        const f = fixture({ monitorId: 11 });
+        f.read.mockResolvedValueOnce(response({ monitor }));
+        f.callbacks[0]?.subscribed();
+        await tick();
+        expect(f.session.getSnapshot().phase).toBe('denied');
+        expect(f.session.getSnapshot().props.monitor.id).toBe(11);
+        expect(f.closes[0]).toHaveBeenCalledOnce();
+        expect(vi.getTimerCount()).toBe(0);
+    },
+);

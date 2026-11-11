@@ -1,5 +1,11 @@
 # Test infrastructure
 
+## Monitor form/action transition coverage — UI.03.7
+
+MonitorMutations.test.tsx exercises inline confirmation/Cancel/Escape/focus, Pause/Resume, synchronous repeated create/edit submissions, draft retention, validation errors, the actual Inertia XHR error path, explicit uncertainty acknowledgement without replay, cancellation, known refusals versus 408/499/5xx/invalid-success uncertainty, unrelated-request isolation, authoritative denial, old callbacks and owned cleanup. The dirty Cancel path uses jsdom dialog shims and the actual departure guard; it is not a native-browser assertion. Existing Monitors tests now finish their intercepted requests before simulating later edits, since pending controls are intentionally disabled.
+
+MonitorMutationNavigationTest.php covers create/update/delete with safe, external, foreign-team, detail-path, array, duplicate, oversized and absent return hints; strict body navigation rejection in form/JSON requests; refusal privacy and real JSON creation with query navigation. The CRUD/input/page suites retain role, tenant, quota and secret-replacement coverage. Final gate counts and unexecuted checks are recorded in TASKS.md.
+
 ## Monitor context panel coverage — UI.03.6
 
 MonitorContextPanels.test.tsx mounts the actual detail page for old-history context, non-applicable/missing/stale/current TLS, server-phased overlapping maintenance and the next window, effective default/override policies, active/verified/stub flags, empty step targets, same-team incident links and zero final duration. MonitorDetail.test.tsx verifies context recovery through the existing partial request and removal after denial. Incidents.test.tsx checks the compact recent-incident region while retaining management-form regressions. MonitorMetricProjectionTest requests monitorContext through the authorized partial protocol; the legacy partial that omits it still excludes its queries. Verification counts and unexecuted checks are recorded in TASKS.md.

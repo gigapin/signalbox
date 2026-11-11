@@ -130,7 +130,10 @@ test.each(['', '-1', 'abc', '60.5', '3e2', '9007199254740993', '86401'])(
 
 test('allows an unchanged legacy cadence below the plan minimum while validating edits to it', async () => {
     const user = userEvent.setup();
-    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    let visit: VisitOptions | undefined;
+    const patch = vi.spyOn(router, 'patch').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
     renderInertia('Signalbox', Edit, {
         team,
         monitor: { ...httpDetail, intervalSeconds: 60 },
@@ -143,10 +146,18 @@ test('allows an unchanged legacy cadence below the plan minimum while validating
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(patch).toHaveBeenCalledOnce();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    act(() => {
+        visit?.onError?.({});
+        visit?.onFinish?.({} as never);
+    });
 
     await user.clear(screen.getByLabelText('Interval (seconds)'));
     await user.type(screen.getByLabelText('Interval (seconds)'), '120');
-    expect(screen.getByRole('alert')).toHaveTextContent('at least 300 seconds');
+    expect(
+        screen
+            .getAllByRole('alert')
+            .some((alert) => alert.textContent?.includes('at least 300 seconds')),
+    ).toBe(true);
     await user.keyboard('{Enter}');
     expect(patch).toHaveBeenCalledOnce();
 });
@@ -166,18 +177,24 @@ test('clears a server interval error when editing it and uses the configured max
         maximumIntervalSeconds: 7200,
     });
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
-    act(() =>
-        visit?.onError?.({ interval_seconds: 'The plan changed. Reload to see its new minimum.' }),
-    );
+    act(() => {
+        visit?.onError?.({ interval_seconds: 'The plan changed. Reload to see its new minimum.' });
+        visit?.onFinish?.({} as never);
+    });
     await user.clear(screen.getByLabelText('Interval (seconds)'));
     await user.type(screen.getByLabelText('Interval (seconds)'), '7201');
-    expect(screen.getByRole('alert')).toHaveTextContent('at most 7200 seconds');
+    expect(
+        screen
+            .getAllByRole('alert')
+            .some((alert) => alert.textContent?.includes('at most 7200 seconds')),
+    ).toBe(true);
     expect(
         screen.queryByText('The plan changed. Reload to see its new minimum.'),
     ).not.toBeInTheDocument();
     await user.clear(screen.getByLabelText('Interval (seconds)'));
     await user.type(screen.getByLabelText('Interval (seconds)'), '7200');
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Interval (seconds)')).toHaveAttribute('aria-invalid', 'false');
+    expect(screen.getByRole('alert')).toHaveTextContent('Change refused');
 });
 
 /** Monitor detail sections without incidents, maintenance or escalation policies, as for a new monitor. */
@@ -429,7 +446,10 @@ async function createsDnsMonitorWithRelevantFields(): Promise<void> {
 /** Edits keep stored secrets by omitting them, and send a URL only after an explicit replacement. */
 async function editsWithoutResendingSecrets(): Promise<void> {
     const user = userEvent.setup();
-    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    let visit: VisitOptions | undefined;
+    const patch = vi.spyOn(router, 'patch').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
 
     renderInertia('Signalbox', Edit, {
         team,
@@ -454,6 +474,10 @@ async function editsWithoutResendingSecrets(): Promise<void> {
     expect(first).not.toHaveProperty('headers');
     expect(first).not.toHaveProperty('body');
 
+    act(() => {
+        visit?.onError?.({});
+        visit?.onFinish?.({} as never);
+    });
     await user.click(screen.getByLabelText('Replace URL'));
     await user.type(screen.getByLabelText('URL'), 'https://example.invalid/v2');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
@@ -520,8 +544,11 @@ async function showsValidationErrors(): Promise<void> {
     act(() => frames.forEach((frame) => frame(0)));
 
     const alerts = screen.getAllByRole('alert');
-    expect(alerts[0]).toHaveTextContent('Your plan allows 5 monitors');
-    expect(alerts[0]).toHaveFocus();
+    const quotaAlert = alerts.find((alert) =>
+        alert.textContent?.includes('Your plan allows 5 monitors'),
+    );
+    expect(quotaAlert).toBeDefined();
+    expect(quotaAlert).toHaveFocus();
     expect(screen.getByLabelText('Interval (seconds)')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText('Interval (seconds)')).toHaveAccessibleDescription(
         /at least 300 seconds\. Your plan requires an interval of at least 300 seconds\./,
@@ -620,7 +647,11 @@ async function keepsInputAfterQuotaRefusal(): Promise<void> {
         visit?.onFinish?.({} as never);
     });
 
-    expect(screen.getAllByRole('alert')[0]).toHaveTextContent('Your plan allows 5 monitors');
+    expect(
+        screen
+            .getAllByRole('alert')
+            .some((alert) => alert.textContent?.includes('Your plan allows 5 monitors')),
+    ).toBe(true);
     expect(screen.getByLabelText('Name')).toHaveValue('Checkout');
     expect(screen.getByLabelText('URL')).toHaveValue('https://shop.example.test/health');
     expect(screen.getByRole('button', { name: 'Create monitor' })).toBeEnabled();
@@ -633,10 +664,6 @@ async function keepsInputAfterQuotaRefusal(): Promise<void> {
 async function showsDetailAndConfirmsDeletion(): Promise<void> {
     const user = userEvent.setup();
     const remove = vi.spyOn(router, 'delete').mockImplementation(() => undefined);
-    const confirm = vi
-        .spyOn(window, 'confirm')
-        .mockReturnValueOnce(false)
-        .mockReturnValueOnce(true);
     const all = { update: true, delete: true, pause: true, resume: true };
 
     const view = renderInertia('Signalbox', Show, {
@@ -657,8 +684,10 @@ async function showsDetailAndConfirmsDeletion(): Promise<void> {
 
     await user.click(screen.getByRole('button', { name: 'Delete monitor' }));
     expect(remove).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(remove).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Delete monitor' }));
-    expect(confirm).toHaveBeenCalledTimes(2);
+    await user.click(screen.getByRole('button', { name: 'Confirm delete' }));
     expect(remove).toHaveBeenCalledWith('/teams/7/monitors/11', expect.any(Object));
 }
 
@@ -858,7 +887,9 @@ test('preserves list context on creation cancellation and editor return without 
     );
     expect(target.searchParams.get('returnTo')).toBe(monitorListUrl);
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
-    expect(patch.mock.calls[0]?.[0]).toBe('/teams/7/monitors/11');
+    expect(patch.mock.calls[0]?.[0]).toBe(
+        '/teams/7/monitors/11?' + new URLSearchParams({ returnTo: monitorListUrl }).toString(),
+    );
     expect(patch.mock.calls[0]?.[1]).not.toHaveProperty('returnTo');
 });
 

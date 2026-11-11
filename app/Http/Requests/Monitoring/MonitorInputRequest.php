@@ -34,7 +34,7 @@ abstract class MonitorInputRequest extends FormRequest
         $validator = $factory->make([], []);
         $validator->after(function (Validator $validator) use ($input): void {
             try {
-                $this->result = $input->validate($this->all(), $this->currentInput());
+                $this->result = $input->validate($this->monitorPayload(), $this->currentInput());
             } catch (ValidationException $exception) {
                 foreach ($exception->errors() as $field => $messages) {
                     foreach ($messages as $message) {
@@ -45,6 +45,21 @@ abstract class MonitorInputRequest extends FormRequest
         });
 
         return $validator;
+    }
+
+    /**
+     * @return array<string, mixed> Domain fields including unknown keys for strict rejection; query-only returnTo is navigation.
+     */
+    private function monitorPayload(): array
+    {
+        $payload = $this->all();
+
+        // A body or file field named returnTo remains invalid; only the URL hint is outside the domain payload.
+        if (!$this->getInputSource()->has('returnTo') && !$this->files->has('returnTo')) {
+            unset($payload['returnTo']);
+        }
+
+        return $payload;
     }
 
     /**

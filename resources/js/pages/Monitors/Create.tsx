@@ -9,7 +9,7 @@ import type {
     MonitorPageProps,
     MonitorUsage,
 } from '../../components/monitors/types';
-import { monitorsPath } from '../../components/monitors/urls';
+import { monitorsPath, withMonitorListReturn } from '../../components/monitors/urls';
 
 /** Creation page response from MonitorPageController::create. */
 interface CreateProps extends MonitorPageProps {
@@ -29,8 +29,10 @@ function PageContent() {
         usePage<CreateProps>().props;
     return (
         <>
-            <nav aria-label="Monitor navigation" className="mb-6 text-sm text-emerald-300">
-                <Link href={monitorListUrl ?? monitorsPath(team.id)}>Back to monitors</Link>
+            <nav aria-label="Monitor navigation" className="ui-actions mb-6">
+                <Link className="ui-link" href={monitorListUrl ?? monitorsPath(team.id)}>
+                    Back to monitors
+                </Link>
             </nav>
             {usage.full && (
                 <p className="mb-6 rounded border border-amber-700 p-3 text-amber-200">
@@ -42,7 +44,13 @@ function PageContent() {
                 initial={initialFormData(defaults)}
                 originalType={null}
                 stored={null}
-                action={monitorsPath(team.id)}
+                action={withMonitorListReturn(
+                    monitorsPath(team.id),
+                    team.id,
+                    monitorListUrl ?? monitorsPath(team.id),
+                )}
+                reviewUrl={monitorListUrl ?? monitorsPath(team.id)}
+                cancelUrl={monitorListUrl ?? monitorsPath(team.id)}
                 method="post"
                 options={options}
                 usage={usage}

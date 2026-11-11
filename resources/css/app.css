@@ -841,3 +841,24 @@
         gap: var(--spacing-ui-3);
     }
 }
+
+/* Monitor editors preserve intrinsic field semantics while permitting narrow-screen reflow. */
+@layer components {
+    .ui-monitor-form,
+    .ui-monitor-form-fields,
+    .ui-monitor-action-stack {
+        display: grid;
+        min-width: 0;
+        gap: var(--spacing-ui-6);
+        overflow-wrap: anywhere;
+    }
+
+    .ui-monitor-form-fields fieldset,
+    .ui-monitor-form-fields input,
+    .ui-monitor-form-fields select,
+    .ui-monitor-form-fields textarea,
+    .ui-monitor-form-fields > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+}

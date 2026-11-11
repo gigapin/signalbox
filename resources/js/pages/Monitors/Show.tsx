@@ -1,13 +1,12 @@
 /** Present authorized monitor operations and time-weighted availability without inventing observations or continuous uptime. */
 import type { MonitorMetricsView, MonitorContextView } from '../../components/monitors/metrics';
-import { useFormProtection } from '../../components/app/NavigationGuard';
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Panel from '../../components/ui/Panel';
 import Alert from '../../components/ui/Alert';
-import Button from '../../components/ui/Button';
+import MonitorActions, { type MonitorPermissions } from '../../components/monitors/MonitorActions';
 import MonitorSnapshot, { monitorDestination } from '../../components/monitors/MonitorSnapshot';
 import AvailabilitySummary from '../../components/monitors/AvailabilitySummary';
 import AvailabilityHistory from '../../components/monitors/AvailabilityHistory';
@@ -27,7 +26,7 @@ import type {
     MonitorDetail,
     MonitorPageProps,
 } from '../../components/monitors/types';
-import { monitorPath, monitorsPath, withMonitorListReturn } from '../../components/monitors/urls';
+import { monitorPath, monitorsPath } from '../../components/monitors/urls';
 
 /** Detail page response from MonitorPageController::show. */
 interface ShowProps extends MonitorPageProps {
@@ -46,7 +45,7 @@ interface ShowProps extends MonitorPageProps {
     /** Escalation policy choice and its effect. */
     escalation: MonitorEscalationView;
     /** Interface hints derived from MonitorPolicy. */
-    can: { update: boolean; delete: boolean; pause: boolean; resume: boolean };
+    can: MonitorPermissions;
 }
 
 /** One term/description pair. */
@@ -174,28 +173,7 @@ function PageContent({ onIdentity }: PageContentProps) {
     useEffect(() => {
         onIdentity({ id: monitor.id, name: monitor.name, type: monitor.type });
     }, [monitor.id, monitor.name, monitor.type, onIdentity]);
-    const form = useForm<Record<string, never>>({});
-    useFormProtection(form);
     const path = monitorPath(team.id, monitor.id);
-
-    /** Submit one authorized pause; existing server policies and transaction rules remain authoritative. */
-    function pause() {
-        form.post(`${path}/pause`, { preserveScroll: true });
-    }
-
-    /** Submit one resume, with quota rechecked by the existing server action. */
-    function resume() {
-        form.post(`${path}/resume`, { preserveScroll: true });
-    }
-
-    /** Delete only after an explicit confirmation, using the existing empty mutation payload. */
-    function destroy() {
-        if (!window.confirm(`Delete ${monitor.name}? This cannot be undone.`)) {
-            return;
-        }
-
-        form.delete(path);
-    }
 
     return (
         <>
@@ -208,57 +186,12 @@ function PageContent({ onIdentity }: PageContentProps) {
                     All incidents
                 </Link>
             </nav>
-            <div className="ui-actions mb-6" role="group" aria-label="Monitor actions">
-                {can.update && (
-                    <Link
-                        className="ui-button"
-                        data-variant="secondary"
-                        href={withMonitorListReturn(
-                            `${path}/edit`,
-                            team.id,
-                            monitorListUrl ?? monitorsPath(team.id),
-                        )}
-                    >
-                        Edit monitor
-                    </Link>
-                )}
-                {monitor.state === 'active' && can.pause && (
-                    <Button
-                        variant="secondary"
-                        type="button"
-                        disabled={form.processing}
-                        onClick={pause}
-                    >
-                        Pause monitor
-                    </Button>
-                )}
-                {monitor.state === 'paused' && can.resume && (
-                    <Button
-                        variant="secondary"
-                        type="button"
-                        disabled={form.processing || !monitor.withinQuota}
-                        onClick={resume}
-                    >
-                        Resume monitor
-                    </Button>
-                )}
-                {can.delete && (
-                    <Button
-                        type="button"
-                        disabled={form.processing}
-                        onClick={destroy}
-                        variant="danger"
-                    >
-                        Delete monitor
-                    </Button>
-                )}
-            </div>
-
-            {Object.entries(form.errors).map(([key, message]) => (
-                <p key={key} role="alert" className="mb-4 text-red-300">
-                    {message}
-                </p>
-            ))}
+            <MonitorActions
+                teamId={team.id}
+                monitor={monitor}
+                can={can}
+                returnTo={monitorListUrl ?? monitorsPath(team.id)}
+            />
 
             {monitor.state === 'suspended' && (
                 <Alert title="Monitor suspended" tone="danger">

@@ -1,5 +1,11 @@
 # Connection failures and narrow viewports
 
+## Owned monitor mutation feedback — UI.03.7
+
+The existing generic notice uses the same extracted response-less browser failure classifier in resources/js/requestFailures.ts. Its behavior for other pages is unchanged. Monitor editors and state actions additionally own their foreground write with useMonitorMutation, which uses the installed Inertia callback/event protocol. Only failures whose Axios config URL matches the owned mutation are consumed by that hook; unrelated programming exceptions remain observable. onFinish without an accepted/refused response is uncertain, including cancellation after dispatch.
+
+MonitorMutation feedback leaves drafts intact and locks another write on uncertainty, even if the generic notice is dismissed or connectivity returns. Review saved data opens a safe same-team GET in a separate tab; explicit I checked the saved data clears the local lock without making a request. This is user acknowledgement, not automatic reconciliation or proof that the previous mutation did not commit. Server-side idempotency and domain semantics remain unchanged. Explicit 401/403/404 denial removes the private page. The global notice and local outcome can both appear for a response-less failure; local controls retain the stronger uncertainty lock.
+
 BT.08 fixes the offline incident update found in L05/L07. The existing Inertia 2 exception event is cancelable; without a handler its rejected transport promise reaches the browser as an unhandled `Network Error`, while `useForm` still releases its processing state.
 
 ## Failure handling

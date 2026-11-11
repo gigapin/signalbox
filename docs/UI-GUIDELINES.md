@@ -1,5 +1,15 @@
 # UI guidelines — Signalbox
 
+## Monitor editor and action transitions — UI.03.7
+
+Create/Edit use shared semantic input/button/panel tokens, an explicit Cancel link, server-provided cadence bounds and the existing departure guard. Numeric text remains raw during typing; local cadence failures focus the interval without sending. Secret replacement remains explicit. Inputs are disabled while a write is pending so edits cannot silently become the baseline of an earlier submission. Server field errors focus after React commits and preserve the draft.
+
+MonitorActions owns inline Pause/Resume/Delete confirmations. Cancel receives focus first, Escape/Cancel restore the trigger, no request is sent before Confirm, and invalidated live policy/state closes the confirmation. Resume outside quota stays disabled; suspended monitors cannot resume. Other page work and the global navigation guard retain their pending protection. No browser confirm dialog is used for these three monitor actions.
+
+useMonitorMutation owns one attempt through its finish callback, with a synchronous duplicate guard, owned transport cancellation and stale-callback protection. Validation errors and explicit refusal statuses (400/405/409/413/415/419/422/425/429) show Change refused; 401/403/404 remove private content. Network loss, cancellation, 408/499, 5xx or invalid success responses have an uncertain outcome: no automatic replay, reconnect-based unlock or claimed rollback. Feedback never displays raw response/error data. The user can inspect saved data in a separate tab while retaining the draft; I checked the saved data only permits a later explicit attempt and never sends anything itself. This acknowledgement does not independently verify the server state or provide server-side idempotency.
+
+The query-only returnTo hint is reconstructed by MonitorListReturn within the authorized team. Create/Update success returns to detail with that normalized list context; Delete success returns to that list. Update failures stay on the editor, and Pause/Resume preserve the current detail through the existing back redirect. Domain payloads are unchanged; a body/file returnTo is still invalid, with no original configuration flashed. Editing and deleting from an obsolete filtered page retain its explicit empty-page recovery.
+
 ## Context panels — UI.03.6
 
 Monitors/Show composes MonitorContextPanels into a responsive grid, with a single column at narrow widths and wrapping channel/policy/reason labels. TLS explicitly distinguishes not applicable, missing, stale and recent observations; cached expiry and retained observation provenance are separate. Freshness belongs to snapshot generation, never the browser clock or a generic last check. Local timestamps retain UTC machine values. No registration-domain expiry is inferred.

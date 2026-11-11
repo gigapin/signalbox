@@ -2,24 +2,7 @@
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-/**
- * @param exception Error emitted after Inertia has handled HTTP responses and cancellations.
- * @returns Whether the browser transport failed without a response; programming errors remain unhandled.
- */
-function isTransportFailure(exception: unknown): boolean {
-    return (
-        typeof exception === 'object' &&
-        exception !== null &&
-        'isAxiosError' in exception &&
-        exception.isAxiosError === true &&
-        'code' in exception &&
-        typeof exception.code === 'string' &&
-        ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(exception.code) &&
-        'request' in exception &&
-        exception.request instanceof XMLHttpRequest &&
-        (!('response' in exception) || exception.response === undefined)
-    );
-}
+import { isTransportFailure } from '../requestFailures';
 
 /**
  * Render a viewport-visible alert for private and public pages without consuming their props.

@@ -1,5 +1,20 @@
 # Application bootstrap reference
 
+## Private settings handoff — 2026-11-11
+
+UI.04.3 integrates existing private status-page/domain, membership/invitation/ownership and account
+security workflows. Forms reuse useOwnedMutation/MutationFeedback; member/hostname baselines preserve
+dirty edits. PrivateContextLayout now removes children on denial/logout and remounts on account
+replacement; SecurityContent keeps abortable sensitive reads and ephemeral credentials below it.
+
+Read [SETTINGS-UI.md](SETTINGS-UI.md). Public status pages, themes, URLs, subscription/unlock, invitation
+acceptance/email checks, recent-password policy and backend domain actions remain unchanged. No PHP
+application source, route, migration, package, environment or worker change; rebuild/reload frontend
+assets. Gate evidence is in TASKS. Next after completion: UI.04.4, distinct operator context and real
+plan/quota state. UI.04.5 and final browser UI.06/L remain open. This handoff supersedes earlier restart
+instructions below.
+
+
 ## Operational workflows handoff — 2026-11-11
 
 UI.04.2 introduces private GET /teams/{team}/maintenance and

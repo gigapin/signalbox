@@ -1,119 +1,67 @@
-/** Manage optional authenticator security without putting secrets into Inertia props or history. */
-import { useNavigationGuard, useLeaveProtection } from '../../components/app/NavigationGuard';
-import { useFormProtection } from '../../components/app/NavigationGuard';
+/** Manage authenticator security while keeping credentials in removable, ephemeral component state. */
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { useContext, useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+    useNavigationGuard,
+    useLeaveProtection,
+    useFormProtection,
+} from '../../components/app/NavigationGuard';
+import { TeamAccessContext } from '../../components/app/TeamAccessContext';
 import type { AuthProps } from '../../components/auth/AuthLayout';
 import PrivateContextLayout from '../../components/app/PrivateContextLayout';
+import Panel from '../../components/ui/Panel';
+import Button from '../../components/ui/Button';
+import MutationFeedback from '../../components/MutationFeedback';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 
-/** Non-secret enrollment status from the authenticated account page. */
+/** Non-secret enrollment flags only; setup keys and recovery codes are never page props. */
 interface SecurityProps extends AuthProps {
-    /** Whether an authenticator has completed setup confirmation. */
+    /** Whether enrollment was confirmed with an authenticator code. */
     twoFactorEnabled: boolean;
-    /** Whether a generated secret still awaits confirmation. */
+    /** Whether an unconfirmed secret exists on the server. */
     twoFactorPending: boolean;
 }
 
-/** Ephemeral setup values retained only in this mounted component. */
+/** Validated setup responses kept only while this authorized page stays mounted. */
 interface Setup {
-    /** Server-generated QR SVG displayed through an isolated image resource. */
+    /** SVG used as an isolated image source, never injected as HTML. */
     svg: string;
-    /** Manual enrollment key shown only after a recent password check. */
+    /** Manual enrollment key returned by a recent-password-protected endpoint. */
     secretKey: string;
 }
 
-/** Retrieve a sensitive JSON response without caching or persisting it in navigation state. */
-async function readSecurity(path: string, onAccessLoss: () => void): Promise<unknown> {
-    /** Same-origin response; no external QR or authenticator service is contacted. */
-    const response = await fetch(path, {
-        credentials: 'same-origin',
-        cache: 'no-store',
-        // Laravel must not record these JSON resources as the previous navigable page.
-        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-    });
-    if (response.status === 423 || response.status === 401 || response.redirected) {
-        onAccessLoss();
-        throw new Error('Please confirm your password again.');
-    }
-    if (!response.ok) throw new Error('Unable to load security details. Please try again.');
-    return response.json() as Promise<unknown>;
-}
+/** Available account transitions; these are never replayed automatically. */
+type SecurityChange = 'enable' | 'confirm' | 'regenerate' | 'disable';
 
-/** Enable, confirm and disable optional 2FA, with explicit recovery-code access. */
-export default function Security() {
-    /** Enrollment flags contain no recoverable credential material. */
-    const { runAuthorizedNavigation } = useNavigationGuard();
-    const reconfirm = () => runAuthorizedNavigation(() => router.visit('/account/security'));
+/** Map explicit user choices to existing Fortify endpoints without adding a transport. */
+const ENDPOINTS: Record<SecurityChange, string> = {
+    enable: '/user/two-factor-authentication',
+    confirm: '/user/confirmed-two-factor-authentication',
+    regenerate: '/user/two-factor-recovery-codes',
+    disable: '/user/two-factor-authentication',
+};
+
+/** Keep all hooks and credentials below the account layout's removable identity boundary. */
+function SecurityContent() {
     const { twoFactorEnabled, twoFactorPending } = usePage<SecurityProps>().props;
-    /** Pending authenticator setup, never remembered by Inertia. */
+    const guard = useNavigationGuard();
+    const deny = useContext(TeamAccessContext);
+    const mutation = useOwnedMutation();
     const [setup, setSetup] = useState<Setup | null>(null);
-    /** Recovery codes fetched only on an explicit user request. */
     const [codes, setCodes] = useState<string[]>([]);
-    /** Local loading state for the sensitive GET endpoints. */
     const [loading, setLoading] = useState(false);
-    useLeaveProtection(false, loading);
-    /** Safe local request error; raw responses are never displayed. */
     const [error, setError] = useState('');
-    /** CSRF-protected transition requests and field validation. */
+    const request = useRef<AbortController | null>(null);
+    const reconfirming = useRef(false);
     const form = useForm({ code: '' });
     useFormProtection(form);
+    useLeaveProtection(false, loading);
+    const blocked = mutation.locked || guard.busy || loading;
 
-    /** Fetch and validate the two independent setup response shapes. */
-    async function loadSetup() {
-        setLoading(true);
-        setError('');
-        try {
-            /** Explicit QR and manual-key responses from the authenticated server. */
-            const [qr, key] = await Promise.all([
-                readSecurity('/user/two-factor-qr-code', reconfirm),
-                readSecurity('/user/two-factor-secret-key', reconfirm),
-            ]);
-            if (
-                typeof qr !== 'object' ||
-                qr === null ||
-                !('svg' in qr) ||
-                typeof qr.svg !== 'string' ||
-                typeof key !== 'object' ||
-                key === null ||
-                !('secretKey' in key) ||
-                typeof key.secretKey !== 'string'
-            )
-                throw new Error('Invalid setup response.');
-            setSetup({ svg: qr.svg, secretKey: key.secretKey });
-        } catch {
-            setError(
-                'Unable to load authenticator setup. Please try again or confirm your password again.',
-            );
-        } finally {
-            setLoading(false);
-        }
-    }
+    /** Cancel owned reads on identity changes, access loss or departure; late JSON cannot reveal credentials. */
+    useEffect(() => () => request.current?.abort(), []);
 
-    /** Fetch replacement or existing recovery codes into ephemeral component state. */
-    async function loadCodes() {
-        setLoading(true);
-        setError('');
-        setCodes([]);
-        try {
-            /** Unknown server payload checked before showing any credential value. */
-            const body = await readSecurity('/user/two-factor-recovery-codes', reconfirm);
-            if (!Array.isArray(body)) throw new Error('Invalid recovery response.');
-            /** Only validated string values may enter the rendered recovery list. */
-            const values = (body as unknown[]).filter(
-                (value): value is string => typeof value === 'string',
-            );
-            if (values.length !== body.length) throw new Error('Invalid recovery response.');
-            setCodes(values);
-        } catch {
-            setError(
-                'Unable to load recovery codes. Please try again or confirm your password again.',
-            );
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    /** Clear all secret display state after enrollment is confirmed or disabled. */
+    /** Erase all visible credentials before a state-changing operation or access recovery. */
     function clearSecrets() {
         setSetup(null);
         setCodes([]);
@@ -121,173 +69,310 @@ export default function Security() {
         form.reset('code');
     }
 
-    /** Confirm the first authenticator code before considering 2FA enabled. */
-    function confirmSetup(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        form.post('/user/confirmed-two-factor-authentication', {
-            errorBag: 'confirmTwoFactorAuthentication',
-            onSuccess: clearSecrets,
-            onFinish: () => form.reset('code'),
-        });
+    /** Hiding credentials also cancels a pending reveal, so a late response cannot show them again. */
+    function hideSecrets() {
+        request.current?.abort();
+        request.current = null;
+        setLoading(false);
+        setSetup(null);
+        setCodes([]);
     }
 
+    /**
+     * @param path Existing same-origin credential resource.
+     * @param operation Owned read shared by paired setup requests.
+     * @returns Validated later by the caller; no body enters navigation/history state.
+     */
+    async function read(path: string, operation: AbortController): Promise<unknown> {
+        const response = await fetch(path, {
+            credentials: 'same-origin',
+            cache: 'no-store',
+            signal: operation.signal,
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (operation.signal.aborted) throw new Error('Disposed credential read.');
+        if ([401, 403, 404].includes(response.status)) {
+            clearSecrets();
+            deny();
+            throw new Error('Account access lost.');
+        }
+        if (response.status === 423 || response.redirected) {
+            clearSecrets();
+            if (!reconfirming.current) {
+                reconfirming.current = true;
+                guard.runAuthorizedNavigation(() => router.visit('/account/security'));
+            }
+            throw new Error('Recent password confirmation required.');
+        }
+        if (!response.ok) throw new Error('Credential read refused.');
+        return response.json() as Promise<unknown>;
+    }
+
+    /**
+     * @param kind Explicitly requested sensitive resource; setup performs two paired AJAX GETs.
+     * @returns Completion after validation, safe failure or disposal. Reads are single-flight and cancellable.
+     */
+    async function load(kind: 'setup' | 'codes'): Promise<void> {
+        if (request.current) return;
+        const operation = new AbortController();
+        request.current = operation;
+        setSetup(null);
+        setCodes([]);
+        setError('');
+        setLoading(true);
+        try {
+            if (kind === 'setup') {
+                const [qr, key] = await Promise.all([
+                    read('/user/two-factor-qr-code', operation),
+                    read('/user/two-factor-secret-key', operation),
+                ]);
+                if (
+                    typeof qr !== 'object' ||
+                    qr === null ||
+                    !('svg' in qr) ||
+                    typeof qr.svg !== 'string' ||
+                    typeof key !== 'object' ||
+                    key === null ||
+                    !('secretKey' in key) ||
+                    typeof key.secretKey !== 'string'
+                ) {
+                    throw new Error('Invalid setup response.');
+                }
+                if (!operation.signal.aborted) setSetup({ svg: qr.svg, secretKey: key.secretKey });
+            } else {
+                const body = await read('/user/two-factor-recovery-codes', operation);
+                if (
+                    !Array.isArray(body) ||
+                    body.length > 100 ||
+                    !body.every(
+                        (value: unknown) =>
+                            typeof value === 'string' && value.length > 0 && value.length <= 256,
+                    )
+                ) {
+                    throw new Error('Invalid recovery response.');
+                }
+                if (!operation.signal.aborted) setCodes(body);
+            }
+        } catch {
+            if (!operation.signal.aborted)
+                setError(
+                    kind === 'setup'
+                        ? 'Unable to load authenticator setup. Please try again or confirm your password again.'
+                        : 'Unable to load recovery codes. Please try again or confirm your password again.',
+                );
+        } finally {
+            if (request.current === operation) request.current = null;
+            if (!operation.signal.aborted) setLoading(false);
+            // A failed paired setup read must also dispose its still-pending sibling.
+            operation.abort();
+        }
+    }
+
+    /** Submit an explicitly selected transition once; uncertain outcomes require saved-state review. */
+    function change(action: SecurityChange) {
+        if (blocked) return;
+        if (
+            action === 'regenerate' &&
+            !window.confirm('Regenerate recovery codes? All previous codes stop working.')
+        )
+            return;
+        if (
+            action === 'disable' &&
+            !window.confirm(
+                twoFactorEnabled
+                    ? 'Disable two-factor authentication for your account?'
+                    : 'Cancel this authenticator setup?',
+            )
+        )
+            return;
+        if (action !== 'confirm') clearSecrets();
+        const path = ENDPOINTS[action];
+        mutation.run(
+            path,
+            (options) => {
+                if (action === 'disable') form.delete(path, options);
+                else
+                    form.post(path, {
+                        ...options,
+                        ...(action === 'confirm'
+                            ? { errorBag: 'confirmTwoFactorAuthentication' }
+                            : {}),
+                    });
+            },
+            undefined,
+            () => {
+                clearSecrets();
+                // Credential reads follow only confirmed acceptance, never transport recovery or a retry timer.
+                if (action === 'enable') void load('setup');
+                if (action === 'regenerate') void load('codes');
+            },
+        );
+    }
+
+    /** Keep the authenticator code on a refused confirmation; clear it only after acceptance. */
+    function confirmSetup(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        change('confirm');
+    }
+
+    return (
+        <>
+            <Panel
+                title="Authenticator"
+                description="Setup and recovery details are shown only on request. They are not stored in page history."
+            >
+                <p role="status">
+                    {twoFactorEnabled
+                        ? 'Two-factor authentication is enabled.'
+                        : twoFactorPending
+                          ? 'Setup is pending. Confirm a code to enable two-factor authentication.'
+                          : 'Two-factor authentication is not enabled.'}
+                </p>
+                {error && (
+                    <p role="alert" className="ui-field-error">
+                        {error}
+                    </p>
+                )}
+                {loading && <p role="status">Loading security details…</p>}
+                <div className="grid gap-4 mt-4">
+                    {!twoFactorEnabled && !twoFactorPending && (
+                        <Button disabled={blocked} onClick={() => change('enable')}>
+                            Enable two-factor authentication
+                        </Button>
+                    )}
+                    {twoFactorPending && (
+                        <>
+                            <Button
+                                variant="secondary"
+                                disabled={blocked}
+                                onClick={() => void load('setup')}
+                            >
+                                Show authenticator setup
+                            </Button>
+                            {setup && (
+                                <div className="grid gap-3">
+                                    <img
+                                        src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(setup.svg)}`}
+                                        alt="Scan this QR code with your authenticator app"
+                                        width="192"
+                                        height="192"
+                                        className="max-w-full bg-white p-2"
+                                    />
+                                    <p>Or enter this setup key manually:</p>
+                                    <code className="block break-all ui-panel">
+                                        {setup.secretKey}
+                                    </code>
+                                    <Button variant="secondary" onClick={hideSecrets}>
+                                        Hide authenticator setup
+                                    </Button>
+                                </div>
+                            )}
+                            <form onSubmit={confirmSetup} noValidate>
+                                <fieldset disabled={blocked} className="grid min-w-0 gap-3">
+                                    <label htmlFor="security-code" className="ui-label">
+                                        Authentication code
+                                    </label>
+                                    <input
+                                        id="security-code"
+                                        className="ui-input"
+                                        value={form.data.code}
+                                        onChange={(event) =>
+                                            form.setData('code', event.target.value)
+                                        }
+                                        autoComplete="one-time-code"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        required
+                                        aria-invalid={Boolean(form.errors.code)}
+                                        aria-describedby={
+                                            form.errors.code ? 'security-code-error' : undefined
+                                        }
+                                    />
+                                    {form.errors.code && (
+                                        <p
+                                            id="security-code-error"
+                                            role="alert"
+                                            className="ui-field-error"
+                                        >
+                                            {form.errors.code}
+                                        </p>
+                                    )}
+                                    <Button type="submit">Confirm authenticator</Button>
+                                </fieldset>
+                            </form>
+                        </>
+                    )}
+                    {twoFactorEnabled && (
+                        <>
+                            <div className="ui-actions">
+                                <Button
+                                    variant="secondary"
+                                    disabled={blocked}
+                                    onClick={() => void load('codes')}
+                                >
+                                    Show recovery codes
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    disabled={blocked}
+                                    onClick={() => change('regenerate')}
+                                >
+                                    Regenerate recovery codes
+                                </Button>
+                                <Button variant="secondary" onClick={hideSecrets}>
+                                    Hide recovery codes
+                                </Button>
+                            </div>
+                            {codes.length > 0 && (
+                                <section aria-label="Recovery codes" className="ui-panel">
+                                    <p>
+                                        Save these codes somewhere safe. Each code can be used once.
+                                        Regenerating invalidates the previous set.
+                                    </p>
+                                    <ul className="mt-3 font-mono break-all">
+                                        {codes.map((code) => (
+                                            <li key={code}>{code}</li>
+                                        ))}
+                                    </ul>
+                                </section>
+                            )}
+                        </>
+                    )}
+                    {(twoFactorEnabled || twoFactorPending) && (
+                        <Button
+                            variant="danger"
+                            disabled={blocked}
+                            onClick={() => change('disable')}
+                        >
+                            {twoFactorEnabled
+                                ? 'Disable two-factor authentication'
+                                : 'Cancel authenticator setup'}
+                        </Button>
+                    )}
+                </div>
+            </Panel>
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl="/account/security"
+                success="Security change accepted"
+                onReviewed={mutation.acknowledge}
+            />
+            <Link href="/account" className="ui-link mt-6 inline-block">
+                Back to account
+            </Link>
+        </>
+    );
+}
+
+/** Only non-secret flags are read above the removable account shell. */
+export default function Security() {
+    const { twoFactorEnabled, twoFactorPending } = usePage<SecurityProps>().props;
     return (
         <PrivateContextLayout
             title="Account security"
             description="Protect your account with an authenticator app and single-use recovery codes."
         >
-            <p role="status">
-                {twoFactorEnabled
-                    ? 'Two-factor authentication is enabled.'
-                    : twoFactorPending
-                      ? 'Setup is pending. Confirm a code to enable two-factor authentication.'
-                      : 'Two-factor authentication is not enabled.'}
-            </p>
-            {error && (
-                <p role="alert" className="mt-4 text-red-300">
-                    {error}
-                </p>
-            )}
-            {loading && (
-                <p role="status" className="mt-4">
-                    Loading security details…
-                </p>
-            )}
-            <div className="mt-6 space-y-5">
-                {!twoFactorEnabled && !twoFactorPending && (
-                    <button
-                        disabled={form.processing || loading}
-                        onClick={() =>
-                            form.post('/user/two-factor-authentication', {
-                                onSuccess: () => {
-                                    void loadSetup();
-                                },
-                            })
-                        }
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
-                        Enable two-factor authentication
-                    </button>
-                )}
-                {twoFactorPending && (
-                    <>
-                        <button
-                            disabled={form.processing || loading}
-                            onClick={() => {
-                                void loadSetup();
-                            }}
-                            className="text-emerald-300"
-                        >
-                            Show authenticator setup
-                        </button>
-                        {setup && (
-                            <div className="space-y-3">
-                                <img
-                                    src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(setup.svg)}`}
-                                    alt="Scan this QR code with your authenticator app"
-                                    width="192"
-                                    height="192"
-                                    className="bg-white p-2"
-                                />
-                                <p>Or enter this setup key manually:</p>
-                                <code className="block break-all rounded bg-slate-900 p-3">
-                                    {setup.secretKey}
-                                </code>
-                            </div>
-                        )}
-                        <form onSubmit={confirmSetup} className="space-y-3">
-                            <label htmlFor="code" className="block">
-                                Authentication code
-                            </label>
-                            <input
-                                id="code"
-                                name="code"
-                                value={form.data.code}
-                                onChange={(event) => form.setData('code', event.target.value)}
-                                autoComplete="one-time-code"
-                                inputMode="numeric"
-                                required
-                                aria-invalid={Boolean(form.errors.code)}
-                                aria-describedby={form.errors.code ? 'code-error' : undefined}
-                                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400"
-                            />
-                            {form.errors.code && (
-                                <p id="code-error" role="alert" className="text-red-300">
-                                    {form.errors.code}
-                                </p>
-                            )}
-                            <button
-                                disabled={form.processing || loading}
-                                className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                            >
-                                Confirm authenticator
-                            </button>
-                        </form>
-                    </>
-                )}
-                {twoFactorEnabled && (
-                    <>
-                        <div className="flex flex-wrap gap-5 text-emerald-300">
-                            <button
-                                disabled={form.processing || loading}
-                                onClick={() => {
-                                    void loadCodes();
-                                }}
-                            >
-                                Show recovery codes
-                            </button>
-                            <button
-                                disabled={form.processing || loading}
-                                onClick={() => {
-                                    setCodes([]);
-                                    form.post('/user/two-factor-recovery-codes', {
-                                        onSuccess: () => {
-                                            void loadCodes();
-                                        },
-                                    });
-                                }}
-                            >
-                                Regenerate recovery codes
-                            </button>
-                            <button onClick={() => setCodes([])}>Hide recovery codes</button>
-                        </div>
-                        {codes.length > 0 && (
-                            <section
-                                aria-label="Recovery codes"
-                                className="rounded border border-slate-700 p-4"
-                            >
-                                <p>
-                                    Save these codes somewhere safe. Each code can be used once.
-                                    Regenerating invalidates the previous set.
-                                </p>
-                                <ul className="mt-3 font-mono">
-                                    {codes.map((code) => (
-                                        <li key={code}>{code}</li>
-                                    ))}
-                                </ul>
-                            </section>
-                        )}
-                    </>
-                )}
-                {(twoFactorEnabled || twoFactorPending) && (
-                    <button
-                        disabled={form.processing || loading}
-                        onClick={() =>
-                            form.delete('/user/two-factor-authentication', {
-                                onSuccess: clearSecrets,
-                            })
-                        }
-                        className="text-red-300"
-                    >
-                        {twoFactorEnabled
-                            ? 'Disable two-factor authentication'
-                            : 'Cancel authenticator setup'}
-                    </button>
-                )}
-            </div>
-            <Link href="/account" className="mt-8 inline-block text-emerald-300">
-                Back to account
-            </Link>
+            <SecurityContent key={`${twoFactorEnabled}:${twoFactorPending}`} />
         </PrivateContextLayout>
     );
 }

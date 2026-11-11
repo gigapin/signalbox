@@ -1,5 +1,17 @@
 # Test infrastructure
 
+## Private settings workflow coverage — UI.04.3
+
+SettingsWorkflows.test.tsx adds 22 cases on actual Inertia pages: hidden password drafts, pending and
+uncertain page writes, accepted secret cleanup, dirty/pristine hostname and member-role baselines,
+removal errors, changed role choices, invitation refusal/acceptance, permission teardown, ownership
+confirmation, cancellable reveals, late JSON/account replacement, paired password expiry, GET/write
+denial, confirmation-code retention, uncertain regeneration, enrollment flag replacement and logout.
+State-preserving server snapshots use router.replace; only transport boundaries are intercepted.
+Existing status-page and domain tests distinguish the new public-link label, per-field errors and the
+native removal confirmation. Exact final gate results and unexecuted checks are in TASKS.
+
+
 ## Operational list and configuration coverage — UI.04.2
 
 OperationalListsTest.php covers both real routes on PostgreSQL: current roles, foreign/revoked teams,

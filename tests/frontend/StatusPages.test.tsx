@@ -172,10 +172,9 @@ test('links only published pages and hides forms from readers', () => {
         can: { manage: false },
     });
 
-    expect(screen.getByRole('link', { name: '/status/acme-status' })).toHaveAttribute(
-        'href',
-        '/status/acme-status',
-    );
+    expect(
+        screen.getByRole('link', { name: 'Open public page · /status/acme-status' }),
+    ).toHaveAttribute('href', '/status/acme-status');
     expect(screen.queryByRole('link', { name: /d-1/ })).not.toBeInTheDocument();
     expect(screen.getByText('/status/d-1 (not reachable yet)')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Edit/ })).not.toBeInTheDocument();

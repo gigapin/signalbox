@@ -1,5 +1,14 @@
 # Invitations and team membership management
 
+## Private settings integration — UI.04.3
+
+[SETTINGS-UI.md](SETTINGS-UI.md) documents the grouped team settings, shared mutation outcomes,
+draft-preserving role baselines and explicit invitation/ownership/departure controls. Current role
+choices and manageable flags remain policy projections, with fresh authorization in existing actions.
+Invitation acceptance, intended-email verification and recent-password ownership checks are unchanged.
+The account workspace has a separate removable identity boundary; no new team creation flow is added.
+
+
 M1.03 adds verified browser flows for invitations, membership management, primary ownership transfer and team switching. It builds on [IDENTITY.md](IDENTITY.md) and [AUTHENTICATION.md](AUTHENTICATION.md). M1.04 adds TeamScope, explicit tenant context and policies for this surface; see [TENANCY.md](TENANCY.md). The routes enforce fresh team membership and the permissions below. See [TASKS.md](TASKS.md) for actual checks and limitations.
 
 ## Permissions and ownership

@@ -1,6 +1,9 @@
 /** Transfer primary ownership explicitly to an existing owner after recent-password confirmation. */
-import { useFormProtection } from '../../components/app/NavigationGuard';
+import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
+import MutationFeedback from '../../components/MutationFeedback';
+import Panel from '../../components/ui/Panel';
 import type { FormEvent } from 'react';
 import type { AuthProps } from '../../components/auth/AuthLayout';
 import AppLayout from '../../components/app/AppLayout';
@@ -19,9 +22,14 @@ function PageContent() {
 
     const form = useForm({ user_id: '' });
     useFormProtection(form);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
+    const blocked = mutation.locked || guard.busy;
 
+    /** Transfer once after confirmation; expired password confirmation follows the existing server flow. */
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        if (blocked || !owners.some((owner) => String(owner.id) === form.data.user_id)) return;
 
         if (
             !window.confirm(`Transfer primary ownership of ${team.name}? You will remain an owner.`)
@@ -29,32 +37,46 @@ function PageContent() {
             return;
         }
 
-        form.post(`/teams/${team.id}/ownership`);
+        const path = `/teams/${team.id}/ownership`;
+        mutation.run(path, (options) => form.post(path, options));
     }
 
     return (
-        <>
+        <Panel
+            title="Primary ownership"
+            description="Choose an existing owner. You may need to confirm your password again. After confirming, review the current ownership before submitting another transfer."
+        >
             {owners.length === 0 ? (
                 <p>Promote another member to owner before transferring primary ownership.</p>
             ) : (
-                <form onSubmit={submit} className="space-y-4">
-                    <label>
-                        New primary owner
-                        <select
-                            required
-                            className="ml-2 bg-slate-800"
-                            value={form.data.user_id}
-                            onChange={(event) => form.setData('user_id', event.target.value)}
+                <form onSubmit={submit}>
+                    <fieldset disabled={blocked} className="grid min-w-0 gap-4">
+                        <label>
+                            New primary owner
+                            <select
+                                required
+                                className="ui-input"
+                                value={form.data.user_id}
+                                onChange={(event) => form.setData('user_id', event.target.value)}
+                            >
+                                <option value="">Choose an owner</option>
+                                {owners.map((owner) => (
+                                    <option key={owner.id} value={owner.id}>
+                                        {owner.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                        <button
+                            className="ui-button"
+                            disabled={
+                                blocked ||
+                                !owners.some((owner) => String(owner.id) === form.data.user_id)
+                            }
                         >
-                            <option value="">Choose an owner</option>
-                            {owners.map((owner) => (
-                                <option key={owner.id} value={owner.id}>
-                                    {owner.name}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                    <button disabled={form.processing}>Transfer ownership</button>
+                            Transfer ownership
+                        </button>
+                    </fieldset>
                 </form>
             )}
             {Object.entries(form.errors).map(([field, message]) => (
@@ -62,10 +84,16 @@ function PageContent() {
                     {message}
                 </p>
             ))}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={`/teams/${team.id}`}
+                success="Ownership transfer accepted"
+                onReviewed={mutation.acknowledge}
+            />
             <Link className="mt-6 block text-emerald-300" href={`/teams/${team.id}`}>
                 Back to team
             </Link>
-        </>
+        </Panel>
     );
 }
 

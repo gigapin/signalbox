@@ -1,7 +1,10 @@
 /** Manage a page's custom hostname, public DNS proof and expiring ownership verification. */
-import { useFormProtection } from '../app/NavigationGuard';
+import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
+import MutationFeedback from '../MutationFeedback';
+import { formatInstant } from '../incidents/time';
 import type { ManagedStatusDomain } from './types';
 
 /** Owner/admin inputs, always checked again by the server. */
@@ -22,22 +25,49 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
     useFormProtection(verify);
     const remove = useForm({});
     useFormProtection(remove);
-    const pending = claim.processing || verify.processing || remove.processing;
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
+    const pending = mutation.locked || guard.busy;
+    const [baseline, setBaseline] = useState(domain?.hostname ?? '');
+    const hostname = domain?.hostname ?? '';
+    if (baseline !== hostname && !pending) {
+        setBaseline(hostname);
+        claim.setDefaults({ domain: hostname });
+        if (claim.data.domain === baseline) claim.setData('domain', hostname);
+    }
     const error =
         claim.errors.domain ?? (verify.errors as Record<string, string | undefined>).domain;
 
     /** @param event Explicit manager submission, preserving page scroll and CSRF handling. */
     function save(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        claim.put(`${path}/domain`, { preserveScroll: true });
+        if (pending) return;
+        mutation.run(`${path}/domain`, (options) => claim.put(`${path}/domain`, options));
+    }
+
+    /** Recheck ownership or remove only the current server claim, without replaying either write. */
+    function change(action: 'verify' | 'remove') {
+        if (pending) return;
+        if (
+            action === 'remove' &&
+            !window.confirm(
+                'Remove this hostname? Its custom address stops serving the status page.',
+            )
+        )
+            return;
+        const url = action === 'verify' ? `${path}/domain/verify` : `${path}/domain`;
+        mutation.run(url, (options) =>
+            action === 'verify' ? verify.post(url, options) : remove.delete(url, options),
+        );
     }
 
     return (
-        <section aria-label="Custom domain" className="mt-4 rounded border border-slate-700 p-4">
+        <section aria-label="Custom domain" className="mt-4 ui-panel">
             <h3 className="font-medium">Custom domain</h3>
             <form onSubmit={save} className="mt-2 grid gap-2">
                 <label htmlFor={`domain-${pageId}`}>Hostname</label>
                 <input
+                    disabled={pending}
                     id={`domain-${pageId}`}
                     value={claim.data.domain}
                     onChange={(event) => claim.setData('domain', event.target.value)}
@@ -46,7 +76,7 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                     maxLength={1024}
                     aria-invalid={Boolean(error)}
                     aria-describedby={error ? `domain-error-${pageId}` : undefined}
-                    className="rounded border border-slate-600 bg-transparent p-2"
+                    className="ui-input"
                 />
                 {error && (
                     <p id={`domain-error-${pageId}`} role="alert">
@@ -60,9 +90,14 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
             {domain && (
                 <div className="mt-3 grid gap-2 text-sm">
                     <p>
-                        {domain.verifiedUntil
-                            ? `Ownership verified until ${domain.verifiedUntil}.`
-                            : 'Ownership not verified. This hostname does not serve the page.'}
+                        {domain.verifiedUntil ? (
+                            <>
+                                Ownership verified until{' '}
+                                {formatInstant(domain.verifiedUntil, 'Unknown')}.
+                            </>
+                        ) : (
+                            'Ownership not verified. This hostname does not serve the page.'
+                        )}
                     </p>
                     <p>Publish and keep this TXT record:</p>
                     <dl className="break-all">
@@ -83,19 +118,15 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                         <button
                             type="button"
                             disabled={pending}
-                            onClick={() =>
-                                verify.post(`${path}/domain/verify`, { preserveScroll: true })
-                            }
-                            className="underline"
+                            onClick={() => change('verify')}
+                            className="ui-link"
                         >
                             {verify.processing ? 'Checking DNS…' : 'Verify DNS ownership'}
                         </button>
                         <button
                             type="button"
                             disabled={pending}
-                            onClick={() =>
-                                remove.delete(`${path}/domain`, { preserveScroll: true })
-                            }
+                            onClick={() => change('remove')}
                             className="text-red-200 underline"
                         >
                             Remove hostname
@@ -103,6 +134,15 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                     </div>
                 </div>
             )}
+            {(remove.errors as Record<string, string | undefined>).domain && (
+                <p role="alert">{(remove.errors as Record<string, string | undefined>).domain}</p>
+            )}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path.split('/status-pages')[0] + '/status-pages'}
+                success="Domain change accepted"
+                onReviewed={mutation.acknowledge}
+            />
         </section>
     );
 }

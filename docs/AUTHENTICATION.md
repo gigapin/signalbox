@@ -1,5 +1,15 @@
 # Web authentication and optional two-factor security
 
+## Account security presentation — UI.04.3
+
+[SETTINGS-UI.md](SETTINGS-UI.md) records the removable account credential boundary and owned
+security-mutation feedback. Sensitive setup/recovery GETs are explicit single-flight no-store AJAX,
+abort on departure/hide/identity replacement, ignore late JSON and erase private content on access
+loss. Paired password-expiry responses request the existing confirmation flow once. Fortify endpoints,
+confirmation error bag, email verification and password policy remain unchanged; no credentials move
+to Inertia/history/storage and uncertain regeneration is never automatically replayed.
+
+
 M1.02 implements browser-session registration, login/logout, password recovery, mandatory email verification and optional authenticator-based 2FA. It preserves Laravel 13, Inertia 2, React 19 and the [M1.01 identity foundation](IDENTITY.md). M1.03 invitations/team switching are documented in [TEAMS.md](TEAMS.md), tenant context and role policies M1.04, and API token issuance M10. See [TASKS.md](TASKS.md) for actual verification evidence.
 
 ## Dependencies and boundaries

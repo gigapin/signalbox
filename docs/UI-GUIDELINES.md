@@ -1,5 +1,16 @@
 # UI guidelines — Signalbox
 
+## Private settings integration — UI.04.3
+
+Status-page management now distinguishes private editing, draft addresses and the existing published
+visitor URL; filtering hides rows without discarding editors. Page/domain writes share mutation
+feedback and input freeze. Team settings groups members, invitations and ownership with server-provided
+role choices; dirty role/hostname baselines survive unrelated accepted changes. Account security keeps
+all credentials below a removable identity boundary, cancels pending reveals on hide/leave/denial and
+never replays uncertain writes. Public/auth/invitation themes and routes remain separate. Details and
+limits: [SETTINGS-UI.md](SETTINGS-UI.md); actual gates: TASKS. UI.06 retains browser L.
+
+
 ## Operational maintenance and notification views — UI.04.2
 
 Maintenance is now a real team navigation destination, shared by desktop and mobile. Maintenance and

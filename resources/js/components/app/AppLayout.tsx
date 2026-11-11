@@ -37,7 +37,7 @@ interface AppLayoutProps {
  * @param props Page identity, current section, trusted breadcrumbs and existing content.
  * @returns A team shell distinct from authentication, public and platform contexts.
  */
-export default function AppLayout({
+function TeamShell({
     title,
     team,
     section,
@@ -55,13 +55,13 @@ export default function AppLayout({
     const deny = useCallback(() => setRevoked(true), []);
     const membership = teamNavigation?.teams.find((choice) => choice.id === team.id);
     const inaccessible = teamNavigation != null && membership === undefined;
-    const hidden = suspended || inaccessible || accessDenied || revoked;
+    const hidden = suspended || inaccessible || accessDenied || revoked || auth?.user === null;
     const user = auth?.user;
 
     return (
         <TeamAccessContext.Provider value={deny}>
             <div className="ui-theme ui-app-shell">
-                <Head title={title} />
+                <Head title={hidden ? 'Team selection' : title} />
                 <a className="ui-skip-link ui-link" href={`#${mainId}`}>
                     Skip to content
                 </a>
@@ -160,4 +160,14 @@ export default function AppLayout({
             </div>
         </TeamAccessContext.Provider>
     );
+}
+
+/**
+ * @param props Authorized route identity and page content.
+ * @returns A fresh private subtree on team/account changes, even when an Inertia visit preserves component state.
+ */
+export default function AppLayout(props: AppLayoutProps) {
+    const { auth } = usePage<AuthProps>().props;
+
+    return <TeamShell key={`${props.team.id}:${auth?.user?.email ?? ''}`} {...props} />;
 }

@@ -168,8 +168,16 @@ it('runs the complete lifecycle of each type through the production pages and ro
     $this->from("{$base}/{$monitor->id}/edit");
     inertiaSubmit('PATCH', "{$base}/{$monitor->id}", [...($case['edit'] ?? $create), 'name' => 'Renamed contract'])
         ->assertSessionHasNoErrors()
-        ->assertRedirect("{$base}/{$monitor->id}/edit")
+        ->assertRedirect("{$base}/{$monitor->id}")
         ->assertSessionHas('status', 'monitor-updated');
+
+    $this->get("{$base}/{$monitor->id}")
+        ->assertOk()
+        ->assertDontSee('contract-secret', false)
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('Monitors/Show')
+            ->where('monitor.id', $monitor->id)
+            ->where('monitor.name', 'Renamed contract'));
 
     $updated = tenantMonitor($team, $monitor->id);
 

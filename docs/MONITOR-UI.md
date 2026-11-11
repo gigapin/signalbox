@@ -1,5 +1,11 @@
 # Monitor pages, search and filters
 
+## Realtime lifecycle audit — UI.03.8
+
+Monitor detail preserves its single M6 session and exact URL, including metric controls and list return. The existing batch/deduplication, reconnect authorization, one follow-up read and no-polling behavior are exercised with native Echo plus controlled transports. Snapshot identity must match route team, actor and monitor. A preserved team/account navigation remounts the private shell; same-identity filter recovery retains drafts, and pending snapshots/JSON/actions cannot revive the old content after disposal.
+
+Saved-policy changes now synchronize only a clean escalation selector; a dirty choice remains visible, including an explicitly unavailable option if the policy disappears. Permission loss removes the authorized editor. Maintenance editors also disappear once their window stops being upcoming. Denial/logout replace private content and its document title. No server rules, endpoints, event payloads, dependencies or runtime configuration changed. Test proof and limits are in TASKS.md and REALTIME-ACCEPTANCE.md.
+
 ## Monitor form and action lifecycle — UI.03.7
 
 MonitorForm retains buildPayload, raw interval validation, post-refusal focus and explicit stored-secret replacement, while using semantic shared styles and Button/MutationFeedback. Inputs freeze only during pending transport; refused/uncertain drafts remain in component memory. Cancel follows the existing dirty/busy navigation guard. Edit adds list/detail breadcrumbs and successful saving now returns to the detail page.

@@ -1,5 +1,11 @@
 # Application bootstrap reference
 
+## Realtime monitor handoff — 2026-11-11
+
+UI.03.8 completes UI.03. One native Echo/live session recovers the exact metric/filter/return URL without polling. LivePageSession rejects a mismatched route monitor identity. AppLayout remounts private children on team/actor change, even with preserveState, and hides private DOM/document title on denial or explicit logout. Escalation choices survive dirty/pending background updates while pristine selectors follow the server; deleted choices remain explicit. Maintenance editors are removed when permission or upcoming phase ends.
+
+No PHP application source, schema, route, event contract, dependency or environment change is needed. Rebuild/reload normal frontend assets to adopt the fixes. Tests use native Echo/Reverb code with controlled socket/HTTP boundaries and guarded test PostgreSQL; real network reconnect, workers, browser/VoiceOver and remote CI remain separate. Final evidence is in TASKS.md. Next: UI.04.1, incident list/detail workflow; UI.06 retains final L acceptance. This handoff supersedes the earlier UI.03 restart instructions below.
+
 ## Monitor form/action handoff — 2026-11-11
 
 UI.03.7 introduces MonitorActions, MutationFeedback, useMonitorMutation and a shared response-less transport classifier. Create/Edit keep raw interval validation and explicit secret replacement, adopt semantic styles/Cancel, and freeze inputs during pending writes. Pause/Resume/Delete use inline confirmation with Cancel/Escape focus behavior. Uncertain outcomes preserve drafts and require checking saved state and explicit acknowledgement before another manual attempt; no retry is automatic.

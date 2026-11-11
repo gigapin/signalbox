@@ -156,3 +156,27 @@ it('recovers current filtered pagination after missed changes without exposing a
         ->assertOk()->assertJsonPath('props.monitors.total', 20)->assertJsonPath('props.monitors.currentPage', 2)
         ->assertJsonCount(0, 'props.monitors.data')->assertDontSee('Private foreign monitor', false);
 });
+
+it('recovers the complete monitor snapshot with fresh permissions and refuses it after revocation', function (string $role): void {
+    $actor = User::factory()->create();
+    $this->team->users()->attach($actor->id, ['role' => $role]);
+    $actor->load('teams');
+    $monitor = app(TenantContext::class)->run($this->team->id, fn (): Monitor => Monitor::factory()->http()->create());
+    $url = '/teams/'.$this->team->id.'/monitors/'.$monitor->id.'?period=7d&region=eu';
+    $headers = liveRecoveryHeaders('Monitors/Show', 'monitor,recentIncidents,maintenance,escalation,can,metrics,monitorContext');
+    $this->actingAs($actor, 'web')->get($url, $headers)
+        ->assertOk()->assertJsonPath('props.monitor.id', $monitor->id)
+        ->assertJsonPath('props.can.update', true)
+        ->assertJsonPath('props.metrics.selection', ['period' => '7d', 'region' => 'eu'])
+        ->assertJsonPath('props.monitorContext.certificate.state', 'not_applicable')
+        ->assertJsonPath('props.monitorContext.notifications', null)
+        ->assertJsonCount(0, 'props.recentIncidents');
+    $this->team->users()->updateExistingPivot($actor->id, ['role' => 'viewer']);
+    $this->get($url, $headers)->assertOk()
+        ->assertJsonPath('props.can', ['update' => false, 'delete' => false, 'pause' => false, 'resume' => false])
+        ->assertJsonPath('props.monitor.id', $monitor->id);
+    $this->get('/teams/'.$this->foreign->id.'/monitors/'.$monitor->id, $headers)->assertNotFound();
+    $this->team->users()->detach($actor->id);
+    $this->get($url, $headers)->assertNotFound();
+    Queue::assertNothingPushed();
+})->with(['admin', 'member']);

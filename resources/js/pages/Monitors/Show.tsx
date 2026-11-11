@@ -274,7 +274,7 @@ function PageContent({ onIdentity }: PageContentProps) {
                 />
 
                 <EscalationPanel
-                    key={`${monitor.id}:${escalation.policyId ?? 'default'}`}
+                    key={monitor.id}
                     teamId={team.id}
                     action={monitorEscalationPath(team.id, monitor.id)}
                     escalation={escalation}

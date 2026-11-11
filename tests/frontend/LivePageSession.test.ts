@@ -425,3 +425,25 @@ test.each([{ id: 12 }, { id: '11' }, null])(
         expect(vi.getTimerCount()).toBe(0);
     },
 );
+
+test.each([{ id: 43, monitor: { id: 11 } }, { id: 42, monitor: { id: 12 } }, null])(
+    'denies an incident projection outside its exact resource scope: %j',
+    async (incident) => {
+        const f = fixture({
+            component: 'Incidents/Show',
+            keys: ['incident'],
+            monitorId: 11,
+            resourceId: 42,
+        });
+        f.read.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({ component: 'Incidents/Show', props: { ...props, incident } }),
+                { headers: { 'X-Inertia': 'true' } },
+            ),
+        );
+        f.callbacks[0]?.subscribed();
+        await tick();
+        expect(f.session.getSnapshot().phase).toBe('denied');
+        expect(f.closes[0]).toHaveBeenCalledOnce();
+    },
+);

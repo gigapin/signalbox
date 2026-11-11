@@ -24,6 +24,7 @@ use App\Enums\Monitoring\HttpMethod;
 use App\Enums\StatusPages\StatusPageAccent;
 use App\Enums\StatusPages\StatusPageThemeMode;
 use App\Exceptions\MissingTenantContext;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Incident;
 use App\Models\Monitor;
 use App\Models\StatusPage;
@@ -64,6 +65,8 @@ beforeEach(function (): void {
     }
 
     $this->withoutVite();
+    // Rendering without Vite does not disable Inertia's independent client-version check.
+    $this->withHeader('X-Inertia-Version', app(HandleInertiaRequests::class)->version(request()) ?? '');
     $this->travelTo(CarbonImmutable::parse('2026-11-15T12:00:00Z'));
     Cache::flush();
 

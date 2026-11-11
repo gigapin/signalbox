@@ -8,6 +8,7 @@ namespace App\Http\Controllers\Incidents;
 
 use App\Actions\Incidents\ManageIncidents;
 use App\Http\Controllers\Controller;
+use App\Http\Navigation\IncidentListReturn;
 use App\Http\Presenters\Incidents\IncidentPresenter;
 use App\Http\Presenters\Notifications\NotificationPresenter;
 use App\Http\Requests\Incidents\ListIncidentsRequest;
@@ -15,6 +16,7 @@ use App\Models\Incident;
 use App\Models\NotificationLog;
 use App\Models\Team;
 use App\Services\Incidents\IncidentListing;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,18 +56,22 @@ final class IncidentPageController extends Controller
     }
 
     /**
+     * @param Request $request Authorized read containing only navigation hints.
+     * @param IncidentListReturn $returns Reconstruct safe return links.
      * @param NotificationPresenter $notifications Safe delivery rows.
      * @param int $team Route team.
      * @param Incident $incident Incident bound inside the route team.
      * @return Response Detail with the oldest-first timeline, its deliveries, the statuses a new entry may carry and permissions.
      */
-    public function show(NotificationPresenter $notifications, int $team, Incident $incident): Response
+    public function show(Request $request, IncidentListReturn $returns, NotificationPresenter $notifications, int $team, Incident $incident): Response
     {
         Gate::authorize('view', $incident);
         $incident->load(['monitor:id,team_id,name', 'acknowledgedBy:id,name', 'updates.author:id,name']);
 
         return Inertia::render('Incidents/Show', [
             'team' => $this->teamSummary($team),
+            'incidentListUrl' => $returns->resolve($request, $team),
+            'monitorUrl' => $returns->monitor($request, $team, $incident->monitor_id),
             'incident' => $this->presenter->detail($incident),
             'deliveries' => NotificationLog::query()
                 ->where('incident_id', $incident->id)

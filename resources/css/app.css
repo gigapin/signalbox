@@ -862,3 +862,32 @@
         max-width: 100%;
     }
 }
+
+/* Incident workflows keep narrow-screen forms and timeline messages inside their local panels. */
+@layer components {
+    .ui-incident-filters,
+    .ui-incident-editor-fields,
+    .ui-incident-management {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--spacing-ui-4);
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+    .ui-incident-filters input,
+    .ui-incident-editor-fields select,
+    .ui-incident-editor-fields textarea {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .ui-incident-entry {
+        padding-block: var(--spacing-ui-4);
+        border-bottom: 1px solid var(--color-ui-border);
+        overflow-wrap: anywhere;
+    }
+    @media (min-width: 48rem) {
+        .ui-incident-filters {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+}

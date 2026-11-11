@@ -392,7 +392,7 @@ test('lists deliveries with deleted channels and an empty state', () => {
     expect(within(table).getByText('Deleted slack channel')).toBeInTheDocument();
     expect(within(table).getByText('Escalation · step 2')).toBeInTheDocument();
     expect(within(table).getByText('Failed')).toBeInTheDocument();
-    expect(within(table).getByText('Not sent')).toBeInTheDocument();
+    expect(within(table).getByText('Not recorded')).toBeInTheDocument();
 });
 
 test('formats step delays in minutes and hours', () => {

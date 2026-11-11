@@ -33,12 +33,14 @@ interface LiveProps extends AuthProps {
  * Return a local authoritative projection plus accessible connection feedback and explicit retry.
  * @param teamId Authorized route team, never the saved preference.
  * @param component Existing screen whose mutable data should be recovered.
- * @param monitorId Detail-page scope, or undefined for a complete filtered list.
+ * @param monitorId Monitor event scope, or undefined for a complete filtered list.
+ * @param resourceId Exact incident identity for incident detail snapshot matching.
  */
 export function useLivePage<P extends LiveProps>(
     teamId: number,
     component: keyof typeof PAGE_KEYS,
     monitorId?: number,
+    resourceId?: number,
 ) {
     const page = usePage<P>();
     const deny = useContext(TeamAccessContext);
@@ -48,6 +50,7 @@ export function useLivePage<P extends LiveProps>(
                 teamId,
                 component,
                 ...(monitorId === undefined ? {} : { monitorId }),
+                ...(resourceId === undefined ? {} : { resourceId }),
                 url: page.url,
                 version: page.version,
                 props: page.props,
@@ -55,7 +58,7 @@ export function useLivePage<P extends LiveProps>(
                 actorEmail: page.props.auth?.user?.email ?? '',
                 configuration: page.props.realtime ?? null,
             }),
-        [teamId, component, monitorId, page.url, page.version, page.props],
+        [teamId, component, monitorId, resourceId, page.url, page.version, page.props],
     );
     useEffect(() => session.start(), [session]);
     const snapshot = useSyncExternalStore(

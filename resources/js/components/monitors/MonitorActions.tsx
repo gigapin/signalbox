@@ -4,8 +4,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import Button from '../ui/Button';
 import Panel from '../ui/Panel';
-import { useMonitorMutation } from '../../hooks/useMonitorMutation';
-import MutationFeedback from './MutationFeedback';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
+import MutationFeedback from '../MutationFeedback';
 import type { MonitorDetail } from './types';
 import { monitorPath, withMonitorListReturn } from './urls';
 
@@ -57,7 +57,7 @@ const TRANSITION_EXPLANATIONS: Record<Transition, string> = {
 export default function MonitorActions({ teamId, monitor, can, returnTo }: ActionsProps) {
     const form = useForm<Record<string, never>>({});
     useFormProtection(form);
-    const mutation = useMonitorMutation();
+    const mutation = useOwnedMutation();
     const guard = useNavigationGuard();
     const [choice, setChoice] = useState<Transition | null>(null);
     const cancelButton = useRef<HTMLButtonElement>(null);

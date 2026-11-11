@@ -1,14 +1,17 @@
 /** Show one incident with its timeline and let managers take responsibility, post, classify and publish. */
-import { useFormProtection } from '../../components/app/NavigationGuard';
+import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
-import type { FormEvent, ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import Panel from '../../components/ui/Panel';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
+import MutationFeedback from '../../components/MutationFeedback';
 import AppLayout from '../../components/app/AppLayout';
 import { IncidentStatusBadge, SeverityBadge } from '../../components/incidents/IncidentBadges';
 import {
     causeLabel,
-    durationLabel,
+    incidentDurationLabel,
     incidentStatusLabel,
     severityLabel,
 } from '../../components/incidents/labels';
@@ -28,6 +31,10 @@ import type { DeliveryView } from '../../components/notifications/types';
 interface ShowProps extends IncidentPageProps {
     /** Detail projection with the oldest-first timeline. */
     incident: IncidentDetail;
+    /** Server-normalized list and monitor returns; absent only in old history fixtures. */
+    incidentListUrl?: string;
+    /** Actual monitor destination with normalized monitor-list context. */
+    monitorUrl?: string;
     /** Notification deliveries of the incident, oldest first. */
     deliveries: DeliveryView[];
     /** Status values a new timeline entry may carry; only `resolved` once resolved. */
@@ -89,11 +96,10 @@ interface EntryProps {
 }
 
 /** Field styling shared by the inputs. */
-const INPUT =
-    'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
+const INPUT = 'ui-input w-full';
 
 /** Primary button styling. */
-const BUTTON = 'rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50';
+const BUTTON = 'ui-button';
 
 /** Render one row of the description list. */
 function Detail({ term, children }: DetailProps) {
@@ -109,13 +115,27 @@ function Detail({ term, children }: DetailProps) {
 function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps) {
     const form = useForm({ status: incident.status, message: '' });
     useFormProtection(form);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
 
+    const [baseline, setBaseline] = useState(incident.status);
+    if (!form.isDirty && !form.processing && baseline !== incident.status) {
+        setBaseline(incident.status);
+        form.setData('status', incident.status);
+        form.setDefaults({ status: incident.status });
+    }
+    const unavailable = !statuses.includes(form.data.status);
+
+    /** Submit one private update; clearing the draft requires confirmed acceptance. */
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        form.post(`${path}/updates`, {
-            preserveScroll: true,
-            onSuccess: () => form.reset('message'),
-        });
+        if (guard.busy || unavailable) return;
+        mutation.run(
+            `${path}/updates`,
+            (options) => form.post(`${path}/updates`, options),
+            undefined,
+            () => form.reset('message'),
+        );
     }
 
     return (
@@ -125,65 +145,90 @@ function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps
             aria-labelledby="post-update-heading"
             className="grid gap-3"
         >
-            <h3 id="post-update-heading" className="font-medium">
-                Add a timeline update
-            </h3>
-            <div>
-                <label htmlFor="update-status" className="mb-2 block text-sm font-medium">
-                    Status after this update
-                </label>
-                <select
-                    id="update-status"
-                    value={form.data.status}
-                    onChange={(event) => form.setData('status', event.target.value)}
-                    aria-invalid={form.errors.status !== undefined}
-                    aria-describedby="update-status-error"
-                    className={INPUT}
-                >
-                    {statuses.map((value) => (
-                        <option key={value} value={value}>
-                            {incidentStatusLabel(value)}
-                        </option>
-                    ))}
-                </select>
-                {form.errors.status && (
-                    <p id="update-status-error" role="alert" className="mt-1 text-red-300">
-                        {form.errors.status}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path}
+                success="Timeline update saved"
+                onReviewed={mutation.acknowledge}
+            />
+            <fieldset
+                disabled={mutation.phase === 'pending' || form.processing}
+                className="ui-incident-editor-fields"
+            >
+                <legend className="sr-only">Private timeline update</legend>
+                {unavailable && (
+                    <p role="status">
+                        The incident changed. Choose an available status; your message is preserved.
                     </p>
                 )}
-            </div>
-            <div>
-                <label htmlFor="update-message" className="mb-2 block text-sm font-medium">
-                    Message
-                </label>
-                <textarea
-                    id="update-message"
-                    required
-                    rows={3}
-                    maxLength={maxLength}
-                    value={form.data.message}
-                    onChange={(event) => form.setData('message', event.target.value)}
-                    aria-invalid={form.errors.message !== undefined}
-                    aria-describedby="update-message-hint update-message-error"
-                    className={INPUT}
-                />
-                <p id="update-message-hint" className="mt-1 text-xs text-slate-400">
-                    Updates are private until you publish them.
-                    {incident.status === 'resolved'
-                        ? ' A resolved incident accepts notes only; a new confirmed failure reopens it.'
-                        : ''}
-                </p>
-                {form.errors.message && (
-                    <p id="update-message-error" role="alert" className="mt-1 text-red-300">
-                        {form.errors.message}
+                <h3 id="post-update-heading" className="font-medium">
+                    Add a timeline update
+                </h3>
+                <div>
+                    <label htmlFor="update-status" className="ui-label">
+                        Status after this update
+                    </label>
+                    <select
+                        id="update-status"
+                        value={form.data.status}
+                        onChange={(event) => form.setData('status', event.target.value)}
+                        aria-invalid={form.errors.status !== undefined}
+                        aria-describedby="update-status-error"
+                        className={INPUT}
+                    >
+                        {unavailable && (
+                            <option value={form.data.status} disabled>
+                                Draft status unavailable
+                            </option>
+                        )}
+                        {statuses.map((value) => (
+                            <option key={value} value={value}>
+                                {incidentStatusLabel(value)}
+                            </option>
+                        ))}
+                    </select>
+                    {form.errors.status && (
+                        <p id="update-status-error" role="alert" className="mt-1 text-red-300">
+                            {form.errors.status}
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <label htmlFor="update-message" className="ui-label">
+                        Message
+                    </label>
+                    <textarea
+                        id="update-message"
+                        required
+                        rows={3}
+                        maxLength={maxLength}
+                        value={form.data.message}
+                        onChange={(event) => form.setData('message', event.target.value)}
+                        aria-invalid={form.errors.message !== undefined}
+                        aria-describedby="update-message-hint update-message-error"
+                        className={INPUT}
+                    />
+                    <p id="update-message-hint" className="ui-help">
+                        Updates are private until you publish them.
+                        {incident.status === 'resolved'
+                            ? ' A resolved incident accepts notes only; a new confirmed failure reopens it.'
+                            : ''}
                     </p>
-                )}
-            </div>
-            <div>
-                <button disabled={form.processing} className={BUTTON}>
-                    {form.processing ? 'Saving…' : 'Add update'}
-                </button>
-            </div>
+                    {form.errors.message && (
+                        <p id="update-message-error" role="alert" className="mt-1 text-red-300">
+                            {form.errors.message}
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <button
+                        disabled={mutation.locked || form.processing || guard.busy || unavailable}
+                        className={BUTTON}
+                    >
+                        {form.processing ? 'Saving…' : 'Add update'}
+                    </button>
+                </div>
+            </fieldset>
         </form>
     );
 }
@@ -192,41 +237,68 @@ function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps
 function SeverityForm({ path, incident, severities }: SeverityProps) {
     const form = useForm({ severity: incident.severity });
     useFormProtection(form);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
 
+    const saved = incident.severity;
+    const [baseline, setBaseline] = useState(saved);
+    if (!form.isDirty && !form.processing && baseline !== saved) {
+        setBaseline(saved);
+        form.setData('severity', saved);
+        form.setDefaults({ severity: saved });
+    }
+
+    /** Submit one explicit change without overwriting a pending draft. */
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        form.patch(`${path}/severity`, { preserveScroll: true });
+        if (guard.busy) return;
+        mutation.run(`${path}/severity`, (options) => form.patch(`${path}/severity`, options));
     }
 
     return (
         <form onSubmit={submit} noValidate className="flex flex-wrap items-end gap-3">
-            <div>
-                <label htmlFor="incident-severity" className="mb-2 block text-sm font-medium">
-                    Severity
-                </label>
-                <select
-                    id="incident-severity"
-                    value={form.data.severity}
-                    onChange={(event) => form.setData('severity', event.target.value)}
-                    aria-invalid={form.errors.severity !== undefined}
-                    aria-describedby="incident-severity-error"
-                    className={INPUT}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path}
+                success="Severity saved"
+                onReviewed={mutation.acknowledge}
+            />
+            <fieldset
+                disabled={mutation.phase === 'pending' || form.processing}
+                className="ui-incident-editor-fields"
+            >
+                <legend className="sr-only">Severity saved</legend>
+                <div>
+                    <label htmlFor="incident-severity" className="ui-label">
+                        Severity
+                    </label>
+                    <select
+                        id="incident-severity"
+                        value={form.data.severity}
+                        onChange={(event) => form.setData('severity', event.target.value)}
+                        aria-invalid={form.errors.severity !== undefined}
+                        aria-describedby="incident-severity-error"
+                        className={INPUT}
+                    >
+                        {severities.map((value) => (
+                            <option key={value} value={value}>
+                                {severityLabel(value)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <button
+                    disabled={form.processing || mutation.locked || guard.busy}
+                    className={BUTTON}
                 >
-                    {severities.map((value) => (
-                        <option key={value} value={value}>
-                            {severityLabel(value)}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <button disabled={form.processing} className={BUTTON}>
-                {form.processing ? 'Saving…' : 'Save severity'}
-            </button>
-            {form.errors.severity && (
-                <p id="incident-severity-error" role="alert" className="w-full text-red-300">
-                    {form.errors.severity}
-                </p>
-            )}
+                    {form.processing ? 'Saving…' : 'Save severity'}
+                </button>
+                {form.errors.severity && (
+                    <p id="incident-severity-error" role="alert" className="w-full text-red-300">
+                        {form.errors.severity}
+                    </p>
+                )}
+            </fieldset>
         </form>
     );
 }
@@ -235,43 +307,70 @@ function SeverityForm({ path, incident, severities }: SeverityProps) {
 function RootCauseForm({ path, incident, maxLength }: RootCauseProps) {
     const form = useForm({ root_cause_note: incident.rootCauseNote ?? '' });
     useFormProtection(form);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
 
+    const saved = incident.rootCauseNote ?? '';
+    const [baseline, setBaseline] = useState(saved);
+    if (!form.isDirty && !form.processing && baseline !== saved) {
+        setBaseline(saved);
+        form.setData('root_cause_note', saved);
+        form.setDefaults({ root_cause_note: saved });
+    }
+
+    /** Submit one explicit change without overwriting a pending draft. */
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        form.patch(`${path}/root-cause`, { preserveScroll: true });
+        if (guard.busy) return;
+        mutation.run(`${path}/root-cause`, (options) => form.patch(`${path}/root-cause`, options));
     }
 
     return (
         <form onSubmit={submit} noValidate className="grid gap-3">
-            <div>
-                <label htmlFor="root-cause" className="mb-2 block text-sm font-medium">
-                    Declared cause
-                </label>
-                <textarea
-                    id="root-cause"
-                    rows={3}
-                    maxLength={maxLength}
-                    value={form.data.root_cause_note}
-                    onChange={(event) => form.setData('root_cause_note', event.target.value)}
-                    aria-invalid={form.errors.root_cause_note !== undefined}
-                    aria-describedby="root-cause-hint root-cause-error"
-                    className={INPUT}
-                />
-                <p id="root-cause-hint" className="mt-1 text-xs text-slate-400">
-                    Leave empty to clear it. The note stays internal; the timeline only records the
-                    change.
-                </p>
-                {form.errors.root_cause_note && (
-                    <p id="root-cause-error" role="alert" className="mt-1 text-red-300">
-                        {form.errors.root_cause_note}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path}
+                success="Declared cause saved"
+                onReviewed={mutation.acknowledge}
+            />
+            <fieldset
+                disabled={mutation.phase === 'pending' || form.processing}
+                className="ui-incident-editor-fields"
+            >
+                <legend className="sr-only">Declared cause saved</legend>
+                <div>
+                    <label htmlFor="root-cause" className="ui-label">
+                        Declared cause
+                    </label>
+                    <textarea
+                        id="root-cause"
+                        rows={3}
+                        maxLength={maxLength}
+                        value={form.data.root_cause_note}
+                        onChange={(event) => form.setData('root_cause_note', event.target.value)}
+                        aria-invalid={form.errors.root_cause_note !== undefined}
+                        aria-describedby="root-cause-hint root-cause-error"
+                        className={INPUT}
+                    />
+                    <p id="root-cause-hint" className="ui-help">
+                        Leave empty to clear it. The note stays internal; the timeline only records
+                        the change.
                     </p>
-                )}
-            </div>
-            <div>
-                <button disabled={form.processing} className={BUTTON}>
-                    {form.processing ? 'Saving…' : 'Save cause'}
-                </button>
-            </div>
+                    {form.errors.root_cause_note && (
+                        <p id="root-cause-error" role="alert" className="mt-1 text-red-300">
+                            {form.errors.root_cause_note}
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <button
+                        disabled={form.processing || mutation.locked || guard.busy}
+                        className={BUTTON}
+                    >
+                        {form.processing ? 'Saving…' : 'Save cause'}
+                    </button>
+                </div>
+            </fieldset>
         </form>
     );
 }
@@ -280,20 +379,36 @@ function RootCauseForm({ path, incident, maxLength }: RootCauseProps) {
 function Entry({ path, entry, canPublish }: EntryProps) {
     const form = useForm<Record<string, never>>({});
     useFormProtection(form);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
 
+    const [confirming, setConfirming] = useState(false);
+    const cancelButton = useRef<HTMLButtonElement>(null);
+    const publishButton = useRef<HTMLButtonElement>(null);
+    if (confirming && (entry.isPublic || !canPublish)) setConfirming(false);
+    useEffect(() => {
+        if (confirming) cancelButton.current?.focus();
+    }, [confirming]);
+
+    /** Close an unsent publication confirmation and restore its trigger focus. */
+    function cancel(): void {
+        setConfirming(false);
+        publishButton.current?.focus();
+    }
+
+    /** Publish once after explicit confirmation; the domain action remains idempotent. */
     function publish() {
-        const question =
-            'Publish this update? Published updates can appear on public status pages and cannot be withdrawn.';
-
-        if (!window.confirm(question)) {
-            return;
-        }
-
-        form.post(`${path}/updates/${entry.id}/publish`, { preserveScroll: true });
+        if (guard.busy || !canPublish || entry.isPublic) return;
+        if (
+            mutation.run(`${path}/updates/${entry.id}/publish`, (options) =>
+                form.post(`${path}/updates/${entry.id}/publish`, options),
+            )
+        )
+            setConfirming(false);
     }
 
     return (
-        <li className="border-b border-slate-800 py-3">
+        <li className="ui-incident-entry">
             <p className="text-sm text-slate-400">
                 {formatInstant(entry.createdAt, 'Unknown time')} ·{' '}
                 {entry.author ?? 'System or deleted account'} · {incidentStatusLabel(entry.status)}
@@ -310,46 +425,109 @@ function Entry({ path, entry, canPublish }: EntryProps) {
             </p>
             {canPublish && !entry.isPublic && (
                 <button
+                    ref={publishButton}
                     type="button"
-                    disabled={form.processing}
-                    onClick={publish}
-                    className="mt-2 rounded border border-slate-600 px-3 py-1 text-sm disabled:opacity-50"
+                    disabled={form.processing || mutation.locked || guard.busy}
+                    onClick={() => setConfirming(true)}
+                    className="ui-button mt-2"
+                    data-variant="secondary"
                 >
-                    {form.processing ? 'Publishing…' : 'Publish update'}
+                    Publish update
                 </button>
             )}
+            {confirming && (
+                <div
+                    role="group"
+                    aria-label="Confirm publication"
+                    className="ui-panel mt-3"
+                    onKeyDown={(event) => {
+                        if (event.key === 'Escape') {
+                            event.preventDefault();
+                            cancel();
+                        }
+                    }}
+                >
+                    <p>
+                        Publish this update? Published updates can appear on public status pages and
+                        cannot be withdrawn.
+                    </p>
+                    <div className="ui-actions">
+                        <button
+                            ref={cancelButton}
+                            type="button"
+                            className="ui-button"
+                            data-variant="secondary"
+                            onClick={cancel}
+                        >
+                            Cancel publication
+                        </button>
+                        <button
+                            type="button"
+                            className="ui-button"
+                            disabled={mutation.locked || guard.busy}
+                            onClick={publish}
+                        >
+                            Confirm publication
+                        </button>
+                    </div>
+                </div>
+            )}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path}
+                success="Update published"
+                onReviewed={mutation.acknowledge}
+            />
         </li>
     );
 }
 
-/** Responsibility is offered only while open; forms re-render from the server after every change. */
+/** Keep authorized incident data live while local drafts retain their own baseline. */
 function PageContent() {
     const initial = usePage<ShowProps>().props;
     const live = useLivePage<ShowProps>(
         initial.team.id,
         'Incidents/Show',
         initial.incident.monitor.id,
+        initial.incident.id,
     );
-    const { team, incident, deliveries, postableStatuses, options, textMaxLength, can, errors } =
-        live.props;
+    const {
+        team,
+        incident,
+        deliveries,
+        postableStatuses,
+        options,
+        textMaxLength,
+        can,
+        errors,
+        incidentListUrl,
+        monitorUrl,
+    } = live.props;
     const acknowledge = useForm<Record<string, never>>({});
     useFormProtection(acknowledge);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
     const path = incidentPath(team.id, incident.id);
     const open = incident.status !== 'resolved';
 
     function takeResponsibility() {
-        acknowledge.post(`${path}/acknowledge`, { preserveScroll: true });
+        if (guard.busy || !can.update || !open) return;
+        mutation.run(`${path}/acknowledge`, (options) =>
+            acknowledge.post(`${path}/acknowledge`, options),
+        );
     }
 
     return (
         <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
-            <nav
-                aria-label="Incident navigation"
-                className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-emerald-300"
-            >
-                <Link href={incidentsPath(team.id)}>Back to incidents</Link>
-                <Link href={monitorPath(team.id, incident.monitor.id)}>
+            <nav aria-label="Incident navigation" className="ui-actions mb-6">
+                <Link className="ui-link" href={incidentListUrl ?? incidentsPath(team.id)}>
+                    Back to incidents
+                </Link>
+                <Link
+                    className="ui-link"
+                    href={monitorUrl ?? monitorPath(team.id, incident.monitor.id)}
+                >
                     Monitor {incident.monitor.name}
                 </Link>
             </nav>
@@ -365,50 +543,60 @@ function PageContent() {
                 <SeverityBadge severity={incident.severity} />
             </div>
 
-            <dl>
-                <Detail term="First failure">{formatInstant(incident.startedAt, '')}</Detail>
-                <Detail term="Confirmed">{formatInstant(incident.confirmedAt, '')}</Detail>
-                <Detail term="Resolved">{formatInstant(incident.resolvedAt, 'Not yet')}</Detail>
-                <Detail term="Duration">
-                    {incident.durationSeconds === null
-                        ? 'Ongoing'
-                        : durationLabel(incident.durationSeconds)}
-                </Detail>
-                <Detail term="Detected cause">{causeLabel(incident.cause)}</Detail>
-                <Detail term="Declared cause">
-                    {incident.rootCauseNote === null ? (
-                        'None declared'
-                    ) : (
-                        <span className="whitespace-pre-line">{incident.rootCauseNote}</span>
-                    )}
-                </Detail>
-                <Detail term="Responsible">
-                    {incident.acknowledgedAt === null
-                        ? 'Nobody yet'
-                        : `${incident.responsible ?? 'A deleted account'} since `}
-                    {incident.acknowledgedAt !== null && formatInstant(incident.acknowledgedAt, '')}
-                </Detail>
-                <Detail term="Reopened">
-                    {incident.reopenedCount === 0
-                        ? 'Never'
-                        : `${incident.reopenedCount} time${incident.reopenedCount === 1 ? '' : 's'}, last `}
-                    {incident.lastReopenedAt !== null && formatInstant(incident.lastReopenedAt, '')}
-                </Detail>
-            </dl>
+            <Panel
+                title="Incident summary"
+                description="Timestamps use your local time. Final duration comes from the recorded incident."
+            >
+                <dl className="ui-monitor-facts">
+                    <Detail term="First failure">{formatInstant(incident.startedAt, '')}</Detail>
+                    <Detail term="Confirmed">{formatInstant(incident.confirmedAt, '')}</Detail>
+                    <Detail term="Resolved">{formatInstant(incident.resolvedAt, 'Not yet')}</Detail>
+                    <Detail term="Duration">{incidentDurationLabel(incident)}</Detail>
+                    <Detail term="Detected cause">{causeLabel(incident.cause)}</Detail>
+                    <Detail term="Declared cause">
+                        {incident.rootCauseNote === null ? (
+                            'None declared'
+                        ) : (
+                            <span className="whitespace-pre-line">{incident.rootCauseNote}</span>
+                        )}
+                    </Detail>
+                    <Detail term="Responsible">
+                        {incident.acknowledgedAt === null
+                            ? 'Nobody yet'
+                            : `${incident.responsible ?? 'A deleted account'} since `}
+                        {incident.acknowledgedAt !== null &&
+                            formatInstant(incident.acknowledgedAt, '')}
+                    </Detail>
+                    <Detail term="Reopened">
+                        {incident.reopenedCount === 0
+                            ? 'Never'
+                            : `${incident.reopenedCount} time${incident.reopenedCount === 1 ? '' : 's'}, last `}
+                        {incident.lastReopenedAt !== null &&
+                            formatInstant(incident.lastReopenedAt, '')}
+                    </Detail>
+                </dl>
+            </Panel>
 
             {can.update && open && (
                 <div className="mt-6">
                     <button
                         type="button"
-                        disabled={acknowledge.processing}
+                        disabled={acknowledge.processing || mutation.locked || guard.busy}
                         onClick={takeResponsibility}
-                        className="rounded border border-slate-600 px-4 py-2 disabled:opacity-50"
+                        className="ui-button"
+                        data-variant="secondary"
                     >
                         {acknowledge.processing ? 'Saving…' : 'Take responsibility'}
                     </button>
                 </div>
             )}
 
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path}
+                success="Responsibility updated"
+                onReviewed={mutation.acknowledge}
+            />
             <section aria-labelledby="timeline-heading" className="mt-8">
                 <h2 id="timeline-heading" className="mb-2 text-lg font-semibold">
                     Timeline
@@ -434,21 +622,15 @@ function PageContent() {
             {can.update ? (
                 <section
                     aria-label="Manage incident"
-                    className="mt-8 grid gap-6 rounded border border-slate-700 p-4"
+                    className="ui-panel ui-incident-management mt-8"
                 >
                     <PostUpdateForm
-                        key={`post-${incident.status}`}
                         path={path}
                         incident={incident}
                         statuses={postableStatuses}
                         maxLength={textMaxLength}
                     />
-                    <SeverityForm
-                        key={`severity-${incident.severity}`}
-                        path={path}
-                        incident={incident}
-                        severities={options.severities}
-                    />
+                    <SeverityForm path={path} incident={incident} severities={options.severities} />
                     <RootCauseForm path={path} incident={incident} maxLength={textMaxLength} />
                 </section>
             ) : (
@@ -462,16 +644,16 @@ function PageContent() {
 
 /** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
 export default function Page() {
-    const { team, incident } = usePage<ShowProps>().props;
+    const { team, incident, incidentListUrl } = usePage<ShowProps>().props;
     return (
         <AppLayout
             team={team}
             section="incidents"
-            ancestors={[{ label: 'Incidents', href: `/teams/${team.id}/incidents` }]}
+            ancestors={[{ label: 'Incidents', href: incidentListUrl ?? incidentsPath(team.id) }]}
             title={`Incident #${incident.id}`}
-            description={`${incident.monitor.name} · ${causeLabel(incident.cause)}`}
+            description="Incident details and response history."
         >
-            <PageContent />
+            <PageContent key={incident.id} />
         </AppLayout>
     );
 }

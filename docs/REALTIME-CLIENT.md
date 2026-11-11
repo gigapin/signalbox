@@ -1,5 +1,11 @@
 # Private live pages (M6.03)
 
+## Incident editor integration — UI.04.1
+
+Incidents/Show passes its exact incident ID in addition to its monitor event scope. Recovery rejects a mismatched/null incident root or another monitor even within the same team/account. The removable PageContent is keyed by incident ID, so a same-component preserveState visit cannot carry a draft into another incident. Static return context remains from the current authorized page; no additional snapshot roots or fetch coordinator are added.
+
+Status/severity/cause forms preserve dirty and pending values across snapshot updates; clean forms accept new baselines. A remotely resolved incident retains an unsent message and asks for an available status before saving. Current policy hints continue to remove management controls. Mutation acceptance, rather than a read or frame, clears a submitted message. Existing denial/team/actor teardown and no-polling behavior remain covered by the complete frontend suite.
+
 ## Monitor lifecycle audit — UI.03.8
 
 Monitor detail continues to use one useLivePage/LivePageSession and native Echo client. The exact accepted URL (period, region and list return) is reused for partial recovery. No polling, separate metric fetcher, event-to-status assignment or new event schema is introduced. In addition to team/account checks, a Monitors/Show snapshot must contain the exact numeric route monitor ID; mismatched/malformed resource identity closes the subscription and triggers the existing denial boundary.

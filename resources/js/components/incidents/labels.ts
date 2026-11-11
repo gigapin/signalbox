@@ -89,3 +89,15 @@ export function durationLabel(seconds: number): string {
 
     return `${rest} s`;
 }
+
+/**
+ * @param incident Recorded resolution and nullable final duration, never a browser-clock estimate.
+ * @returns Final duration including measured zero, ongoing state or explicit missing final data.
+ */
+export function incidentDurationLabel(incident: {
+    resolvedAt: string | null;
+    durationSeconds: number | null;
+}): string {
+    if (incident.durationSeconds !== null) return durationLabel(incident.durationSeconds);
+    return incident.resolvedAt === null ? 'Ongoing' : 'Unavailable';
+}

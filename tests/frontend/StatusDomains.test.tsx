@@ -67,13 +67,17 @@ test('verifies DNS and associates a refusal with the hostname field', async () =
     act(() =>
         visit.mock.calls[0]?.[1]?.onError?.({ domain: 'The DNS proof could not be confirmed.' }),
     );
-    expect(screen.getByRole('alert')).toHaveTextContent('The DNS proof could not be confirmed.');
+    expect(screen.getByText('The DNS proof could not be confirmed.')).toHaveAttribute(
+        'role',
+        'alert',
+    );
     expect(screen.getByLabelText('Hostname')).toHaveAccessibleDescription(
         'The DNS proof could not be confirmed.',
     );
 });
 
 test('removes the hostname through its own CSRF-aware endpoint', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const user = userEvent.setup();
     const visit = vi.spyOn(router, 'visit').mockImplementation(() => undefined);
     renderInertia('Signalbox', PendingDomain);

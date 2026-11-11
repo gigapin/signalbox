@@ -1,6 +1,8 @@
 /** Show one status page with its visibility and components, and offer editing and deletion to managers. */
-import { useFormProtection } from '../app/NavigationGuard';
+import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
+import MutationFeedback from '../MutationFeedback';
 import { useState } from 'react';
 import StatusPageForm from './StatusPageForm';
 import StatusDomainForm from './StatusDomainForm';
@@ -20,6 +22,8 @@ interface StatusPageRowProps {
     limits: StatusPageLimits;
     /** Whether management controls are offered; the server decides again. */
     canManage: boolean;
+    /** Hide a filtered row without discarding its mounted editor. */
+    hidden?: boolean;
 }
 
 /** Only a published page links to its address, since a draft answers 404. */
@@ -30,24 +34,30 @@ export default function StatusPageRow({
     themeChoices,
     limits,
     canManage,
+    hidden = false,
 }: StatusPageRowProps) {
     const [editing, setEditing] = useState(false);
     const remove = useForm<Record<string, never>>({});
     useFormProtection(remove);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
+    const blocked = mutation.locked || guard.busy;
 
+    /** Delete only after explicit confirmation; preserve uncertain outcomes for manual review. */
     function destroy() {
+        if (blocked) return;
         if (!window.confirm(`Delete the status page ${page.title}? Its address stops working.`)) {
             return;
         }
 
-        remove.delete(path, { preserveScroll: true });
+        mutation.run(path, (options) => remove.delete(path, options));
     }
 
     return (
-        <li className="border-b border-slate-800 py-4">
+        <li hidden={hidden} className="ui-operation-row">
             <p className="font-medium">
                 {page.title}
-                <span className="ml-2 text-sm text-slate-300">
+                <span className="ml-2 text-sm text-[var(--color-ui-text)]">
                     {page.isPublic ? 'Published' : 'Draft'}
                 </span>
                 {page.hasPassword && (
@@ -56,18 +66,20 @@ export default function StatusPageRow({
             </p>
             {page.isPublic ? (
                 <a href={page.path} className="text-sm text-emerald-300 underline">
-                    {page.path}
+                    Open public page · {page.path}
                 </a>
             ) : (
-                <p className="text-sm text-slate-400">{page.path} (not reachable yet)</p>
+                <p className="text-sm text-[var(--color-ui-muted)]">
+                    {page.path} (not reachable yet)
+                </p>
             )}
             {page.components.length === 0 ? (
-                <p className="mt-2 text-sm text-slate-400">No components yet.</p>
+                <p className="mt-2 text-sm text-[var(--color-ui-muted)]">No components yet.</p>
             ) : (
                 <ol className="mt-2 grid gap-1 text-sm" aria-label={`Components of ${page.title}`}>
                     {page.components.map((component) => (
                         <li key={component.name}>
-                            <span className="text-slate-300">{component.name}:</span>{' '}
+                            <span className="text-[var(--color-ui-text)]">{component.name}:</span>{' '}
                             {component.monitors.length === 0
                                 ? 'no monitors left, choose at least one to save the page again'
                                 : component.monitors.map((monitor) => monitor.name).join(', ')}
@@ -79,15 +91,16 @@ export default function StatusPageRow({
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
                     <button
                         type="button"
+                        disabled={blocked}
                         onClick={() => setEditing(!editing)}
                         aria-expanded={editing}
-                        className="underline"
+                        className="ui-link"
                     >
                         {editing ? 'Close editor' : `Edit ${page.title}`}
                     </button>
                     <button
                         type="button"
-                        disabled={remove.processing}
+                        disabled={blocked}
                         onClick={destroy}
                         className="text-red-200 underline"
                     >
@@ -96,7 +109,7 @@ export default function StatusPageRow({
                 </div>
             )}
             {canManage && editing && (
-                <div className="mt-4 rounded border border-slate-700 p-4">
+                <div className="mt-4 ui-panel">
                     <StatusPageForm
                         idPrefix={`page-${page.id}`}
                         action={path}
@@ -110,20 +123,19 @@ export default function StatusPageRow({
                     />
                 </div>
             )}
-            {canManage && (
-                <StatusDomainForm
-                    key={page.domain?.hostname ?? 'no-domain'}
-                    path={path}
-                    domain={page.domain}
-                    pageId={page.id}
-                />
-            )}
+            {canManage && <StatusDomainForm path={path} domain={page.domain} pageId={page.id} />}
             {!canManage && page.domain && (
                 <p className="mt-2 text-sm">
                     Custom domain: {page.domain.hostname} (
                     {page.domain.verifiedUntil ? 'verified' : 'not verified'})
                 </p>
             )}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path.split('/status-pages')[0] + '/status-pages'}
+                success="Status page deleted"
+                onReviewed={mutation.acknowledge}
+            />
         </li>
     );
 }

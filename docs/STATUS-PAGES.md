@@ -1,5 +1,13 @@
 # Status pages
 
+## Private management integration — UI.04.3
+
+[SETTINGS-UI.md](SETTINGS-UI.md) describes shared mutation feedback, retained page/password drafts,
+explicit private/draft/published boundaries and independent hostname editing. The public page, themes,
+component projection, published incident rules, URLs, password lockout and subscription flow retain
+their existing behavior. No draft preview endpoint is added; only published rows link visitor addresses.
+
+
 A status page is a public page of a team: address, title, description, appearance, visibility, optional password and ordered components. Visitors read the current state, 90 days of history and explicitly published incident entries, through a short application cache.
 
 ## Data

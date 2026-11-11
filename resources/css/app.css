@@ -903,3 +903,15 @@
 .ui-operation-row fieldset {
     min-width: 0;
 }
+
+/* Private settings compose fields without intrinsic-width overflow on narrow screens. */
+.ui-settings-fields {
+    display: grid;
+    min-width: 0;
+    gap: 1rem;
+}
+
+.ui-settings-fields > *,
+.ui-settings-fields fieldset {
+    min-width: 0;
+}

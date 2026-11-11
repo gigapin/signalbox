@@ -15,13 +15,13 @@ interface TeamsProps extends AuthProps {
 }
 
 /** Show an honest empty state for invited identities awaiting acceptance. */
-export default function Teams() {
+function PageContent() {
     const { teams, currentTeamId } = usePage<TeamsProps>().props;
 
     const [suspended, setSuspended] = useState(false);
 
     return (
-        <PrivateContextLayout title="Your teams">
+        <>
             {teams.length > 0 && (
                 <TeamSwitcher
                     key={currentTeamId}
@@ -34,9 +34,9 @@ export default function Teams() {
                 (teams.length === 0 ? (
                     <p>You do not belong to any teams yet. Open your invitation to join one.</p>
                 ) : (
-                    <ul className="space-y-4">
+                    <ul className="grid gap-4">
                         {teams.map((team) => (
-                            <li key={team.id}>
+                            <li key={team.id} className="ui-panel">
                                 <Link href={`/teams/${team.id}/dashboard`} className="ui-link">
                                     {team.name}
                                 </Link>
@@ -48,6 +48,18 @@ export default function Teams() {
                         ))}
                     </ul>
                 ))}
+        </>
+    );
+}
+
+/** Reset selector state on identity replacement; no team is inferred from an old preference. */
+export default function Teams() {
+    return (
+        <PrivateContextLayout
+            title="Your teams"
+            description="Choose a team you currently belong to. Each team has its own role and permissions."
+        >
+            <PageContent />
         </PrivateContextLayout>
     );
 }

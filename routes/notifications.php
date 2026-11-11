@@ -2,6 +2,7 @@
 
 /** Declare notification channel, escalation policy and monitor escalation routes inside an authorized route team. */
 
+use App\Http\Controllers\Notifications\DeliveryPageController;
 use App\Http\Controllers\Notifications\EscalationPolicyController;
 use App\Http\Controllers\Notifications\NotificationChannelController;
 use App\Http\Controllers\Notifications\NotificationPageController;
@@ -17,6 +18,10 @@ Route::middleware(['auth', 'verified', EstablishTeamContext::class])
                 Route::get('/teams/{team}/notifications', [NotificationPageController::class, 'index'])
                     ->whereNumber('team')
                     ->name('teams.notifications.index');
+
+                Route::get('/teams/{team}/notifications/deliveries', [DeliveryPageController::class, 'index'])
+                    ->whereNumber('team')
+                    ->name('teams.notifications.deliveries');
 
                 Route::post('/teams/{team}/notification-channels/{channel}/signing-secret', [NotificationChannelController::class, 'rotateSigningSecret'])
                     ->whereNumber(['team', 'channel'])

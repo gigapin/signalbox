@@ -1,5 +1,17 @@
 # UI guidelines — Signalbox
 
+## Operational maintenance and notification views — UI.04.2
+
+Maintenance is now a real team navigation destination, shared by desktop and mobile. Maintenance and
+Notification deliveries use bounded native tables, explicit snapshot time/refresh, canonical GET
+filters and previous/next pagination. Management links enter the existing monitor or incident workflow.
+Notifications offers in-page channel/policy navigation, delivery access and guided setup; local name
+filters hide rows without unmounting drafts. Channel, policy and quiet-hour forms reuse the shared
+owned mutation feedback and input freeze. Native destructive confirmations remain. Secret rotation
+stays ephemeral and blocks further writes after an uncertain result. Contracts and privacy boundaries
+are in [OPERATIONS-UI.md](OPERATIONS-UI.md); actual gates are in TASKS, browser L remains UI.06.
+
+
 ## Incident response workflow — UI.04.1
 
 Incident tables reuse DataTable's visible caption, native headers and keyboard scroll region. Filter controls use accepted URLs and the existing owned GET lifecycle. A failed read keeps the unsent selection and previous rows with an explicit Apply filters retry; navigation/history restores accepted selection. Incident summary and timeline retain actual recorded values, local timestamps, textual status/severity and explicit private/published labels. No ongoing duration is inferred for a resolved incident lacking final data.

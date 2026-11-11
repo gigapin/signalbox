@@ -1,5 +1,14 @@
 # Notification channels, provider adapters, escalation policies and delivery log
 
+## Operational navigation — UI.04.2
+
+[OPERATIONS-UI.md](OPERATIONS-UI.md) documents the team maintenance list, paginated safe delivery list,
+configuration name filtering and shared mutation feedback. Notifications now links channels, policies,
+recorded outcomes and monitor policy assignment. Delivery reads reuse NotificationPresenter while
+selecting only safe columns; no encrypted message snapshots are hydrated. Existing delivery jobs,
+provider adapters, verification policy and escalation/quiet-hour rules remain authoritative.
+
+
 M5.01 models where notifications go and when, and gives owners and admins a page to manage it. M5.02 adds provider adapters and makes channel verification deliverable. M5.03 adds durable incident deliveries with deduplication, coalescing, resolution summaries and retries. M5.04 freezes all escalation steps at confirmation/reopening, cancels waiting deliveries at recovery and silences attempts during maintenance; see [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md). M5.05 adds [daily per-channel quiet hours](QUIET-HOURS.md) with explicit timezone, midnight and DST handling. Evidence is in [TASKS.md](TASKS.md); the route permissions are in [AUTHORIZATION-MATRIX.md](AUTHORIZATION-MATRIX.md).
 
 ## User decisions
@@ -75,6 +84,7 @@ Steps reference channels by identity in JSON, as in the specification. Channel d
 | Route | Method and URL | Roles |
 |---|---|---|
 | teams.notifications.index | GET /teams/{team}/notifications (no-store) | all members |
+| teams.notifications.deliveries | GET /teams/{team}/notifications/deliveries (no-store) | all members |
 | teams.notification-channels.store | POST /teams/{team}/notification-channels | owner, admin |
 | teams.notification-channels.update | PATCH …/notification-channels/{channel} | owner, admin |
 | teams.notification-channels.destroy | DELETE …/notification-channels/{channel} | owner, admin |

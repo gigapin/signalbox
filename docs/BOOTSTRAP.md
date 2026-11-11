@@ -1,5 +1,21 @@
 # Application bootstrap reference
 
+## Operational workflows handoff — 2026-11-11
+
+UI.04.2 introduces private GET /teams/{team}/maintenance and
+/teams/{team}/notifications/deliveries. Maintenance enters the shared team navigation; Notifications
+links delivery outcomes and guides channel/policy/monitor setup. Both new lists are fixed twenty-row
+snapshots with canonical filters, explicit refresh, no-store and current-membership authorization.
+Mutations reuse existing monitor/channel endpoints and the shared useOwnedMutation lifecycle.
+NotificationLog gains an incident relation for the safe read service; no schema or migration changes.
+
+Read [OPERATIONS-UI.md](OPERATIONS-UI.md) for privacy, query bounds and snapshot semantics. No new
+package, environment setting, scheduler, provider or worker change; rebuild/reload normal frontend
+assets. Next after the checks recorded in TASKS: UI.04.3, status-page management, members/invites and
+account/security integration. UI.04 stays open for later items including billing/API; UI.06 retains L.
+This handoff supersedes the earlier next-task instructions below.
+
+
 ## Incident workflow handoff — 2026-11-11
 
 UI.04.1 integrates incident list/detail with shared tables/styles, retained list/monitor context, private timeline forms, responsibility, inline irreversible-publication confirmation and redacted delivery outcomes. Status/severity/cause drafts survive realtime updates; pristine forms rebase without an unsaved warning. Exact incident identity is fenced during recovery and a changed resource remounts its forms. The existing mutation coordinator is shared as useOwnedMutation, and MutationFeedback moved from monitors/ to components/; monitor behavior/payloads remain covered by regressions.

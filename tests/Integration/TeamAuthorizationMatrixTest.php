@@ -278,6 +278,19 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.monitors.maintenance.destroy':
             expect($fixture->loadWindows())->toBe([]);
             break;
+        case 'teams.maintenance.index':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Maintenance/Index')
+                ->where('team.id', $fixture->team->id)
+                ->where('listing.total', 1)
+                ->where('listing.data.0.monitor.id', $fixture->monitor->id));
+            break;
+        case 'teams.notifications.deliveries':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Notifications/Deliveries')
+                ->where('team.id', $fixture->team->id)
+                ->where('listing.data', []));
+            break;
         case 'teams.notifications.index':
             $response->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Notifications/Index')

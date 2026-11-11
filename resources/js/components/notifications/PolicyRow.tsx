@@ -1,5 +1,7 @@
 /** Show one escalation policy with its steps and offer editing and deletion to managers. */
-import { useFormProtection } from '../app/NavigationGuard';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
+import MutationFeedback from '../MutationFeedback';
+import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { delayLabel } from './labels';
@@ -18,36 +20,50 @@ interface PolicyRowProps {
     limits: NotificationLimits;
     /** Whether management controls are offered; the server decides again. */
     canManage: boolean;
+    /** Hide a filtered row without discarding its draft. */
+    hidden?: boolean;
 }
 
 /** Steps are listed in delay order; inactive channels are marked because deliveries skip them. */
-export default function PolicyRow({ path, policy, channels, limits, canManage }: PolicyRowProps) {
+export default function PolicyRow({
+    path,
+    policy,
+    channels,
+    limits,
+    canManage,
+    hidden = false,
+}: PolicyRowProps) {
     const [editing, setEditing] = useState(false);
     const remove = useForm<Record<string, never>>({});
     useFormProtection(remove);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
+    const blocked = mutation.locked || guard.busy;
 
     function destroy() {
-        const usage =
-            policy.monitorCount === 0
-                ? ''
-                : ` ${policy.monitorCount} monitor${policy.monitorCount === 1 ? '' : 's'} will fall back to the team default.`;
+        if (blocked) return;
+        const usage = policy.isDefault
+            ? ' Monitors without another policy will notify nobody until a new default or override is assigned.'
+            : policy.monitorCount === 0
+              ? ''
+              : ` ${policy.monitorCount} monitor${policy.monitorCount === 1 ? '' : 's'} will fall back to the team default.`;
 
         if (!window.confirm(`Delete the policy ${policy.name}?${usage}`)) {
             return;
         }
 
-        remove.delete(path, { preserveScroll: true });
+        mutation.run(path, (options) => remove.delete(path, options));
     }
 
     return (
-        <li className="border-b border-slate-800 py-4">
+        <li hidden={hidden} className="ui-operation-row">
             <p className="font-medium">
                 {policy.name}
                 {policy.isDefault && (
                     <span className="ml-2 text-sm text-emerald-200">Team default</span>
                 )}
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--color-ui-muted)]">
                 {policy.monitorCount === 0
                     ? 'No monitor chose it explicitly.'
                     : `Chosen by ${policy.monitorCount} monitor${policy.monitorCount === 1 ? '' : 's'}.`}
@@ -55,7 +71,9 @@ export default function PolicyRow({ path, policy, channels, limits, canManage }:
             <ol className="mt-2 grid gap-1 text-sm" aria-label={`Steps of ${policy.name}`}>
                 {policy.steps.map((step, index) => (
                     <li key={index}>
-                        <span className="text-slate-300">{delayLabel(step.afterMinutes)}:</span>{' '}
+                        <span className="text-[var(--color-ui-text)]">
+                            {delayLabel(step.afterMinutes)}:
+                        </span>{' '}
                         {step.channels.length === 0
                             ? 'no channel'
                             : step.channels
@@ -72,15 +90,16 @@ export default function PolicyRow({ path, policy, channels, limits, canManage }:
                 <div className="mt-2 flex flex-wrap gap-3 text-sm">
                     <button
                         type="button"
+                        disabled={blocked}
                         aria-expanded={editing}
                         onClick={() => setEditing(!editing)}
-                        className="underline"
+                        className="ui-link"
                     >
                         {editing ? 'Close editor' : 'Edit policy'}
                     </button>
                     <button
                         type="button"
-                        disabled={remove.processing}
+                        disabled={blocked}
                         onClick={destroy}
                         className="text-red-200 underline disabled:opacity-50"
                     >
@@ -88,8 +107,8 @@ export default function PolicyRow({ path, policy, channels, limits, canManage }:
                     </button>
                 </div>
             )}
-            {editing && (
-                <div className="mt-3 rounded border border-slate-700 p-3">
+            {editing && canManage && (
+                <div className="mt-3 ui-panel">
                     <PolicyForm
                         idPrefix={`policy-${policy.id}`}
                         action={path}
@@ -102,6 +121,12 @@ export default function PolicyRow({ path, policy, channels, limits, canManage }:
                     />
                 </div>
             )}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path.split('/escalation-policies')[0] + '/notifications'}
+                success="Request accepted"
+                onReviewed={mutation.acknowledge}
+            />
         </li>
     );
 }

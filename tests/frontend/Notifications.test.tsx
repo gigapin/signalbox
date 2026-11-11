@@ -167,15 +167,18 @@ test('creates a channel with the fields of the chosen type and announces field e
             },
         }),
     );
-    expect(await within(form).findByRole('alert')).toHaveTextContent(
-        'Enter the bot token issued by BotFather.',
-    );
+    expect(
+        await within(form).findByText('Enter the bot token issued by BotFather.'),
+    ).toHaveAttribute('role', 'alert');
     expect(within(form).getByLabelText('Bot token')).toHaveAttribute('aria-invalid', 'true');
 });
 
 test('sends and confirms a verification code and pauses a verified channel', async () => {
     const user = userEvent.setup();
-    const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
+    const post = vi.spyOn(router, 'post').mockImplementation((_url, _data, options) => {
+        options?.onSuccess?.({} as never);
+        options?.onFinish?.({} as never);
+    });
     const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
 
     renderInertia('Signalbox', Index, pageProps(true));
@@ -214,7 +217,10 @@ test('sends and confirms a verification code and pauses a verified channel', asy
 
 test('edits a channel without prefilling secrets and deletes only after confirmation', async () => {
     const user = userEvent.setup();
-    const visit = vi.spyOn(router, 'visit').mockImplementation(() => undefined);
+    const visit = vi.spyOn(router, 'visit').mockImplementation((_url, options) => {
+        options?.onSuccess?.({} as never);
+        options?.onFinish?.({} as never);
+    });
     const destroy = vi.spyOn(router, 'delete').mockImplementation(() => undefined);
     vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
 
@@ -478,7 +484,7 @@ test('announces per-field quiet-hours errors and retains the submitted interval'
         />
     ));
     await user.click(screen.getByRole('button', { name: 'Save quiet hours' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Choose a supported IANA timezone.');
+    expect(screen.getByText('Choose a supported IANA timezone.')).toHaveAttribute('role', 'alert');
     expect(screen.getByLabelText('Quiet hours timezone')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText('Quiet hours timezone')).toHaveValue('Mars/Olympus');
     expect(screen.getByLabelText('Quiet hours start')).toHaveValue('22:00');

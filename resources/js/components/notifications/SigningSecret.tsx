@@ -1,6 +1,7 @@
 /** Rotate and reveal a webhook signing secret once, keeping it in ephemeral component state only. */
-import { useLeaveProtection } from '../app/NavigationGuard';
-import { useEffect, useRef, useState } from 'react';
+import { useLeaveProtection, useNavigationGuard } from '../app/NavigationGuard';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { TeamAccessContext } from '../app/TeamAccessContext';
 import { csrfHeader } from '../csrf';
 
 /** Control inputs. */
@@ -10,13 +11,16 @@ interface SigningSecretProps {
 }
 
 /** Message shown for any failure, without echoing server details. */
-const FAILURE = 'Unable to rotate the signing secret. Reload the page and check your permissions.';
+const FAILURE =
+    'Rotation was not confirmed; the previous secret may already be invalid. Reload and check the saved state before any manual attempt. This request will not retry automatically.';
 
 /**
  * The secret is fetched through a same-origin JSON mutation so it never enters Inertia props, history or the
  * session. Rotating invalidates the previous secret immediately, so the action asks for confirmation.
  */
 export default function SigningSecret({ path }: SigningSecretProps) {
+    const deny = useContext(TeamAccessContext);
+    const guard = useNavigationGuard();
     const [secret, setSecret] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
     useLeaveProtection(false, busy);
@@ -32,6 +36,8 @@ export default function SigningSecret({ path }: SigningSecretProps) {
     async function rotate() {
         if (
             pending.current ||
+            guard.busy ||
+            error !== '' ||
             !window.confirm(
                 'Create a new signing secret? The current one stops working immediately.',
             )
@@ -53,6 +59,11 @@ export default function SigningSecret({ path }: SigningSecretProps) {
                 signal: operation.signal,
                 headers: { Accept: 'application/json', 'X-XSRF-TOKEN': csrfHeader(FAILURE) },
             });
+
+            if ([401, 403, 404].includes(response.status)) {
+                if (!operation.signal.aborted) deny();
+                return;
+            }
 
             if (!response.ok || response.redirected) {
                 throw new Error(FAILURE);
@@ -92,7 +103,7 @@ export default function SigningSecret({ path }: SigningSecretProps) {
         <div className="mt-2">
             <button
                 type="button"
-                disabled={busy}
+                disabled={busy || guard.busy || error !== ''}
                 onClick={() => void rotate()}
                 className="rounded border border-slate-600 px-3 py-1 text-sm disabled:opacity-50"
             >

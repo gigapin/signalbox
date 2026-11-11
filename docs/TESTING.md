@@ -1,5 +1,22 @@
 # Test infrastructure
 
+## Operational list and configuration coverage — UI.04.2
+
+OperationalListsTest.php covers both real routes on PostgreSQL: current roles, foreign/revoked teams,
+no-store, literal search, exact half-open phases, malformed/oversized controls, out-of-range pages,
+deterministic pagination, deleted channels and explicit safe SQL columns. A service-level assertion
+checks constant relation queries at one versus twenty visible rows (maintenance three; deliveries
+five). TeamRouteMatrix and TeamAuthorizationMatrixTest include both new read routes, so the route
+catalogue completeness, guest/unverified gates and role × membership cases cover them automatically.
+
+OperationalWorkflows.test.tsx mounts actual Inertia components for maintenance navigation/pagination,
+failed read/manual retry, accepted-page refresh, bounded out-of-range pagination, delivery semantics,
+configuration links, hidden draft preservation, duplicate/refused/uncertain writes, verification-code
+cleanup and failed ephemeral secret rotation. AppLayout includes Maintenance as an active section;
+existing Notifications tests finish successful intercepted requests before a later action and target
+specific field errors separately from the general refusal notice. Gate results and limits are in TASKS.
+
+
 ## Integrated incident workflows — UI.04.1
 
 IncidentWorkflows.test.tsx uses actual Inertia pages for list/detail return links, owned filter reads and retry, history-like filter restoration, inline publication focus/Cancel/Escape/confirmation, duplicate note submission, refusal and accepted-note cleanup, the actual XHR response-loss path, zero/missing resolved duration, dirty/pristine server baseline synchronization and per-incident draft teardown. LivePageSession.test.ts also checks exact incident/monitor identity boundaries. Existing incident/notification/monitor interaction suites exercise shared lifecycle extraction and table changes.

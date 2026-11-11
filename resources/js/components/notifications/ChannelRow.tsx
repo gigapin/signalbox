@@ -1,5 +1,7 @@
 /** Show one notification channel with its verification state and the changes its state admits. */
-import { useFormProtection } from '../app/NavigationGuard';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
+import MutationFeedback from '../MutationFeedback';
+import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { formatInstant } from '../incidents/time';
@@ -18,6 +20,8 @@ interface ChannelRowProps {
     type: ChannelTypeOption | undefined;
     /** Whether management controls are offered; the server decides again. */
     canManage: boolean;
+    /** Hide a filtered row without discarding its draft. */
+    hidden?: boolean;
     /** Longest accepted label. */
     nameMaxLength: number;
     /** Digits of a verification code. */
@@ -48,6 +52,7 @@ export default function ChannelRow({
     canManage,
     nameMaxLength,
     codeLength,
+    hidden = false,
 }: ChannelRowProps) {
     const [editing, setEditing] = useState(false);
     const action = useForm<Record<string, never>>({});
@@ -56,49 +61,65 @@ export default function ChannelRow({
     useFormProtection(activation);
     const confirm = useForm({ code: '' });
     useFormProtection(confirm);
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
+    const blocked = mutation.locked || guard.busy;
     const codeId = `channel-${channel.id}-code`;
 
     function sendCode() {
-        action.post(`${path}/verification`, { preserveScroll: true });
+        if (blocked) return;
+        mutation.run(`${path}/verification`, (options) =>
+            action.post(`${path}/verification`, options),
+        );
     }
 
     function toggle() {
-        activation.patch(`${path}/activation`, { preserveScroll: true });
+        if (blocked) return;
+        activation.transform(() => ({ active: !channel.isActive }));
+        mutation.run(`${path}/activation`, (options) =>
+            activation.patch(`${path}/activation`, options),
+        );
     }
 
     function destroy() {
+        if (blocked) return;
         if (!window.confirm(`Delete the channel ${channel.name}? Delivery history is kept.`)) {
             return;
         }
 
-        action.delete(path, { preserveScroll: true });
+        mutation.run(path, (options) => action.delete(path, options));
     }
 
     function submitCode(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        confirm.post(`${path}/verification/confirm`, {
-            preserveScroll: true,
-            onFinish: () => confirm.reset('code'),
-        });
+        if (blocked) return;
+        mutation.run(
+            `${path}/verification/confirm`,
+            (options) => confirm.post(`${path}/verification/confirm`, options),
+            undefined,
+            () => confirm.reset('code'),
+        );
     }
 
     return (
-        <li className="border-b border-slate-800 py-4">
+        <li hidden={hidden} className="ui-operation-row">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-medium">
                     {channel.name}{' '}
-                    <span className="text-sm text-slate-400">· {type?.label ?? channel.type}</span>
+                    <span className="text-sm text-[var(--color-ui-muted)]">
+                        · {type?.label ?? channel.type}
+                    </span>
                 </p>
                 <p className="text-sm">{channelStateLabel(channel)}</p>
             </div>
-            <p className="text-sm text-slate-300">{channel.hint}</p>
-            <p className="text-xs text-slate-400">
+            <p className="text-sm text-[var(--color-ui-text)]">{channel.hint}</p>
+            <p className="text-xs text-[var(--color-ui-muted)]">
                 {channel.quietHours === null
                     ? 'No quiet hours.'
                     : `Quiet hours daily: ${channel.quietHours.start}–${channel.quietHours.end} (${channel.quietHours.timezone}).`}
             </p>
             {channel.verifiedAt !== null && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--color-ui-muted)]">
                     Verified {formatInstant(channel.verifiedAt, '')}
                 </p>
             )}
@@ -107,7 +128,7 @@ export default function ChannelRow({
                     Stub channel: deliveries are recorded but never sent.
                 </p>
             )}
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--color-ui-muted)]">
                 {channel.usedBy.length === 0
                     ? 'Not used by any escalation policy.'
                     : `Used by: ${channel.usedBy.join(', ')}`}
@@ -117,7 +138,7 @@ export default function ChannelRow({
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
                     <button
                         type="button"
-                        disabled={action.processing}
+                        disabled={blocked}
                         onClick={sendCode}
                         className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
                     >
@@ -126,7 +147,7 @@ export default function ChannelRow({
                     {channel.verifiedAt !== null && (
                         <button
                             type="button"
-                            disabled={activation.processing}
+                            disabled={blocked}
                             onClick={toggle}
                             className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
                         >
@@ -135,15 +156,16 @@ export default function ChannelRow({
                     )}
                     <button
                         type="button"
+                        disabled={blocked}
                         aria-expanded={editing}
                         onClick={() => setEditing(!editing)}
-                        className="underline"
+                        className="ui-link"
                     >
                         {editing ? 'Close editor' : 'Edit channel'}
                     </button>
                     <button
                         type="button"
-                        disabled={action.processing}
+                        disabled={blocked}
                         onClick={destroy}
                         className="text-red-200 underline disabled:opacity-50"
                     >
@@ -164,6 +186,7 @@ export default function ChannelRow({
                         </label>
                         <input
                             id={codeId}
+                            disabled={blocked}
                             inputMode="numeric"
                             autoComplete="one-time-code"
                             pattern="[0-9]*"
@@ -174,12 +197,15 @@ export default function ChannelRow({
                             aria-describedby={`${codeId}-hint ${codeId}-error`}
                             className="w-32 rounded border border-slate-600 bg-slate-900 px-3 py-2"
                         />
-                        <p id={`${codeId}-hint`} className="mt-1 text-xs text-slate-400">
+                        <p
+                            id={`${codeId}-hint`}
+                            className="mt-1 text-xs text-[var(--color-ui-muted)]"
+                        >
                             Expires {formatInstant(channel.verificationExpiresAt, 'soon')}.
                         </p>
                     </div>
                     <button
-                        disabled={confirm.processing}
+                        disabled={blocked}
                         className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
                     >
                         {confirm.processing ? 'Checking…' : 'Verify'}
@@ -195,7 +221,7 @@ export default function ChannelRow({
             {canManage && channel.type === 'webhook' && <SigningSecret path={path} />}
 
             {canManage && (
-                <details className="mt-3 rounded border border-slate-700 p-3">
+                <details className="mt-3 ui-panel">
                     <summary className="cursor-pointer text-sm">Configure quiet hours</summary>
                     <QuietHoursForm
                         path={path}
@@ -205,8 +231,8 @@ export default function ChannelRow({
                 </details>
             )}
 
-            {editing && type !== undefined && (
-                <div className="mt-3 rounded border border-slate-700 p-3">
+            {editing && canManage && type !== undefined && (
+                <div className="mt-3 ui-panel">
                     <ChannelForm
                         idPrefix={`channel-${channel.id}`}
                         action={path}
@@ -220,6 +246,12 @@ export default function ChannelRow({
                     />
                 </div>
             )}
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={path.split('/notification-channels')[0] + '/notifications'}
+                success="Request accepted"
+                onReviewed={mutation.acknowledge}
+            />
         </li>
     );
 }

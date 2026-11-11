@@ -1,5 +1,20 @@
 # Application bootstrap reference
 
+## Automated acceptance handoff — 2026-11-11
+
+UI.06.1 completed the audit of phase-A test coverage and the canonical verification pipeline. The only application fix
+is foreground GET event ownership in useReadNavigation: full request URL attribution and the existing
+transport classifier prevent unrelated responses/programming errors from being consumed as search
+failure or private-access denial. Fifteen regression cases and updated list/chart transport fixtures
+cover it; no PHP application, route, migration, package, environment or worker change is needed.
+
+Read [UI-ACCEPTANCE.md](UI-ACCEPTANCE.md) for the criterion→test map and manual limits, and TASKS
+for the final execution record. Rebuild/reload normal frontend assets. Next: UI.06.2,
+real Brave/Firefox essential-flow checks with synthetic fixtures, followed by current screen/guide/L
+acceptance and explicit phase-A exit. Phase A is not accepted by this audit alone. UI.04.5, UI.05 and
+UI.07 retain their scope/dependencies. This supersedes earlier restart notes below.
+
+
 ## Operator workflow handoff — 2026-11-11
 
 UI.04.4 integrates the platform directory/detail and override/audit flows, and adds a member-safe

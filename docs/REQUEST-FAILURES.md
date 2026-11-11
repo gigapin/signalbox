@@ -1,5 +1,15 @@
 # Connection failures and narrow viewports
 
+## Foreground GET ownership — UI.06.1
+
+useReadNavigation now consumes invalid/exception events only when their transport URL matches the
+active GET including scalar query controls. Equivalent query ordering/encoding is normalized; another
+origin, path, selection or missing attribution cannot deny the current private page. Exceptions must
+also pass the existing response-less browser-transport classifier; programming errors are not swallowed
+as a filter failure. Existing explicit retry, generation and cleanup behavior remains. Regression proof
+and phase-A evidence map: [UI-ACCEPTANCE.md](UI-ACCEPTANCE.md). No mutation replay or polling added.
+
+
 ## Shared incident write lifecycle — UI.04.1
 
 useMonitorMutation was renamed/extracted as useOwnedMutation and the identical MutationFeedback moved to components/ for actual monitor and incident callers. The coordinator remains one implementation; the only added callback permits note cleanup after owned confirmed acceptance. Incident note, severity, cause, responsibility and publication writes use it. No event bus, polling or new retry policy is introduced.

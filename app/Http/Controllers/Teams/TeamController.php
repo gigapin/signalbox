@@ -12,6 +12,7 @@ use App\Http\Requests\Teams\TeamInputRequest;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
+use App\Services\Billing\TeamPlanSummary;
 use App\Services\Identity\TeamAccess;
 use App\Services\Identity\TeamNavigation;
 use Illuminate\Http\JsonResponse;
@@ -53,10 +54,11 @@ final class TeamController extends Controller
      * Show team members and only the invitations the actor may manage.
      *
      * @param Request $request Verified browser identity.
+     * @param TeamPlanSummary $plans Member-safe effective plan and quota snapshot.
      * @param int $team Explicit team ID, authorized before private data is loaded.
      * @return Response Member directory and permitted management controls.
      */
-    public function show(Request $request, int $team): Response
+    public function show(Request $request, TeamPlanSummary $plans, int $team): Response
     {
         $actor = $this->authenticatedUser($request);
         $role = $this->access->membership($actor, $team)->role;
@@ -83,6 +85,7 @@ final class TeamController extends Controller
                 'name' => $identity->name,
                 'ownerId' => $identity->owner_id,
             ],
+            'planSummary' => fn (): array => $plans->forTeam($identity),
             'actorId' => $actor->id,
             'roles' => $roles,
             'members' => $members,

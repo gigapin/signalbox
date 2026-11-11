@@ -1,8 +1,8 @@
 /** Platform operator view of one team: effective plan, override form and audit history. */
-import { useLeaveProtection } from '../../../components/app/NavigationGuard';
+import { useLeaveProtection, useNavigationGuard } from '../../../components/app/NavigationGuard';
 import { useFormProtection } from '../../../components/app/NavigationGuard';
-import { useForm, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Link, useForm, usePage } from '@inertiajs/react';
+import { useContext, useEffect, useRef, useState, type FormEvent } from 'react';
 import { planLabel, sourceLabel, utcLabel } from '../../../components/admin/labels';
 import {
     overridePayload,
@@ -12,6 +12,12 @@ import {
 import type { AdminTeamDetail } from '../../../components/admin/types';
 import type { AuthProps } from '../../../components/auth/AuthLayout';
 import PrivateContextLayout from '../../../components/app/PrivateContextLayout';
+import { useOwnedMutation } from '../../../hooks/useOwnedMutation';
+import MutationFeedback from '../../../components/MutationFeedback';
+import { TeamAccessContext } from '../../../components/app/TeamAccessContext';
+import { withDirectoryReturn } from '../../../components/admin/urls';
+import AuditHistory from '../../../components/admin/AuditHistory';
+import Panel from '../../../components/ui/Panel';
 import PasswordConfirmationForm from '../../../components/auth/PasswordConfirmationForm';
 
 /** Detail response from TeamDirectoryController::show. */
@@ -22,11 +28,12 @@ interface ShowProps extends AuthProps {
     options: { kinds: string[]; plans: string[] };
     /** Longest accepted reason, in characters. */
     reasonMaxLength: number;
+    /** Server-normalized directory context; absent in older history entries. */
+    directoryUrl?: string;
 }
 
 /** Field styling shared with the other forms. */
-const INPUT =
-    'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
+const INPUT = 'ui-input';
 
 /** Labels of the radio choices. */
 const CHOICES: { value: Choice; label: string }[] = [
@@ -68,15 +75,19 @@ function validThrough(expiresAt: string | null): string {
 }
 
 /** Show the team and let the operator set or clear its override with a mandatory reason. */
-export default function Show() {
-    const { team, reasonMaxLength } = usePage<ShowProps>().props;
+function DetailContent() {
+    const { team, reasonMaxLength, directoryUrl = '/admin/teams' } = usePage<ShowProps>().props;
     const form = useForm<OverrideForm>({
         choice: currentChoice(team),
         valid_through: validThrough(team.override?.expiresAt ?? null),
         reason: '',
     });
     useFormProtection(form);
-    const path = `/admin/teams/${team.id}/plan-override`;
+    const mutation = useOwnedMutation();
+    const guard = useNavigationGuard();
+    const deny = useContext(TeamAccessContext);
+    const path = withDirectoryReturn(`/admin/teams/${team.id}/plan-override`, directoryUrl);
+    const reviewUrl = withDirectoryReturn(`/admin/teams/${team.id}`, directoryUrl);
     const fieldErrors = form.errors as Record<string, string | undefined>;
     const general = ['kind', 'plan']
         .map((key) => fieldErrors[key])
@@ -87,11 +98,30 @@ export default function Show() {
     const [confirmationError, setConfirmationError] = useState('');
     const passwordCheck = useRef<AbortController | null>(null);
     const saveButton = useRef<HTMLButtonElement>(null);
-    const locked = form.processing || checkingPassword || pendingDraft !== null;
+    const locked =
+        mutation.locked ||
+        guard.busy ||
+        form.processing ||
+        checkingPassword ||
+        pendingDraft !== null;
     useLeaveProtection(false, checkingPassword || pendingDraft !== null);
     let saveLabel = 'Save override';
     if (checkingPassword) saveLabel = 'Checking password…';
-    else if (form.processing) saveLabel = 'Saving…';
+    else if (form.processing || mutation.phase === 'pending') saveLabel = 'Saving…';
+
+    const savedChoice = currentChoice(team);
+    const savedExpiry = validThrough(team.override?.expiresAt ?? null);
+    const [baseline, setBaseline] = useState({
+        choice: savedChoice,
+        valid_through: savedExpiry,
+        reason: '',
+    });
+    if ((baseline.choice !== savedChoice || baseline.valid_through !== savedExpiry) && !locked) {
+        const next = { choice: savedChoice, valid_through: savedExpiry, reason: '' };
+        setBaseline(next);
+        form.setDefaults(next);
+        if (!form.isDirty) form.setData(next);
+    }
 
     /** Stop the preflight when leaving; a late response must never trigger the stored operation. */
     useEffect(() => () => passwordCheck.current?.abort(), []);
@@ -99,10 +129,15 @@ export default function Show() {
     /** Send the exact confirmed draft through the existing, server-protected Inertia mutation. */
     function save(draft: OverrideForm): void {
         form.transform(() => overridePayload(draft));
-        const visit = { preserveScroll: true, onSuccess: () => form.setData('reason', '') };
-
-        if (draft.choice === 'none') form.delete(path, visit);
-        else form.put(path, visit);
+        mutation.run(
+            path,
+            (options) => {
+                if (draft.choice === 'none') form.delete(path, options);
+                else form.put(path, options);
+            },
+            undefined,
+            () => form.setData('reason', ''),
+        );
     }
 
     /** Read the actual server session before deciding whether the current intent needs an inline challenge. */
@@ -119,6 +154,11 @@ export default function Show() {
                 signal: operation.signal,
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             });
+            if (operation.signal.aborted) return;
+            if ([401, 403, 404].includes(response.status)) {
+                deny();
+                return;
+            }
             if (!response.ok || response.redirected)
                 throw new Error('Invalid confirmation status.');
             const body: unknown = await response.json();
@@ -172,57 +212,86 @@ export default function Show() {
     }
 
     return (
-        <PrivateContextLayout
-            context="platform"
-            title={team.name}
-            description={`Team ${team.slug}.`}
-        >
-            <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                <div>
-                    <dt className="text-sm text-slate-400">Owner</dt>
-                    <dd>
-                        {team.owner.name} ({team.owner.email})
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-sm text-slate-400">Members</dt>
-                    <dd>{team.members}</dd>
-                </div>
-                <div>
-                    <dt className="text-sm text-slate-400">Stored plan</dt>
-                    <dd>{planLabel(team.storedPlan)}</dd>
-                </div>
-                <div>
-                    <dt className="text-sm text-slate-400">Effective plan</dt>
-                    <dd>
-                        {planLabel(team.entitlement.plan)} — {sourceLabel(team.entitlement.source)}
-                        {team.entitlement.expiresAt !== null &&
-                            `, until ${utcLabel(team.entitlement.expiresAt)}`}
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-sm text-slate-400">Monitors</dt>
-                    <dd>
-                        {team.usage.used} of {team.usage.limit}, minimum interval{' '}
-                        {team.usage.minimumIntervalSeconds} s
-                    </dd>
-                </div>
-                <div>
-                    <dt className="text-sm text-slate-400">Trial</dt>
-                    <dd>
-                        {utcLabel(team.trialStartedAt)} – {utcLabel(team.trialEndsAt)}
-                    </dd>
-                </div>
-            </dl>
+        <>
+            <nav aria-label="Platform team navigation" className="ui-actions mb-4">
+                <Link href={directoryUrl} className="ui-link">
+                    Back to all teams
+                </Link>
+                <a href="#override-heading" className="ui-link">
+                    Plan override
+                </a>
+                <a href="#history-heading" className="ui-link">
+                    History
+                </a>
+            </nav>
+            <Panel
+                title="Team summary"
+                description="Operator inspection does not grant membership or change your selected team."
+            >
+                <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                    <div>
+                        <dt className="text-sm text-[var(--color-ui-muted)]">Owner</dt>
+                        <dd>
+                            {team.owner.name} ({team.owner.email})
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-[var(--color-ui-muted)]">Members</dt>
+                        <dd>{team.members}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-[var(--color-ui-muted)]">Stored plan</dt>
+                        <dd>{planLabel(team.storedPlan)}</dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-[var(--color-ui-muted)]">Effective plan</dt>
+                        <dd>
+                            {planLabel(team.entitlement.plan)} —{' '}
+                            {sourceLabel(team.entitlement.source)}
+                            {team.entitlement.expiresAt !== null &&
+                                `, until ${utcLabel(team.entitlement.expiresAt)}`}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-[var(--color-ui-muted)]">Monitors</dt>
+                        <dd>
+                            {team.usage.used} of {team.usage.limit}, minimum interval{' '}
+                            {team.usage.minimumIntervalSeconds} s
+                        </dd>
+                    </div>
+                    <div>
+                        <dt className="text-sm text-[var(--color-ui-muted)]">Trial</dt>
+                        <dd>
+                            {utcLabel(team.trialStartedAt)} – {utcLabel(team.trialEndsAt)}
+                        </dd>
+                    </div>
+                </dl>
+            </Panel>
 
             <section aria-labelledby="override-heading" className="mt-10">
                 <h2 id="override-heading" className="text-xl font-semibold">
                     Plan override
                 </h2>
-                <p className="mt-2 text-sm text-slate-300">
-                    {team.override === null
-                        ? 'No override is set.'
-                        : `Current: ${team.override.kind === 'unlimited' ? 'unlimited testing' : `granted ${planLabel(team.override.plan ?? 'pro')}`}, ends ${utcLabel(team.override.expiresAt, 'never')}. Reason: ${team.override.reason}`}
+                <p className="ui-description">
+                    {team.override === null ? (
+                        'No override is set.'
+                    ) : (
+                        <>
+                            Recorded override:{' '}
+                            {team.override.kind === 'unlimited'
+                                ? 'unlimited testing'
+                                : 'granted plan'}
+                            {team.override.plan !== null && ` · ${planLabel(team.override.plan)}`};
+                            ends {utcLabel(team.override.expiresAt, 'no expiry')}. Reason:{' '}
+                            {team.override.reason}. The effective plan above determines which limits
+                            currently apply.
+                        </>
+                    )}
+                </p>
+                <p className="ui-help">
+                    Testing limits are high but finite. Removing or expiring an override returns
+                    this team to its normal entitlement. The server rechecks your operator access
+                    and password confirmation before saving.
                 </p>
 
                 {confirmationError && (
@@ -280,7 +349,10 @@ export default function Show() {
                                     aria-describedby="valid-through-hint valid-through-error"
                                     className={INPUT}
                                 />
-                                <p id="valid-through-hint" className="mt-1 text-xs text-slate-400">
+                                <p
+                                    id="valid-through-hint"
+                                    className="mt-1 text-xs text-[var(--color-ui-muted)]"
+                                >
                                     Leave empty to keep the override until it is removed.
                                 </p>
                                 {form.errors.valid_through && (
@@ -326,11 +398,7 @@ export default function Show() {
                         </div>
 
                         <div>
-                            <button
-                                ref={saveButton}
-                                disabled={locked}
-                                className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                            >
+                            <button ref={saveButton} disabled={locked} className="ui-button">
                                 {saveLabel}
                             </button>
                         </div>
@@ -344,33 +412,29 @@ export default function Show() {
                 )}
             </section>
 
-            <section aria-labelledby="history-heading" className="mt-10">
-                <h2 id="history-heading" className="text-xl font-semibold">
-                    History
-                </h2>
-                {team.events.length === 0 ? (
-                    <p className="mt-2 text-slate-300">
-                        No operator action recorded for this team.
-                    </p>
-                ) : (
-                    <ol className="mt-3 grid gap-3">
-                        {team.events.map((event) => (
-                            <li
-                                key={event.id}
-                                className="rounded border border-slate-800 p-3 text-sm"
-                            >
-                                <p>
-                                    <span className="font-medium">{event.action}</span> by{' '}
-                                    {event.actor ?? 'command line'} on {utcLabel(event.createdAt)}
-                                </p>
-                                {event.reason !== null && (
-                                    <p className="text-slate-300">Reason: {event.reason}</p>
-                                )}
-                            </li>
-                        ))}
-                    </ol>
-                )}
-            </section>
+            <MutationFeedback
+                phase={mutation.phase}
+                reviewUrl={reviewUrl}
+                success="Plan override change accepted"
+                onReviewed={mutation.acknowledge}
+            />
+            <div id="history-heading" className="mt-8">
+                <AuditHistory events={team.events} />
+            </div>
+        </>
+    );
+}
+
+/** Remount the complete override and password intent when inspecting another team or operator account. */
+export default function Show() {
+    const { team } = usePage<ShowProps>().props;
+    return (
+        <PrivateContextLayout
+            context="platform"
+            title={team.name}
+            description={`Team ${team.slug}.`}
+        >
+            <DetailContent key={team.id} />
         </PrivateContextLayout>
     );
 }

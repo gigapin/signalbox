@@ -1,5 +1,15 @@
 # UI guidelines — Signalbox
 
+## Operator context and ordinary plan visibility — UI.04.4
+
+Platform pages use a distinct workspace, captioned keyboard-scroll directory, bounded page controls,
+retained accepted search and explicit failed-read retry. Override/password intent lives below the
+removable operator and inspected-team boundaries; pending/refused/uncertain/accepted results share the
+existing coordinator, without replay. Audit Before/After renders known snapshot fields only. Ordinary
+Team settings shows real plan/trial/quotas with no operator or payment action, and old history without
+data asks for reload. Details and limits: [PLATFORM-UI.md](PLATFORM-UI.md). Browser L remains UI.06.
+
+
 ## Private settings integration — UI.04.3
 
 Status-page management now distinguishes private editing, draft addresses and the existing published

@@ -27,13 +27,15 @@ function ContextShell({ title, context = 'account', description, children }: Con
     const { appName, auth, status } = usePage<AuthProps>().props;
     const [denied, setDenied] = useState(false);
     const deny = useCallback(() => setDenied(true), []);
-    const hidden = denied || auth?.user === null;
-    const mainId = useId();
     const platform = context === 'platform';
+    const hidden =
+        denied || auth?.user === null || (platform && auth?.user?.isPlatformAdmin !== true);
+    const deniedTitle = platform ? 'Platform access unavailable' : 'Account access unavailable';
+    const mainId = useId();
     return (
         <TeamAccessContext.Provider value={deny}>
             <div className="ui-theme ui-app-shell">
-                <Head title={hidden ? 'Account access unavailable' : title} />
+                <Head title={hidden ? deniedTitle : title} />
                 <a className="ui-skip-link ui-link" href={`#${mainId}`}>
                     Skip to content
                 </a>
@@ -56,7 +58,7 @@ function ContextShell({ title, context = 'account', description, children }: Con
                         <Link className="ui-link" href="/account">
                             Your account
                         </Link>
-                        {platform ? (
+                        {platform && !hidden ? (
                             <Link className="ui-link" href="/admin/teams">
                                 All teams
                             </Link>
@@ -72,7 +74,7 @@ function ContextShell({ title, context = 'account', description, children }: Con
                         )}
                     </nav>
                     <PageHeading
-                        title={hidden ? 'Account access unavailable' : title}
+                        title={hidden ? deniedTitle : title}
                         {...(hidden || description === undefined ? {} : { description })}
                     />
                     {!hidden && status && (

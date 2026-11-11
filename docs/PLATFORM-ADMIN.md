@@ -1,5 +1,14 @@
 # Platform administration
 
+## Integrated operator UI — UI.04.4
+
+[PLATFORM-UI.md](PLATFORM-UI.md) records the bounded directory/search return context, shared override
+mutation feedback, removable operator/password intent and allowlisted Before/After audit presentation.
+The ordinary Team settings page now receives only a member-safe effective plan/trial/quota snapshot;
+operator reasons, identities and audit remain private to platform routes. Existing gates, locks,
+idempotence, expiry semantics and production 2FA remain authoritative. No payment UI is introduced.
+
+
 Milestone MA adds platform operators (super admins) and a panel for overriding team plans, so that test teams can work without plan limits and customers can receive a plan without a subscription. It is outside the product specification: the user decided to add it on 2026-10-23, and the decision is recorded in [TASKS.md](TASKS.md). User management (MA.05) and impersonation (MA.06) are planned but not implemented. The architecture decision is ADR-011 in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Operators

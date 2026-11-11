@@ -4,6 +4,7 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import type { AuthProps } from '../../components/auth/AuthLayout';
 import AppLayout from '../../components/app/AppLayout';
+import TeamPlanPanel, { type TeamPlanSummary } from '../../components/billing/TeamPlanPanel';
 import Panel from '../../components/ui/Panel';
 import Button from '../../components/ui/Button';
 import MutationFeedback from '../../components/MutationFeedback';
@@ -50,6 +51,8 @@ interface TeamProps extends AuthProps {
     members: Member[];
     /** Invitations the actor may manage. */
     invitations: Invitation[];
+    /** Current member-safe entitlement snapshot; absent in older history entries. */
+    planSummary?: TeamPlanSummary;
 }
 
 /** Validation errors shared by the management forms. */
@@ -339,7 +342,7 @@ function LeaveTeam({ teamId, actorId, name }: { teamId: number; actorId: number;
 
 /** Compose current memberships and capabilities without creating a second authorization model. */
 function PageContent() {
-    const { team, actorId, roles, members, invitations } = usePage<TeamProps>().props;
+    const { team, actorId, roles, members, invitations, planSummary } = usePage<TeamProps>().props;
     return (
         <>
             <nav aria-label="Team settings" className="ui-actions mb-4">
@@ -355,7 +358,8 @@ function PageContent() {
                     Your teams
                 </Link>
             </nav>
-            <section id="members-heading" aria-label="Members">
+            <TeamPlanPanel {...(planSummary === undefined ? {} : { summary: planSummary })} />
+            <section className="mt-6" id="members-heading" aria-label="Members">
                 <Panel
                     title="Members"
                     description="Roles control access within this team. Changes are checked against your current permissions."

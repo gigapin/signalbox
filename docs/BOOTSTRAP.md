@@ -1,5 +1,20 @@
 # Application bootstrap reference
 
+## Operator workflow handoff — 2026-11-11
+
+UI.04.4 integrates the platform directory/detail and override/audit flows, and adds a member-safe
+plan/trial/quota snapshot to ordinary Team settings. PlatformTeamSelection and PlatformDirectoryReturn
+normalize bounded search and retained directory context. TeamPlanSummary reuses TeamEntitlement and
+PlanLimits after membership authorization; no granting-operator justification or identity enters that projection.
+
+Operator form/password intent is removable on denial, identity or inspected-team change; actual writes
+reuse useOwnedMutation. PrivateContextLayout now hides platform data without an explicit operator flag.
+No new route, schema, package, environment or worker change; rebuild/reload frontend assets.
+[PLATFORM-UI.md](PLATFORM-UI.md) owns contracts and TASKS owns checks. Next: UI.06.1,
+phase-A test/coverage acceptance, followed by real-browser UI.06.2 and final L. UI.04 remains open for
+billing/API UI.04.5 after M9–M10; no payment UI is simulated. This supersedes earlier restart notes.
+
+
 ## Private settings handoff — 2026-11-11
 
 UI.04.3 integrates existing private status-page/domain, membership/invitation/ownership and account

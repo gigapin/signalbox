@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Data\Admin\PlatformTeamSelection;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -32,20 +33,19 @@ final class ListPlatformTeamsRequest extends FormRequest
     /** @return string Trimmed search text, or empty when absent, not a string or too long. */
     public function search(): string
     {
-        $value = $this->query('q');
-
-        if (!is_string($value) || mb_strlen(trim($value)) > self::QUERY_MAX_LENGTH) {
-            return '';
-        }
-
-        return trim($value);
+        return PlatformTeamSelection::fromInput($this->query->all())->q;
     }
 
     /** @return int Requested page, or 1 when absent or invalid. */
     public function page(): int
     {
-        $value = $this->query('page');
-
-        return is_string($value) && ctype_digit($value) && (int) $value >= 1 ? (int) $value : 1;
+        return PlatformTeamSelection::fromInput($this->query->all())->page;
     }
+
+    /** @return list<string> Invalid bounded control names, without their submitted values. */
+    public function rejectedFilters(): array
+    {
+        return PlatformTeamSelection::fromInput($this->query->all())->rejected;
+    }
+
 }

@@ -355,10 +355,12 @@ test.each(['network', 'invalid', 'expired'] as const)(
         await user.type(screen.getByLabelText(/^Reason/), 'Preserved');
         await user.click(screen.getByRole('button', { name: 'Save override' }));
         expect(await screen.findByRole('alert')).toHaveTextContent(
-            'Unable to check password confirmation',
+            failure === 'expired' ? 'Private data hidden' : 'Unable to check password confirmation',
         );
         expect(remove).not.toHaveBeenCalled();
-        expect(screen.getByLabelText(/^Reason/)).toHaveValue('Preserved');
+        if (failure === 'expired')
+            expect(screen.queryByLabelText(/^Reason/)).not.toBeInTheDocument();
+        else expect(screen.getByLabelText(/^Reason/)).toHaveValue('Preserved');
     },
 );
 

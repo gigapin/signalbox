@@ -915,3 +915,12 @@
 .ui-settings-fields fieldset {
     min-width: 0;
 }
+
+/* Operator audit and member plan facts keep a readable single column on narrow screens. */
+.ui-audit-snapshots {
+    display: grid;
+    min-width: 0;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    overflow-wrap: anywhere;
+}

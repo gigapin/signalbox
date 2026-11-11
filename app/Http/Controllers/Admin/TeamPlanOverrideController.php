@@ -8,6 +8,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Admin\ManagePlanOverrides;
 use App\Http\Controllers\Controller;
+use App\Http\Navigation\PlatformDirectoryReturn;
 use App\Http\Requests\Admin\ClearPlanOverrideRequest;
 use App\Http\Requests\Admin\SavePlanOverrideRequest;
 use Illuminate\Http\RedirectResponse;
@@ -15,8 +16,11 @@ use Illuminate\Http\RedirectResponse;
 /** Both mutations redirect back to the team page with a status flash. */
 final class TeamPlanOverrideController extends Controller
 {
-    /** @param ManagePlanOverrides $overrides Transactional override changes. */
-    public function __construct(private readonly ManagePlanOverrides $overrides)
+    /**
+     * @param ManagePlanOverrides $overrides Transactional override changes.
+     * @param PlatformDirectoryReturn $links Canonical directory context after accepted writes.
+     */
+    public function __construct(private readonly ManagePlanOverrides $overrides, private readonly PlatformDirectoryReturn $links)
     {
     }
 
@@ -36,7 +40,7 @@ final class TeamPlanOverrideController extends Controller
             $request->reason(),
         );
 
-        return redirect()->route('admin.teams.show', ['team' => $team])->with('status', 'plan-override-saved');
+        return redirect()->to($this->links->detail($request, $team))->with('status', 'plan-override-saved');
     }
 
     /**
@@ -48,6 +52,6 @@ final class TeamPlanOverrideController extends Controller
     {
         $this->overrides->clear($this->authenticatedUser($request), $team, $request->reason());
 
-        return redirect()->route('admin.teams.show', ['team' => $team])->with('status', 'plan-override-cleared');
+        return redirect()->to($this->links->detail($request, $team))->with('status', 'plan-override-cleared');
     }
 }

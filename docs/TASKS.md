@@ -12,6 +12,13 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Correzione CI: redirect dopo modifica monitor — 2026-11-11
+
+- **Completata** dopo segnalazione utente: CI backend con cinque fallimenti lifecycle, 3215 passati/22031 asserzioni. Il successo update torna al dettaglio da UI.03.7; il test dei cinque tipi conservava l’aspettativa precedente sull’editor, non incluso nelle verifiche mirate allora eseguite. Correzione segnata in corso prima delle modifiche; nessun Git/gh eseguito.
+- File: `tests/Integration/MonitorLifecycleTest.php` e questo piano. Aggiornato il redirect del salvataggio riuscito al dettaglio; aggiunta GET della destinazione con verifica componente Monitors/Show, ID e nome aggiornato e assenza di contract-secret. I casi di validazione fallita continuano a pretendere ritorno all’editor. Nessun codice applicativo modificato: il comportamento era già implementato e documentato correttamente.
+- Verifiche: MonitorLifecycleTest + MonitorMutationNavigationTest su PostgreSQL/Redis isolati, con --fail-on-skipped/--fail-on-warning: **68 test / 876 asserzioni**, exit 0; PHP-CS-Fixer dry-run sul file zero correzioni; Larastan livello 8 senza errori. Nessun dato/processo di sviluppo modificato.
+- Non eseguiti: CI remota/PHP 8.5, suite backend completa (i cinque fallimenti segnalati e i redirect correlati sono coperti dalle suite eseguite), frontend/build/browser (nessun sorgente applicativo modificato). La verifica remota resta da confermare; UI.04.1 resta il prossimo task funzionale, con UI.03 completata e senza modifiche di scope.
+
 ## Audit realtime monitor — 2026-11-11
 
 - [x] **UI.03.8 completato**, dipendenze UI.03.1–UI.03.7 soddisfatte; segnato in corso prima delle modifiche su richiesta dell’utente. Nessun Git/gh eseguito; branch non verificato dall’agente.

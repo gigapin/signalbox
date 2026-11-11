@@ -4,6 +4,7 @@
 
 use App\Http\Controllers\Incidents\IncidentController;
 use App\Http\Controllers\Incidents\IncidentPageController;
+use App\Http\Controllers\Incidents\MaintenancePageController;
 use App\Http\Controllers\Incidents\MaintenanceWindowController;
 use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\NoStoreAuthentication;
@@ -15,6 +16,10 @@ Route::middleware(['auth', 'verified', EstablishTeamContext::class])
         // Pages carry private timelines and declared causes, so browsers and proxies must not store them.
         Route::middleware(NoStoreAuthentication::class)
             ->group(function (): void {
+                Route::get('/teams/{team}/maintenance', [MaintenancePageController::class, 'index'])
+                    ->whereNumber('team')
+                    ->name('teams.maintenance.index');
+
                 Route::get('/teams/{team}/incidents', [IncidentPageController::class, 'index'])
                     ->whereNumber('team')
                     ->name('teams.incidents.index');

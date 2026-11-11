@@ -41,6 +41,8 @@ final class TeamRouteMatrix
         'teams.monitors.maintenance.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.maintenance.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
         'teams.monitors.maintenance.destroy' => ['method' => 'DELETE', 'status' => 302, 'roles' => ['owner', 'admin', 'member']],
+        'teams.maintenance.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.notifications.deliveries' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.notifications.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.notification-channels.store' => ['method' => 'POST', 'status' => 302, 'roles' => ['owner', 'admin']],
         'teams.notification-channels.update' => ['method' => 'PATCH', 'status' => 302, 'roles' => ['owner', 'admin']],

@@ -167,3 +167,14 @@ The private `teams.status-pages.domain.update` (PUT), `.verify` (POST) and `.des
 
 `status-domains.allow` is deliberately outside the account/tenant matrix: raw socket peer authorization restricts it to configured internal callers before sessions and again at the route, including decoded paths. Only a live verified public association yields 204, with no account, page content or cookie. `GuardStatusPageHosts` rejects unknown/custom hosts before private routes; verified custom hosts expose one page and its public forms only. `StatusDomainsTest` checks Host/forwarded-header boundaries, lease expiry, direct tenant calls, raw database composite constraints, CSRF, separate Redis sessions and a cross-team activation race. Details and deployment boundaries: [STATUS-DOMAINS.md](STATUS-DOMAINS.md).
 
+
+## Operational list reads — UI.04.2
+
+`teams.maintenance.index` (`GET /teams/{team}/maintenance`) and `teams.notifications.deliveries`
+(`GET /teams/{team}/notifications/deliveries`) join the exhaustive private route catalogue. All four
+current roles read them; guest/unverified, foreign-team and revoked membership cases use the same
+middleware and current-membership policies as monitor and notification lists. Both reads are no-store.
+Maintenance actions still use each monitor's existing policy and endpoints; no permission is inferred
+from the list link. Delivery rows expose only safe outcomes and actual incident/monitor identities,
+never recipient payloads, destination hashes, dedupe keys or attempt fences. Dedicated PostgreSQL tests
+cover pagination, literal monitor-name search, half-open maintenance phases and deleted-channel history.

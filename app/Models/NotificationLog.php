@@ -44,6 +44,7 @@ use LogicException;
  * @property CarbonImmutable|null $quiet_hours_deferred_until UTC quiet-hours wait boundary; cleared when a provider attempt starts.
  * @property string|null $claim_token Latest attempt fence, retained after completion for stale-hook rejection.
  * @property CarbonImmutable|null $claim_until Lease expiry; null when no attempt owns the row.
+ * @property-read Incident $incident Incident within the same tenant.
  * @property-read NotificationChannel|null $channel Target channel within the same tenant, if it still exists.
  */
 final class NotificationLog extends Model
@@ -108,6 +109,12 @@ final class NotificationLog extends Model
     public function channel(): BelongsTo
     {
         return $this->belongsTo(NotificationChannel::class, 'channel_id');
+    }
+
+    /** @return BelongsTo<Incident, $this> Incident resolved through the current tenant scope. */
+    public function incident(): BelongsTo
+    {
+        return $this->belongsTo(Incident::class);
     }
 
     /**

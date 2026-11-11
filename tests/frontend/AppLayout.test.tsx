@@ -68,11 +68,12 @@ test('uses configured branding and only real route-team destinations despite a d
         '/teams/12/dashboard',
         '/teams/12/monitors',
         '/teams/12/incidents',
+        '/teams/12/maintenance',
         '/teams/12/notifications',
         '/teams/12/status-pages',
         '/teams/12',
     ]);
-    for (const absent of ['Maintenance', 'Billing', 'API']) {
+    for (const absent of ['Billing', 'API']) {
         expect(within(navigation).queryByRole('link', { name: absent })).not.toBeInTheDocument();
     }
     expect(screen.getByText('Current team')).toBeVisible();
@@ -83,6 +84,7 @@ test.each([
     ['dashboard', 'Dashboard'],
     ['monitors', 'Monitors'],
     ['incidents', 'Incidents'],
+    ['maintenance', 'Maintenance'],
     ['notifications', 'Notifications'],
     ['status-pages', 'Status pages'],
     ['team', 'Team'],

@@ -1,8 +1,14 @@
 /** Build the currently implemented team destinations independently of saved account preferences. */
 
-/** Implemented sections; maintenance, billing and API are intentionally absent until their pages exist. */
+/** Implemented sections; billing and API are intentionally absent until their pages exist. */
 export type TeamSection =
-    'dashboard' | 'monitors' | 'incidents' | 'notifications' | 'status-pages' | 'team';
+    | 'dashboard'
+    | 'monitors'
+    | 'incidents'
+    | 'maintenance'
+    | 'notifications'
+    | 'status-pages'
+    | 'team';
 
 /** One authorized team identity already projected by the route controller. */
 export interface AppTeam {
@@ -41,6 +47,7 @@ export function teamDestinations(teamId: number): TeamDestination[] {
         { section: 'dashboard', label: 'Dashboard', href: `${base}/dashboard` },
         { section: 'monitors', label: 'Monitors', href: `${base}/monitors` },
         { section: 'incidents', label: 'Incidents', href: `${base}/incidents` },
+        { section: 'maintenance', label: 'Maintenance', href: `${base}/maintenance` },
         { section: 'notifications', label: 'Notifications', href: `${base}/notifications` },
         { section: 'status-pages', label: 'Status pages', href: `${base}/status-pages` },
         { section: 'team', label: 'Team', href: base },

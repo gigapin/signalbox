@@ -891,3 +891,15 @@
         }
     }
 }
+
+/* Operational lists and editors must wrap long team labels and configuration summaries locally. */
+.ui-operation-row {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    border-bottom: 1px solid var(--color-ui-border);
+    padding-block: 1rem;
+}
+
+.ui-operation-row fieldset {
+    min-width: 0;
+}

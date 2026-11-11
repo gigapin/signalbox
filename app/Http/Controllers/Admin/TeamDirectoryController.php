@@ -8,10 +8,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Actions\Admin\ManagePlanOverrides;
 use App\Http\Controllers\Controller;
+use App\Http\Navigation\PlatformDirectoryReturn;
 use App\Http\Presenters\Admin\PlatformTeamPresenter;
 use App\Http\Requests\Admin\ListPlatformTeamsRequest;
 use App\Models\Team;
 use App\Services\Admin\PlatformTeamDirectory;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,14 +43,17 @@ final class TeamDirectoryController extends Controller
         return Inertia::render('Admin/Teams/Index', [
             'teams' => $this->presenter->page($page, $this->directory->monitorCounts($ids)),
             'filters' => ['q' => $search],
+            'rejectedFilters' => $request->rejectedFilters(),
         ]);
     }
 
     /**
+     * @param Request $request Admitted operator request with optional navigation context.
+     * @param PlatformDirectoryReturn $links Canonical directory navigation.
      * @param int $team Any team ID.
      * @return Response Team detail with override form data and history.
      */
-    public function show(int $team): Response
+    public function show(Request $request, PlatformDirectoryReturn $links, int $team): Response
     {
         $model = Team::query()->with(['owner:id,name,email', 'planOverride'])->findOrFail($team);
         $monitors = $this->directory->monitorCounts([$model->id])[$model->id] ?? 0;
@@ -57,6 +62,7 @@ final class TeamDirectoryController extends Controller
             'team' => $this->presenter->detail($model, $monitors, $this->directory->memberCount($model), $this->directory->events($model)),
             'options' => PlatformTeamPresenter::options(),
             'reasonMaxLength' => ManagePlanOverrides::REASON_MAX_LENGTH,
+            'directoryUrl' => $links->resolve($request),
         ]);
     }
 }

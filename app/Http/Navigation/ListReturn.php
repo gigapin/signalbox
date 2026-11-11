@@ -17,10 +17,10 @@ final readonly class ListReturn
 
     /**
      * @param Request $request Read request containing optional untrusted returnTo.
-     * @param string $base Application-built list path inside the authorized team.
+     * @param string $base Application-built list path admitted by the current route authorization.
      * @param Closure(array<array-key, mixed>): array<string, int|string|null> $normalize Domain filter normalization.
      * @param string $parameter Navigation query key selected by application code.
-     * @return string Canonical same-team list URL, falling back to its unfiltered first page.
+     * @return string Canonical authorized list URL, falling back to its unfiltered first page.
      */
     public function resolve(Request $request, string $base, Closure $normalize, string $parameter = 'returnTo'): string
     {

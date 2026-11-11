@@ -271,7 +271,10 @@ test.each(['account', 'platform'] as const)(
                 </PrivateContextLayout>
             );
         }
-        renderInertia('Configured name', ContextFixture, identity);
+        renderInertia('Configured name', ContextFixture, {
+            ...identity,
+            auth: { user: { ...identity.auth.user, isPlatformAdmin: context === 'platform' } },
+        });
         expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Workspace');
         expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
         expect(screen.queryByText('Current team')).not.toBeInTheDocument();

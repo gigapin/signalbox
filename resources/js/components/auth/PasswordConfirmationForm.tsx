@@ -1,6 +1,7 @@
 /** Confirm a password inline without navigating away from a pending, explicitly requested operation. */
 import { useLeaveProtection } from '../app/NavigationGuard';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useContext, useEffect, useRef, useState, type FormEvent } from 'react';
+import { TeamAccessContext } from '../app/TeamAccessContext';
 import { csrfHeader } from '../csrf';
 
 /** Callbacks retain the caller's non-secret operation draft outside the password form. */
@@ -19,6 +20,7 @@ export default function PasswordConfirmationForm({
     onConfirmed,
     onCancel,
 }: PasswordConfirmationProps) {
+    const deny = useContext(TeamAccessContext);
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
@@ -63,7 +65,12 @@ export default function PasswordConfirmationForm({
                 },
                 body: JSON.stringify({ password }),
             });
+            if (operation.signal.aborted) return;
             setPassword('');
+            if ([401, 403, 404].includes(response.status)) {
+                deny();
+                return;
+            }
 
             if (response.status === 422) {
                 if (!operation.signal.aborted)
@@ -126,7 +133,7 @@ export default function PasswordConfirmationForm({
                             ? 'override-confirm-hint override-password-error'
                             : 'override-confirm-hint'
                     }
-                    className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 aria-invalid:border-red-400"
+                    className="ui-input"
                 />
                 {error && (
                     <p id="override-password-error" role="alert" className="text-red-300">
@@ -134,13 +141,10 @@ export default function PasswordConfirmationForm({
                     </p>
                 )}
                 <div className="flex gap-4">
-                    <button
-                        disabled={busy}
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
+                    <button disabled={busy} className="ui-button">
                         {busy ? 'Confirming…' : 'Confirm password and save override'}
                     </button>
-                    <button type="button" onClick={onCancel} className="underline">
+                    <button type="button" onClick={onCancel} className="ui-link">
                         Cancel
                     </button>
                 </div>

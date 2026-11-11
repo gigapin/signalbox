@@ -1,5 +1,21 @@
 # Test infrastructure
 
+## Operator workflow and member entitlement coverage — UI.04.4
+
+PlatformWorkflowTest.php exercises actual PostgreSQL routes: four roles/current/foreign/revoked teams,
+member-safe quotas including paused/suspended monitors and drafts, entitlement precedence/exclusive
+trial and override ends, lazy partial reads and fixed service query growth, normalized directory returns
+after PUT/DELETE, unsafe/duplicate hints and invalid bounded controls. Existing PlatformAdminAccess and
+PlanOverride suites retain all operator/production-2FA/password/lock/idempotence checks.
+
+PlatformWorkflows.test.tsx adds 16 DOM cases on actual Inertia pages for directory context/search retry,
+history, bounded pagination, accepted/uncertain writes, disposed team/password intents, flag and
+GET/write denial, dirty/pristine override choices, audit allowlists and ordinary member plan display.
+Admin.test.tsx updates its expired-session preflight expectation to private-content removal, while
+network/malformed errors retain drafts. NavigationGuard supplies the explicit operator flag in its
+authorized platform fixture instead of inferring it from a membership role. Final gate evidence and unexecuted checks remain in TASKS.
+
+
 ## Private settings workflow coverage — UI.04.3
 
 SettingsWorkflows.test.tsx adds 22 cases on actual Inertia pages: hidden password drafts, pending and

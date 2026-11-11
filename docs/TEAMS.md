@@ -1,5 +1,14 @@
 # Invitations and team membership management
 
+## Member plan snapshot — UI.04.4
+
+Ordinary Team settings now shows an authorized effective plan/trial/quota projection from
+TeamPlanSummary, with PlanLimits as the source of numeric limits. Paused/suspended monitors and draft
+status pages count. Old history without data requests reload; no payment, renewal date or operator
+controls are inferred. Operator reasons/audit/identities are excluded. Snapshot/privacy/query contracts
+are in [PLATFORM-UI.md](PLATFORM-UI.md); mutation enforcement and membership rules remain unchanged.
+
+
 ## Private settings integration — UI.04.3
 
 [SETTINGS-UI.md](SETTINGS-UI.md) documents the grouped team settings, shared mutation outcomes,

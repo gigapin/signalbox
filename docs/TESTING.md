@@ -1,5 +1,17 @@
 # Test infrastructure
 
+## Phase A automatic acceptance audit — UI.06.1
+
+[UI-ACCEPTANCE.md](UI-ACCEPTANCE.md) maps each implemented UI criterion to concrete DOM and PHP
+suites, the canonical local/CI gates and the remaining real-browser boundary. It is behavioral evidence,
+not a coverage percentage. The audit demonstrates a GET error-ownership regression (nine failing
+cases before correction): unrelated response events and programming exceptions could interfere with
+an active read. Fifteen new ReadNavigation cases fence URL/path/query/origin attribution and disposal;
+Monitors/MonitorCharts fixtures now supply actual transport URLs and failure shapes. Existing owned
+mutation, realtime, role/tenant and privacy coverage remains. Final results belong in TASKS; browser
+UI.06.2–UI.06.4/L are still independent.
+
+
 ## Operator workflow and member entitlement coverage — UI.04.4
 
 PlatformWorkflowTest.php exercises actual PostgreSQL routes: four roles/current/foreign/revoked teams,

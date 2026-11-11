@@ -1,5 +1,14 @@
 # UI guidelines — Signalbox
 
+## Automated phase-A audit — UI.06.1
+
+[UI-ACCEPTANCE.md](UI-ACCEPTANCE.md) links the implemented criteria to actual DOM/PHP regressions
+and manual limits. Foreground GET feedback now belongs to its exact path/query/origin; unrelated or
+unattributed errors cannot clear the page and programming exceptions remain visible to error handling.
+The audit does not certify native dialog/focus, VoiceOver, browser layout/zoom/history or real sessions.
+Those remain UI.06.2–UI.06.4 and L; automatic counts are not coverage percentages or browser PASS.
+
+
 ## Operator context and ordinary plan visibility — UI.04.4
 
 Platform pages use a distinct workspace, captioned keyboard-scroll directory, bounded page controls,

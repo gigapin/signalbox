@@ -109,9 +109,19 @@ test.each([401, 403, 404])(
     'removes old charts after authoritative chart-navigation denial %s',
     async (status) => {
         const user = userEvent.setup();
-        vi.spyOn(router, 'get').mockImplementation((_path, _data, callbacks) =>
-            callbacks?.onStart?.({} as never),
-        );
+        let requestedUrl: string | undefined;
+        vi.spyOn(router, 'get').mockImplementation((path, data, callbacks) => {
+            if (typeof path === 'string') {
+                const target = new URL(path, location.href);
+                if (data !== null && typeof data === 'object') {
+                    for (const [key, value] of Object.entries(data)) {
+                        if (typeof value === 'string') target.searchParams.set(key, value);
+                    }
+                }
+                requestedUrl = target.href;
+            }
+            callbacks?.onStart?.({} as never);
+        });
         renderInertia('Signalbox', Show, chartsProps);
         await user.click(
             within(screen.getByRole('navigation', { name: 'Latency region' })).getByRole('link', {
@@ -122,7 +132,7 @@ test.each([401, 403, 404])(
             document.dispatchEvent(
                 new CustomEvent('inertia:invalid', {
                     cancelable: true,
-                    detail: { response: { status } },
+                    detail: { response: { status, config: { url: requestedUrl } } },
                 }),
             );
         });

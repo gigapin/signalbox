@@ -801,7 +801,15 @@ test.each(['exception', 'invalid'])(
         await user.click(screen.getByRole('button', { name: 'Apply filters' }));
         const failure = new CustomEvent(`inertia:${eventName}`, {
             cancelable: true,
-            detail: { exception: new Error('private diagnostic'), response: { status: 500 } },
+            detail: {
+                exception: Object.assign(new Error('private diagnostic'), {
+                    isAxiosError: true,
+                    code: 'ERR_NETWORK',
+                    request: new XMLHttpRequest(),
+                    config: { url: '/teams/7/monitors' },
+                }),
+                response: { status: 500, config: { url: '/teams/7/monitors' } },
+            },
         });
         act(() => {
             document.dispatchEvent(failure);
@@ -924,7 +932,7 @@ test.each([401, 403, 404])(
             document.dispatchEvent(
                 new CustomEvent('inertia:invalid', {
                     cancelable: true,
-                    detail: { response: { status } },
+                    detail: { response: { status, config: { url: '/teams/7/monitors' } } },
                 }),
             );
         });

@@ -1,5 +1,13 @@
 # Monitor pages, search and filters
 
+## Monitor form and action lifecycle — UI.03.7
+
+MonitorForm retains buildPayload, raw interval validation, post-refusal focus and explicit stored-secret replacement, while using semantic shared styles and Button/MutationFeedback. Inputs freeze only during pending transport; refused/uncertain drafts remain in component memory. Cancel follows the existing dirty/busy navigation guard. Edit adds list/detail breadcrumbs and successful saving now returns to the detail page.
+
+MonitorActions replaces window.confirm with inline confirmation for Pause/Resume/Delete, first focusing Cancel and restoring the trigger on Cancel/Escape. Policy hints and quota control visibility/enabling; server policies and transactional actions remain authoritative. useMonitorMutation prevents synchronous repeated dispatch, scopes failure listeners by the owned URL, disposes subscriptions and transport, and ignores obsolete lifecycle callbacks. MutationFeedback distinguishes pending, confirmed acceptance, refusal and uncertainty. Uncertain changes require checking saved data in a new tab and explicit acknowledgement before another manual attempt. No automatic retry, draft persistence or new domain idempotency mechanism is added.
+
+Only query navigation metadata reaches the mutation URL; it is normalized independently of the strict body validator. No header, URL credential or body content enters the navigation hint. The tests and remaining browser/CI limits are recorded in TASKS.md.
+
 M2.05 adds the browser interface on top of the [model](MONITORS.md), the [input contract](MONITOR-INPUT.md), the [outbound boundary](OUTBOUND-SECURITY.md) and the [mutations and plan limits](MONITOR-CRUD.md). M2.06 adds the [integrated coverage](#integrated-coverage-m206), including concurrent attempts to add a sixth monitor through the UI. Evidence is in [TASKS.md](TASKS.md).
 
 ## Pages and routes

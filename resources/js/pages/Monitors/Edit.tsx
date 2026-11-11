@@ -32,8 +32,9 @@ function PageContent() {
         usePage<EditProps>().props;
     return (
         <>
-            <nav aria-label="Monitor navigation" className="mb-6 text-sm text-emerald-300">
+            <nav aria-label="Monitor navigation" className="ui-actions mb-6">
                 <Link
+                    className="ui-link"
                     href={withMonitorListReturn(
                         monitorPath(team.id, monitor.id),
                         team.id,
@@ -47,7 +48,21 @@ function PageContent() {
                 initial={editFormData(monitor, defaults)}
                 originalType={monitor.type}
                 stored={monitor.configuration}
-                action={monitorPath(team.id, monitor.id)}
+                action={withMonitorListReturn(
+                    monitorPath(team.id, monitor.id),
+                    team.id,
+                    monitorListUrl ?? monitorsPath(team.id),
+                )}
+                reviewUrl={withMonitorListReturn(
+                    monitorPath(team.id, monitor.id),
+                    team.id,
+                    monitorListUrl ?? monitorsPath(team.id),
+                )}
+                cancelUrl={withMonitorListReturn(
+                    monitorPath(team.id, monitor.id),
+                    team.id,
+                    monitorListUrl ?? monitorsPath(team.id),
+                )}
                 method="patch"
                 options={options}
                 usage={usage}
@@ -60,9 +75,24 @@ function PageContent() {
 
 /** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
 export default function Page() {
-    const { team, monitor } = usePage<EditProps>().props;
+    const { team, monitor, monitorListUrl } = usePage<EditProps>().props;
     return (
-        <AppLayout team={team} section="monitors" title={`Edit ${monitor.name}`}>
+        <AppLayout
+            team={team}
+            section="monitors"
+            ancestors={[
+                { label: 'Monitors', href: monitorListUrl ?? monitorsPath(team.id) },
+                {
+                    label: monitor.name,
+                    href: withMonitorListReturn(
+                        monitorPath(team.id, monitor.id),
+                        team.id,
+                        monitorListUrl ?? monitorsPath(team.id),
+                    ),
+                },
+            ]}
+            title={`Edit ${monitor.name}`}
+        >
             <PageContent />
         </AppLayout>
     );

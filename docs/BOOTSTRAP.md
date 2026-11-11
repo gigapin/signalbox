@@ -1,5 +1,11 @@
 # Application bootstrap reference
 
+## Monitor form/action handoff — 2026-11-11
+
+UI.03.7 introduces MonitorActions, MutationFeedback, useMonitorMutation and a shared response-less transport classifier. Create/Edit keep raw interval validation and explicit secret replacement, adopt semantic styles/Cancel, and freeze inputs during pending writes. Pause/Resume/Delete use inline confirmation with Cancel/Escape focus behavior. Uncertain outcomes preserve drafts and require checking saved state and explicit acknowledgement before another manual attempt; no retry is automatic.
+
+MonitorController now returns successful updates to detail and preserves server-normalized list context for Create/Update/Delete. MonitorInputRequest removes query-only returnTo from domain validation while still rejecting a body/file field of that name. No migration, new package, configuration, queue or development-data update is needed; rebuild/reload client assets as usual. Next: UI.03.8, full realtime recovery/lifecycle audit. UI.06 owns final browser L; current test evidence/limitations are in TASKS.md. This handoff supersedes earlier next-task instructions below.
+
 ## Monitor context handoff — 2026-11-11
 
 UI.03.6 adds MonitorContextPanels to Monitors/Show: observed TLS expiry/provenance, ongoing/next maintenance, effective notification steps and safe channel eligibility flags, and compact linked recent incidents. The existing maintenance/escalation forms remain; no new endpoint, query service, migration, package or environment setting. monitorContext joins the existing authorized live partial recovery. Missing browser-history context asks for reload; stale TLS never implies expiry. Next task: UI.03.7, form/action transitions; UI.03.8 and UI.06 remain separate. See TASKS.md for final checks and limitations; this handoff supersedes earlier next-task instructions below.

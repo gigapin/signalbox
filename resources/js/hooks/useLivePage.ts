@@ -10,7 +10,15 @@ import type { ReverbConfiguration } from '../realtime/types';
 const PAGE_KEYS = {
     'Dashboard/Show': ['dashboard'],
     'Monitors/Index': ['monitors', 'usage', 'can'],
-    'Monitors/Show': ['monitor', 'recentIncidents', 'maintenance', 'escalation', 'can', 'metrics'],
+    'Monitors/Show': [
+        'monitor',
+        'recentIncidents',
+        'maintenance',
+        'escalation',
+        'can',
+        'metrics',
+        'monitorContext',
+    ],
     'Incidents/Index': ['incidents'],
     'Incidents/Show': ['incident', 'deliveries', 'postableStatuses', 'can'],
 } as const;

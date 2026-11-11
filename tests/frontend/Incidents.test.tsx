@@ -408,9 +408,9 @@ test('saves severity and clears the declared cause with an empty note', async ()
 test('lists recent incidents and maintenance phases on the monitor page', () => {
     renderInertia('Signalbox', MonitorShow, monitorProps(false));
 
-    const incidents = screen.getByRole('table', { name: 'Recent incidents of Checkout API' });
+    const incidents = screen.getByRole('region', { name: 'Recent incidents' });
     expect(within(incidents).getByRole('link', { name: 'Incident #42' })).toBeInTheDocument();
-    expect(within(incidents).queryByRole('columnheader', { name: 'Monitor' })).toBeNull();
+    expect(within(incidents).getByText(/Investigating/)).toBeInTheDocument();
 
     const current = screen.getByRole('list', { name: 'Current and upcoming maintenance' });
     expect(within(current).getAllByRole('listitem')[0]).toHaveTextContent('In progress');

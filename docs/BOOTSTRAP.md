@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## Monitor context handoff — 2026-11-11
+
+UI.03.6 adds MonitorContextPanels to Monitors/Show: observed TLS expiry/provenance, ongoing/next maintenance, effective notification steps and safe channel eligibility flags, and compact linked recent incidents. The existing maintenance/escalation forms remain; no new endpoint, query service, migration, package or environment setting. monitorContext joins the existing authorized live partial recovery. Missing browser-history context asks for reload; stale TLS never implies expiry. Next task: UI.03.7, form/action transitions; UI.03.8 and UI.06 remain separate. See TASKS.md for final checks and limitations; this handoff supersedes earlier next-task instructions below.
+
 M0.02 introduces the Laravel 13 application skeleton with Inertia 2, React 19, TypeScript and Tailwind 4. See [TASKS.md](TASKS.md) for remaining work and [DEPENDENCIES.md](DEPENDENCIES.md) for package constraints. The framework configuration and initial migrations were adapted from the [official Laravel 13 skeleton](https://github.com/laravel/laravel/tree/13.x); project-specific source documentation and entry points were added locally.
 
 [ARCHITECTURE.md](ARCHITECTURE.md) records M0.08–M0.09 decisions for future domain boundaries, checker strategies, tenant context, documentation, recoverable scheduling, regional confirmation, retention, SLA and plan reconciliation. These decisions do not imply that the corresponding domain classes or features already exist.
@@ -14,7 +18,7 @@ Backend acceptance: 170 tests/1498 assertions across six relevant suites, Larast
 
 ## Monitor availability detail handoff — 2026-11-10
 
-**Next: UI.03.5, detail latency/uptime charts and supported period/region controls. UI.03.4 is complete.** Monitors/Show now composes MonitorSnapshot, AvailabilityHistory and AvailabilitySummary. Safe destination and authorized actions appear near the heading; filtered return/edit context stays intact. Paused/suspended/current maintenance are separate from the last observed result; missing observation does not render Up. Check timestamps are local, metric windows/bars UTC. No continuous Up/Down duration is inferred.
+**Historical handoff:** UI.03.4 completion and the initial UI.03.5 handoff are retained below. The current next task is UI.03.6, as recorded above. Monitors/Show now composes MonitorSnapshot, AvailabilityHistory and AvailabilitySummary. Safe destination and authorized actions appear near the heading; filtered return/edit context stays intact. Paused/suspended/current maintenance are separate from the last observed result; missing observation does not render Up. Check timestamps are local, metric windows/bars UTC. No continuous Up/Down duration is inferred.
 
 Cards use existing metrics for 24h/7d/30d observed uptime, coverage, nullable SLA and down/unknown/excluded aggregate durations. History bars preserve all duration categories and outside-lifetime time, with labelled images, patterns, legend and a native keyboard disclosure containing the full equivalent table. Partial observed 100% never paints the whole requested hour up. Old history without metrics and unavailable/zero-life/fully-excluded periods have explicit explanations. Percentage formatting preserves source precision if rounding would overstate availability. Existing settings, maintenance/escalation/heartbeat forms and recent incidents remain; UI.03.6 owns their contextual presentation.
 

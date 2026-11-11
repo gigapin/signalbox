@@ -1,5 +1,9 @@
 # Proiezioni private di dashboard e monitor
 
+## Presentazione del contesto — UI.03.6
+
+MonitorContextPanels consuma le proiezioni esistenti senza nuove query o formule. Il certificato conserva expiry e provenienza distinte; il testo riferisce la freschezza allo snapshot, non al momento corrente. Manutenzione corrente/prossima usa phase e ordine del server, mostrando anche finestre correnti sovrapposte. Policy/canali effettivi espongono solo label/tipo/flag; step senza canali, policy assente e contesto history mancante hanno testi distinti. Incidenti recenti conservano durata finale nulla/zero e collegamenti dello stesso team. Il protocollo partial del dettaglio include ora monitorContext insieme a metrics. Nessun polling, cache, nuovo endpoint o costo query aggiuntivo alla lettura completa; la partial recovery esegue ora anche le letture di contesto già presenti nella risposta completa.
+
 UI.03.1 estende le letture, senza cambiare check, incidenti, notifiche, schema o formule SLA. La dashboard conserva `DashboardOverview`/`DashboardLatency` e gli URL con selezione monitor/pagina. Le nuove schede/grafici entrano nei sotto-task successivi: la presenza delle props non ne certifica già la resa grafica.
 
 ## Contratti e fonti

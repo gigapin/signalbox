@@ -12,6 +12,16 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Chiusura sessione e ripartenza — 2026-11-11
+
+- Sessione chiusa su richiesta dell’utente dopo il completamento di UI.06.1; **20/27 sotto-task completati, 7 aperti**. UI.06 resta in corso; UI.06.2 non è ancora avviato. Nessun altro task implementato durante la chiusura.
+- Ripartire da **UI.06.2**, collaudo dei flussi essenziali in Brave e Firefox: leggere prima [UI-ACCEPTANCE.md](UI-ACCEPTANCE.md), [BROWSER-TESTS.md](BROWSER-TESTS.md), [BOOTSTRAP.md](BOOTSTRAP.md) e [USER-DASHBOARD.md](USER-DASHBOARD.md). Verificare ambiente/browser disponibili e dati sintetici, quindi segnare il task in corso prima delle modifiche; conservare gli ID e gli esiti storici A–L e registrare versione, risultati e limiti delle nuove prove.
+- Ultimo gate applicativo valido: `./scripts/verify.sh` superato, **3315 backend / 22956 asserzioni**, **467 DOM in 38 file**, **5 qualità**, PHP-CS-Fixer, Larastan livello 8, ESLint/Prettier/TypeScript e build. Dettagli nel registro immediatamente sotto e nella matrice; non occorre ripeterlo per questa sola chiusura Markdown.
+- Correzione da conservare: useReadNavigation attribuisce invalid/exception all’URL della GET corrente e riconosce solo errori di trasporto; 15 nuove regressioni, fixture Monitors/MonitorCharts aggiornate. Nessun cambio a PHP applicativo, rotte, schema o dipendenze.
+- Restano da eseguire il collaudo reale Brave/Firefox, VoiceOver/zoom nativo e i passi UI.06.3–UI.06.4/L. **Fase A non accettata; non iniziare M9 da questa consegna.** CI remota/PHP 8.5 non verificata in questa sessione.
+- Git/gh mai eseguiti; branch, commit e stato di sincronizzazione non verificati. Branch suggerito per il prossimo lavoro: `test/browser-essential-flows`, da gestire esclusivamente dall’utente. Nessun processo applicativo, dato di sviluppo o preferenza browser modificato alla chiusura; i servizi test isolati precedenti non sono stati arrestati da questa operazione e lo stato runtime va verificato alla ripresa.
+- Chiusura limitata a TASKS, BOOTSTRAP e USER-DASHBOARD: controllati collegamenti locali e coerenza degli stati; test applicativi non ripetuti perché cambia soltanto Markdown.
+
 ## Audit automatico fase A — 2026-11-11
 
 - [x] **UI.06.1 completato**, dipendenze UI.01–UI.03/UI.04.1–UI.04.4 soddisfatte; avviato su richiesta dell’utente. Nessun Git/gh eseguito; branch non verificato dall’agente.

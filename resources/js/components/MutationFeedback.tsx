@@ -1,7 +1,7 @@
 /** Explain confirmed refusal versus uncertain commit without clearing drafts or replaying writes. */
-import type { MutationPhase } from '../../hooks/useMonitorMutation';
-import Alert from '../ui/Alert';
-import Button from '../ui/Button';
+import type { MutationPhase } from '../hooks/useOwnedMutation';
+import Alert from './ui/Alert';
+import Button from './ui/Button';
 
 /** Outcome presentation has no request payload or transport diagnostics. */
 interface FeedbackProps {

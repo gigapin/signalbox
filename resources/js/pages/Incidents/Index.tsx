@@ -1,6 +1,9 @@
 /** List one team's incidents, open first, with state and severity filters and explicit empty and error states. */
-import { Link, router, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
+import Button from '../../components/ui/Button';
+import Alert from '../../components/ui/Alert';
+import { useReadNavigation } from '../../hooks/useReadNavigation';
 import { useLivePage } from '../../hooks/useLivePage';
 import { useState, type FormEvent } from 'react';
 import AppLayout from '../../components/app/AppLayout';
@@ -30,27 +33,33 @@ interface IndexProps extends IncidentPageProps {
 }
 
 /** Field styling shared by the filter selects. */
-const INPUT =
-    'w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
+const INPUT = 'ui-input';
 
 /** Filter through GET navigation so results stay bookmarkable and keyboard-operable. */
 function PageContent() {
-    const { team } = usePage<IndexProps>().props;
+    const page = usePage<IndexProps>();
+    const { team } = page.props;
     const live = useLivePage<IndexProps>(team.id, 'Incidents/Index');
     const { incidents, filters, filtered, rejectedFilters, options } = live.props;
     const [draft, setDraft] = useState<IncidentFilters>(filters);
-    const [loading, setLoading] = useState(false);
+    const [selection, setSelection] = useState(filters);
+    const [acceptedUrl, setAcceptedUrl] = useState(page.url);
+    const { loading, failed, navigate: read } = useReadNavigation();
+    if (
+        acceptedUrl !== page.url ||
+        selection.state !== filters.state ||
+        selection.severity !== filters.severity
+    ) {
+        setAcceptedUrl(page.url);
+        setSelection(filters);
+        setDraft(filters);
+    }
 
     /**
      * @param next Filters to apply from the first page.
      */
     function navigate(next: IncidentFilters) {
-        router.get(incidentsPath(team.id), incidentListQuery(next), {
-            preserveState: true,
-            replace: true,
-            onStart: () => setLoading(true),
-            onFinish: () => setLoading(false),
-        });
+        read(incidentsPath(team.id), incidentListQuery(next), { preserveState: true });
     }
 
     function submit(event: FormEvent<HTMLFormElement>) {
@@ -70,14 +79,15 @@ function PageContent() {
             <form
                 aria-label="Filter incidents"
                 onSubmit={submit}
-                className="grid gap-4 rounded border border-slate-700 p-4 md:grid-cols-3"
+                className="ui-panel ui-incident-filters"
             >
                 <div>
-                    <label htmlFor="filter-state" className="mb-2 block text-sm font-medium">
+                    <label htmlFor="filter-state" className="ui-label">
                         State
                     </label>
                     <select
                         id="filter-state"
+                        disabled={loading}
                         value={draft.state ?? ''}
                         onChange={(event) =>
                             setDraft({
@@ -96,11 +106,12 @@ function PageContent() {
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="filter-severity" className="mb-2 block text-sm font-medium">
+                    <label htmlFor="filter-severity" className="ui-label">
                         Severity
                     </label>
                     <select
                         id="filter-severity"
+                        disabled={loading}
                         value={draft.severity ?? ''}
                         onChange={(event) =>
                             setDraft({
@@ -118,19 +129,17 @@ function PageContent() {
                         ))}
                     </select>
                 </div>
-                <div className="flex items-end gap-3">
-                    <button
-                        disabled={loading}
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
-                        {loading ? 'Loading…' : 'Apply filters'}
-                    </button>
+                <div className="ui-actions">
+                    <Button type="submit" busy={loading} busyLabel="Loading…">
+                        Apply filters
+                    </Button>
                     {filtered && (
                         <button
                             type="button"
                             disabled={loading}
                             onClick={clear}
-                            className="underline"
+                            className="ui-button"
+                            data-variant="secondary"
                         >
                             Clear filters
                         </button>
@@ -144,6 +153,15 @@ function PageContent() {
                 </p>
             )}
 
+            {failed && (
+                <Alert
+                    title="Incident filters could not be loaded"
+                    tone="warning"
+                    announce="assertive"
+                >
+                    Your selection and previous results are preserved. Apply filters again to retry.
+                </Alert>
+            )}
             <section aria-label="Incident results" aria-busy={loading} className="mt-6">
                 <p aria-live="polite" className="mb-3 text-sm text-slate-400">
                     {incidents.total === 1 ? '1 incident' : `${incidents.total} incidents`}
@@ -178,6 +196,7 @@ function PageContent() {
                         incidents={incidents.data}
                         caption={`Incidents of ${team.name}`}
                         showMonitor
+                        returnTo={incidentListUrl(team.id, filters, incidents.currentPage)}
                     />
                 )}
 

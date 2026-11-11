@@ -1,5 +1,17 @@
 # Incident and maintenance pages (M4.05)
 
+## Integrated incident workflow — UI.04.1
+
+Incidents/Index now uses the shared table and field/button styles, the existing owned GET lifecycle and explicit loading/failure recovery. Rows preserve accepted state/severity/page in their detail URL. A navigation/history replacement restores accepted filters; a background live refresh preserves an unsent selection. Empty team, no matches and an empty later page keep their explicit recovery links.
+
+IncidentPageController projects incidentListUrl and monitorUrl after normal policy authorization. IncidentListReturn and MonitorListReturn share the bounded ListReturn parser; incident requests and hints use IncidentListSelection. Only the authorized team's exact list path and accepted controls survive. External/foreign/detail paths, arrays, outer duplicate hints and oversized/control-bearing values fall back; inner duplicate fields and unknown/nested controls are discarded. The monitor destination always uses the bound incident's monitor ID. Monitor-origin detail links carry monitorReturnTo separately so the monitor's filtered list survives the incident round trip. The original request URL remains Inertia metadata, including user-supplied query text; generated navigation targets are independently reconstructed from the allowlist. Mutation bodies and endpoints are unchanged.
+
+The detail composes a named summary, recorded status/severity/cause/responsibility, local timestamps, final duration (zero is valid, missing resolved duration is unavailable), oldest-first timeline and redacted delivery table. Taking responsibility still assigns the current actor and follows the existing idempotent/lock-aware action. Publication uses inline confirmation, initially focuses Cancel, restores the trigger on Escape/Cancel, and states that publication cannot be withdrawn. New entries remain private; no declared cause is copied into public timeline text.
+
+The existing monitor request coordinator is now shared as useOwnedMutation, with MutationFeedback under components/. It retains one owned attempt, confirmed refusal versus uncertain outcome, disposal and denial behavior. Note text clears only after that attempt is accepted. Pending inputs freeze; refused/uncertain drafts remain in memory, and uncertain writes cannot replay automatically. Clean status/severity/cause editors follow server snapshots; dirty drafts survive. If a drafted status stops being allowed after resolution, the text remains and the user chooses an admitted status before saving. Changing incident identity remounts its forms, and live recovery validates both incident and monitor IDs.
+
+DeliveryLog is labelled Notification deliveries, including pending/failed/suppressed states, attempts and redacted outcomes. Sent records provider acceptance, not recipient reading; absent send time is Not recorded. Its existing query remains limited to the oldest 100 rows, with no new delivery transport or retry action.
+
 M4.05 adds the browser interface on top of the [incident lifecycle and manual actions](INCIDENTS.md) and the [maintenance windows](MAINTENANCE.md). The page patterns follow [MONITOR-UI.md](MONITOR-UI.md). Evidence is in [TASKS.md](TASKS.md).
 
 ## Pages and routes
@@ -74,5 +86,5 @@ User choice: every entry is created private. Each private entry has a "Publish u
 
 - No real browser drives the pages (same choice as M2.06): DOM tests plus Inertia requests to the production routes.
 - Focus is not moved programmatically after a failed submission; errors are announced by `role="alert"`.
-- Pages do not update live; real-time updates arrive with M6. A page reflects the state of its last load, and the actions decide under lock.
-- Notifications on publication or resolution belong to M5.
+- M6 recovery updates server projections without polling; unsent forms retain their drafts. Manual actions continue to decide under lock. See REALTIME-CLIENT.md.
+- Notification delivery remains governed by the existing services; this workflow adds no transport or delivery retry.

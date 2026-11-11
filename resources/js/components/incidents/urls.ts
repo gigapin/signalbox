@@ -63,3 +63,24 @@ export function incidentListUrl(teamId: number, filters: IncidentFilters, page =
 
     return search === '' ? incidentsPath(teamId) : `${incidentsPath(teamId)}?${search}`;
 }
+
+/**
+ * @param teamId Authorized route team.
+ * @param incidentId Actual incident identifier.
+ * @param list Optional accepted incident-list selection.
+ * @param monitorList Optional normalized originating monitor-list URL.
+ * @returns Detail GET URL carrying bounded context which the server independently reconstructs.
+ */
+export function incidentDetailUrl(
+    teamId: number,
+    incidentId: number,
+    list?: string,
+    monitorList?: string,
+): string {
+    const query = new URLSearchParams();
+    if (list && list !== incidentsPath(teamId)) query.set('returnTo', list);
+    if (monitorList && monitorList !== `/teams/${teamId}/monitors`)
+        query.set('monitorReturnTo', monitorList);
+    const suffix = query.toString();
+    return `${incidentPath(teamId, incidentId)}${suffix === '' ? '' : `?${suffix}`}`;
+}

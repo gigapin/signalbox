@@ -29,6 +29,8 @@ export interface LivePageScope<P extends Record<string, unknown>> {
     configuration: ReverbConfiguration | null;
     /** Optional detail-page filter; list pages must invalidate even for rows currently filtered out. */
     monitorId?: number;
+    /** Exact incident identity when several incidents belong to the same monitor. */
+    resourceId?: number;
 }
 
 /** Stable snapshot consumed by useSyncExternalStore. */
@@ -245,8 +247,16 @@ export class LivePageSession<P extends Record<string, unknown>> {
                 this.scope.component === 'Monitors/Show' &&
                 this.scope.monitorId !== undefined &&
                 (!isRecord(props.monitor) || props.monitor.id !== this.scope.monitorId);
+            const wrongIncident =
+                this.scope.component === 'Incidents/Show' &&
+                this.scope.resourceId !== undefined &&
+                (!isRecord(props.incident) ||
+                    props.incident.id !== this.scope.resourceId ||
+                    !isRecord(props.incident.monitor) ||
+                    props.incident.monitor.id !== this.scope.monitorId);
             if (
                 wrongMonitor ||
+                wrongIncident ||
                 !isRecord(props.team) ||
                 props.team.id !== this.scope.teamId ||
                 !isRecord(props.auth) ||

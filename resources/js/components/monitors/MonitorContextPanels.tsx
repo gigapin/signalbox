@@ -4,12 +4,14 @@ import Panel from '../ui/Panel';
 import type { MonitorContextView } from './metrics';
 import type { IncidentSummary, MaintenanceView, MaintenanceWindowView } from '../incidents/types';
 import { causeLabel, durationLabel, incidentStatusLabel, severityLabel } from '../incidents/labels';
-import { incidentPath } from '../incidents/urls';
+import { incidentDetailUrl } from '../incidents/urls';
 
 /** Authorized, bounded context collections from the same monitor snapshot. */
 interface ContextProps {
     /** Route team used for incident links. */
     teamId: number;
+    /** Normalized monitor-list context for the incident → monitor return. */
+    monitorListUrl?: string;
     /** Absent only on older history entries; never interpreted as an empty configuration. */
     context: MonitorContextView | undefined;
     /** Windows with phases determined by the server clock. */
@@ -65,6 +67,7 @@ export default function MonitorContextPanels({
     context,
     maintenance,
     incidents,
+    monitorListUrl,
 }: ContextProps) {
     const certificate = context?.certificate;
     const policy = context?.notifications;
@@ -204,7 +207,15 @@ export default function MonitorContextPanels({
                     <ul className="ui-context-list">
                         {incidents.map((incident) => (
                             <li key={incident.id}>
-                                <Link className="ui-link" href={incidentPath(teamId, incident.id)}>
+                                <Link
+                                    className="ui-link"
+                                    href={incidentDetailUrl(
+                                        teamId,
+                                        incident.id,
+                                        undefined,
+                                        monitorListUrl,
+                                    )}
+                                >
                                     Incident #{incident.id}
                                 </Link>
                                 <p>

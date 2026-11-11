@@ -1,6 +1,6 @@
 /** Exercise incident pages and the maintenance panel through actual Inertia components with only the router intercepted. */
 import { router } from '@inertiajs/react';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import type {
@@ -21,7 +21,7 @@ const team = { id: 7, name: 'Synthetic team' };
 const options = { states: ['open', 'resolved'], severities: ['minor', 'major', 'critical'] };
 
 /** Capture the options of the next spied visit so tests can run its lifecycle callbacks. */
-type VisitOptions = { onStart?: (visit: never) => void };
+type VisitOptions = NonNullable<Parameters<typeof router.post>[2]>;
 
 /**
  * @param elements Elements found by a query, in document order.
@@ -262,7 +262,7 @@ test('distinguishes an empty team from no matches and announces rejected filters
 test('lists incidents as text badges with links and submits filters with a loading state', async () => {
     const user = userEvent.setup();
     const get = vi.spyOn(router, 'get').mockImplementation((_url, _data, visit) => {
-        (visit as VisitOptions | undefined)?.onStart?.({} as never);
+        visit?.onStart?.({} as never);
     });
 
     renderInertia('Signalbox', Index, indexProps([row(42), row(41, 'resolved')]));
@@ -313,7 +313,10 @@ test('shows a read-only timeline to viewers without management controls', () => 
 
 test('posts a private update with the chosen status and takes responsibility', async () => {
     const user = userEvent.setup();
-    const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
+    let visit: VisitOptions | undefined;
+    const post = vi.spyOn(router, 'post').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
 
     renderInertia('Signalbox', Show, showProps(detail(), true));
     await user.selectOptions(screen.getByLabelText('Status after this update'), 'identified');
@@ -327,6 +330,10 @@ test('posts a private update with the chosen status and takes responsibility', a
         expect.any(Object),
     );
 
+    act(() => {
+        visit?.onError?.({});
+        visit?.onFinish?.({} as never);
+    });
     await user.click(screen.getByRole('button', { name: 'Take responsibility' }));
     expect(post).toHaveBeenLastCalledWith(
         '/teams/7/incidents/42/acknowledge',
@@ -338,20 +345,16 @@ test('posts a private update with the chosen status and takes responsibility', a
 test('publishes a private entry only after confirmation and never offers it twice', async () => {
     const user = userEvent.setup();
     const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
-    const confirm = vi
-        .spyOn(window, 'confirm')
-        .mockReturnValueOnce(false)
-        .mockReturnValueOnce(true);
-
     renderInertia('Signalbox', Show, showProps(detail(), true));
     const publish = screen.getByRole('button', { name: 'Publish update' });
 
     await user.click(publish);
     expect(post).not.toHaveBeenCalled();
+    expect(screen.getByText(/cannot be withdrawn/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancel publication' }));
+    expect(post).not.toHaveBeenCalled();
     await user.click(publish);
-
-    expect(confirm).toHaveBeenCalledTimes(2);
-    expect(confirm).toHaveBeenNthCalledWith(1, expect.stringContaining('cannot be withdrawn'));
+    await user.click(screen.getByRole('button', { name: 'Confirm publication' }));
     expect(post).toHaveBeenCalledWith(
         '/teams/7/incidents/42/updates/100/publish',
         {},
@@ -381,7 +384,10 @@ test('offers only notes on a resolved incident and announces lifecycle refusals'
 
 test('saves severity and clears the declared cause with an empty note', async () => {
     const user = userEvent.setup();
-    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    let visit: VisitOptions | undefined;
+    const patch = vi.spyOn(router, 'patch').mockImplementation((_url, _data, options) => {
+        visit = options;
+    });
 
     renderInertia(
         'Signalbox',
@@ -396,6 +402,10 @@ test('saves severity and clears the declared cause with an empty note', async ()
         expect.any(Object),
     );
 
+    act(() => {
+        visit?.onError?.({});
+        visit?.onFinish?.({} as never);
+    });
     await user.clear(screen.getByLabelText('Declared cause'));
     await user.click(screen.getByRole('button', { name: 'Save cause' }));
     expect(patch).toHaveBeenLastCalledWith(

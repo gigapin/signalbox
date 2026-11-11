@@ -1,5 +1,9 @@
 # Monitor pages, search and filters
 
+## Incident return integration — UI.04.1
+
+MonitorContextPanels builds incident links with the server-normalized monitor-list context. The incident page returns to its actual monitor and carries only the normalized list hint; it cannot select another resource or tenant. Direct links and old history retain canonical fallbacks. Existing monitor request feedback now imports the shared useOwnedMutation and components/MutationFeedback without changing payloads or behavior.
+
 ## Realtime lifecycle audit — UI.03.8
 
 Monitor detail preserves its single M6 session and exact URL, including metric controls and list return. The existing batch/deduplication, reconnect authorization, one follow-up read and no-polling behavior are exercised with native Echo plus controlled transports. Snapshot identity must match route team, actor and monitor. A preserved team/account navigation remounts the private shell; same-identity filter recovery retains drafts, and pending snapshots/JSON/actions cannot revive the old content after disposal.
@@ -10,7 +14,7 @@ Saved-policy changes now synchronize only a clean escalation selector; a dirty c
 
 MonitorForm retains buildPayload, raw interval validation, post-refusal focus and explicit stored-secret replacement, while using semantic shared styles and Button/MutationFeedback. Inputs freeze only during pending transport; refused/uncertain drafts remain in component memory. Cancel follows the existing dirty/busy navigation guard. Edit adds list/detail breadcrumbs and successful saving now returns to the detail page.
 
-MonitorActions replaces window.confirm with inline confirmation for Pause/Resume/Delete, first focusing Cancel and restoring the trigger on Cancel/Escape. Policy hints and quota control visibility/enabling; server policies and transactional actions remain authoritative. useMonitorMutation prevents synchronous repeated dispatch, scopes failure listeners by the owned URL, disposes subscriptions and transport, and ignores obsolete lifecycle callbacks. MutationFeedback distinguishes pending, confirmed acceptance, refusal and uncertainty. Uncertain changes require checking saved data in a new tab and explicit acknowledgement before another manual attempt. No automatic retry, draft persistence or new domain idempotency mechanism is added.
+MonitorActions replaces window.confirm with inline confirmation for Pause/Resume/Delete, first focusing Cancel and restoring the trigger on Cancel/Escape. Policy hints and quota control visibility/enabling; server policies and transactional actions remain authoritative. useOwnedMutation prevents synchronous repeated dispatch, scopes failure listeners by the owned URL, disposes subscriptions and transport, and ignores obsolete lifecycle callbacks. MutationFeedback distinguishes pending, confirmed acceptance, refusal and uncertainty. Uncertain changes require checking saved data in a new tab and explicit acknowledgement before another manual attempt. No automatic retry, draft persistence or new domain idempotency mechanism is added.
 
 Only query navigation metadata reaches the mutation URL; it is normalized independently of the strict body validator. No header, URL credential or body content enters the navigation hint. The tests and remaining browser/CI limits are recorded in TASKS.md.
 

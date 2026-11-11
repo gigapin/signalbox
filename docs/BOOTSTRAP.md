@@ -1,5 +1,11 @@
 # Application bootstrap reference
 
+## Incident workflow handoff — 2026-11-11
+
+UI.04.1 integrates incident list/detail with shared tables/styles, retained list/monitor context, private timeline forms, responsibility, inline irreversible-publication confirmation and redacted delivery outcomes. Status/severity/cause drafts survive realtime updates; pristine forms rebase without an unsaved warning. Exact incident identity is fenced during recovery and a changed resource remounts its forms. The existing mutation coordinator is shared as useOwnedMutation, and MutationFeedback moved from monitors/ to components/; monitor behavior/payloads remain covered by regressions.
+
+New PHP classes are ListReturn, IncidentListReturn and IncidentListSelection; normal controller/container autowiring requires no route, migration, package, environment or worker change. Rebuild/reload the normal frontend assets. Source preparation introduces no new outbound transport or domain transition. TASKS.md owns final checks and limits. Next: UI.04.2, maintenance listing and operational notification navigation. UI.04 stays in progress, including its later billing/API portion; final browser L remains UI.06. This handoff supersedes earlier next-task instructions below.
+
 ## Realtime monitor handoff — 2026-11-11
 
 UI.03.8 completes UI.03. One native Echo/live session recovers the exact metric/filter/return URL without polling. LivePageSession rejects a mismatched route monitor identity. AppLayout remounts private children on team/actor change, even with preserveState, and hides private DOM/document title on denial or explicit logout. Escalation choices survive dirty/pending background updates while pristine selectors follow the server; deleted choices remain explicit. Maintenance editors are removed when permission or upcoming phase ends.

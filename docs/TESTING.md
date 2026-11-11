@@ -1,5 +1,11 @@
 # Test infrastructure
 
+## Integrated incident workflows — UI.04.1
+
+IncidentWorkflows.test.tsx uses actual Inertia pages for list/detail return links, owned filter reads and retry, history-like filter restoration, inline publication focus/Cancel/Escape/confirmation, duplicate note submission, refusal and accepted-note cleanup, the actual XHR response-loss path, zero/missing resolved duration, dirty/pristine server baseline synchronization and per-incident draft teardown. LivePageSession.test.ts also checks exact incident/monitor identity boundaries. Existing incident/notification/monitor interaction suites exercise shared lifecycle extraction and table changes.
+
+IncidentWorkflowNavigationTest.php drives normal routes on PostgreSQL for accepted paired list contexts, external/foreign/detail/array/oversized/control/duplicate/absent hints, repeated/nested filter controls and every role before/after revocation. It supplies the actual Inertia version header and disables Vite rendering so the suite works with or without frontend artifacts. Assertions target reconstructed links rather than Inertia's original-request URL metadata. Complete gate counts, corrections during implementation and unexecuted checks are in TASKS.md.
+
 ## Realtime monitor lifecycle coverage — UI.03.8
 
 MonitorRealtimeLifecycle.test.tsx mounts the actual Monitors/Show with native Echo and MemoryPusher. Sixteen cases cover dirty/pristine/deleted escalation choices, maintenance permission/phase transitions, frames and exact-URL reconnect recovery, retained same-identity drafts versus discarded team/account drafts, delayed JSON and mutations, logout, socket/read denial, managed Head updates, keyboard retry and StrictMode cleanup. LivePageSession.test.ts adds three route-monitor identity cases. LivePageRecoveryTest adds two managing-role → viewer → revoked complete-root recoveries on PostgreSQL.

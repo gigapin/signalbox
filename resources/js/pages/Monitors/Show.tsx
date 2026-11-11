@@ -265,6 +265,7 @@ function PageContent({ onIdentity }: PageContentProps) {
                     context={monitorContext}
                     maintenance={maintenance}
                     incidents={recentIncidents}
+                    monitorListUrl={monitorListUrl ?? monitorsPath(team.id)}
                 />
 
                 <MaintenancePanel

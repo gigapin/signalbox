@@ -206,7 +206,8 @@ test('links recent incidents within the route team and preserves zero duration',
     const panel = within(screen.getByRole('region', { name: 'Recent incidents' }));
     expect(panel.getByRole('link', { name: 'Incident #9' })).toHaveAttribute(
         'href',
-        '/teams/7/incidents/9',
+        '/teams/7/incidents/9?' +
+            new URLSearchParams({ monitorReturnTo: detailProps.monitorListUrl }).toString(),
     );
     expect(panel.getByText('Duration: 0 s')).toBeInTheDocument();
     expect(panel.getByText('Ongoing; final duration unavailable')).toBeInTheDocument();

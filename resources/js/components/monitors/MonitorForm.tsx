@@ -1,8 +1,8 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
 import { useFormProtection } from '../app/NavigationGuard';
 import Button from '../ui/Button';
-import MutationFeedback from './MutationFeedback';
-import { useMonitorMutation } from '../../hooks/useMonitorMutation';
+import MutationFeedback from '../MutationFeedback';
+import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import { Link, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
@@ -266,7 +266,7 @@ export default function MonitorForm({
 }: MonitorFormProps) {
     const form = useForm<MonitorFormData>(initial);
     useFormProtection(form);
-    const mutation = useMonitorMutation();
+    const mutation = useOwnedMutation();
     const formElement = useRef<HTMLFormElement>(null);
     const [serverFocusAttempt, setServerFocusAttempt] = useState(0);
     const data = form.data;

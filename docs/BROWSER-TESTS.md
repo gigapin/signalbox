@@ -2,9 +2,9 @@
 
 Guida passo per passo per provare l'applicazione com'è dopo M8, prima di iniziare M9. Non sostituisce i test automatici: controlla ciò che loro non vedono, cioè browser reale, email reali, aspetto delle pagine e flussi completi.
 
-**Guida rivista il 2026-11-08.** È rivolta a chi usa l'applicazione e non ne conosce il codice. La revisione delle istruzioni non cambia gli esiti del collaudo.
+**Guida rivista il 2026-11-12 per la fase A UI.** È rivolta a chi usa l'applicazione e non ne conosce il codice. La revisione delle istruzioni non cambia gli esiti del collaudo.
 
-**Stato aggiornato al 2026-11-09:** l’utente conferma completati i blocchi obbligatori fino a K. Il blocco L — Accessibilità e usabilità è **rinviato su richiesta dell’utente a UI.06, dopo la nuova dashboard e navigazione applicativa**. Il registro delle precedenti prove dell’agente conserva 72 casi con 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO: è una fotografia storica, non l’elenco attuale dei blocchi ancora aperti. Dettagli in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). Nessun nuovo esito individuale viene dedotto per le prove facoltative realtime/dominio.
+**Stato storico al 2026-11-09:** l’utente conferma completati i blocchi obbligatori fino a K. Il blocco L — Accessibilità e usabilità è **rinviato su richiesta dell’utente a UI.06, dopo la nuova dashboard e navigazione applicativa**. Il registro delle precedenti prove dell’agente conserva 72 casi con 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO: è una fotografia storica, non l’elenco attuale dei blocchi ancora aperti. Dettagli in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). Nessun nuovo esito individuale viene dedotto per le prove facoltative realtime/dominio.
 
 ## Collaudo corrente — 2026-11-12
 
@@ -14,23 +14,33 @@ mutazioni dei monitor, incidenti, notifiche/status page, dinieghi e password inl
 Questi flussi supplementari non riscrivono gli esiti storici A–L né attestano la riesecuzione integrale
 delle precedenti prove. Fixture ripristinate, due note private e audit conservati; servizi nuovamente arrestati.
 
-**Prossimo UI.06.3:** aggiornare integralmente mappa/passaggi della guida conservando A–L ed eseguire
-L01–L08 sulla UI corrente, inclusi VoiceOver e zoom nativo. Le sezioni storiche sotto descrivono
-la versione precedente e possono avere nomi/istruzioni superati (grafici, conferme, percorsi).
-Il nuovo registro riporta i passi effettivamente provati; nessun nuovo PASS L, fase A non ancora accettata.
+**UI.06.3 in corso:** mappa e passi di questa guida aggiornati alla nuova navigazione. L01–L08
+richiedono ancora esiti correnti distinti dai risultati del 2026-11-09; VoiceOver reale e zoom nativo
+non si deducono dalle prove headless. UI.06.4 deve confermare la fase A prima di M9.
 
-## Ripresa storica — 2026-11-09
+[Registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md): L01/L04–L08 PASS nel perimetro dichiarato;
+L02 e L03 restano BLOCCATO per annuncio VoiceOver e zoom nativo, pur avendo verificato errori visibili
+e 390 px. La [checklist nativa](BROWSER-NATIVE-CHECKS.md) contiene i passi restanti. Web/PostgreSQL/Redis
+sono ora avviati per questi riscontri; worker/scheduler/Reverb fermi. La tabella storica in fondo
+mantiene il rinvio del 2026-11-09 e non sostituisce questi esiti correnti.
 
-La prossima sessione è dedicata a **UI.01.1**. Il riepilogo delle correzioni, l’ultima baseline verificata e i risultati attesi dell’inventario sono nella [chiusura di sessione](TASKS.md) e nel [brief dashboard](USER-DASHBOARD.md). Il collaudo obbligatorio non è chiuso: L01–L08 verrà eseguito sulla nuova interfaccia dopo la fase A.
+### Fixture e risultati precedenti
 
-- **Prossimo lavoro: UI.01.1**, inventario/progetto della dashboard nel [macro task UI](USER-DASHBOARD.md). Eseguire L01–L08 dopo l’implementazione della fase A, in UI.06. I precedenti PASS L01/L04–L08 restano storici: la nuova navigazione richiederà una verifica aggiornata di tutti gli otto casi, includendo VoiceOver e zoom nativo 200%.
-- Riferimenti storici delle fixture, da ricontrollare prima delle prove L: GiGa Team resta `{TEAM}=2`, pagina `/status/status-test`, titolo `Stato Prova`, tema light/amber, pubblicata senza password né dominio personalizzato. PROVA-HTTP è stato riportato a URL 200, Up e incidente 8 Resolved; soglia 3 e intervallo 60 s invariati. Il suo override preesistente Granted Pro è conservato. H13–H26 e H38–H42 sono PASS osservati nel browser/HTTP.
-- H obbligatorio, I e K ora conclusi sulla base della conferma complessiva dell’utente dopo BT.14; J era già PASS. Non ricostruire dai conteggi storici nuovi dettagli di inbox, inviti o ripristini non comunicati. Non iniziare M9.01 prima della chiusura dei casi obbligatori L.
-- G08–G10 e H43–H46 restano facoltativi, senza PASS per deduzione. Nessun dominio reale/DNS/hosts modificato. I processi vanno ricontrollati prima di riprendere; non assumere che siano rimasti attivi.
-- L'errore **Live updates could not refresh** è stato corretto e le pagine ricompilate (**BT.03**). Ricarica completamente le schede rimaste aperte dalla sessione precedente. Le verifiche tecniche sono in [TASKS.md](TASKS.md#diagnosi-da-collaudo--aggiornamenti-realtime-2026-11-06); G08–G10 restano da confermare manualmente.
-- Il trial Pro di GiGa Team è scaduto il 2026-11-06 alle 13:33 italiane. I check a 60 s richiedono un piano/override compatibile; Free richiede 300 s. Il motore ha ripreso a registrare check di PROVA-HTTP durante la diagnosi, ma piano e processi vanno ricontrollati alla ripresa secondo le sezioni 1.1 e 1.5, senza presumere che siano rimasti attivi.
-- H10 chiarito: **Color scheme** va salvato nella gestione della pagina pubblica; il pannello privato resta scuro. H12 verificato dall'agente via HEAD locale su `/status/status-test`: 200, `no-store, private`, `index, follow` e canonical; l'indirizzo di esempio inesistente restituisce invece 404/noindex.
-- Gli avvisi sospesi dalle quiet hours ripartono alla fine della fascia se l'incidente è ancora aperto; non occorre cambiare di nuovo il suo stato. La correzione è registrata in [QUIET-HOURS.md](QUIET-HOURS.md).
+Il 2026-11-09 l’utente ha confermato i blocchi obbligatori A–K conclusi e ha rinviato L alla nuova UI.
+Il [registro storico](BROWSER-RESULTS-2026-11-09.md) conserva risultati, difetti e ripetizioni di quella
+versione. Non ripartire da H13/H28 solo perché compaiono nelle note storiche.
+
+Per il collaudo essenziale del 2026-11-12: Synthetic Alpha `{ALPHA}=3`, Beta `{BETA}=4`, monitor
+7/8 in pausa e incidente Alpha 9 risolto; pagina pubblica esistente `/status/status-test`, **Stato Prova**,
+letta senza modificarla. Ricontrollare questi identificativi in un’altra installazione. GiGa Team
+resta il riferimento delle procedure A–K, con ID storico 2: non confonderlo con Alpha.
+I trial e gli override storici non attestano il piano corrente: usare **Team → Plan and usage** e il
+riepilogo **Monitors**. Non ricreare fixture già presenti, non rigenerare chiavi e non cambiare
+configurazione/processi per le prove che non richiedono il motore o email.
+
+G08–G10 (realtime) e H43–H46 (dominio reale) restano facoltativi e senza nuovi PASS. La correzione
+quiet hours è descritta in [QUIET-HOURS.md](QUIET-HOURS.md); un avviso in attesa può ripartire alla
+fine della fascia se l’incidente è ancora aperto. Prima delle prove di assenza verificare il provider.
 
 **Accesso rapido:** [preparazione](#1-preparazione), [A accesso](#blocco-a--accesso-e-account), [B monitor](#blocco-b--monitor), [C heartbeat](#blocco-c--heartbeat), [D notifiche](#blocco-d--notifiche), [E incidenti](#blocco-e--incidenti), [F manutenzioni](#blocco-f--manutenzioni-e-quiet-hours), [G dashboard](#blocco-g--dashboard-e-report), [H status page](#blocco-h--status-page), [L dopo la nuova UI](#blocco-l--accessibilità-e-usabilità), [I permessi](#blocco-i--permessi-e-isolamento), [J limiti](#blocco-j--limiti-di-piano), [K amministrazione](#blocco-k--pannello-amministratore), [L accessibilità](#blocco-l--accessibilità-e-usabilità), [registro](#registro-degli-esiti).
 
@@ -46,7 +56,7 @@ La prossima sessione è dedicata a **UI.01.1**. Il riepilogo delle correzioni, l
 
 - I testi fra graffe sono segnaposto da sostituire, senza conservare le graffe. Usa la tabella qui sotto per annotare i tuoi valori.
 - L'interfaccia è in inglese: i nomi di pulsanti e campi sono riportati esattamente come li vedi.
-- Non giudicare qui la grafica: è provvisoria e verrà rifatta con i task UI. Segna quello che non ti piace a parte, nella [sezione dedicata](#note-sulla-grafica).
+- La navigazione e le schermate private della fase A sono implementate. Registra problemi di leggibilità, focus o comandi irraggiungibili come difetti; i perfezionamenti estetici e il futuro restyling pubblico restano separati nelle [note sulla grafica](#note-sulla-grafica).
 
 **Se qualcosa non va**, annota URL, account, cosa ti aspettavi, cosa è successo ed eventuali errori della Console del browser (F12). Non incollare mai token, password o codici. Sono da correggere prima di M9 i problemi di sicurezza, permessi, dati di altri team, errori 500 e perdita di dati.
 
@@ -85,20 +95,43 @@ Le finestre private dello stesso browser possono condividere la sessione: due fi
 
 ### Mappa delle schermate
 
+Le pagine team mostrano il nome del team nell’intestazione e il menu comune. Su desktop usa
+la sidebar; a larghezza ridotta **Open navigation** apre un dialogo: **Close navigation** o Escape
+lo chiude e restituisce il focus. **Skip to content** porta al contenuto con la tastiera.
+Il menu **Account menu**, etichettato visivamente col tuo nome, contiene **Your account**,
+**Your teams**, **Account security**, **Sign out** e **Admin** solo per un operatore.
+
+Per cambiare la preferenza scegli nel campo **Team** e premi **Switch team**: dopo la conferma
+si apre la dashboard del team scelto. Il team nel percorso della pagina resta autorevole.
+Se compare la protezione di una bozza, **Stay** conserva la bozza, **Discard and leave**
+la abbandona; durante un invio bisogna attendere l’esito. Un cambio team non confermato offre
+**Check current teams**, senza ripetere automaticamente il POST.
+
 | Schermata | Percorso | Come orientarsi |
 |---|---|---|
-| Scelta team | `/teams` | Apri il nome del team; controlla il team prima delle modifiche |
-| Membri e inviti | `/teams/{TEAM}` | **Members**, **Invitations**, **Send invitation** |
-| Monitor | `/teams/{TEAM}/monitors` | Nome monitor per il dettaglio, **New monitor** per crearne uno |
-| Dettaglio monitor | `/teams/{TEAM}/monitors/{MONITOR}` | **Edit monitor** in alto; poi **Recent incidents**, **Maintenance**, **Notifications** scorrendo |
-| Incidenti | `/teams/{TEAM}/incidents` | Apri il numero dell'incidente del monitor interessato |
-| Dettaglio incidente | `/teams/{TEAM}/incidents/{INCIDENT}` | Stato in alto; poi **Timeline**, **Notifications sent**, **Add a timeline update** |
-| Canali e policy | `/teams/{TEAM}/notifications` | **Add a channel**, elenco canali, **Add a policy** |
-| Dashboard | `/teams/{TEAM}/dashboard` | Conteggi, tabella **Monitors**, selezione **Charts**, grafici, **Monthly report** |
-| Gestione status page | `/teams/{TEAM}/status-pages` | Riga col titolo e link pubblico; **Edit {titolo}** apre il modulo nella stessa pagina |
-| Pagina del visitatore | `/status/{SLUG}` | Titolo, riepilogo generale, componenti con stato e storico, **Email updates**, **Published incidents** |
-| Sicurezza account | `/account/security` | Autenticatore e codici di recupero |
-| Amministrazione piattaforma | `/admin` | Richiede operatore verificato; 2FA obbligatoria in produzione, facoltativa in locale. Non basta essere owner di un team |
+| Account | `/account` | Identità, preferenza corrente, Open dashboard e View your teams; non è una dashboard di un team |
+| Scelta team | `/teams` | Campo Team + Switch team aggiorna la preferenza e apre la dashboard; il link col nome apre la dashboard del team |
+| Dashboard | `/teams/{TEAM}/dashboard` | Conteggi e incidenti prioritari, Manage monitors/New monitor se consentito, tabella Monitors, grafici compatibili e Monthly reports |
+| Monitor | `/teams/{TEAM}/monitors` | Search/Type/Status/State + Apply filters, paginazione; nome → dettaglio, New monitor se consentito |
+| Nuovo/modifica monitor | `/teams/{TEAM}/monitors/create`, `/teams/{TEAM}/monitors/{MONITOR}/edit` | Form per tipo, sostituzione esplicita dei segreti, Create monitor/Save changes e Cancel; il salvataggio riuscito apre il dettaglio |
+| Dettaglio monitor | `/teams/{TEAM}/monitors/{MONITOR}` | Stato e attività distinti, timing, storico 24 h, schede uptime/copertura/SLA, Monitor charts con periodo/regione/tabelle, contesto TLS/manutenzioni/notifiche/incidenti; Back to monitors conserva i filtri |
+| Incidenti | `/teams/{TEAM}/incidents` | Filtri State/Severity e paginazione; numero → dettaglio; il ritorno conserva la selezione |
+| Dettaglio incidente | `/teams/{TEAM}/incidents/{INCIDENT}` | Incident summary, Timeline privata/pubblicata, Notification deliveries e form autorizzati; Back to incidents e link al monitor |
+| Manutenzioni team | `/teams/{TEAM}/maintenance` | Snapshot, filtri e Refresh; collegamento al monitor reale per creare/modificare finestre |
+| Canali e policy | `/teams/{TEAM}/notifications` | Channels/Escalation policies/Notification deliveries, filtro locale Find channels or policies; gli editor nascosti conservano le bozze |
+| Consegne | `/teams/{TEAM}/notifications/deliveries` | Snapshot, filtri, Refresh e link a incidenti/monitor; Sent significa accettazione del provider, non lettura del destinatario |
+| Gestione status page | `/teams/{TEAM}/status-pages` | Gestione privata, Find a status page, Draft/Published; Edit {titolo} apre il form; una bozza non ha anteprima pubblica |
+| Membri e inviti | `/teams/{TEAM}` | Menu Team; Members, Invitations, Plan and usage e controlli di proprietà secondo il ruolo |
+| Pagina del visitatore | `/status/{SLUG}` | Layout pubblico distinto: titolo, stato, componenti/storico, Email updates e Published incidents; niente menu privato |
+| Sicurezza account | `/account/security` | Può richiedere prima Confirm your password; autenticatore e rivelazioni temporanee solo su richiesta |
+| Directory piattaforma | `/admin` → `/admin/teams` | Contesto Platform administration separato dalle membership; Search, dettaglio e ritorno filtrato; non seleziona un team di lavoro |
+| Override e audit | `/admin/teams/{TEAM}` | Team summary, Plan override e History; conferma nativa dell’intento, password inline se scaduta; non concede membership |
+
+**Esiti degli invii.** Waiting for the server to confirm… significa attesa; Change refused indica
+un rifiuto noto. Outcome not confirmed conserva la bozza e blocca nuovi tentativi: usa
+Review saved data (new tab), controlla il risultato e poi I checked the saved data prima di un
+nuovo invio esplicito. Il ritorno online non ripete le scritture. Se l’accesso viene negato, i dati
+privati sono nascosti e occorre autenticarsi o verificare l’accesso corrente.
 
 ### Operazioni comuni: guasto, ripristino e pubblicazione
 
@@ -108,7 +141,7 @@ Queste procedure sono richiamate nei casi con un nome esplicito. Non occorre con
 
 1. In **Gestione** apri `/teams/{TEAM}/monitors`, clicca `PROVA-HTTP`, poi **Edit monitor**.
 2. Seleziona **Replace URL**; nel campo **URL** inserisci l'indirizzo completo `https://httpbin.org/status/503`. Mantieni **Expected status = 200**, così una risposta 503 è un fallimento. Premi **Save changes** in fondo.
-3. Nel dettaglio controlla **Active**, **Interval**, **Failures before alerting** e **Last check**. Se è in pausa, usa **Resume monitor**. Non deve esserci una manutenzione in corso, salvo nei casi F01–F03.
+3. Nel dettaglio controlla **Active**, **Interval**, **Failures before alerting** e **Last check**. Se è in pausa, usa **Resume monitor → Confirm resume**. Non deve esserci una manutenzione in corso, salvo nei casi F01–F03.
 4. Ricarica il dettaglio ogni 20–30 secondi. Con intervallo 60 s, soglia 2 e sola regione EU attendi indicativamente 2–3 minuti. Con intervallo 300 s, soglia 2 possono servire 10–11 minuti. Sono attese operative, non tempi garantiti del servizio di destinazione.
 5. Il guasto è pronto quando lo stato è **Down** e in **Recent incidents** c'è un incidente non **Resolved**. Aprilo e annota numero, URL e ora del ciclo corrente: **Confirmed** per un nuovo incidente; l'ultima ora nella voce **Reopened** se si è riaperto un incidente recente. Un primo check fallito può rendere il monitor **Down** senza aver ancora aperto un incidente.
 
@@ -127,7 +160,7 @@ Se **Last check** non avanza entro due intervalli più un minuto, fermati e usa 
 1. In **Gestione** apri l'incidente da **Recent incidents**, oppure da `/teams/{TEAM}/incidents`.
 2. Scorri a **Add a timeline update**. In **Status after this update** mantieni lo stato corrente per una semplice nota; su un incidente già risolto usa **Resolved**. Inserisci in **Message** il testo indicato dal caso e premi **Add update**.
 3. La nota compare nella **Timeline**, ordinata dalla più vecchia alla più recente, con etichetta **Private**. Per una prova privata fermati qui.
-4. Per pubblicarla, trova proprio quella nota nella **Timeline**, premi il suo **Publish update** e conferma nella finestra del browser. L'etichetta diventa **Published …**. La pubblicazione non si ritira: usa soltanto testi di prova destinati ai visitatori.
+4. Per pubblicarla, trova proprio quella nota nella **Timeline**, premi il suo **Publish update**, leggi il riquadro inline e premi **Confirm publication**. **Cancel publication** o Escape annulla soltanto la conferma non inviata. L'etichetta diventa **Published …**. La pubblicazione non si ritira: usa soltanto testi di prova destinati ai visitatori.
 5. Torna in **Pubblico**, ricarica e scorri a **Published incidents**: il testo deve apparire sotto il nome pubblico del componente che include il monitor. Prima di **Publish update**, il testo non deve essere visibile lì.
 
 ### Come attribuire l'esito
@@ -143,9 +176,11 @@ Un caso superato non implica che lo siano gli altri. Per controllare un 403/404/
 
 ## 1. Preparazione
 
-### 1.1 Attiva i controlli e prepara i servizi
+### 1.1 Prepara soltanto i servizi necessari
 
-Apri il file `.env` nella cartella principale del progetto. Cerca `MONITOR_SCHEDULING_ENABLED`: se esiste modifica quella riga, altrimenti aggiungila. Non lasciare due definizioni dello stesso valore.
+**Per L e lo smoke UI senza check/consegne nuovi** basta `docker compose up -d web` (con PostgreSQL/Redis dipendenti), asset aggiornati e schema già applicato. Lascia scheduler/worker fermi se non servono e annota lo stato iniziale da ripristinare. Non modificare `.env` per queste sole prove.
+
+**Per i casi B–H che richiedono check e notifiche reali**, apri il file `.env` nella cartella principale del progetto. Cerca `MONITOR_SCHEDULING_ENABLED`: se esiste modifica quella riga, altrimenti aggiungila. Non lasciare due definizioni dello stesso valore.
 
 ```sh
 MONITOR_SCHEDULING_ENABLED=true
@@ -236,7 +271,7 @@ Alla data della revisione entrambi i trial sono scaduti. Per conoscere i limiti 
 
 Per B–H puoi scegliere una delle due preparazioni:
 
-1. **Mantenere le prove a 60 secondi:** con il tuo account operatore, segui l'accesso del [blocco K](#blocco-k--pannello-amministratore), apri GiGa Team, seleziona **Granted Pro plan**, compila **Reason (required, recorded in the audit log)** con `Collaudo browser a 60 secondi`, poi **Save override**. Se compare la richiesta password nella stessa pagina, compila **Current password** e premi **Confirm password and save override**: l’operazione viene eseguita dopo la conferma, senza ripetere il salvataggio. Annota la configurazione precedente per ripristinarla alla fine. Torna in **Monitors** e controlla **Minimum interval 1 min**. In locale l'accesso operatore non richiede necessariamente la 2FA; la regola esatta è nel blocco K.
+1. **Mantenere le prove a 60 secondi:** con il tuo account operatore, segui l'accesso del [blocco K](#blocco-k--pannello-amministratore), apri GiGa Team, seleziona **Granted Pro plan**, compila **Reason (required, recorded in the audit log)** con `Collaudo browser a 60 secondi`, poi **Save override** e accetta il dialogo nativo. Se compare la richiesta password nella stessa pagina, compila **Current password** e premi **Confirm password and save override**: l’operazione viene eseguita dopo la conferma, senza ripetere il salvataggio. Annota la configurazione precedente per ripristinarla alla fine. Torna in **Monitors** e controlla **Minimum interval 1 min**. In locale l'accesso operatore non richiede necessariamente la 2FA; la regola esatta è nel blocco K.
 2. **Usare Free:** in ciascun monitor a 60 s apri **Edit monitor**, cambia **Interval (seconds)** in `300`, premi **Save changes**. Usa le attese più lunghe descritte nelle operazioni comuni. Free consente cinque monitor in totale: B14 richiede un posto aggiuntivo, quindi quella prova rimane bloccata finché non c'è quota o un piano Pro. La pausa non libera un posto.
 
 Se non puoi accedere all'amministrazione e la prova richiede il piano Pro, segna il caso **BLOCCATO**. Non riavviare ripetutamente i processi per aggirare il limite: il piano viene controllato anche nell'esecuzione dei check. Per J02–J06 servirà invece un team effettivamente Free senza override.
@@ -259,7 +294,7 @@ La protezione SSRF rifiuta localhost e reti private, quindi servono siti pubblic
 
 ## Blocco A — Accesso e account
 
-**Preparazione:** tieni il tuo account principale nella finestra **Gestione**. A01–A10 si eseguono in un altro profilo, usando per A04 un indirizzo nuovo, per esempio `accesso-02@example.test`. Mailtrap deve essere disponibile. Per uscire dall'account apri `/account` e premi **Sign out**; sulle pagine di monitoraggio non c'è sempre un pulsante di uscita.
+**Preparazione:** tieni il tuo account principale nella finestra **Gestione**. A01–A10 si eseguono in un altro profilo, usando per A04 un indirizzo nuovo, per esempio `accesso-02@example.test`. Mailtrap deve essere disponibile. Per uscire usa **Account menu → Sign out** nell’intestazione privata; il logout porta alla home pubblica. Un successivo ingresso privato deve richiedere login.
 
 | Caso | Cosa fare | Risultato atteso |
 |---|---|---|
@@ -269,9 +304,9 @@ La protezione SSRF rifiuta localhost e reti private, quindi servono siti pubblic
 | A04 | In un profilo separato apri `/register`. Compila **Your name** `Collaudo Accesso`, **Team name** `Collaudo Accesso`, **Email** con un nuovo indirizzo sintetico, **Password (12–128 characters)** e **Confirm password** uguali; premi **Create account**. Annota privatamente indirizzo e password | Pagina **Verify your email** e nuova email al destinatario indicato in Mailtrap |
 | A05 | Con il nuovo account di A04 ancora non verificato apri `/teams` | Torni a **Verify your email**, senza dati dei team |
 | A06 | In Mailtrap apri l'email di A04 e il suo collegamento di verifica nello stesso profilo dove hai registrato l'account. Poi visita `/teams` | Verifica riuscita; puoi aprire il team creato in A04 |
-| A07 | Nel profilo di A04 apri `/account`, premi **Sign out**, poi visita `/forgot-password`. Inserisci la stessa email e premi **Send reset link**. Apri il nuovo link Mailtrap, compila la nuova password e la conferma, premi **Reset password**. Su `/login` prova prima la vecchia password e poi la nuova | La vecchia è rifiutata; la nuova permette **Sign in**. Annota privatamente la nuova password per A08 |
+| A07 | Nel profilo di A04 usa **Account menu → Sign out**, poi visita `/forgot-password`. Inserisci la stessa email e premi **Send reset link**. Apri il nuovo link Mailtrap, compila la nuova password e la conferma, premi **Reset password**. Su `/login` prova prima la vecchia password e poi la nuova | La vecchia è rifiutata; la nuova permette **Sign in**. Annota privatamente la nuova password per A08 |
 | A08 | Con l'account A04 vai su `/account/security`, premi **Enable two-factor authentication**. Se appare **Confirm your password**, inserisci la password attuale e premi **Confirm password**, poi riprendi la configurazione. Se il QR non è già visibile premi **Show authenticator setup**. Scansionalo con un'app autenticatore, inserisci il codice corrente in **Authentication code** e premi **Confirm authenticator**; poi **Show recovery codes** e conserva privatamente almeno due codici per A10 | Testo **Two-factor authentication is enabled.** e codici di recupero visibili su richiesta. Non inserire codici o QR nel registro degli esiti |
-| A09 | Con il medesimo account di A08 vai a `/account → Sign out`, poi `/login → Sign in`. Nella schermata **Two-factor authentication** prova un codice errato; poi inserisci un codice attuale del tuo autenticatore e premi **Verify and sign in** | Prima compare un errore; poi accedi. La sola password non completa il login |
+| A09 | Con il medesimo account di A08 usa **Account menu → Sign out**, poi `/login → Sign in`. Nella schermata **Two-factor authentication** prova un codice errato; poi inserisci un codice attuale del tuo autenticatore e premi **Verify and sign in** | Prima compare un errore; poi accedi. La sola password non completa il login |
 | A10 | Esci e avvia un nuovo login. Nella schermata 2FA premi **Use a recovery code**, inserisci un codice salvato in A08, poi **Verify and sign in**. Esci di nuovo e riprova lo stesso codice: deve fallire. Usa un codice diverso per accedere, vai a `/account/security` e premi **Disable two-factor authentication** | Ogni codice di recupero funziona una sola volta; al termine 2FA disattivata solo per l'account di A04 |
 
 Fai A08–A10 con l'account creato in A04, non con il tuo, a meno che ti serva per il blocco K.
@@ -294,7 +329,7 @@ Crea questi cinque monitor, uno alla volta: dalla lista **New monitor**, compila
 | B04 | `PROVA-DNS` | DNS | 300 | **Query name** `one.one.one.one`, **Record type** A, **Expected values** `1.1.1.1` e, con **Add value**, `1.0.0.1`. **Resolver** vuoto | 3 |
 | B05 | `PROVA-HEARTBEAT` | Heartbeat | 60 | **Grace period (seconds)** 30 | 2 |
 
-**Atteso per ognuno:** compaiono solo i campi del tipo scelto, poi il dettaglio mostra **Monitor created.**, nome corretto, impostazioni salvate e **Active**. Lo stato iniziale è **Unknown**; un check molto rapido può averlo già aggiornato. Non aspettarti un grafico in questo dettaglio: si trova nella Dashboard, blocco G.
+**Atteso per ognuno:** compaiono solo i campi del tipo scelto, poi il dettaglio mostra **Monitor created.**, nome corretto, impostazioni salvate e **Active**. Lo stato iniziale è **Unknown**; un check molto rapido può averlo già aggiornato. Il dettaglio include **Monitor charts** e lo storico 24 ore; i grafici precedenti della Dashboard restano compatibili, blocco G. I dati mancanti sono dichiarati.
 
 ### B2. Stato reale
 
@@ -325,7 +360,7 @@ Apri **New monitor** per ciascuna prova. Prima compila tutti gli altri campi con
 | B14 | Con quota disponibile apri **New monitor**, usa i valori HTTP di B01 e **Name** `PROVA-SEGRETI`. Imposta **URL** `https://httpbin.org/status/200?api_key=segreto-prova`; premi **Add header**, nel primo campo scrivi `Authorization`, nel secondo `Bearer segreto-prova`; premi **Create monitor** | Dettaglio del nuovo monitor. Annota il suo URL per B17; usa soltanto questi segreti sintetici |
 | B15 | Nel dettaglio di PROVA-SEGRETI cerca `segreto-prova` con ⌘F/Ctrl+F; poi apri **Edit monitor** senza selezionare caselle di sostituzione e ripeti. Apri anche il sorgente HTML della pagina di modifica e cerca lo stesso testo (istruzioni sorgente in H2) | Segreto assente; URL con valore query nascosto, header mostrato solo per nome. Il testo che hai appena digitato in un campo di sostituzione non vale come fuga: qui controlli ciò che il server restituisce dopo il salvataggio |
 | B16 | In **Edit monitor** modifica solo **Name** in `PROVA-SEGRETI-RINOMINATO`, lasciando deselezionati **Replace URL** e **Replace all headers**; premi **Save changes**. Attendi un nuovo **Last check** | Nuovo nome salvato e monitor ancora **Up**. Il mantenimento esatto dei segreti è coperto dai test automatici: questa prova verifica il comportamento visibile, non legge credenziali nascoste |
-| B17 | Dal dettaglio del solo monitor temporaneo di B14 premi **Delete monitor**, annulla nella finestra browser: il monitor deve restare. Ripeti e conferma, poi visita il suo URL annotato | Torni alla lista; monitor temporaneo assente; vecchio URL **404**. Non eliminare PROVA-HTTP o gli altri monitor riutilizzati |
+| B17 | Dal dettaglio del solo monitor temporaneo di B14 premi **Delete monitor**, poi **Cancel** nel riquadro inline: il monitor deve restare. Ripeti con **Confirm delete**, poi visita il suo URL annotato | Torni alla lista; monitor temporaneo assente; vecchio URL **404**. Non eliminare PROVA-HTTP o gli altri monitor riutilizzati |
 
 ### B5. Lista e pausa
 
@@ -334,7 +369,7 @@ Apri **New monitor** per ciascuna prova. Prima compila tutti gli altri campi con
 | B18 | Nella lista **Monitors**, campo **Search**, scrivi `PROVA-`. Scegli **Type = HTTP** e uno **Status**, poi **Apply filters**; controlla nomi e tipo. Premi **Clear filters** | Ogni risultato rispetta i filtri; dopo la pulizia torna la lista completa, comprese eventuali altre pagine |
 | B19 | In **Search** scrivi `inesistente`, poi **Apply filters** | **No monitors match these filters on this page.**; poi **Clear filters** per continuare |
 | B20 | Nella barra indirizzi apri `/teams/{TEAM}/monitors?type=nonexistent` | Avviso **Some filters were invalid and have been ignored: type.**; lista ancora utilizzabile. Torna alla lista senza query |
-| B21 | Apri `PROVA-TLS` dalla lista, scorri in fondo, premi **Pause monitor**, verifica **Paused**, poi **Resume monitor** | Lo stato operativo torna **Active**. Lo stato osservato **Up/Down/Unknown** è distinto dalla pausa |
+| B21 | Apri `PROVA-TLS` dalla lista; nelle azioni in alto **Pause monitor → Confirm pause**, verifica **Paused**, poi **Resume monitor → Confirm resume** | Lo stato operativo torna **Active**. Lo stato osservato **Up/Down/Unknown** è distinto dalla pausa |
 
 ---
 
@@ -415,8 +450,8 @@ Le prove sulle quiet hours sono nel [blocco F](#blocco-f--manutenzioni-e-quiet-h
 |---|---|---|
 | E01 | Segui **Provocare il guasto HTTP** nelle operazioni comuni, a partire da PROVA-HTTP operativo e senza manutenzione; annota numero e ora di conferma dell’incidente | Monitor **Down**; incidente aperto in **Recent incidents**. Clicca il numero per il dettaglio, oppure trovalo in `/teams/{TEAM}/incidents` |
 | E02 | Da **Posta**, dopo l’ora di conferma di E01, cerca la nuova email a `prova@example.test`; attendi fino a un minuto | Avviso di apertura per PROVA-HTTP. Non confonderlo con i codici di verifica del blocco D |
-| E03 | Nel dettaglio dell’incidente E01 controlla stato in alto, **Confirmed**, **Resolved: Not yet**, **Timeline** e più sotto **Notifications sent** | Incidente aperto; la riga Email riporta **Incident opened** in **Reason** e **Sent** in **Status** dopo la consegna |
-| E04 | Lascia l’URL guasto e l’incidente aperto. Attendi 5 minuti dall'ora di conferma del guasto corrente (**Confirmed**, oppure ultima ora **Reopened**), poi fino a un minuto per la consegna. Controlla webhook.site e ricarica **Notifications sent** nell’incidente | Richiesta Webhook di escalation e riga **Escalation · step 2**, **Sent**; non contare la richiesta di verifica D05 come avviso |
+| E03 | Nel dettaglio dell’incidente E01 controlla stato in alto, **Confirmed**, **Resolved: Not yet**, **Timeline** e più sotto **Notification deliveries** | Incidente aperto; la riga Email riporta **Incident opened** in **Reason** e **Sent** in **Status** dopo la consegna |
+| E04 | Lascia l’URL guasto e l’incidente aperto. Attendi 5 minuti dall'ora di conferma del guasto corrente (**Confirmed**, oppure ultima ora **Reopened**), poi fino a un minuto per la consegna. Controlla webhook.site e ricarica **Notification deliveries** nell’incidente | Richiesta Webhook di escalation e riga **Escalation · step 2**, **Sent**; non contare la richiesta di verifica D05 come avviso |
 
 ### E2. Gestione
 
@@ -433,8 +468,8 @@ Le prove sulle quiet hours sono nel [blocco F](#blocco-f--manutenzioni-e-quiet-h
 | Caso | Cosa fare | Risultato atteso |
 |---|---|---|
 | E10 | Segui **Ripristinare HTTP** nelle operazioni comuni; ricarica dettaglio monitor e incidente E01 | **Up**, incidente **Resolved**, data **Resolved** e durata valorizzate |
-| E11 | Dopo E10 cerca in Mailtrap e webhook.site i messaggi relativi allo stesso incidente; controlla **Notifications sent** | Un **Resolution summary** per ciascun canale che aveva ricevuto un avviso di questo incidente |
-| E12 | Confronta le righe **Sent** di **Notifications sent** con email e richieste Webhook dello stesso incidente/ciclo. Ricarica e ricontrolla dopo un minuto | Nessun invio aggiuntivo della stessa apertura, dello stesso step o della stessa risoluzione. Apertura, escalation e risoluzione sono messaggi distinti previsti |
+| E11 | Dopo E10 cerca in Mailtrap e webhook.site i messaggi relativi allo stesso incidente; controlla **Notification deliveries** | Un **Resolution summary** per ciascun canale che aveva ricevuto un avviso di questo incidente |
+| E12 | Confronta le righe **Sent** di **Notification deliveries** con email e richieste Webhook dello stesso incidente/ciclo. Ricarica e ricontrolla dopo un minuto | Nessun invio aggiuntivo della stessa apertura, dello stesso step o della stessa risoluzione. Apertura, escalation e risoluzione sono messaggi distinti previsti |
 | E13 | Segui di nuovo **Provocare il guasto HTTP**, annota il numero dell’incidente aperto e controlla la lista; poi **Ripristinare HTTP** | Un solo incidente aperto per questo monitor. Se il guasto è ravvicinato può riaprire lo stesso incidente: annota il contatore **Reopened** invece di aspettarti sempre un numero nuovo |
 
 ### E4. Heartbeat mancato
@@ -444,7 +479,7 @@ Le prove sulle quiet hours sono nel [blocco F](#blocco-f--manutenzioni-e-quiet-h
 | E14 | Nel terminale del ciclo heartbeat del blocco C premi Ctrl+C. Nel dettaglio PROVA-HEARTBEAT annota **Deadline** e ricarica dopo la scadenza, attendendo i fallimenti necessari alla soglia | **Down** e incidente aperto in **Recent incidents**. Con 60 s e soglia 2 considera circa 3–4 minuti; con 300 s la prova richiede più tempo |
 | E15 | Riavvia lo stesso ciclo con la credenziale valida, ricarica il dettaglio dopo un nuovo check e apri l’incidente heartbeat | **Last heartbeat** recente, **Up** e incidente **Resolved** |
 | E16 | Ferma il ciclo, conserva il comando vecchio privatamente. Nel pannello **Heartbeat** premi **Rotate credential** e conferma. Copia subito il nuovo comando; esegui quello vecchio e poi il nuovo, aggiungendo `-i` se vuoi leggere il codice. Riavvia il ciclo con il nuovo | Vecchio comando **404**; nuovo **204** senza corpo. Non ricaricare prima di aver conservato quello nuovo |
-| E17 | Ferma il ciclo; nel pannello **Heartbeat** premi **Revoke credential** e conferma. Riprova l’ultimo comando | **404**, **Credential: Not configured**. Metti in pausa il monitor con **Pause monitor** per evitare altri incidenti |
+| E17 | Ferma il ciclo; nel pannello **Heartbeat** premi **Revoke credential** e conferma. Riprova l’ultimo comando | **404**, **Credential: Not configured**. Metti in pausa il monitor con **Pause monitor → Confirm pause** per evitare altri incidenti |
 
 Dopo E17 ferma il ciclo e metti in pausa il monitor, così non genera altri incidenti.
 
@@ -464,7 +499,7 @@ Dopo E17 ferma il ciclo e metti in pausa il monitor, così non genera altri inci
 | F06 | In **Schedule maintenance** imposta **Start (your local time)** a ieri e una fine futura valida, poi **Schedule maintenance** | Errore sul passato; nessuna nuova finestra salvata |
 | F07 | In **Notifications**, riga **Email prova**, premi **Configure quiet hours**. Spunta **Enable daily quiet hours**; **Quiet hours start** qualche minuto prima di adesso, **Quiet hours end** abbastanza avanti da coprire apertura incidente e almeno 6 minuti successivi; **Quiet hours timezone** `Europe/Rome`, poi **Save quiet hours**. Ricarica | Riepilogo **Quiet hours daily: … (Europe/Rome)** con gli orari salvati. Con prove a 60 s puoi usare una fine fra 15 minuti; a 300 s scegli almeno 25 minuti |
 | F08 | Durante la fascia Email appena salvata segui **Provocare il guasto HTTP**. Annota l'ora di conferma corrente (**Confirmed**, oppure ultima ora **Reopened**) e mantieni il guasto per almeno altri 6 minuti, sempre dentro la fascia | Nessuna email di apertura nella fascia; Webhook prova, senza quiet hours, riceve lo step dopo 5 minuti dalla conferma corrente |
-| F09 | Nell’incidente F08 scorri a **Notifications sent**: sulla riga Email controlla **Pending** in **Status** e il motivo in **Response**. Senza modificare l’incidente, attendi la fine esatta della fascia salvata e fino a un minuto per dispatcher e worker | Arriva l’avviso Email; la riga diventa **Sent**. Eventuali step maturati sul medesimo canale sono raggruppati; nessun nuovo cambio di stato richiesto |
+| F09 | Nell’incidente F08 scorri a **Notification deliveries**: sulla riga Email controlla **Pending** in **Status** e il motivo in **Response**. Senza modificare l’incidente, attendi la fine esatta della fascia salvata e fino a un minuto per dispatcher e worker | Arriva l’avviso Email; la riga diventa **Sent**. Eventuali step maturati sul medesimo canale sono raggruppati; nessun nuovo cambio di stato richiesto |
 | F10 | Prima **Ripristinare HTTP** e controlla il **Resolution summary** del primo incidente. Poi prepara una nuova fascia che copra apertura e recupero (almeno 15 min a 60 s, più lunga a 300 s), provoca un secondo guasto, verifica Email **Pending**, ripristina HTTP e attendi **Resolved** prima della fine. Dopo la fascia attendi un minuto. Infine in **Configure quiet hours** togli **Enable daily quiet hours** e premi **Save quiet hours** | Primo ciclo: riepilogo al canale già avvisato. Secondo ciclo: nessuna apertura tardiva né riepilogo Email per un incidente mai notificato a quel canale. Alla fine riepilogo **No quiet hours.**, HTTP operativo |
 
 ---
@@ -475,7 +510,7 @@ Apri **Dashboard** (`/teams/{TEAM}/dashboard`).
 
 **Preparazione:** usa **Gestione**, con lo stesso team dei monitor; ricarica per leggere dati correnti se il realtime è disattivato. Concludi il guasto di G02 con **Ripristinare HTTP** prima di passare a H, salvo che tu stia eseguendo anche G08–G10. Per i grafici seleziona un monitor con osservazioni recenti; un monitor nuovo non ha necessariamente dati nelle ore precedenti.
 
-Per G03 resta nella Dashboard: nella sua tabella **Monitors**, la colonna **Charts** contiene **View charts for {nome monitor}** oppure **Selected** per il monitor già selezionato. Cliccare sul nome del monitor apre invece il dettaglio di configurazione, dove attualmente non sono presenti grafici.
+Per G03 resta nella Dashboard: nella tabella **Monitors**, **Charts** contiene **View charts for {nome monitor}** oppure **Selected**. Il nome del monitor apre invece il dettaglio completo, che ora include **Monitor charts** con selezione periodo/regione e tabelle equivalenti. Sono due ingressi validi: i vecchi link Dashboard restano compatibili.
 
 | Caso | Cosa fare | Risultato atteso |
 |---|---|---|
@@ -484,7 +519,7 @@ Per G03 resta nella Dashboard: nella sua tabella **Monitors**, la colonna **Char
 | G03 | Nella tabella **Monitors** della **Dashboard**, colonna **Charts**, clicca **View charts for {nome monitor}**. Se compare **Selected**, il monitor è già selezionato. Scorri sotto la tabella | Resti su `/teams/{TEAM}/dashboard?monitor={MONITOR}` (con eventuale `page`). Sotto il nome selezionato compaiono **Last 24 hours · Hourly buckets · UTC**, **Response time** e **Observed uptime**. In assenza di misure compare il relativo messaggio di indisponibilità |
 | G04 | Sotto i grafici apri **View response time data** e **View observed uptime data** | Valori coerenti con i grafici; gli intervalli senza dati restano mancanti |
 | G05 | Sotto i grafici del monitor selezionato leggi **Observed uptime**, **Data coverage**, **SLA** e, se presenti, **Time up**, **Time down**, **Time unknown**, **Time excluded** | Nessun 100% inventato in assenza di misure. **SLA** può essere indisponibile con dati parziali. Annota i valori insieme al monitor e all’intervallo di 24 ore; l’assenza di durate non disponibili non equivale a zero |
-| G06 | In alto in Dashboard trova **Monthly report**: scegli esplicitamente il mese corrente (il mese precedente è preselezionato), poi **Download PDF**. Apri il file scaricato dal browser | PDF `signalbox-report-…pdf`, leggibile, con mese e monitor del team scelto. Un report senza osservazioni deve dichiarare i dati mancanti |
+| G06 | In Dashboard scorri a **Monthly reports** e trova **Monthly report**: scegli esplicitamente il mese corrente (il mese precedente è preselezionato), poi **Download PDF**. Apri il file scaricato dal browser | PDF `signalbox-report-…pdf`, leggibile, con mese e monitor del team scelto. Un report senza osservazioni deve dichiarare i dati mancanti |
 | G07 | Nel PDF di G06 cerca `httpbin`, URL completi, email private e nomi dei monitor dell’altro team, se già noti. Confronta l’elenco monitor con quello del team corrente | Nessun URL riservato o dato estraneo. Non confondere il nome pubblico del team del report con una fuga di dati |
 
 ### Aggiornamenti in tempo reale (facoltativo)
@@ -511,7 +546,7 @@ docker compose up -d --no-deps --force-recreate web queue scheduler
 
 **Contesti:** **Gestione** con il tuo account e GiGa Team; **Pubblico** in finestra privata senza login; **Posta** in Mailtrap. Gestione e pagina pubblica sono due schermate diverse: modifica e salva nella prima, poi passa alla seconda e ricarica.
 
-**Alla ripresa attuale:** la pagina esiste già, ha indirizzo `/status/status-test` e il prossimo caso è H13. Non creare una seconda pagina. Nei casi qui sotto `{SLUG}` vale `status-test`, salvo il cambio temporaneo di H16.
+**Fixture storica:** la pagina esistente ha indirizzo `/status/status-test`. Alla ripresa usa il caso indicato nel registro corrente, senza ripartire automaticamente da H13 e senza creare una seconda pagina. Nei casi qui sotto `{SLUG}` vale `status-test`, salvo il cambio temporaneo di H16.
 
 **Prima dei casi:** apri `/teams/2/status-pages` e cerca la riga della tua pagina. Deve contenere `API pubblica: PROVA-HTTP` e `Sito: PROVA-KEYWORD`, se hai usato i nomi proposti in H01. Se i nomi pubblici sono diversi annotali e segui quelli. Usa **Edit {titolo}** per controllare i monitor selezionati nei componenti; premi **Save page** solo se hai effettuato modifiche. Verifica che i due monitor siano **Active**, abbiano check recenti e che il piano ammetta gli intervalli. Per H13 evita altri guasti o manutenzioni sui componenti: altrimenti il risultato complessivo può essere diverso.
 
@@ -590,7 +625,7 @@ Con **404** controlla prima l'indirizzo e la pubblicazione: una pagina inesisten
 | Caso | Cosa fare | Risultato atteso |
 |---|---|---|
 | H13 | Esegui i sette passaggi sopra, mantenendo aperto l'incidente fino a H17 | **Outage** accanto al componente HTTP; **Some systems are having problems** sotto il titolo se l'altro componente è operativo. Con composizione diversa usa le regole sopra. Cambiamento visibile ricaricando entro 60 s dalla conferma |
-| H14 | Nel dettaglio dell'incidente appena aperto aggiungi `Aggiornamento pubblico H14` e pubblicalo con la procedura comune (**Add update**, poi **Publish update** sulla nuova nota e conferma). In **Pubblico** ricarica e scorri a **Published incidents** | Il nuovo testo compare già alla prima ricarica dopo il salvataggio riuscito, sotto il componente corretto; non serve attendere la scadenza della cache |
+| H14 | Nel dettaglio dell'incidente appena aperto aggiungi `Aggiornamento pubblico H14` e pubblicalo con la procedura comune (**Add update**, poi **Publish update** sulla nuova nota e **Confirm publication**). In **Pubblico** ricarica e scorri a **Published incidents** | Il nuovo testo compare già alla prima ricarica dopo il salvataggio riuscito, sotto il componente corretto; non serve attendere la scadenza della cache |
 | H15 | In **Gestione → Status pages → Edit {titolo}** annota il titolo originale, cambia **Title** in `Stato Prova H15`, premi **Save page**. Ricarica **Pubblico** | Il nuovo titolo è visibile in cima già alla prima ricarica. Ripristina il titolo originale con **Edit Stato Prova H15 → Save page**, ricarica e verifica |
 | H16 | In **Gestione → Edit {titolo}**, annota **Public address** originale (`status-test` nella ripresa). Cambialo in `status-test-h16`, premi **Save page**. In **Pubblico** visita sia `/status/status-test` sia `/status/status-test-h16`, adattando il primo se il tuo originale è diverso | Il vecchio indirizzo risponde **404**, il nuovo apre la stessa pagina. Poi rimetti **Public address** al valore originale, **Save page**: l'originale funziona e quello temporaneo dà 404. Da H17 usa di nuovo `{SLUG}` originale |
 | H17 | In **Gestione** segui **Ripristinare HTTP**: URL `https://httpbin.org/status/200`, **Expected status = 200**, **Save changes**. Attendi **Up** e incidente **Resolved**. In **Pubblico** ricarica | Accanto al componente HTTP compare **Operational**; se anche gli altri componenti sono attivi e operativi, sotto il titolo compare **All systems operational**. Le note già pubblicate restano nello storico: non devono sparire per la sola risoluzione |
@@ -691,7 +726,7 @@ Al termine ripristina l'URL 200 del monitor Alpha, attendi la risoluzione e rime
 | Caso | Account | Cosa fare | Risultato atteso |
 |---|---|---|---|
 | I01 | admin | In Alpha apri il monitor di prova → **Edit monitor**, cambia **Name** temporaneamente e **Save changes**, poi ripristinalo. In `/teams/{ALPHA}/notifications` crea `Email admin prova` come D01. In `/teams/{ALPHA}/status-pages` crea una bozza `ruoli-admin` come H01, usando il monitor Alpha | Tutti e tre i salvataggi consentiti e visibili dopo ricarica. Se manca quota distingui il blocco dal rifiuto di autorizzazione |
-| I02 | member | In Alpha apri il monitor → **Edit monitor**, cambia solo **Name** e **Save changes**, poi rimetti il nome originale. Nel dettaglio **Pause monitor**, poi **Resume monitor** | Modifica consentita; **Paused** e poi **Active**. Se la pausa interrompe la preparazione dell'incidente, attendi nuovi check e verifica che l'URL copiato per I06 resti valido |
+| I02 | member | In Alpha apri il monitor → **Edit monitor**, cambia solo **Name** e **Save changes**, poi rimetti il nome originale. Nel dettaglio **Pause monitor → Confirm pause**, poi **Resume monitor → Confirm resume** | Modifica consentita; **Paused** e poi **Active**. Se la pausa interrompe la preparazione dell'incidente, attendi nuovi check e verifica che l'URL copiato per I06 resti valido |
 | I03 | member | Apri `/teams/{ALPHA}/notifications` e `/teams/{ALPHA}/status-pages`; confronta canali e pagine con quanto preparato dall'owner | Dati leggibili, destinazioni dei canali mascherate; nessun controllo per aggiungere/modificare/eliminare canali, policy o pagine |
 | I04 | viewer | Apri `/teams/{ALPHA}/monitors`, poi clicca PROVA-RUOLI-ALPHA | Lista e dettaglio leggibili; assenti **New monitor**, **Edit monitor**, **Pause monitor**, **Resume monitor**, **Delete monitor** |
 | I05 | viewer | Incolla nella barra indirizzi `/teams/{ALPHA}/monitors/create`, poi `/teams/{ALPHA}/monitors/{MONITOR_ALPHA}/edit`, usando gli ID annotati | **403** su entrambi, nessun modulo modificabile. Torna alla lista tramite indirizzo |
@@ -705,7 +740,7 @@ Al termine ripristina l'URL 200 del monitor Alpha, attendi la risoluzione e rime
 | I08 | account estraneo | Apri gli URL privati copiati dalla gestione di GiGa Team: `/teams/2/incidents/{INCIDENT}`, `/teams/2/notifications`, `/teams/2/status-pages` | **404** su tutti. Qui provi la gestione privata: la pagina `/status/{SLUG}` pubblicata è invece accessibile intenzionalmente |
 | I09 | account estraneo | Apri `/teams/2/reports/2026-11`, oppure cambia il mese al mese corrente mantenendo il team estraneo | **404**, nessun PDF scaricato |
 | I10 | owner | In `/teams/{ALPHA}/monitors/{MONITOR_ALPHA}` sostituisci solo il numero del monitor con `{MONITOR_BETA}` lasciando il numero di Alpha | **404** anche se l'owner appartiene a entrambi i team. Il monitor Beta resta accessibile dal suo percorso sotto Beta |
-| I11 | owner | In **Monitors** di Alpha cerca `PROVA-RUOLI-` e premi **Apply filters**; annota le righe. Vai a `/teams`, premi **Switch to Synthetic Beta**, apri Beta → **Monitors** e ripeti la ricerca | Alpha mostra solo PROVA-RUOLI-ALPHA; Beta solo PROVA-RUOLI-BETA. Il nome del team e il numero nel percorso devono coincidere con quello scelto |
+| I11 | owner | In **Monitors** di Alpha cerca `PROVA-RUOLI-` e premi **Apply filters**; annota le righe. Vai a `/teams`, scegli Synthetic Beta nel campo **Team**, premi **Switch team**, poi apri **Monitors** e ripeti la ricerca | Alpha mostra solo PROVA-RUOLI-ALPHA; Beta solo PROVA-RUOLI-BETA. Il nome del team e il numero nel percorso devono coincidere con quello scelto |
 | I12 | owner | Apri `/teams/{ALPHA}/status-pages`, **Edit {titolo della pagina ruoli-alpha}**, scorri a **Monitors in this component** | PROVA-RUOLI-ALPHA selezionabile; PROVA-RUOLI-BETA assente. Premi **Close editor** senza modifiche |
 | I13 | owner, admin, member | In ciascuno dei tre profili sintetici apri `/admin` e `/horizon` | `/admin` risponde **404**, `/horizon` **403**; nessun elenco globale team o pannello code. Se uno è operatore, il prerequisito non è valido e va usato un account senza quel privilegio |
 
@@ -719,7 +754,7 @@ Al termine ripristina l'URL 200 del monitor Alpha, attendi la risoluzione e rime
 | I15 | Nel profilo invitato apri il link Mailtrap; premi **Create an account** e compila il modulo col medesimo indirizzo, password e conferma, poi **Create account**. Verifica l'email aprendo il nuovo link di verifica nello stesso profilo. Torna a **Review invitation** da `/account`, oppure `/invitations/accept`, e premi **Accept invitation** | Solo dopo **Accept invitation** compare **You have joined the team.** e il team è accessibile con ruolo **viewer**. La registrazione da invito non crea un team personale |
 | I16 | Come owner in `/teams/2`, in **Members** trova l'account nuovo: scegli **member** in **Role for {nome}**, premi **Save role for {nome}**. Nel profilo invitato ricarica Monitors e controlla che possa modificare. Poi come owner premi **Remove {nome}** sulla stessa riga e conferma; nel profilo invitato ricarica `/teams/2/monitors` | Cambio ruolo applicato; dopo la rimozione la pagina del team restituisce **404**, non dati rimasti visibili dopo ricarica |
 | I17 | Come owner invia un altro invito a un nuovo indirizzo. In **Invitations** premi **Revoke invitation for {email}** e conferma. Apri il suo link Mailtrap in un profilo separato | **This invitation is unavailable or expired. Ask a team owner or admin for a new link.**; nessun pulsante di accettazione valido |
-| I18 | Come owner sintetico, `/teams`: premi **Switch to Synthetic Alpha**, controlla **Current team**, apri Alpha → **Monitors**; ripeti con **Switch to Synthetic Beta** | Conferma **Current team updated.**, preferenza aggiornata e risorse del team nel percorso. Cliccare il nome di un team apre i suoi membri; **Switch to …** cambia la preferenza |
+| I18 | Come owner sintetico, in `/teams` scegli Synthetic Alpha nel campo **Team** e premi **Switch team**; controlla dashboard/nome/URL, apri **Monitors**; ripeti scegliendo Synthetic Beta | Preferenza aggiornata soltanto dopo conferma server e dashboard del team scelto; nome e ID nel percorso coerenti. Il link col nome in `/teams` apre la dashboard; **Team** nel menu comune apre membri/inviti |
 | I19 | Come owner principale di GiGa Team apri `/teams/2` e guarda i controlli in fondo | **Leave team** assente; presente **Transfer primary ownership**. Non trasferire la proprietà per questa prova |
 
 ---
@@ -762,8 +797,8 @@ docker compose exec web php artisan signalbox:platform-admin '{EMAIL_OPERATORE}'
 |---|---|---|
 | K01 | Se l'account operatore non ha ancora 2FA, accedi in **Gestione** e apri `/admin`. Se ha già 2FA, registra questo caso **NON ESEGUITO: 2FA già presente**, senza disattivarla | **In locale:** elenco team accessibile anche senza 2FA, comportamento previsto. **Solo in un ambiente già di produzione:** rimando a `/account/security` e **Enable two-factor authentication to use the admin panel.**; quel ramo non è verificato dal collaudo locale |
 | K02 | Per provare anche l'accesso con 2FA, attivala e confermala con A08 sul tuo account operatore, conservando privatamente i recovery code; se è già attiva riutilizzala. Riapri `/admin` | Elenco globale dei team; aprendo il nome di uno accedi al suo dettaglio amministrativo. In locale attivare la 2FA non è un prerequisito per K03–K05 |
-| K03 | Apri un team sintetico e annota override/scadenza iniziali. In **Plan override** scegli **Unlimited testing**, compila **Reason (required, recorded in the audit log)** con `Collaudo limiti temporanei`, poi **Save override**. Se compare la richiesta password nella stessa pagina, compila **Current password** e premi **Confirm password and save override**: l’operazione viene eseguita dopo la conferma, senza ripetere il salvataggio. Con un account membro di quel team apri Monitors e modifica un monitor temporaneo a 30 s | Ritorno allo stesso dettaglio amministrativo del team con **Plan override saved.**, anche dopo aver mostrato QR/codici 2FA in K02; nessuna schermata JSON di Inertia. Limite minimo 30 s nella lista e salvataggio a 30 s consentito. Un operatore che non è membro del team non ottiene per questo accesso alle sue pagine private |
-| K04 | Prima rimetti il monitor temporaneo a 300 s e salva. Nel pannello del team scegli **No override (stored plan and trial apply)**, compila un motivo e premi **Save override**. Se compare la conferma inline, inserisci **Current password** e premi **Confirm password and save override**; una password errata deve lasciare invariati override, scelta e motivo | Ritorno allo stesso dettaglio amministrativo con **Plan override removed.**, limiti del piano/trial effettivo ripristinati. Se prima di K03 c'era già un altro override, ripristina anche quello con motivo e scadenza annotati; non lasciare il team con una configurazione diversa senza volerlo |
+| K03 | Apri un team sintetico e annota override/scadenza iniziali. In **Plan override** scegli **Unlimited testing**, compila **Reason (required, recorded in the audit log)** con `Collaudo limiti temporanei`, poi **Save override** e accetta il dialogo nativo. Se compare la richiesta password nella stessa pagina, compila **Current password** e premi **Confirm password and save override**: l’operazione viene eseguita dopo la conferma, senza ripetere il salvataggio. Con un account membro di quel team apri Monitors e modifica un monitor temporaneo a 30 s | Ritorno allo stesso dettaglio amministrativo del team con **Plan override saved.**, anche dopo aver mostrato QR/codici 2FA in K02; nessuna schermata JSON di Inertia. Limite minimo 30 s nella lista e salvataggio a 30 s consentito. Un operatore che non è membro del team non ottiene per questo accesso alle sue pagine private |
+| K04 | Prima rimetti il monitor temporaneo a 300 s e salva. Nel pannello del team scegli **No override (stored plan and trial apply)**, compila un motivo e premi **Save override**, accettando il dialogo nativo. Se compare la conferma inline, inserisci **Current password** e premi **Confirm password and save override**; una password errata deve lasciare invariati override, scelta e motivo | Ritorno allo stesso dettaglio amministrativo con **Plan override removed.**, limiti del piano/trial effettivo ripristinati. Se prima di K03 c'era già un altro override, ripristina anche quello con motivo e scadenza annotati; non lasciare il team con una configurazione diversa senza volerlo |
 | K05 | Col medesimo account operatore verificato (2FA richiesta in produzione), apri `/horizon` e guarda supervisori/processi | Pannello accessibile, Horizon attivo e worker visibili. Un pannello accessibile ma senza worker non prova l'esecuzione dei check: torna a 1.1 |
 
 Alla fine, se hai aggiunto il ruolo solo per questa prova e non ti serve più, revocalo dal terminale. Non togliere un ruolo che esisteva già senza averlo deciso:
@@ -776,9 +811,11 @@ docker compose exec web php artisan signalbox:platform-admin '{EMAIL_OPERATORE}'
 
 ## Blocco L — Accessibilità e usabilità
 
-**Esecuzione rinviata:** decisione dell’utente del 2026-11-09, dopo la dashboard e la navigazione della fase A UI. Il riferimento operativo è UI.06 in [TASKS.md](TASKS.md), con brief in [USER-DASHBOARD.md](USER-DASHBOARD.md). Questi passi restano la base; aggiornare nomi e percorsi delle schermate durante l’implementazione senza rinumerare i casi. Aggiungere dashboard e navigazione comune alla copertura. Gli esiti precedenti non sostituiscono il collaudo della nuova UI.
+**Esecuzione corrente in UI.06.3:** il rinvio deciso il 2026-11-09 è terminato con l’implementazione della fase A. Usare i passi aggiornati sotto e registrare ogni limite senza promuovere gli esiti precedenti. Piano in [TASKS.md](TASKS.md), brief in [USER-DASHBOARD.md](USER-DASHBOARD.md).
 
-**Preparazione:** esegui le prove su **Monitors**, dettaglio monitor, dettaglio incidente, **Notifications**, gestione **Status pages** e pagina pubblica. Per le pagine private usa un account con permessi di modifica; per quella pubblica il contesto anonimo. Annota browser/versione. Usa risorse e testi temporanei; se riusi l'incidente risolto di H13, aggiungi note con **Status after this update = Resolved**.
+**Preparazione:** esegui le prove su **Dashboard**, **Monitors**, dettaglio monitor e relativi grafici/tabelle, dettaglio incidente, **Maintenance**, **Notifications**, **Notification deliveries**, gestione **Status pages**, **Team**, account e pagina pubblica. Includi menu comune, cambio team, Account menu e dialogo mobile. Apri gli editor e le sezioni View … data con la tastiera per coprire anche controlli inizialmente nascosti. Per le pagine private usa un account con permessi di modifica; per quella pubblica il contesto anonimo. Annota browser/versione. Usa risorse e testi temporanei; se riusi l'incidente risolto di H13, aggiungi note con **Status after this update = Resolved**.
+
+Per L02 e lo zoom nativo di L03 segui anche [BROWSER-NATIVE-CHECKS.md](BROWSER-NATIVE-CHECKS.md), che elenca i due moduli e le schermate da osservare.
 
 Per vista mobile e rete usa gli strumenti sviluppatore: **Network** per **Slow 4G / Offline**, barra dispositivi per larghezza 390 px. I nomi delle opzioni variano fra browser: annota l'equivalente usato. **L02 richiede una tecnologia assistiva per valutare l'annuncio**: su Mac VoiceOver si attiva con ⌘F5 (o Fn+⌘F5); senza lettore di schermo puoi confermare solo l'errore visibile, lasciando l'annuncio non verificato.
 
@@ -787,9 +824,9 @@ Per vista mobile e rete usa gli strumenti sviluppatore: **Network** per **Slow 4
 | L01 | Per ciascuna schermata usa solo Tab/Shift+Tab per muoverti, Invio per link/pulsanti, Spazio per le caselle e frecce per i menu. Esegui un filtro e apri/chiudi un editor senza mouse | Focus riconoscibile, ordine sensato, tutti i controlli raggiungibili e attivabili. Su Safari abilita prima la navigazione da tastiera dei controlli nelle preferenze |
 | L02 | Con lettore di schermo attivo, apri **New monitor**, compila un HTTP valido e svuota solo **Name**, poi **Create monitor**. Ripeti su un altro modulo, per esempio password pubblica errata | Errore visibile vicino al campo, annunciato dalla tecnologia assistiva; nessuna risorsa invalida creata. Registra separatamente il risultato visivo e l'annuncio |
 | L03 | Su ciascuna schermata prova prima larghezza 390 px, poi finestra normale con zoom browser 200%; scorri in verticale e, dove previsto, nelle tabelle in orizzontale | Pulsanti e messaggi raggiungibili, testo leggibile, nessun controllo irraggiungibile fuori schermo. Alla fine ripristina zoom 100% e disattiva vista dispositivi |
-| L04 | In **Network** scegli **Slow 4G**. Nell'incidente di prova aggiungi una nota `Prova doppio invio L04` e fai doppio clic su **Add update** | Durante l'invio compare **Saving…**, pulsante disabilitato; una sola nota con quel testo in Timeline dopo ricarica. Poi rimetti **No throttling** |
-| L05 | Apri l'incidente mentre sei Online; passa a **Offline**, tenta **Add update** con `Prova offline L05` e annota messaggio/stato del pulsante. Torna Online, ricarica e verifica la Timeline prima di riprovare una volta se la nota manca | Problema comunicato in modo comprensibile, nessuna attesa infinita; recupero possibile e nessun duplicato. Se devi ricaricare per uscire da un blocco, annotalo come comportamento osservato, non come prova superata |
-| L06 | Online, salva una nota temporanea, visita la lista incidenti, usa Indietro/Avanti e ricarica il dettaglio | Navigazione coerente; nota presente una volta sola, nessun nuovo invio dovuto alla ricarica |
+| L04 | In **Network** scegli **Slow 4G**. Nell’incidente di prova già risolto lascia **Status after this update = Resolved** e aggiungi una nota univoca `Prova doppio invio L04 {browser/data}` e fai doppio clic su **Add update** | Durante l'invio compare **Saving…**, pulsante disabilitato; una sola nota con quel testo in Timeline dopo ricarica. Poi rimetti **No throttling** |
+| L05 | Apri l'incidente mentre sei Online; passa a **Offline**, tenta **Add update** con `Prova offline L05` e annota messaggio/stato del pulsante. Torna Online e usa **Review saved data (new tab)** per verificare la Timeline prima di riprovare una volta se la nota manca | **Outcome not confirmed**, bozza conservata e invio bloccato; **Review saved data (new tab)** permette la verifica senza perdere la bozza. Dopo il controllo usa **I checked the saved data** e invia una volta soltanto se assente; nessun replay al ritorno online né duplicato. Se devi ricaricare per uscire da un blocco, annotalo come comportamento osservato, non come prova superata |
+| L06 | Online, salva una nota privata univoca, usa **Back to incidents**, poi Indietro/Avanti e reload. Ripeti lasciando una bozza: **Stay** la conserva e **Discard and leave** permette l’uscita | Navigazione coerente; nota presente una volta sola, nessun nuovo invio dovuto alla ricarica |
 | L07 | Apri **Console** prima delle azioni; distingui gli errori precedenti da quelli dell'azione in corso. Per un errore annota caso, URL, testo e ora | Nessun errore JS inatteso. 403/404/429 provocati nei relativi casi e l'interruzione intenzionale di L05 sono attesi, ma un'eccezione JS non gestita va comunque registrata |
 | L08 | In un secondo browser annota nome/versione; ripeti login, filtro monitor, modifica di un nome con ripristino, lettura incidente, pagina pubblica e iscrizione con un nuovo indirizzo sintetico. Se hai scelto il realtime, prova anche connessione e recupero | Stessi risultati osservabili; registra le differenze con il relativo caso originale. Al termine ripristina nomi e annulla l'iscrizione sintetica se confermata |
 
@@ -834,9 +871,9 @@ npm run dev
 
 Ricarica la pagina e riprendi il caso interrotto. Echo/Pusher sono già dichiarati nel lockfile: non aggiungere nuove versioni per aggirare l’errore. Se il problema persiste, annota il modulo non trovato e l’indirizzo di Vite mostrato nel terminale. Dettagli in [BOOTSTRAP.md](BOOTSTRAP.md#host-vite-and-docker-dependencies).
 
-**Dopo Save override viene chiesta la password ma il piano resta invariato:** prima di BT.14 il redirect di riconferma interrompeva il salvataggio. Con il codice aggiornato la password si conferma nella stessa pagina del team: **Current password** → **Confirm password and save override**. La password valida fa partire una sola volta l’operazione scelta; una password errata o **Cancel** non cambiano l’override e conservano il motivo. Ricarica una volta le schede aperte per caricare la nuova UI. Verifica l’esito con **Plan override removed.**/**Plan override saved.**, **Current** e **History**.
+**Dopo Save override viene chiesta la password ma il piano resta invariato:** prima di BT.14 il redirect di riconferma interrompeva il salvataggio. Con il codice aggiornato la password si conferma nella stessa pagina del team: **Current password** → **Confirm password and save override**. La password valida fa partire una sola volta l’operazione scelta; una password errata o **Cancel** non cambiano l’override e conservano il motivo. Ricarica una volta le schede aperte per caricare la nuova UI. Verifica l’esito con **Plan override removed.**/**Plan override saved.**, **Plan override** e **History**.
 
-**Dopo Save override compare un JSON del QR 2FA:** difetto di redirect corretto in BT.13. Riapri direttamente `/admin/teams/{TEAM}` e ricarica la pagina per usare il codice aggiornato; verifica **Current** e **History**, perché il salvataggio può essere già riuscito prima del redirect errato. Prosegui K03 se l’override desiderato è già presente. Il salvataggio e la rimozione ora tornano esplicitamente al dettaglio del team; non modificare la 2FA per risolvere questo errore. Non inserire QR, chiavi o codici nel registro.
+**Dopo Save override compare un JSON del QR 2FA:** difetto di redirect corretto in BT.13. Riapri direttamente `/admin/teams/{TEAM}` e ricarica la pagina per usare il codice aggiornato; verifica **Plan override** e **History**, perché il salvataggio può essere già riuscito prima del redirect errato. Prosegui K03 se l’override desiderato è già presente. Il salvataggio e la rimozione ora tornano esplicitamente al dettaglio del team; non modificare la 2FA per risolvere questo errore. Non inserire QR, chiavi o codici nel registro.
 
 **Il link locale non si apre in Brave con `ERR_SOCKS_CONNECTION_FAILED`:** usa una finestra privata standard per il profilo dell’invitato. La finestra privata con Tor usa un proxy; durante il collaudo l’utente ha confermato che era la causa e che il collegamento funzionava in Firefox. Mantieni il link originale completo; il solo errore di rete non prova che l’invito sia invalido.
 
@@ -848,7 +885,7 @@ Ricarica la pagina e riprendi il caso interrotto. Echo/Pusher sono già dichiara
 docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT id, team_id, name, is_paused, last_status, last_checked_at, next_check_at FROM monitors ORDER BY id;"'
 ```
 
-**Le email non arrivano:** controlla prima destinatario e ora in Mailtrap. Per gli avvisi del team apri l'incidente → **Notifications sent**: **Pending** con motivo di quiet hours è un rinvio previsto; **Failed** richiede diagnosi. Per il lettore della status page verifica che abbia premuto **Confirm email updates** e che la nota sia **Published**, non solo **Private**. Poi controlla scheduler/queue e i soli campi non segreti del trasporto email:
+**Le email non arrivano:** controlla prima destinatario e ora in Mailtrap. Per gli avvisi del team apri l'incidente → **Notification deliveries**: **Pending** con motivo di quiet hours è un rinvio previsto; **Failed** richiede diagnosi. Per il lettore della status page verifica che abbia premuto **Confirm email updates** e che la nota sia **Published**, non solo **Private**. Poi controlla scheduler/queue e i soli campi non segreti del trasporto email:
 
 ```sh
 docker compose logs --tail=20 scheduler | grep -E 'dispatch'
@@ -902,7 +939,7 @@ docker compose exec web php artisan metrics:rollups
 
 Ultima sessione: **2026-11-09** · Browser: **Brave / Chromium 157.0.8103.39** · Secondo browser: **Firefox 159.0**
 
-**Punto di ripartenza: H28.** I risultati osservati dall’agente il 2026-11-09 sono nel [registro per caso](BROWSER-RESULTS-2026-11-09.md#registro-per-caso): 49 PASS, 0 FAIL, 18 BLOCCATO, 5 NON ESEGUITO. `CONCLUSO` nei blocchi storici registra soltanto l’avanzamento comunicato dall’utente, senza attribuire PASS ai singoli casi. H, I, K e L restano aperti; J completato.
+**Ripartenza corrente: UI.06.3 / L**, secondo lo stato nel piano. I risultati osservati dall’agente il 2026-11-09 sono nel [registro per caso](BROWSER-RESULTS-2026-11-09.md#registro-per-caso): 49 PASS, 0 FAIL, 18 BLOCCATO, 5 NON ESEGUITO. `CONCLUSO` nei blocchi storici registra soltanto l’avanzamento comunicato dall’utente, senza attribuire PASS ai singoli casi. La conferma successiva dell’utente chiude A–K; L va valutato sulla nuova UI, senza convertire gli esiti storici per caso.
 
 Puoi mandarmi anche solo i casi che non sono `PASS`.
 

@@ -1,0 +1,3192 @@
+{
+  "scope": "UI.06.3 partial acceptance; no native VoiceOver or 200% zoom observation",
+  "origin": "http://localhost:8000",
+  "browsers": {
+    "Brave": {
+      "application": "157.1.99.56",
+      "engine": "157.0.8103.50"
+    },
+    "Firefox": {
+      "distribution": "Playwright",
+      "engine": "159.0",
+      "desktop_not_tested": "159.0.1"
+    }
+  },
+  "mode": "headless; actual DOM keyboard events, real HTTP and synthetic development storage; native Chromium CDP throttling for L04",
+  "case_assessment": {
+    "L01": "PASS",
+    "L02": "BLOCCATO: visible error, focus and association checked; actual VoiceOver announcement unobserved",
+    "L03": "BLOCCATO: 390px checked; native browser 200% zoom unobserved",
+    "L04": "PASS: native Chromium throttling only",
+    "L05": "PASS",
+    "L06": "PASS",
+    "L07": "PASS for unexpected JavaScript errors; favicon 404 and stopped Reverb explicitly observed",
+    "L08": "PASS for second-browser smoke and generic subscription request; no email delivery or confirmation claim"
+  },
+  "successful_subchecks": [
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "dashboard",
+      "time": "2026-11-12T09:27:21.655Z",
+      "evidence": {
+        "tabStops": 33,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Manage monitors"
+          },
+          {
+            "tag": "A",
+            "label": "New monitor"
+          },
+          {
+            "tag": "A",
+            "label": "Open incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Down"
+          },
+          {
+            "tag": "A",
+            "label": "Unknown"
+          },
+          {
+            "tag": "A",
+            "label": "Up"
+          },
+          {
+            "tag": "A",
+            "label": "Paused"
+          },
+          {
+            "tag": "A",
+            "label": "Suspended"
+          },
+          {
+            "tag": "A",
+            "label": "View all open incidents"
+          },
+          {
+            "tag": "DIV",
+            "label": "Monitors of Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "PROVA-RUOLI-ALPHA"
+          },
+          {
+            "tag": "A",
+            "label": "Selected"
+          },
+          {
+            "tag": "A",
+            "label": "Open monitor details"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "EU"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "US"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View response time data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Response time data viewport"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View observed uptime data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Observed uptime data viewport"
+          },
+          {
+            "tag": "SELECT",
+            "label": "November 2026October 2026September 2026August 2026July 2026J"
+          },
+          {
+            "tag": "A",
+            "label": "Download PDF"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "dashboard",
+      "time": "2026-11-12T09:27:22.058Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 26,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:22.270Z",
+      "evidence": {
+        "tabStops": 20,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "New monitor"
+          },
+          {
+            "tag": "INPUT",
+            "label": "filter-q"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyHTTPTLS certificateDNSHeartbeatKeyword"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyUnknownUpDown"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyActivePausedSuspended by plan"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Apply filters"
+          },
+          {
+            "tag": "DIV",
+            "label": "Monitors of Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "PROVA-RUOLI-ALPHA"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:22.551Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 15,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "monitor",
+      "time": "2026-11-12T09:27:22.722Z",
+      "evidence": {
+        "tabStops": 48,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Back to monitors"
+          },
+          {
+            "tag": "A",
+            "label": "All incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Edit monitor"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Resume monitor"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete monitor"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View hourly availability data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Hourly availability durations, UTC"
+          },
+          {
+            "tag": "A",
+            "label": "24 hours"
+          },
+          {
+            "tag": "A",
+            "label": "7 days"
+          },
+          {
+            "tag": "A",
+            "label": "30 days"
+          },
+          {
+            "tag": "A",
+            "label": "All regions"
+          },
+          {
+            "tag": "A",
+            "label": "EU"
+          },
+          {
+            "tag": "A",
+            "label": "US"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Mean"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p50"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p95"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View response time eu data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Response time EU data viewport"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Mean"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p50"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p95"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View response time us data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Response time US data viewport"
+          },
+          {
+            "tag": "DIV",
+            "label": "Whole-window latency statistics"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Observed uptime"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Data coverage"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "SLA"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View availability over time data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Availability over time data viewport"
+          },
+          {
+            "tag": "A",
+            "label": "Incident #9"
+          },
+          {
+            "tag": "INPUT",
+            "label": "maintenance-new-starts_at"
+          },
+          {
+            "tag": "INPUT",
+            "label": "maintenance-new-ends_at"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "maintenance-new-reason"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Schedule maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Manage channels and policies"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "monitor",
+      "time": "2026-11-12T09:27:23.422Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 39,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "incident",
+      "time": "2026-11-12T09:27:23.747Z",
+      "evidence": {
+        "tabStops": 33,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Back to incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Monitor PROVA-RUOLI-ALPHA"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Resolved"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "update-message"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add update"
+          },
+          {
+            "tag": "SELECT",
+            "label": "MinorMajorCritical"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save severity"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "root-cause"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save cause"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "incident",
+      "time": "2026-11-12T09:27:24.148Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 28,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "notifications",
+      "time": "2026-11-12T09:27:24.345Z",
+      "evidence": {
+        "tabStops": 40,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Channels"
+          },
+          {
+            "tag": "A",
+            "label": "Escalation policies"
+          },
+          {
+            "tag": "A",
+            "label": "Notification deliveries"
+          },
+          {
+            "tag": "A",
+            "label": "Assign a policy to a monitor"
+          },
+          {
+            "tag": "INPUT",
+            "label": "notification-search"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Send verification code"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit channel"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete channel"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "Configure quiet hours"
+          },
+          {
+            "tag": "INPUT",
+            "label": ""
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save quiet hours"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Send verification code"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit channel"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete channel"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "Configure quiet hours"
+          },
+          {
+            "tag": "INPUT",
+            "label": ""
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save quiet hours"
+          },
+          {
+            "tag": "SELECT",
+            "label": "EmailSlackTelegramWebhookSMS (stub)"
+          },
+          {
+            "tag": "INPUT",
+            "label": "channel-new-name"
+          },
+          {
+            "tag": "INPUT",
+            "label": "channel-new-address"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add channel"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-name"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-default"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-step-0-delay"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-step-0-channel-5"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-step-0-channel-4"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add step"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add policy"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "notifications",
+      "time": "2026-11-12T09:27:24.696Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 31,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "maintenance",
+      "time": "2026-11-12T09:27:24.879Z",
+      "evidence": {
+        "tabStops": 17,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Choose a monitor to schedule maintenance"
+          },
+          {
+            "tag": "INPUT",
+            "label": "operations-q"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyUpcomingOngoingFinished"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Apply filters"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Refresh results"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "maintenance",
+      "time": "2026-11-12T09:27:25.126Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 12,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "deliveries",
+      "time": "2026-11-12T09:27:25.317Z",
+      "evidence": {
+        "tabStops": 18,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Channels and escalation policies"
+          },
+          {
+            "tag": "INPUT",
+            "label": "operations-q"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyPendingSentFailedSuppressed"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Apply filters"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Refresh results"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "deliveries",
+      "time": "2026-11-12T09:27:25.563Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 13,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "status-management",
+      "time": "2026-11-12T09:27:25.729Z",
+      "evidence": {
+        "tabStops": 30,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "INPUT",
+            "label": "status-page-search"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit Ruoli Admin"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete Ruoli Admin"
+          },
+          {
+            "tag": "INPUT",
+            "label": "domain-3"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save hostname"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit Ruoli Alpha"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete Ruoli Alpha"
+          },
+          {
+            "tag": "INPUT",
+            "label": "domain-2"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save hostname"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-title"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-slug"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "page-new-description"
+          },
+          {
+            "tag": "SELECT",
+            "label": "systemlightdark"
+          },
+          {
+            "tag": "SELECT",
+            "label": "emeraldbluevioletamberslate"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-public"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-password"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add component"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add status page"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "status-management",
+      "time": "2026-11-12T09:27:26.055Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 25,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "team",
+      "time": "2026-11-12T09:27:26.233Z",
+      "evidence": {
+        "tabStops": 28,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Members"
+          },
+          {
+            "tag": "A",
+            "label": "Invitations"
+          },
+          {
+            "tag": "A",
+            "label": "Your teams"
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save role for Synthetic Admin"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Remove Synthetic Admin"
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save role for Synthetic Member"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Remove Synthetic Member"
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save role for Synthetic Viewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Remove Synthetic Viewer"
+          },
+          {
+            "tag": "INPUT",
+            "label": ""
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Send invitation"
+          },
+          {
+            "tag": "A",
+            "label": "Transfer primary ownership"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "team",
+      "time": "2026-11-12T09:27:26.525Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 23,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "account",
+      "time": "2026-11-12T09:27:26.701Z",
+      "evidence": {
+        "tabStops": 8,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Your account"
+          },
+          {
+            "tag": "A",
+            "label": "Your teams"
+          },
+          {
+            "tag": "A",
+            "label": "Account security"
+          },
+          {
+            "tag": "A",
+            "label": "Open dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "View your teams"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "account",
+      "time": "2026-11-12T09:27:26.914Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 8,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-tab-order",
+      "screen": "public",
+      "time": "2026-11-12T09:27:27.075Z",
+      "evidence": {
+        "tabStops": 2,
+        "sequence": [
+          {
+            "tag": "INPUT",
+            "label": "subscriber-email"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Subscribe to updates"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L03-390px",
+      "screen": "public",
+      "time": "2026-11-12T09:27:27.326Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 2,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-mobile-dialog",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:27.486Z",
+      "evidence": {
+        "nativeDialog": true,
+        "tabPresses": 20,
+        "bodySentinels": 1,
+        "backgroundControlsFocused": 0,
+        "escapeRestoresTrigger": true,
+        "scrollRestored": true
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-keyboard-filter",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:27.812Z",
+      "evidence": {
+        "keyboardOnly": true,
+        "searchRetained": true
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L02-visible-field-error",
+      "screen": "create",
+      "time": "2026-11-12T09:27:28.208Z",
+      "evidence": {
+        "error": "The name field is required.",
+        "focus": "Name",
+        "announcement": "not observed; requires real VoiceOver"
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "dashboard",
+      "time": "2026-11-12T09:27:32.165Z",
+      "evidence": {
+        "tabStops": 33,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Manage monitors"
+          },
+          {
+            "tag": "A",
+            "label": "New monitor"
+          },
+          {
+            "tag": "A",
+            "label": "Open incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Down"
+          },
+          {
+            "tag": "A",
+            "label": "Unknown"
+          },
+          {
+            "tag": "A",
+            "label": "Up"
+          },
+          {
+            "tag": "A",
+            "label": "Paused"
+          },
+          {
+            "tag": "A",
+            "label": "Suspended"
+          },
+          {
+            "tag": "A",
+            "label": "View all open incidents"
+          },
+          {
+            "tag": "DIV",
+            "label": "Monitors of Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "PROVA-RUOLI-ALPHA"
+          },
+          {
+            "tag": "A",
+            "label": "Selected"
+          },
+          {
+            "tag": "A",
+            "label": "Open monitor details"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "EU"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "US"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View response time data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Response time data viewport"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View observed uptime data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Observed uptime data viewport"
+          },
+          {
+            "tag": "SELECT",
+            "label": "November 2026October 2026September 2026August 2026July 2026J"
+          },
+          {
+            "tag": "A",
+            "label": "Download PDF"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "dashboard",
+      "time": "2026-11-12T09:27:32.611Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 26,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:32.901Z",
+      "evidence": {
+        "tabStops": 20,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "New monitor"
+          },
+          {
+            "tag": "INPUT",
+            "label": "filter-q"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyHTTPTLS certificateDNSHeartbeatKeyword"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyUnknownUpDown"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyActivePausedSuspended by plan"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Apply filters"
+          },
+          {
+            "tag": "DIV",
+            "label": "Monitors of Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "PROVA-RUOLI-ALPHA"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:33.247Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 15,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "monitor",
+      "time": "2026-11-12T09:27:33.500Z",
+      "evidence": {
+        "tabStops": 48,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Back to monitors"
+          },
+          {
+            "tag": "A",
+            "label": "All incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Edit monitor"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Resume monitor"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete monitor"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View hourly availability data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Hourly availability durations, UTC"
+          },
+          {
+            "tag": "A",
+            "label": "24 hours"
+          },
+          {
+            "tag": "A",
+            "label": "7 days"
+          },
+          {
+            "tag": "A",
+            "label": "30 days"
+          },
+          {
+            "tag": "A",
+            "label": "All regions"
+          },
+          {
+            "tag": "A",
+            "label": "EU"
+          },
+          {
+            "tag": "A",
+            "label": "US"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Mean"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p50"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p95"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View response time eu data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Response time EU data viewport"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Mean"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p50"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "p95"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View response time us data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Response time US data viewport"
+          },
+          {
+            "tag": "DIV",
+            "label": "Whole-window latency statistics"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Observed uptime"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Data coverage"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "SLA"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "View availability over time data"
+          },
+          {
+            "tag": "DIV",
+            "label": "Availability over time data viewport"
+          },
+          {
+            "tag": "A",
+            "label": "Incident #9"
+          },
+          {
+            "tag": "INPUT",
+            "label": "maintenance-new-starts_at"
+          },
+          {
+            "tag": "INPUT",
+            "label": "maintenance-new-ends_at"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "maintenance-new-reason"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Schedule maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Manage channels and policies"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "monitor",
+      "time": "2026-11-12T09:27:34.293Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 39,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "incident",
+      "time": "2026-11-12T09:27:34.645Z",
+      "evidence": {
+        "tabStops": 33,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Back to incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Monitor PROVA-RUOLI-ALPHA"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Publish update"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Resolved"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "update-message"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add update"
+          },
+          {
+            "tag": "SELECT",
+            "label": "MinorMajorCritical"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save severity"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "root-cause"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save cause"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "incident",
+      "time": "2026-11-12T09:27:35.040Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 28,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "notifications",
+      "time": "2026-11-12T09:27:35.295Z",
+      "evidence": {
+        "tabStops": 40,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Channels"
+          },
+          {
+            "tag": "A",
+            "label": "Escalation policies"
+          },
+          {
+            "tag": "A",
+            "label": "Notification deliveries"
+          },
+          {
+            "tag": "A",
+            "label": "Assign a policy to a monitor"
+          },
+          {
+            "tag": "INPUT",
+            "label": "notification-search"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Send verification code"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit channel"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete channel"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "Configure quiet hours"
+          },
+          {
+            "tag": "INPUT",
+            "label": ""
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save quiet hours"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Send verification code"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit channel"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete channel"
+          },
+          {
+            "tag": "SUMMARY",
+            "label": "Configure quiet hours"
+          },
+          {
+            "tag": "INPUT",
+            "label": ""
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save quiet hours"
+          },
+          {
+            "tag": "SELECT",
+            "label": "EmailSlackTelegramWebhookSMS (stub)"
+          },
+          {
+            "tag": "INPUT",
+            "label": "channel-new-name"
+          },
+          {
+            "tag": "INPUT",
+            "label": "channel-new-address"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add channel"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-name"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-default"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-step-0-delay"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-step-0-channel-5"
+          },
+          {
+            "tag": "INPUT",
+            "label": "policy-new-step-0-channel-4"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add step"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add policy"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "notifications",
+      "time": "2026-11-12T09:27:35.700Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 31,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "maintenance",
+      "time": "2026-11-12T09:27:35.948Z",
+      "evidence": {
+        "tabStops": 17,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Choose a monitor to schedule maintenance"
+          },
+          {
+            "tag": "INPUT",
+            "label": "operations-q"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyUpcomingOngoingFinished"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Apply filters"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Refresh results"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "maintenance",
+      "time": "2026-11-12T09:27:36.272Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 12,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "deliveries",
+      "time": "2026-11-12T09:27:36.510Z",
+      "evidence": {
+        "tabStops": 18,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Channels and escalation policies"
+          },
+          {
+            "tag": "INPUT",
+            "label": "operations-q"
+          },
+          {
+            "tag": "SELECT",
+            "label": "AnyPendingSentFailedSuppressed"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Apply filters"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Refresh results"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "deliveries",
+      "time": "2026-11-12T09:27:36.826Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 13,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "status-management",
+      "time": "2026-11-12T09:27:37.063Z",
+      "evidence": {
+        "tabStops": 30,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "INPUT",
+            "label": "status-page-search"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit Ruoli Admin"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete Ruoli Admin"
+          },
+          {
+            "tag": "INPUT",
+            "label": "domain-3"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save hostname"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Edit Ruoli Alpha"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Delete Ruoli Alpha"
+          },
+          {
+            "tag": "INPUT",
+            "label": "domain-2"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save hostname"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-title"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-slug"
+          },
+          {
+            "tag": "TEXTAREA",
+            "label": "page-new-description"
+          },
+          {
+            "tag": "SELECT",
+            "label": "systemlightdark"
+          },
+          {
+            "tag": "SELECT",
+            "label": "emeraldbluevioletamberslate"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-public"
+          },
+          {
+            "tag": "INPUT",
+            "label": "page-new-password"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add component"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Add status page"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "status-management",
+      "time": "2026-11-12T09:27:37.433Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 25,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "team",
+      "time": "2026-11-12T09:27:37.660Z",
+      "evidence": {
+        "tabStops": 28,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "SELECT",
+            "label": "Choose a teamSynthetic Alpha · ownerSynthetic Beta · owner"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "Monitors"
+          },
+          {
+            "tag": "A",
+            "label": "Incidents"
+          },
+          {
+            "tag": "A",
+            "label": "Maintenance"
+          },
+          {
+            "tag": "A",
+            "label": "Notifications"
+          },
+          {
+            "tag": "A",
+            "label": "Status pages"
+          },
+          {
+            "tag": "A",
+            "label": "Team"
+          },
+          {
+            "tag": "A",
+            "label": "Synthetic Alpha"
+          },
+          {
+            "tag": "A",
+            "label": "Members"
+          },
+          {
+            "tag": "A",
+            "label": "Invitations"
+          },
+          {
+            "tag": "A",
+            "label": "Your teams"
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save role for Synthetic Admin"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Remove Synthetic Admin"
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save role for Synthetic Member"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Remove Synthetic Member"
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Save role for Synthetic Viewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Remove Synthetic Viewer"
+          },
+          {
+            "tag": "INPUT",
+            "label": ""
+          },
+          {
+            "tag": "SELECT",
+            "label": "owneradminmemberviewer"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Send invitation"
+          },
+          {
+            "tag": "A",
+            "label": "Transfer primary ownership"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "team",
+      "time": "2026-11-12T09:27:38.059Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 23,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "account",
+      "time": "2026-11-12T09:27:38.325Z",
+      "evidence": {
+        "tabStops": 8,
+        "sequence": [
+          {
+            "tag": "A",
+            "label": "Skip to content"
+          },
+          {
+            "tag": "A",
+            "label": "Signalbox"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Account menu"
+          },
+          {
+            "tag": "A",
+            "label": "Your account"
+          },
+          {
+            "tag": "A",
+            "label": "Your teams"
+          },
+          {
+            "tag": "A",
+            "label": "Account security"
+          },
+          {
+            "tag": "A",
+            "label": "Open dashboard"
+          },
+          {
+            "tag": "A",
+            "label": "View your teams"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "account",
+      "time": "2026-11-12T09:27:38.899Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 8,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-tab-order",
+      "screen": "public",
+      "time": "2026-11-12T09:27:39.127Z",
+      "evidence": {
+        "tabStops": 2,
+        "sequence": [
+          {
+            "tag": "INPUT",
+            "label": "subscriber-email"
+          },
+          {
+            "tag": "BUTTON",
+            "label": "Subscribe to updates"
+          }
+        ],
+        "missingComputedOutlines": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L03-390px",
+      "screen": "public",
+      "time": "2026-11-12T09:27:39.434Z",
+      "evidence": {
+        "viewport": 390,
+        "documentWidth": 390,
+        "bodyWidth": 390,
+        "controls": 2,
+        "outsideControls": []
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-mobile-dialog",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:39.631Z",
+      "evidence": {
+        "nativeDialog": true,
+        "tabPresses": 20,
+        "bodySentinels": 2,
+        "backgroundControlsFocused": 0,
+        "escapeRestoresTrigger": true,
+        "scrollRestored": true
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-keyboard-filter",
+      "screen": "monitors",
+      "time": "2026-11-12T09:27:40.010Z",
+      "evidence": {
+        "keyboardOnly": true,
+        "searchRetained": true
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L02-visible-field-error",
+      "screen": "create",
+      "time": "2026-11-12T09:27:40.531Z",
+      "evidence": {
+        "error": "The name field is required.",
+        "focus": "Name",
+        "announcement": "not observed; requires real VoiceOver"
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-keyboard-editor-scroll",
+      "time": "2026-11-12T09:31:31.902Z",
+      "evidence": {
+        "editorOpenedClosedWithEnter": true,
+        "nativeHorizontalScrollLeft": 3
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L02-second-visible-error",
+      "time": "2026-11-12T09:31:32.679Z",
+      "evidence": {
+        "visibleError": "The name field is required.",
+        "invalid": true,
+        "announcement": "not observed; requires actual VoiceOver"
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L08-subscription-request",
+      "time": "2026-11-12T09:31:33.123Z",
+      "evidence": {
+        "temporaryPageDeleted": true,
+        "anonymousSubscriptionRequest": true,
+        "genericAcknowledgement": true,
+        "emailConfirmation": "not executed; no inbox or worker",
+        "subscriberCleanup": "page deletion cascades to temporary subscribers/outbox"
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-keyboard-editor-scroll",
+      "time": "2026-11-12T09:31:38.793Z",
+      "evidence": {
+        "editorOpenedClosedWithEnter": true,
+        "nativeHorizontalScrollLeft": 6.400000095367432
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L02-second-visible-error",
+      "time": "2026-11-12T09:31:39.927Z",
+      "evidence": {
+        "visibleError": "The name field is required.",
+        "invalid": true,
+        "announcement": "not observed; requires actual VoiceOver"
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L08-subscription-request",
+      "time": "2026-11-12T09:31:40.589Z",
+      "evidence": {
+        "temporaryPageDeleted": true,
+        "anonymousSubscriptionRequest": true,
+        "genericAcknowledgement": true,
+        "emailConfirmation": "not executed; no inbox or worker",
+        "subscriberCleanup": "page deletion cascades to temporary subscribers/outbox"
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L01-keyboard-confirmations",
+      "time": "2026-11-12T09:38:04.940Z",
+      "outcome": "PASS",
+      "evidence": {
+        "accountMenuEscapeRestores": true,
+        "deleteCancelInitialFocus": true,
+        "deleteEscapeRestores": true,
+        "publicationCancelInitialFocus": true,
+        "publicationEscapeRestores": true,
+        "mutationRequests": 0
+      }
+    },
+    {
+      "browser": "Firefox",
+      "id": "L01-keyboard-confirmations",
+      "time": "2026-11-12T09:38:09.897Z",
+      "outcome": "PASS",
+      "evidence": {
+        "accountMenuEscapeRestores": true,
+        "deleteCancelInitialFocus": true,
+        "deleteEscapeRestores": true,
+        "publicationCancelInitialFocus": true,
+        "publicationEscapeRestores": true,
+        "mutationRequests": 0
+      }
+    },
+    {
+      "browser": "Brave",
+      "id": "L04-slow-double-submit",
+      "time": "2026-11-12T09:33:32.367Z",
+      "evidence": {
+        "nativeCDP": true,
+        "latencyMs": 150,
+        "downloadBytesPerSecond": 200000,
+        "uploadBytesPerSecond": 93750,
+        "postCount": 1,
+        "visibleSaving": true,
+        "disabled": true,
+        "persistedNotes": 1,
+        "throttleRestored": true
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L05-offline-recovery",
+      "time": "2026-11-12T09:33:33.026Z",
+      "evidence": {
+        "offlineAttemptFailed": true,
+        "draftPreserved": true,
+        "uncertainOutcome": true,
+        "reconnectReplay": false,
+        "acknowledgementReplay": false,
+        "explicitRetryAttempts": 1,
+        "persistedNotes": 1
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Brave",
+      "id": "L06-history-and-draft",
+      "time": "2026-11-12T09:33:34.071Z",
+      "evidence": {
+        "backForwardReload": true,
+        "historyPosts": 0,
+        "stayPreservesDraft": true,
+        "discardLeavesWithoutWrite": true
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L05-offline-recovery",
+      "time": "2026-11-12T09:34:18.484Z",
+      "evidence": {
+        "offlineAttemptFailed": true,
+        "draftPreserved": true,
+        "uncertainOutcome": true,
+        "reconnectReplay": false,
+        "acknowledgementReplay": false,
+        "explicitRetryAttempts": 1,
+        "persistedNotes": 1
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L06-history-and-draft",
+      "time": "2026-11-12T09:34:19.986Z",
+      "evidence": {
+        "backForwardReload": true,
+        "historyPosts": 0,
+        "stayPreservesDraft": true,
+        "discardLeavesWithoutWrite": true
+      },
+      "outcome": "PASS"
+    },
+    {
+      "browser": "Firefox",
+      "id": "L07-console",
+      "time": "2026-11-12T09:34:21.227Z",
+      "evidence": {
+        "pageErrors": [],
+        "consoleCategories": [
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable",
+          "expected-reverb-unavailable"
+        ],
+        "expectedOfflineRequestFailures": [
+          "NS_ERROR_OFFLINE",
+          "NS_BINDING_ABORTED"
+        ]
+      },
+      "outcome": "PASS"
+    }
+  ],
+  "console_attribution": [
+    {
+      "browser": "Brave",
+      "id": "L07-resource-attribution",
+      "time": "2026-11-12T09:35:27.833Z",
+      "errors": [],
+      "resources": [],
+      "messages": [
+        {
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "location": "/favicon.ico"
+        },
+        {
+          "text": "WebSocket connection to '[websocket endpoint] failed: ",
+          "location": "/build/assets/useLivePage-BiyTqj_q.js"
+        },
+        {
+          "text": "WebSocket connection to '[websocket endpoint] failed: ",
+          "location": "/build/assets/useLivePage-BiyTqj_q.js"
+        },
+        {
+          "text": "WebSocket connection to '[websocket endpoint] failed: ",
+          "location": "/build/assets/useLivePage-BiyTqj_q.js"
+        },
+        {
+          "text": "WebSocket connection to '[websocket endpoint] failed: ",
+          "location": "/build/assets/useLivePage-BiyTqj_q.js"
+        }
+      ]
+    },
+    {
+      "browser": "Firefox",
+      "id": "L07-resource-attribution",
+      "time": "2026-11-12T09:35:32.889Z",
+      "errors": [],
+      "resources": [],
+      "messages": [
+        {
+          "text": "[JavaScript Error: \"Firefox can’t establish a connection to the server at [websocket endpoint] {file: \"http://localhost:8000/build/assets/useLivePage-BiyTqj_q.js\" line: 2}]",
+          "location": "/build/assets/useLivePage-BiyTqj_q.js"
+        },
+        {
+          "text": "[JavaScript Error: \"Firefox can’t establish a connection to the server at [websocket endpoint] {file: \"http://localhost:8000/build/assets/useLivePage-BiyTqj_q.js\" line: 2}]",
+          "location": "/build/assets/useLivePage-BiyTqj_q.js"
+        }
+      ]
+    }
+  ],
+  "exploration_limits": [
+    "Temporary real-HTTP proxy probes were inconclusive (incomplete request/response handling); discarded as L04 acceptance evidence. Native CDP and direct transport supersede them.",
+    "An initial console assertion rejected a missing favicon network resource as if it were a JavaScript exception; follow-up identifies /favicon.ico, zero unhandled pageerrors.",
+    "Sondes corrected to wait for hydrated #app main, accept two public subscription controls, distinguish body/dialog boundary from background controls, and use Cancel publication/group rather than Cancel/region."
+  ],
+  "retained_private_note_ids": [
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52
+  ],
+  "cleanup": {
+    "temporary_status_pages_remaining": 0,
+    "original_monitors": [
+      {
+        "id": 7,
+        "paused": true
+      },
+      {
+        "id": 8,
+        "paused": true
+      }
+    ],
+    "incident_9_status": "resolved",
+    "owner_operator": false,
+    "alpha_beta_overrides": 0,
+    "browser_profiles_closed": true,
+    "native_preferences_changed": false,
+    "runtime": "web, postgres, redis left running for pending user native observations; queue, scheduler, reverb remain stopped"
+  },
+  "native_checks_pending": "../../../BROWSER-NATIVE-CHECKS.md"
+}

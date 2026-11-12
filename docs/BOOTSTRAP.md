@@ -1,5 +1,26 @@
 # Application bootstrap reference
 
+## Accessibility acceptance in progress — 2026-11-12
+
+UI.06.3 remains open. [Current execution record](BROWSER-ACCESSIBILITY-2026-11-12.md) documents
+native browser-keyboard checks, eleven screens at 390 px in Brave/Playwright Firefox, slow double
+submission in Chromium, offline recovery/history, console attribution and temporary public subscription
+requests. L01/L04–L08 pass within that record; visible validation/mobile checks do not complete L02/L03.
+Actual VoiceOver announcements and native browser-menu 200% zoom still need user observation through
+[BROWSER-NATIVE-CHECKS.md](BROWSER-NATIVE-CHECKS.md). No accessibility permission or personal browser
+preference was changed. Phase A remains unaccepted; UI.06.4 and M9 have not started.
+
+BROWSER-TESTS now describes current screens/actions while preserving all 169 A–L case identifiers and
+historical outcomes. Application sources, schema, dependencies and environment are unchanged. npm check
+passes including five quality tests; the previous unchanged-build/PHP/DOM gates were not repeated.
+Seven additional private incident notes (46–52) remain; the two temporary public pages and their dependent
+subscription records were removed. Original paused monitors, drafts, operator flag and overrides are restored.
+
+**Web/PostgreSQL/Redis remain running for the pending user-native observations; queue, scheduler and
+Reverb remain stopped.** After those checks, restore the initially stopped state with
+`docker compose stop web postgres redis` unless the user chooses to keep development active. Never remove
+volumes. The full fixture/runtime record and open criteria are in TASKS. This handoff supersedes older notes.
+
 ## Essential browser-flow handoff — 2026-11-12
 
 UI.06.2 is complete: [execution record](BROWSER-RESULTS-2026-11-12.md), 22 supplementary flows

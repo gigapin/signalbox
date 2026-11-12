@@ -1,27 +1,25 @@
 # Application bootstrap reference
 
-## Accessibility acceptance in progress — 2026-11-12
+## Accessibility acceptance completed — 2026-11-12
 
-UI.06.3 remains open. [Current execution record](BROWSER-ACCESSIBILITY-2026-11-12.md) documents
-native browser-keyboard checks, eleven screens at 390 px in Brave/Playwright Firefox, slow double
-submission in Chromium, offline recovery/history, console attribution and temporary public subscription
-requests. L01/L03–L08 pass within that record; visible validation checks do not complete VoiceOver L02.
-Native 200% zoom is now verified in [the follow-up](BROWSER-ACCESSIBILITY-2026-11-12.md): 22 checks
-using Brave browser tabs APIs and Firefox desktop 159.0.1 Marionette/fullZoom with its 200% indicator,
-then restored to 100%. Only actual VoiceOver announcements still need user observation through
-[BROWSER-NATIVE-CHECKS.md](BROWSER-NATIVE-CHECKS.md). No accessibility permission or personal browser
-preference was changed. Phase A remains unaccepted; UI.06.4 and M9 have not started.
+**UI.06.3 is complete**, with [the current L execution record](BROWSER-ACCESSIBILITY-2026-11-12.md).
+The user reports both empty-Name VoiceOver checks (monitor/channel) successful in Brave and Firefox;
+these are user observations, not agent audio or verbatim announcement transcripts. Installed versions
+were rechecked: Brave 157.1.99.56 and Firefox desktop 159.0.1; exact user-window versions were not
+separately reported. Native 200% zoom has 22 checks and was restored to 100%; the earlier 64 scoped
+browser probes retain their own boundaries. The guide preserves 169 A–L identifiers and historical results.
 
-BROWSER-TESTS now describes current screens/actions while preserving all 169 A–L case identifiers and
-historical outcomes. Application sources, schema, dependencies and environment are unchanged. npm check
-passes including five quality tests; the previous unchanged-build/PHP/DOM gates were not repeated.
-Seven additional private incident notes (46–52) remain; the two temporary public pages and their dependent
-subscription records were removed. Original paused monitors, drafts, operator flag and overrides are restored.
+**Next: UI.06.4**, final finding/fixture/settings review and handoff before explicit phase-A acceptance.
+Progress: 22/27 subtasks complete, five open. Phase A remains unaccepted and M9 has not started.
+The missing favicon remains a documented resource observation. Personal VoiceOver restoration was not
+reported and must not be inferred; its final check belongs to UI.06.4.
 
-**Web/PostgreSQL/Redis remain running for the pending user-native observations; queue, scheduler and
-Reverb remain stopped.** After those checks, restore the initially stopped state with
-`docker compose stop web postgres redis` unless the user chooses to keep development active. Never remove
-volumes. The full fixture/runtime record and open criteria are in TASKS. This handoff supersedes older notes.
+No application source, schema, dependency, lockfile or environment changes. Earlier build/frontend/PHP
+checks remain recorded; not rerun for these Markdown/JSON confirmations. Seven private incident notes
+46–52 remain; temporary public pages/subscriptions were removed, original fixtures preserved.
+**Web/PostgreSQL/Redis were stopped after the native checks**, restoring the initial runtime state;
+queue/scheduler/Reverb remain stopped and volumes are preserved. Git/gh were never run.
+This handoff supersedes the older restart notes below.
 
 ## Essential browser-flow handoff — 2026-11-12
 

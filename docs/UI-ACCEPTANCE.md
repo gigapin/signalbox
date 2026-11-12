@@ -108,7 +108,7 @@ and append-only audits remain documented. No application source changed. Build a
 checks pass; the previous full PHP/DOM gate above was not repeated. Next: UI.06.3, then UI.06.4;
 phase A remains unaccepted.
 
-## Current L acceptance — UI.06.3 in progress, 2026-11-12
+## Current L acceptance — UI.06.3 completed, 2026-11-12
 
 [The current browser record](BROWSER-ACCESSIBILITY-2026-11-12.md) documents real headless keyboard
 and 390 px checks on eleven screens in Brave and Playwright Firefox, native Chromium slow submission,
@@ -118,6 +118,8 @@ every console message is absent. No application source changed. The guide preser
 
 L03 is now complete through [the native-zoom follow-up](BROWSER-ACCESSIBILITY-2026-11-12.md):
 22 screen checks using actual Brave tabs zoom and Firefox desktop 159.0.1 fullZoom/native 200% indicator,
-restored to 100%. L02 visible field feedback passes, but actual VoiceOver announcements remain unobserved.
-Follow [the native checklist](BROWSER-NATIVE-CHECKS.md); keep UI.06.3 open until those announcements and
-restoration are recorded. UI.06.4/phase-A exit remains separate.
+restored to 100%. The user now reports both monitor/channel VoiceOver checks successful in Brave and
+Firefox, completing L02. Those reports are separate from automatic probes; no agent audio observation
+or exact announcement transcript is claimed. The [native checklist](BROWSER-NATIVE-CHECKS.md) remains
+reproducible. UI.06.3 is complete; personal VoiceOver restoration is unreported and is retained for
+UI.06.4 final review. Phase-A exit remains separate.

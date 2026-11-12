@@ -14,15 +14,15 @@ mutazioni dei monitor, incidenti, notifiche/status page, dinieghi e password inl
 Questi flussi supplementari non riscrivono gli esiti storici A–L né attestano la riesecuzione integrale
 delle precedenti prove. Fixture ripristinate, due note private e audit conservati; servizi nuovamente arrestati.
 
-**UI.06.3 in corso:** mappa e passi di questa guida aggiornati alla nuova navigazione. L01–L08
-richiedono ancora esiti correnti distinti dai risultati del 2026-11-09; VoiceOver reale e zoom nativo
-non si deducono dalle prove headless. UI.06.4 deve confermare la fase A prima di M9.
+**UI.06.3 completato:** mappa/passaggi aggiornati, 169 ID A–L conservati e prove correnti nel
+[registro L](BROWSER-ACCESSIBILITY-2026-11-12.md). L02 completato tramite i riscontri VoiceOver
+dell’utente sui due moduli in Brave/Firefox; L03 tramite zoom nativo 200% e ripristino. Limiti,
+versioni, provenienza e differenze fra sonde/manuale sono espliciti; i risultati storici restano invariati.
 
-[Registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md): L01/L03–L08 PASS nel perimetro dichiarato;
-L03 completato con zoom nativo Brave/Firefox desktop, fattore 2 e ripristino a 1.
-Soltanto L02 resta BLOCCATO per gli annunci VoiceOver, pur avendo verificato gli errori visibili. La [checklist nativa](BROWSER-NATIVE-CHECKS.md) contiene i passi restanti. Web/PostgreSQL/Redis
-sono ora avviati per questi riscontri; worker/scheduler/Reverb fermi. La tabella storica in fondo
-mantiene il rinvio del 2026-11-09 e non sostituisce questi esiti correnti.
+**Prossimo UI.06.4:** verifica finale dei ripristini, osservazioni e handoff, poi accettazione esplicita
+della fase A prima di M9. VoiceOver personale finale non comunicato: da verificare in quella chiusura.
+Web/PostgreSQL/Redis sono nuovamente arrestati, volumi conservati. La [checklist nativa](BROWSER-NATIVE-CHECKS.md)
+resta disponibile per riprodurre le prove, senza richiedere di ripetere i casi già confermati.
 
 ### Fixture e risultati precedenti
 

@@ -5,8 +5,10 @@
 UI.06.3 remains open. [Current execution record](BROWSER-ACCESSIBILITY-2026-11-12.md) documents
 native browser-keyboard checks, eleven screens at 390 px in Brave/Playwright Firefox, slow double
 submission in Chromium, offline recovery/history, console attribution and temporary public subscription
-requests. L01/L04–L08 pass within that record; visible validation/mobile checks do not complete L02/L03.
-Actual VoiceOver announcements and native browser-menu 200% zoom still need user observation through
+requests. L01/L03–L08 pass within that record; visible validation checks do not complete VoiceOver L02.
+Native 200% zoom is now verified in [the follow-up](BROWSER-ACCESSIBILITY-2026-11-12.md): 22 checks
+using Brave browser tabs APIs and Firefox desktop 159.0.1 Marionette/fullZoom with its 200% indicator,
+then restored to 100%. Only actual VoiceOver announcements still need user observation through
 [BROWSER-NATIVE-CHECKS.md](BROWSER-NATIVE-CHECKS.md). No accessibility permission or personal browser
 preference was changed. Phase A remains unaccepted; UI.06.4 and M9 have not started.
 

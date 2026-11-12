@@ -116,6 +116,8 @@ direct offline/history recovery and second-browser subscription requests. L01/L0
 explicit record; console observations include missing favicon and stopped Reverb, not an assertion that
 every console message is absent. No application source changed. The guide preserves all A–L identifiers.
 
-L02 visible field feedback and L03 mobile reflow pass their subchecks, but actual VoiceOver announcements
-and native browser-menu 200% zoom remain unobserved. Follow [the native checklist](BROWSER-NATIVE-CHECKS.md);
-keep UI.06.3 open until those results and restorations are recorded. UI.06.4/phase-A exit remains separate.
+L03 is now complete through [the native-zoom follow-up](BROWSER-ACCESSIBILITY-2026-11-12.md):
+22 screen checks using actual Brave tabs zoom and Firefox desktop 159.0.1 fullZoom/native 200% indicator,
+restored to 100%. L02 visible field feedback passes, but actual VoiceOver announcements remain unobserved.
+Follow [the native checklist](BROWSER-NATIVE-CHECKS.md); keep UI.06.3 open until those announcements and
+restoration are recorded. UI.06.4/phase-A exit remains separate.

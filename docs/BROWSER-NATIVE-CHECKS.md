@@ -1,6 +1,10 @@
 # Prove native ancora da osservare — UI.06.3
 
-Questi passi completano L02 e la parte zoom di L03 della [guida browser](BROWSER-TESTS.md).
+**Aggiornamento 2026-11-12:** L03 completato tramite zoom nativo browser; [metodo ed evidenza](BROWSER-ACCESSIBILITY-2026-11-12.md).
+**Resta da eseguire L02**, ascoltando gli annunci VoiceOver. I passi L03 sotto restano una procedura
+di riproduzione facoltativa, senza richiedere una nuova prova per chiudere UI.06.3.
+
+Questi passi descrivono L02 e la riproduzione di L03 della [guida browser](BROWSER-TESTS.md).
 Servono osservazioni sul desktop: controlli ARIA, screenshot a 390 px o zoom CSS non attestano
 annunci VoiceOver e zoom nativo. Non comunicare password, token, codici o cookie.
 
@@ -71,7 +75,7 @@ Per ogni browser indica versione e:
 
 - L02 monitor: errore visibile sì/no; focus su Name sì/no; annuncio spontaneo ascoltato, oppure assente.
 - L02 canale: errore visibile sì/no; campo associato sì/no; annuncio spontaneo ascoltato, oppure assente.
-- L03: menu Zoom effettivamente a 200%, schermate controllate ed eventuali testi/comandi irraggiungibili.
+- L03, soltanto se ripetuto volontariamente: menu Zoom a 200%, schermate controllate ed eventuali testi/comandi irraggiungibili.
 - VoiceOver e zoom ripristinati; eventuali differenze tra Brave e Firefox.
 
 Un errore soltanto visibile non è un PASS dell’annuncio. Una parte non osservata resta aperta;

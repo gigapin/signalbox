@@ -19,10 +19,11 @@ delle precedenti prove. Fixture ripristinate, due note private e audit conservat
 dell’utente sui due moduli in Brave/Firefox; L03 tramite zoom nativo 200% e ripristino. Limiti,
 versioni, provenienza e differenze fra sonde/manuale sono espliciti; i risultati storici restano invariati.
 
-**Prossimo UI.06.4:** verifica finale dei ripristini, osservazioni e handoff, poi accettazione esplicita
-della fase A prima di M9. VoiceOver personale finale non comunicato: da verificare in quella chiusura.
-Web/PostgreSQL/Redis sono nuovamente arrestati, volumi conservati. La [checklist nativa](BROWSER-NATIVE-CHECKS.md)
-resta disponibile per riprodurre le prove, senza richiedere di ripetere i casi già confermati.
+**UI.06.4 completato e fase A accettata:** [consegna finale](PHASE-A-ACCEPTANCE.md), verifica dei
+ripristini con 15 controlli READ ONLY positivi. VoiceOver non in esecuzione, zoom temporanei a 1,
+profili effimeri eliminati, tutti i servizi arrestati e volumi conservati. Favicon 404 registrato
+come non bloccante e assegnato a UI.07. Prossimo **M9.01**, non ancora avviato; la
+[checklist nativa](BROWSER-NATIVE-CHECKS.md) resta per riprodurre le prove, senza richiederne una ripetizione.
 
 ### Fixture e risultati precedenti
 

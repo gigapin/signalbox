@@ -10,6 +10,18 @@ possible defect is excluded. Test totals and assertion counts are not coverage p
 exercise installed Inertia/React code with transport boundaries controlled; they do not certify real
 browser layout, assistive technology, worker/provider delivery or a live authenticated browser session.
 
+## Final phase-A decision — 2026-11-12
+
+**Phase A is accepted through UI.06.4.** [The final handoff](PHASE-A-ACCEPTANCE.md) combines this
+automated map with the essential-browser/L records, user-reported VoiceOver checks, native zoom and
+fifteen read-only fixture assertions. VoiceOver is no longer running and application services are
+stopped; the missing favicon is explicitly non-blocking and retained for the separate UI.07 decision.
+No new application/remote gate is inferred from this documentation-only close. Next ready task is
+M9.01, not started; the full UI macro and later UI.04.5/UI.05/UI.07 remain distinct.
+
+The following audit and intermediate handoff sections retain their dated historical scope; this
+final decision supersedes their statements that phase A was still awaiting acceptance.
+
 ## Criteria and checked-in evidence
 
 | Area / criterion | DOM or pure client evidence | HTTP / PostgreSQL / protocol evidence | Remaining manual boundary |

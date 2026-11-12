@@ -1,5 +1,5 @@
 {
-  "scope": "UI.06.3 partial acceptance; no native VoiceOver or 200% zoom observation",
+  "scope": "UI.06.3 partial acceptance; actual VoiceOver announcement still unobserved; L03 native zoom verified in follow-up",
   "origin": "http://localhost:8000",
   "browsers": {
     "Brave": {
@@ -16,7 +16,7 @@
   "case_assessment": {
     "L01": "PASS",
     "L02": "BLOCCATO: visible error, focus and association checked; actual VoiceOver announcement unobserved",
-    "L03": "BLOCCATO: 390px checked; native browser 200% zoom unobserved",
+    "L03": "PASS: original 390px checks plus native 200% browser zoom follow-up",
     "L04": "PASS: native Chromium throttling only",
     "L05": "PASS",
     "L06": "PASS",
@@ -3188,5 +3188,6 @@
     "native_preferences_changed": false,
     "runtime": "web, postgres, redis left running for pending user native observations; queue, scheduler, reverb remain stopped"
   },
-  "native_checks_pending": "../../../BROWSER-NATIVE-CHECKS.md"
+  "native_checks_pending": "../../../BROWSER-NATIVE-CHECKS.md",
+  "native_zoom_followup": "native-zoom.json"
 }

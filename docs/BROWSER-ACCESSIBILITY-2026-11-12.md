@@ -1,7 +1,7 @@
 # Collaudo della nuova UI — L01–L08, 2026-11-12
 
-**UI.06.3 resta in corso.** Guida e mappa aggiornate, sei casi L verificati nel perimetro sotto;
-**L02 è aperto per VoiceOver reale, L03 per zoom browser nativo 200%**.
+**UI.06.3 resta in corso.** Guida e mappa aggiornate, sette casi L verificati nel perimetro sotto;
+**resta aperto L02 per gli annunci VoiceOver reali**. L03 completato con il seguito nativo sotto.
 I riscontri assistivi non sono dedotti da attributi ARIA, focus DOM, screenshot o viewport.
 Le [istruzioni per completare le prove native](BROWSER-NATIVE-CHECKS.md) sono pronte.
 UI.06.4 e l’accettazione della fase A non sono avviate; M9 resta successivo.
@@ -33,7 +33,7 @@ per queste sole modifiche Markdown/evidenza.
 |---|---|---|
 | L01 | PASS | Tab sulle 11 schermate in entrambi i browser, outline calcolato presente; filtro e apertura/chiusura editor con tastiera, frecce nello scroll locale della tabella mobile. Menu account Escape, conferme Delete/Publish con focus iniziale su Cancel/Cancel publication ed Escape al trigger senza POST. Dialogo mobile nativo: nessun controllo di sfondo raggiunto, Escape e scroll ripristinati. Non è una prova con tecnologia assistiva. |
 | L02 | BLOCCATO, parte visiva verificata | Due form per browser: monitor HTTP senza Name e canale Email senza Name. Errore vicino al campo, aria-invalid e associazione verificati; primo form con focus su Name, nessuna creazione. **Nessun annuncio VoiceOver ascoltato**. L’API macOS UI elements enabled restituisce false; non sono state cambiate autorizzazioni/preferenze di sistema. |
-| L03 | BLOCCATO, parte 390 px verificata | Tutte le 22 misure hanno documentWidth = bodyWidth = viewport = 390; nessun controllo visibile fuori viewport tranne contenuto nelle tabelle a scorrimento locale. Nessun CSS zoom o device scale viene chiamato “200%”: **zoom nativo non osservato**. |
+| L03 | PASS, seguito nativo registrato | Le 22 misure iniziali a 390 px passano; il seguito verifica 11 schermate per browser al fattore nativo 2. Brave tabs.getZoom() = 2; Firefox desktop fullZoom = 2 e indicatore browser 200%. CSS zoom resta 1, larghezza CSS 720 su finestra 1440; nessun controllo fuori pagina salvo tabelle con scroll locale. Ripristino al fattore 1. Metodi e limiti sotto. |
 | L04 | PASS in Brave | Rallentamento nativo Chromium CDP: 150 ms, download 200000 B/s (1,6 Mbps), upload 93750 B/s (750 Kbps). Doppio clic reale su Add update: Saving…, disabilitato, **un solo POST**, una sola nota privata dopo reload. Throttle ripristinato. Questo specifico profilo lento non è stato replicato in Firefox. |
 | L05 | PASS in Brave e Firefox | Offline reale del contesto browser: avviso globale e Outcome not confirmed, bozza conservata, invio bloccato. Ritorno online senza replay; lettura in seconda scheda conferma nota assente. I checked the saved data non scrive; un solo reinvio esplicito salva una nota, unica dopo reload. |
 | L06 | PASS in Brave e Firefox | Lista resolved → dettaglio, Back to incidents, Indietro/Avanti e reload conservano nota/contesto senza POST. Con bozza non inviata: Stay conserva testo e URL; Discard and leave esce senza salvare. |
@@ -41,12 +41,45 @@ per queste sole modifiche Markdown/evidenza.
 | L08 | PASS nel perimetro della richiesta iscrizione | Confronto login/filtro/modifica nome con ripristino/lettura incidente/pubblico già osservato nei due browser in [UI.06.2](BROWSER-RESULTS-2026-11-12.md), stessa build senza modifiche applicative; ora aggiunta richiesta email anonima nuova per browser su pagina temporanea, con risposta generica e campo ripulito. **Nessuna conferma email o consegna provider attestata** (H28–H37 sono prove distinte). Pagine temporanee eliminate e record dipendenti rimossi dal vincolo cascade; realtime facoltativo non scelto. |
 
 I [dati JSON](browser-evidence/2026-11-12/UI06-3/verification.json) conservano **64 sonde circoscritte
-superate**, inclusi i sotto-controlli visivi di L02 e mobile di L03: non significano che quei due casi
-siano completi. Il documento descrive ogni chiave del JSON: scope/origin/browsers/mode identificano
+superate**, inclusi i sotto-controlli visivi di L02 e mobile di L03: non attestano annunci assistivi.
+Il successivo native-zoom.json completa L03, separato dalle 64 sonde iniziali. Il documento descrive ogni chiave del JSON: scope/origin/browsers/mode identificano
 l’ambiente, case_assessment lo stato L, successful_subchecks ora/browser/schermata/evidenza/esito,
 console_attribution i messaggi attribuiti, exploration_limits i limiti delle sonde iniziali,
 retained_private_note_ids gli effetti conservati, cleanup il ripristino e native_checks_pending la guida.
 Non sono conservati cookie, credenziali, URL firmati o payload di sottoscrizione.
+
+## Seguito: zoom nativo 200% completato — 10:00–10:05 UTC
+
+Le API macOS di accessibilità restano disabilitate, ma il controllo dello zoom del browser è
+raggiungibile attraverso i protocolli browser. Questa strada completa L03 senza usare CSS zoom,
+pinch zoom o emulazione del device scale. È una scelta di metodo documentata, non una riduzione
+al test a 390 px né una dichiarazione di click sul menu macOS.
+
+- **Brave 157.1.99.56 / Chromium 157.0.8103.50:** estensione locale minimale, solo profilo temporaneo,
+  tabs.setZoom(2) e tabs.getZoom() = 2. Finestra gestita dal browser, senza viewport emulato; dimensioni
+  CSS 720 e devicePixelRatio 2, CSS zoom 1. Editor notifiche/status page e tabella equivalente aperti;
+  focus e controlli dentro il viewport salvo scorrimento locale. Pubblico in profilo anonimo separato.
+- **Firefox desktop 159.0.1**, questa volta il binario installato: client ufficiale Mozilla Marionette
+  3.7.1 installato soltanto in `/private/tmp`, nuovo profilo isolato. ZoomManager imposta il fullZoom
+  del browser a 2; l’indicatore nativo della barra indirizzi riporta **200%** su ogni schermata.
+  Stesse 11 schermate, editor/tabelle aperti e controlli entro la pagina; pubblico senza cookie del
+  profilo temporaneo. Non è il Firefox Playwright della prima esecuzione.
+- **22 controlli superati**, 11 per browser; fattore iniziale 1 e finale 1, browser effimeri chiusi.
+  Nessuna impostazione del profilo personale, dato applicativo, pacchetto/lockfile del progetto o
+  autorizzazione macOS modificata. Screenshot temporanei ispezionati fuori repository: tabella
+  ingrandita in Brave e indicatore 200% in Firefox. Non certificano annunci o percezioni assistive.
+
+Dati in [native-zoom.json](browser-evidence/2026-11-12/UI06-3/native-zoom.json): scope/date/browsers
+identificano il seguito, methods/sources il metodo e i riferimenti, checks le singole schermate,
+restoration il ripristino e limits i confini. Riferimenti primari:
+[API Tabs Chromium](https://developer.chrome.com/docs/extensions/reference/api/tabs/#method-setZoom),
+[Marionette Mozilla](https://firefox-source-docs.mozilla.org/remote/marionette/Intro.html).
+
+Il primo screenshot con viewport emulato risultava bianco ed è escluso dall’evidenza visiva;
+la ripetizione usa dimensioni finestra del browser e acquisizione diretta. Il client Mozilla ha
+emesso warning Python dei distruttori del profilo allo shutdown, dopo ripristino e cleanup:
+sono limiti dello strumento temporaneo, non eccezioni JavaScript del prodotto. Nessuna immagine
+è conservata nel repository. **VoiceOver non è stato ascoltato: L02 e UI.06.3 restano aperti.**
 
 ## Ripetizioni e attribuzione delle sonde
 
@@ -78,7 +111,7 @@ attribuisce esattamente il favicon mancante e distingue le eccezioni non gestite
 - Monitor originari 7/8 ancora in pausa con i nomi originali; nessun override Alpha/Beta; owner
   sintetico non operatore. Nessun cambio membership, credenziale, piano o trial.
 - Profili effimeri chiusi, proxy temporanei arrestati, rete online e throttling ripristinati;
-  VoiceOver/zoom del sistema non modificati. Nessun Git/gh o screenshot nel repository.
+  VoiceOver e zoom dei profili personali non modificati; zoom dei profili temporanei ripristinato a 1. Nessun Git/gh o screenshot nel repository.
 - **Web/PostgreSQL/Redis restano avviati per le prove native dell’utente**; scheduler/worker/Reverb
   rimangono arrestati. È una differenza intenzionale rispetto allo stato iniziale tutto arrestato.
   Dopo le osservazioni native ripristinare lo stato iniziale con `docker compose stop web postgres redis`,
@@ -86,8 +119,8 @@ attribuisce esattamente il favicon mancante e distingue le eccezioni non gestite
 
 ## Cosa manca per chiudere UI.06.3
 
-Registrare versione desktop, annuncio spontaneo su entrambi i form di L02, zoom effettivamente
-mostrato a 200% nel menu browser e raggiungibilità sulle schermate di L03; annotare i ripristini.
+Registrare versione desktop e annuncio spontaneo su entrambi i form di L02; annotare il ripristino
+di VoiceOver. L03 è ora completato dal seguito nativo: non occorre ripeterlo salvo nuovi difetti.
 Seguire [BROWSER-NATIVE-CHECKS.md](BROWSER-NATIVE-CHECKS.md). Senza questi riscontri **non segnare
 completo UI.06.3** e non passare a UI.06.4/M9. La richiesta di osservazioni è pendente; un mancato
 riscontro non equivale a PASS o autorizzazione a ridurre i criteri.

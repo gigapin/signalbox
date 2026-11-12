@@ -4,9 +4,9 @@
 
 UI.06.2 completato ([44 controlli essenziali](BROWSER-RESULTS-2026-11-12.md)); **UI.06.3 in corso**:
 [mappa e guida browser aggiornate](BROWSER-TESTS.md#mappa-delle-schermate), senza rinumerare A–L,
-e [registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md). L01/L04–L08 superati nel perimetro
-registrato; L02 richiede annunci VoiceOver e L03 zoom nativo 200%, entrambi ancora da osservare
-con la [checklist nativa](BROWSER-NATIVE-CHECKS.md). **21/27 sotto-task completati, 6 aperti**.
+e [registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md). L01/L03–L08 superati nel perimetro
+registrato: L03 completato con zoom nativo Brave e Firefox desktop 159.0.1 al 200%, poi ripristinato.
+**Resta da osservare soltanto l’annuncio VoiceOver di L02** tramite la [checklist nativa](BROWSER-NATIVE-CHECKS.md). **21/27 sotto-task completati, 6 aperti**.
 
 La mappa corrente comprende dashboard, lista/dettaglio/form monitor con grafici, incidenti, manutenzioni,
 canali/policy/consegne, gestione status page, team/account e contesto piattaforma distinto. Le tabelle

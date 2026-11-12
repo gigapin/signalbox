@@ -1,0 +1,406 @@
+{
+  "scope": "L03 native browser zoom follow-up; VoiceOver L02 remains unobserved",
+  "date": "2026-11-12",
+  "browsers": {
+    "Brave": "157.1.99.56 / Chromium 157.0.8103.50",
+    "Firefox desktop": "159.0.1"
+  },
+  "methods": {
+    "Brave": "Temporary local extension in isolated profile; tabs.setZoom(2) and tabs.getZoom()=2. Browser-owned window size, no emulated viewport or CSS zoom. Public page uses separate anonymous profile.",
+    "Firefox desktop": "Official Mozilla Marionette client 3.7.1 in temporary directory; isolated desktop Firefox profile. ZoomManager.setZoomForBrowser(...,2), fullZoom=2 and native URL-bar indicator=200%. Public page after deleting only temporary profile cookies."
+  },
+  "sources": [
+    "https://developer.chrome.com/docs/extensions/reference/api/tabs/#method-setZoom",
+    "https://firefox-source-docs.mozilla.org/remote/marionette/Intro.html"
+  ],
+  "checks": [
+    {
+      "browser": "Brave",
+      "screen": "dashboard",
+      "time": "2026-11-12T10:03:15.415Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "monitors",
+      "time": "2026-11-12T10:03:15.786Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "monitor",
+      "time": "2026-11-12T10:03:16.063Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "incident",
+      "time": "2026-11-12T10:03:16.559Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "notifications",
+      "time": "2026-11-12T10:03:16.812Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "auto"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "maintenance",
+      "time": "2026-11-12T10:03:17.114Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "deliveries",
+      "time": "2026-11-12T10:03:17.380Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "status-management",
+      "time": "2026-11-12T10:03:17.617Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "auto"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "team",
+      "time": "2026-11-12T10:03:17.888Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "account",
+      "time": "2026-11-12T10:03:18.096Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "solid"
+        }
+      }
+    },
+    {
+      "browser": "Brave",
+      "screen": "public",
+      "time": "2026-11-12T10:04:37.781Z",
+      "outcome": "PASS",
+      "evidence": {
+        "nativeZoom": 2,
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "focus": {
+          "visible": true,
+          "outline": "auto"
+        }
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "dashboard",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "monitors",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "monitor",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "incident",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "notifications",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "maintenance",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "deliveries",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "status-management",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "team",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "account",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": false
+      }
+    },
+    {
+      "browser": "Firefox desktop",
+      "version": "159.0.1",
+      "screen": "public",
+      "outcome": "PASS",
+      "evidence": {
+        "zoom": 2,
+        "indicator": "200%",
+        "width": 720,
+        "documentWidth": 720,
+        "dpr": 2,
+        "cssZoom": "1",
+        "outside": [],
+        "anonymous": true
+      }
+    }
+  ],
+  "restoration": {
+    "Brave": 1,
+    "Firefox desktop": 1,
+    "personal_profiles_changed": false,
+    "temporary_browser_processes_closed": true,
+    "application_data_changed": false
+  },
+  "limits": [
+    "No VoiceOver audio observed; macOS UI elements enabled remains false.",
+    "Native zoom set through browser APIs, not through a macOS menu click. Firefox native browser indicator read as 200%.",
+    "Headless layout/control checks plus temporary screenshot inspection are not assistive-technology or whole-desktop perceptual certification.",
+    "First automation screenshot with emulated viewport was blank; excluded from visual evidence. Browser-owned window screenshot and Firefox chrome indicator captured subsequently; screenshot files not retained in repository.",
+    "Mozilla client emitted Python profile destructor warnings at interpreter shutdown after cleanup; zoom restoration and browser cleanup completed."
+  ]
+}

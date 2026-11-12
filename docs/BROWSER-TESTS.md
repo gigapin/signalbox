@@ -18,9 +18,9 @@ delle precedenti prove. Fixture ripristinate, due note private e audit conservat
 richiedono ancora esiti correnti distinti dai risultati del 2026-11-09; VoiceOver reale e zoom nativo
 non si deducono dalle prove headless. UI.06.4 deve confermare la fase A prima di M9.
 
-[Registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md): L01/L04–L08 PASS nel perimetro dichiarato;
-L02 e L03 restano BLOCCATO per annuncio VoiceOver e zoom nativo, pur avendo verificato errori visibili
-e 390 px. La [checklist nativa](BROWSER-NATIVE-CHECKS.md) contiene i passi restanti. Web/PostgreSQL/Redis
+[Registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md): L01/L03–L08 PASS nel perimetro dichiarato;
+L03 completato con zoom nativo Brave/Firefox desktop, fattore 2 e ripristino a 1.
+Soltanto L02 resta BLOCCATO per gli annunci VoiceOver, pur avendo verificato gli errori visibili. La [checklist nativa](BROWSER-NATIVE-CHECKS.md) contiene i passi restanti. Web/PostgreSQL/Redis
 sono ora avviati per questi riscontri; worker/scheduler/Reverb fermi. La tabella storica in fondo
 mantiene il rinvio del 2026-11-09 e non sostituisce questi esiti correnti.
 

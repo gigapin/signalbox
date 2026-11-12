@@ -1,10 +1,30 @@
 # Collaudo della nuova UI — L01–L08, 2026-11-12
 
-**UI.06.3 resta in corso.** Guida e mappa aggiornate, sette casi L verificati nel perimetro sotto;
-**resta aperto L02 per gli annunci VoiceOver reali**. L03 completato con il seguito nativo sotto.
-I riscontri assistivi non sono dedotti da attributi ARIA, focus DOM, screenshot o viewport.
-Le [istruzioni per completare le prove native](BROWSER-NATIVE-CHECKS.md) sono pronte.
-UI.06.4 e l’accettazione della fase A non sono avviate; M9 resta successivo.
+**UI.06.3 completato.** L01–L08 verificati nei perimetri e limiti sotto: L02 tramite i riscontri
+VoiceOver dell’utente sui due moduli in entrambi i browser, L03 tramite il seguito di zoom nativo.
+Gli annunci non sono dedotti da ARIA, screenshot o viewport e non sono stati ascoltati dall’agente.
+L’accettazione della fase A rimane il successivo UI.06.4; M9 non è avviato.
+
+**Riscontro finale:** alla richiesta di ripetere monitor e canale in Firefox con VoiceOver attivo,
+l’utente conferma «ok funziona anche su Firefox». I quattro controlli L02 sono positivi secondo
+l’utente. Non viene dedotta la trascrizione esatta degli annunci. Le versioni installate sono state
+ricontrollate alla chiusura (Brave 157.1.99.56, Firefox desktop 159.0.1); l’utente non ha indicato
+separatamente la versione della sua finestra. Le note cronologiche sotto mantengono i limiti intermedi.
+
+## Riscontri manuali intermedi — registrati dalle 10:35 UTC
+
+Alla richiesta di provare il modulo monitor in Brave con VoiceOver, l’utente risponde:
+«funziona, mi ha segnalato del campo Name vuoto». Il primo controllo L02 è quindi positivo secondo
+il riscontro dell’utente sulla procedura richiesta; non è un ascolto dell’agente né una trascrizione
+completa dell’annuncio. La versione browser non è stata comunicata. Restano da osservare il modulo
+canale nello stesso browser e i due moduli in Firefox; **L02/UI.06.3 non sono ancora completi**.
+Il JSON conserva questo singolo riscontro in user_observations (ora di registrazione, provenienza,
+procedura/browser richiesti, testo riferito e limiti), separato dalle sonde automatiche.
+
+**Secondo riscontro:** alla successiva prova canale Email senza Name, sempre nella procedura Brave
+con VoiceOver, l’utente risponde «ok funziona». Entrambi i controlli Brave sono positivi secondo
+l’utente. Restano i due moduli in Firefox; nessuna versione o trascrizione dell’annuncio è dedotta.
+Questo seguito aggiorna il punto precedente, senza dichiarare L02 completo.
 
 ## Versioni, ambiente e schermate
 
@@ -32,7 +52,7 @@ per queste sole modifiche Markdown/evidenza.
 | Caso | Esito corrente | Evidenza e limite |
 |---|---|---|
 | L01 | PASS | Tab sulle 11 schermate in entrambi i browser, outline calcolato presente; filtro e apertura/chiusura editor con tastiera, frecce nello scroll locale della tabella mobile. Menu account Escape, conferme Delete/Publish con focus iniziale su Cancel/Cancel publication ed Escape al trigger senza POST. Dialogo mobile nativo: nessun controllo di sfondo raggiunto, Escape e scroll ripristinati. Non è una prova con tecnologia assistiva. |
-| L02 | BLOCCATO, parte visiva verificata | Due form per browser: monitor HTTP senza Name e canale Email senza Name. Errore vicino al campo, aria-invalid e associazione verificati; primo form con focus su Name, nessuna creazione. **Nessun annuncio VoiceOver ascoltato**. L’API macOS UI elements enabled restituisce false; non sono state cambiate autorizzazioni/preferenze di sistema. |
+| L02 | PASS, riscontro dell’utente | Monitor HTTP senza Name e canale Email senza Name: parte visiva/focus/ARIA già verificata nelle sonde; l’utente conferma la segnalazione VoiceOver su entrambi i moduli in Brave e Firefox. Riscontri distinti nel JSON, senza ascolto dell’agente né trascrizione esatta degli annunci. |
 | L03 | PASS, seguito nativo registrato | Le 22 misure iniziali a 390 px passano; il seguito verifica 11 schermate per browser al fattore nativo 2. Brave tabs.getZoom() = 2; Firefox desktop fullZoom = 2 e indicatore browser 200%. CSS zoom resta 1, larghezza CSS 720 su finestra 1440; nessun controllo fuori pagina salvo tabelle con scroll locale. Ripristino al fattore 1. Metodi e limiti sotto. |
 | L04 | PASS in Brave | Rallentamento nativo Chromium CDP: 150 ms, download 200000 B/s (1,6 Mbps), upload 93750 B/s (750 Kbps). Doppio clic reale su Add update: Saving…, disabilitato, **un solo POST**, una sola nota privata dopo reload. Throttle ripristinato. Questo specifico profilo lento non è stato replicato in Firefox. |
 | L05 | PASS in Brave e Firefox | Offline reale del contesto browser: avviso globale e Outcome not confirmed, bozza conservata, invio bloccato. Ritorno online senza replay; lettura in seconda scheda conferma nota assente. I checked the saved data non scrive; un solo reinvio esplicito salva una nota, unica dopo reload. |
@@ -79,7 +99,7 @@ Il primo screenshot con viewport emulato risultava bianco ed è escluso dall’e
 la ripetizione usa dimensioni finestra del browser e acquisizione diretta. Il client Mozilla ha
 emesso warning Python dei distruttori del profilo allo shutdown, dopo ripristino e cleanup:
 sono limiti dello strumento temporaneo, non eccezioni JavaScript del prodotto. Nessuna immagine
-è conservata nel repository. **VoiceOver non è stato ascoltato: L02 e UI.06.3 restano aperti.**
+è conservata nel repository. **L’agente non ha ascoltato VoiceOver; i riscontri finali dell’utente completano L02 come registrato in apertura.**
 
 ## Ripetizioni e attribuzione delle sonde
 
@@ -112,15 +132,18 @@ attribuisce esattamente il favicon mancante e distingue le eccezioni non gestite
   sintetico non operatore. Nessun cambio membership, credenziale, piano o trial.
 - Profili effimeri chiusi, proxy temporanei arrestati, rete online e throttling ripristinati;
   VoiceOver e zoom dei profili personali non modificati; zoom dei profili temporanei ripristinato a 1. Nessun Git/gh o screenshot nel repository.
-- **Web/PostgreSQL/Redis restano avviati per le prove native dell’utente**; scheduler/worker/Reverb
-  rimangono arrestati. È una differenza intenzionale rispetto allo stato iniziale tutto arrestato.
-  Dopo le osservazioni native ripristinare lo stato iniziale con `docker compose stop web postgres redis`,
-  salvo che l’utente scelga di tenere attivo lo sviluppo. I volumi non vanno rimossi.
+- **Dopo i riscontri finali, web/PostgreSQL/Redis sono stati arrestati**, ripristinando lo stato
+  iniziale; scheduler/worker/Reverb rimangono arrestati e i volumi sono conservati. Stato personale
+  finale di VoiceOver non comunicato dall’utente: non viene dedotto o dichiarato ripristinato.
+  Il controllo di tale preferenza e degli altri ripristini finali rimane nella chiusura UI.06.4.
 
-## Cosa manca per chiudere UI.06.3
+## Consegna a UI.06.4
 
-Registrare versione desktop e annuncio spontaneo su entrambi i form di L02; annotare il ripristino
-di VoiceOver. L03 è ora completato dal seguito nativo: non occorre ripeterlo salvo nuovi difetti.
-Seguire [BROWSER-NATIVE-CHECKS.md](BROWSER-NATIVE-CHECKS.md). Senza questi riscontri **non segnare
-completo UI.06.3** e non passare a UI.06.4/M9. La richiesta di osservazioni è pendente; un mancato
-riscontro non equivale a PASS o autorizzazione a ridurre i criteri.
+UI.06.3 completato con la conferma Firefox dell’utente. I riferimenti tecnici dei gate precedenti,
+i 64 sotto-controlli iniziali, i 22 controlli zoom nativo e i riscontri VoiceOver sono separati:
+nessun totale viene presentato come misura di coverage o accettazione produzione.
+
+UI.06.4 deve valutare le osservazioni (favicon 404 incluso), verificare ripristini/dati/piano,
+registrare lo stato finale personale di VoiceOver e aggiornare l’handoff. I servizi applicativi
+sono nuovamente arrestati; lo stato iniziale dei volumi è conservato. **La fase A non è ancora
+accettata e M9 non è avviato.**

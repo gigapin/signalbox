@@ -2,17 +2,17 @@
 
 ## Ripartenza corrente — 2026-11-12
 
-UI.06.2 completato ([44 controlli essenziali](BROWSER-RESULTS-2026-11-12.md)); **UI.06.3 in corso**:
-[mappa e guida browser aggiornate](BROWSER-TESTS.md#mappa-delle-schermate), senza rinumerare A–L,
-e [registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md). L01/L03–L08 superati nel perimetro
-registrato: L03 completato con zoom nativo Brave e Firefox desktop 159.0.1 al 200%, poi ripristinato.
-**Resta da osservare soltanto l’annuncio VoiceOver di L02** tramite la [checklist nativa](BROWSER-NATIVE-CHECKS.md). **21/27 sotto-task completati, 6 aperti**.
+UI.06.2 e **UI.06.3 completati**: [flussi essenziali](BROWSER-RESULTS-2026-11-12.md),
+[mappa/guida attuale](BROWSER-TESTS.md#mappa-delle-schermate) e [registro L](BROWSER-ACCESSIBILITY-2026-11-12.md).
+L02 completato con riscontri VoiceOver dell’utente su monitor e canale in Brave/Firefox;
+L03 con 22 controlli zoom nativo 200%, poi ripristinato a 100%. Riscontri manuali e sonde automatiche
+rimangono distinti. **22/27 sotto-task completati, 5 aperti**.
 
-La mappa corrente comprende dashboard, lista/dettaglio/form monitor con grafici, incidenti, manutenzioni,
-canali/policy/consegne, gestione status page, team/account e contesto piattaforma distinto. Le tabelle
-d’inventario UI.01.1 sotto sono storiche, non descrivono lacune tuttora da implementare.
-Web/PostgreSQL/Redis lasciati avviati per le prove native, altri worker fermi; ripristini ed effetti
-privati sintetici nel registro. UI.06.4 deve ancora accettare la fase A; non iniziare M9.
+Prossimo **UI.06.4**: valutazione osservazioni, verifica finale di ripristini/dati/piano e handoff;
+la fase A resta da accettare prima di M9. Stato personale finale di VoiceOver non comunicato,
+da verificare in quella chiusura. Servizi riportati allo stato iniziale arrestato, volumi conservati.
+La mappa corrente comprende dashboard, monitor/form/grafici, incidenti, manutenzioni, canali/policy/
+consegne, gestione status page, team/account e piattaforma distinta. L’inventario UI.01.1 sotto è storico.
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 

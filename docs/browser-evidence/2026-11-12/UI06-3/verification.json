@@ -1,5 +1,5 @@
 {
-  "scope": "UI.06.3 partial acceptance; actual VoiceOver announcement still unobserved; L03 native zoom verified in follow-up",
+  "scope": "UI.06.3 completed with bounded browser probes, native zoom follow-up and user-reported VoiceOver results; phase-A acceptance remains UI.06.4",
   "origin": "http://localhost:8000",
   "browsers": {
     "Brave": {
@@ -15,7 +15,7 @@
   "mode": "headless; actual DOM keyboard events, real HTTP and synthetic development storage; native Chromium CDP throttling for L04",
   "case_assessment": {
     "L01": "PASS",
-    "L02": "BLOCCATO: visible error, focus and association checked; actual VoiceOver announcement unobserved",
+    "L02": "PASS: user reports the monitor and channel VoiceOver checks successful in Brave and Firefox; no agent audio observation",
     "L03": "PASS: original 390px checks plus native 200% browser zoom follow-up",
     "L04": "PASS: native Chromium throttling only",
     "L05": "PASS",
@@ -3186,8 +3186,45 @@
     "alpha_beta_overrides": 0,
     "browser_profiles_closed": true,
     "native_preferences_changed": false,
-    "runtime": "web, postgres, redis left running for pending user native observations; queue, scheduler, reverb remain stopped"
+    "runtime": "web, postgres, redis stopped after user-native checks; all other Compose services remain stopped",
+    "user_voiceover_restoration": "Not reported; do not infer personal VoiceOver state. Final personal-setting check belongs to UI.06.4."
   },
   "native_checks_pending": "../../../BROWSER-NATIVE-CHECKS.md",
-  "native_zoom_followup": "native-zoom.json"
+  "native_zoom_followup": "native-zoom.json",
+  "user_observations": [
+    {
+      "recorded_at": "2026-11-12T10:35:41Z",
+      "source": "User reply to the requested Brave VoiceOver monitor test",
+      "case": "L02",
+      "form": "monitor create, empty Name",
+      "browser": "Brave per requested procedure; version not supplied",
+      "report": "funziona, mi ha segnalato del campo Name vuoto",
+      "scope": "Positive user-reported monitor subcheck only; no agent audio observation or verbatim announcement transcript. Channel in Brave and both forms in Firefox remain unverified."
+    },
+    {
+      "recorded_at": "2026-11-12T10:43:22+00:00",
+      "source": "User reply to the requested Brave VoiceOver channel test",
+      "case": "L02",
+      "form": "email channel create, empty Name",
+      "browser": "Brave per requested procedure; version not supplied",
+      "report": "ok funziona",
+      "scope": "Positive user-reported channel subcheck in Brave; no agent audio observation or verbatim announcement transcript. Both Firefox forms remain unverified."
+    },
+    {
+      "recorded_at": "2026-11-12T11:10:09+00:00",
+      "source": "User reply to the explicit request to repeat both invalid submissions in Firefox with VoiceOver active",
+      "case": "L02",
+      "forms": [
+        "monitor create, empty Name",
+        "email channel create, empty Name"
+      ],
+      "browser": "Firefox per requested procedure; installed desktop version 159.0.1 rechecked separately",
+      "report": "ok funziona anche su Firefox",
+      "scope": "Both Firefox subchecks reported successful by the user. No agent audio observation or verbatim announcement transcript."
+    }
+  ],
+  "installed_desktop_versions_at_close": {
+    "Brave": "157.1.99.56",
+    "Firefox": "159.0.1"
+  }
 }

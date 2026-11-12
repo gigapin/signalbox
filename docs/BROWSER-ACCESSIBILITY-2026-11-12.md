@@ -3,7 +3,8 @@
 **UI.06.3 completato.** L01–L08 verificati nei perimetri e limiti sotto: L02 tramite i riscontri
 VoiceOver dell’utente sui due moduli in entrambi i browser, L03 tramite il seguito di zoom nativo.
 Gli annunci non sono dedotti da ARIA, screenshot o viewport e non sono stati ascoltati dall’agente.
-L’accettazione della fase A rimane il successivo UI.06.4; M9 non è avviato.
+**Seguito UI.06.4 completato: fase A accettata**, [handoff finale](PHASE-A-ACCEPTANCE.md).
+M9.01 è il prossimo task pronto, non ancora avviato.
 
 **Riscontro finale:** alla richiesta di ripetere monitor e canale in Firefox con VoiceOver attivo,
 l’utente conferma «ok funziona anche su Firefox». I quattro controlli L02 sono positivi secondo
@@ -147,3 +148,11 @@ UI.06.4 deve valutare le osservazioni (favicon 404 incluso), verificare ripristi
 registrare lo stato finale personale di VoiceOver e aggiornare l’handoff. I servizi applicativi
 sono nuovamente arrestati; lo stato iniziale dei volumi è conservato. **La fase A non è ancora
 accettata e M9 non è avviato.**
+
+## Seguito finale UI.06.4
+
+[La chiusura della fase A](PHASE-A-ACCEPTANCE.md) verifica i ripristini mancanti: VoiceOver ora non
+in esecuzione, profili effimeri eliminati e servizi tutti arrestati. Quindici controlli PostgreSQL
+READ ONLY confermano le fixture e i piani selezionati; nove note private e gli audit sono conservati.
+Favicon 404 non bloccante assegnato alla decisione UI.07. Questo seguito supera i punti ancora aperti
+nella consegna precedente, senza riscrivere la cronologia delle prove.

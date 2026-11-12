@@ -1,0 +1,117 @@
+{
+  "phase_a_status": "accepted",
+  "scope": "UI.01–UI.03, UI.04.1–UI.04.4 and UI.06; not the whole UI macro or M9",
+  "final_state_observed_at": "2026-11-12T11:42:07Z",
+  "fixture_audit": {
+    "audited_at": "2026-11-12T11:40:20+00:00",
+    "database_transaction": "READ ONLY",
+    "environment": "local",
+    "checks": {
+      "original_identity_preferences": true,
+      "original_memberships": true,
+      "original_monitor_count_and_identity": true,
+      "original_monitor_pause_and_cadence": true,
+      "temporary_monitors_deleted": true,
+      "no_alpha_beta_override": true,
+      "finite_trial_entitlements": true,
+      "original_channels_and_names": true,
+      "original_channel_admission": true,
+      "original_draft_pages": true,
+      "temporary_pages_deleted": true,
+      "original_public_page": true,
+      "nine_unique_private_test_notes": true,
+      "incident_still_resolved": true,
+      "override_audit_no_duplicates": true
+    },
+    "plans": [
+      {
+        "team_id": 3,
+        "stored_plan": "free",
+        "effective_plan": "pro",
+        "source": "trial",
+        "trial_ends_at": "2026-11-16T15:43:40+00:00",
+        "monitors_limit": 50,
+        "minimum_interval_seconds": 60,
+        "status_pages_limit": 3
+      },
+      {
+        "team_id": 4,
+        "stored_plan": "free",
+        "effective_plan": "pro",
+        "source": "trial",
+        "trial_ends_at": "2026-11-16T15:43:40+00:00",
+        "monitors_limit": 50,
+        "minimum_interval_seconds": 60,
+        "status_pages_limit": 3
+      }
+    ],
+    "retained_note_ids": [
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52
+    ],
+    "operator_override_audit_rows": 4,
+    "runtime_configuration": {
+      "monitor_scheduling_enabled": true,
+      "broadcasting_driver": "reverb"
+    }
+  },
+  "desktop": {
+    "voiceover_running": false,
+    "observation": "Read-only AppleScript application running check; no accessibility permission or personal preference changed",
+    "native_zoom_restored": {
+      "Brave": 1,
+      "Firefox desktop": 1
+    }
+  },
+  "runtime": {
+    "initial": "all Compose services stopped",
+    "final": "all Compose services stopped",
+    "audit_started_only": [
+      "postgres",
+      "redis"
+    ],
+    "audit_transport": "one-off web service container running PHP CLI, not the application HTTP server; removed after execution",
+    "volumes_preserved": true
+  },
+  "profile_cleanup": {
+    "removed_temporary_profiles": [
+      "profile",
+      "headed-profile",
+      "window-profile",
+      "anonymous-profile"
+    ],
+    "personal_profiles_changed": false
+  },
+  "findings": [
+    {
+      "finding": "Brave favicon.ico HTTP 404",
+      "disposition": "non-blocking cosmetic resource observation; explicitly retained for UI.07 identity work",
+      "reason": "No navigation, mutation, privacy or JavaScript behavior failure; no new logo or favicon introduced while name/logo decision remains open"
+    },
+    {
+      "finding": "Stopped Reverb connection errors",
+      "disposition": "expected in the browser smoke runtime; no new live-network acceptance inferred",
+      "reason": "Domain/reconnect lifecycle has automated coverage; G08–G10 remains the separately optional real-network flow"
+    }
+  ],
+  "retained_scope": [
+    "M3–M5",
+    "custom status domain",
+    "monthly PDF",
+    "customer portal",
+    "UI.04.5",
+    "UI.05",
+    "UI.07",
+    "M9–M12"
+  ],
+  "verification_boundary": "No application code changed during browser acceptance/closure. Existing application gates are historical evidence; this closure reruns document/evidence checks and read-only fixture assertions only. Remote CI/PHP 8.5 and real provider/live-network acceptance not rerun.",
+  "next_task": "M9.01; ready, not started",
+  "git_operations_executed": false
+}

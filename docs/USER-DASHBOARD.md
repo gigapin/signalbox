@@ -2,17 +2,17 @@
 
 ## Ripartenza corrente — 2026-11-12
 
-UI.06.2 e **UI.06.3 completati**: [flussi essenziali](BROWSER-RESULTS-2026-11-12.md),
-[mappa/guida attuale](BROWSER-TESTS.md#mappa-delle-schermate) e [registro L](BROWSER-ACCESSIBILITY-2026-11-12.md).
-L02 completato con riscontri VoiceOver dell’utente su monitor e canale in Brave/Firefox;
-L03 con 22 controlli zoom nativo 200%, poi ripristinato a 100%. Riscontri manuali e sonde automatiche
-rimangono distinti. **22/27 sotto-task completati, 5 aperti**.
+**Fase A accettata con UI.06.4; UI.06 completato.** [Accettazione e handoff](PHASE-A-ACCEPTANCE.md),
+[guida corrente](BROWSER-TESTS.md), [registro L](BROWSER-ACCESSIBILITY-2026-11-12.md).
+**23/27 sotto-task completati, 4 aperti**; nome/logo UI.07 rimane una decisione distinta.
+Prossimo task pronto **M9.01**, non ancora avviato. UI.04.5/UI.05 restano dopo M9–M10;
+PDF, dominio personalizzato, portale clienti e milestone funzionali conservati.
 
-Prossimo **UI.06.4**: valutazione osservazioni, verifica finale di ripristini/dati/piano e handoff;
-la fase A resta da accettare prima di M9. Stato personale finale di VoiceOver non comunicato,
-da verificare in quella chiusura. Servizi riportati allo stato iniziale arrestato, volumi conservati.
-La mappa corrente comprende dashboard, monitor/form/grafici, incidenti, manutenzioni, canali/policy/
-consegne, gestione status page, team/account e piattaforma distinta. L’inventario UI.01.1 sotto è storico.
+Ripristino finale verificato: audit PostgreSQL READ ONLY con 15 controlli positivi, fixture originarie
+preservate e note private/audit intenzionalmente conservati; VoiceOver spento, zoom ripristinato,
+profili temporanei eliminati, tutti i servizi arrestati e volumi conservati. Favicon 404 non bloccante,
+assegnato a UI.07. Gate e limiti nel nuovo handoff; nessun test remoto/provider reale dedotto.
+L’inventario UI.01.1 e le ripartenze sotto sono storici, non descrivono lacune attuali della fase A.
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 

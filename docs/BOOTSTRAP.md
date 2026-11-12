@@ -1,5 +1,25 @@
 # Application bootstrap reference
 
+## Phase A accepted; next billing foundation — 2026-11-12
+
+**UI.06.4/UI.06 are complete and phase A is accepted.** Read [PHASE-A-ACCEPTANCE.md](PHASE-A-ACCEPTANCE.md)
+for the criterion/evidence map, finding dispositions and restoration audit. Next ready task: **M9.01**,
+not started. Progress: 23/27 UI subtasks complete, four open; UI.07 identity decision remains separate.
+UI.04.5/UI.05 retain their M9–M10 dependencies; no custom-domain/PDF/customer-portal scope is removed.
+
+The final PostgreSQL READ ONLY audit passes fifteen selected fixture checks. Existing plans/trials,
+roles/preferences, paused monitors, channels and pages are preserved; nine private synthetic notes and
+four override audit events remain intentionally. VoiceOver is no longer running; temporary zoom was
+restored and four closed temporary browser profiles removed. All Compose services are stopped, volumes
+preserved. Only PostgreSQL/Redis plus a disposable PHP CLI container ran for the final audit.
+
+Existing configuration remains monitor-scheduling.enabled=true and broadcasting=reverb. Starting
+scheduler/workers later may resume already configured work; this close operation did not start them
+or change .env. No application source/dependency/migration/build adoption is required for this
+Markdown/JSON handoff. Prior application gates remain historical; CI/PHP 8.5 and live providers/network
+were not rerun. Missing favicon is explicitly non-blocking and retained for UI.07. No Git/gh operations.
+This is the current handoff; earlier restart/acceptance notes below are historical.
+
 ## Accessibility acceptance completed — 2026-11-12
 
 **UI.06.3 is complete**, with [the current L execution record](BROWSER-ACCESSIBILITY-2026-11-12.md).

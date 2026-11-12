@@ -1,7 +1,7 @@
 # Prove native ancora da osservare — UI.06.3
 
 **Aggiornamento 2026-11-12:** L03 completato tramite zoom nativo browser; [metodo ed evidenza](BROWSER-ACCESSIBILITY-2026-11-12.md).
-**L02 completato:** l’utente conferma entrambi i controlli Name vuoto (monitor e canale) con VoiceOver in Brave e Firefox. Le istruzioni sotto restano riproducibili; nessuna nuova esecuzione richiesta per chiudere UI.06.3. Stato finale personale di VoiceOver non comunicato, da verificare in UI.06.4. I passi L03 sotto restano una procedura
+**L02 completato:** l’utente conferma entrambi i controlli Name vuoto (monitor e canale) con VoiceOver in Brave e Firefox. Le istruzioni sotto restano riproducibili; nessuna nuova esecuzione richiesta per chiudere UI.06.3. UI.06.4 ha poi verificato VoiceOver non in esecuzione e i ripristini finali; [fase A accettata](PHASE-A-ACCEPTANCE.md). I passi L03 sotto restano una procedura
 di riproduzione facoltativa, senza richiedere una nuova prova per chiudere UI.06.3.
 
 Questi passi descrivono L02 e la riproduzione di L03 della [guida browser](BROWSER-TESTS.md).

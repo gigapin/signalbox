@@ -107,3 +107,15 @@ accessibility acceptance. Fixture edits and temporary operator access were resto
 and append-only audits remain documented. No application source changed. Build and frontend
 checks pass; the previous full PHP/DOM gate above was not repeated. Next: UI.06.3, then UI.06.4;
 phase A remains unaccepted.
+
+## Current L acceptance — UI.06.3 in progress, 2026-11-12
+
+[The current browser record](BROWSER-ACCESSIBILITY-2026-11-12.md) documents real headless keyboard
+and 390 px checks on eleven screens in Brave and Playwright Firefox, native Chromium slow submission,
+direct offline/history recovery and second-browser subscription requests. L01/L04–L08 pass within the
+explicit record; console observations include missing favicon and stopped Reverb, not an assertion that
+every console message is absent. No application source changed. The guide preserves all A–L identifiers.
+
+L02 visible field feedback and L03 mobile reflow pass their subchecks, but actual VoiceOver announcements
+and native browser-menu 200% zoom remain unobserved. Follow [the native checklist](BROWSER-NATIVE-CHECKS.md);
+keep UI.06.3 open until those results and restorations are recorded. UI.06.4/phase-A exit remains separate.

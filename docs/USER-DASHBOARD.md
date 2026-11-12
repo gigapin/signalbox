@@ -2,18 +2,23 @@
 
 ## Ripartenza corrente — 2026-11-12
 
-UI.06.2 completato: [44 controlli browser superati](BROWSER-RESULTS-2026-11-12.md), 22 flussi per
-browser in Brave e Firefox Playwright headless, senza difetti applicativi confermati. Ripristini
-verificati; due note private e audit sintetici conservati. **21/27 sotto-task completati, 6 aperti**.
-Prossimo UI.06.3: guida/mappa corrente e L01–L08, inclusi VoiceOver reale e zoom nativo 200%.
-UI.06.4 deve ancora accettare la fase A; non iniziare M9. I riferimenti di inventario e handoff
-precedenti qui sotto restano storici. Stato operativo e verifiche nel piano e nel registro collegato.
+UI.06.2 completato ([44 controlli essenziali](BROWSER-RESULTS-2026-11-12.md)); **UI.06.3 in corso**:
+[mappa e guida browser aggiornate](BROWSER-TESTS.md#mappa-delle-schermate), senza rinumerare A–L,
+e [registro L corrente](BROWSER-ACCESSIBILITY-2026-11-12.md). L01/L04–L08 superati nel perimetro
+registrato; L02 richiede annunci VoiceOver e L03 zoom nativo 200%, entrambi ancora da osservare
+con la [checklist nativa](BROWSER-NATIVE-CHECKS.md). **21/27 sotto-task completati, 6 aperti**.
+
+La mappa corrente comprende dashboard, lista/dettaglio/form monitor con grafici, incidenti, manutenzioni,
+canali/policy/consegne, gestione status page, team/account e contesto piattaforma distinto. Le tabelle
+d’inventario UI.01.1 sotto sono storiche, non descrivono lacune tuttora da implementare.
+Web/PostgreSQL/Redis lasciati avviati per le prove native, altri worker fermi; ripristini ed effetti
+privati sintetici nel registro. UI.06.4 deve ancora accettare la fase A; non iniziare M9.
 
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 
 **Stato al 2026-11-11:** UI.01/UI.02/UI.03, UI.04.1–UI.04.4 e UI.06.1 completati. Il dettaglio presenta destinazione sicura, azioni, stato/check, storico 24h e schede temporali di uptime/copertura/SLA; lista e overview conservano il proprio contesto. **20 dei 27 sotto-task completati, 7 aperti**. Regole in [UI-GUIDELINES.md](UI-GUIDELINES.md), fonti/durate in [MONITOR-METRICS.md](MONITOR-METRICS.md); gate e prove realmente eseguite nel piano.
 
-## Ripartenza della prossima sessione
+## Ripartenza storica — 2026-11-11
 
 Sessione chiusa il 2026-11-11 su richiesta dell’utente. UI.06.2 è il prossimo task pronto e non è ancora avviato; partire dalla [consegna di chiusura](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-11) e dalla [matrice di accettazione](UI-ACCEPTANCE.md). Branch suggerito: `test/browser-essential-flows`; operazioni Git riservate all’utente. Verificare ambiente e browser disponibili alla ripresa.
 

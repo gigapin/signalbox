@@ -1,5 +1,38 @@
 # Application bootstrap reference
 
+## Essential browser-flow handoff — 2026-11-12
+
+UI.06.2 is complete: [execution record](BROWSER-RESULTS-2026-11-12.md), 22 supplementary flows
+per browser, 44 PASS on real headless Brave/Chromium and Playwright Firefox. Existing A–L results
+remain historical; this does not accept phase A or native accessibility. Next: UI.06.3, update the
+screen/guide map and execute current L01–L08, then UI.06.4 before M9. Progress: 21/27 subtasks complete.
+
+No application source, dependency, lock, migration, environment or worker configuration changed.
+`npm run build` and `npm run check` pass, including five quality-tool tests; the full PHP/DOM gate
+was not repeated for documentation/evidence-only changes. Temporary monitors were deleted, names
+and plan overrides restored, and the synthetic owner operator grant revoked. Two private resolved
+incident notes and the append-only audit events remain deliberately. Only web/PostgreSQL/Redis
+were started; all three were stopped again to restore the initial runtime state. No personal browser
+profile, screenshots, Git or gh operations. Read the record before restarting services for UI.06.3.
+
+This handoff supersedes the earlier restart notes below.
+
+## Session close and restart — 2026-11-11
+
+The user closed the session after UI.06.1: 20/27 subtasks complete, seven open. Start the next
+session with UI.06.2, essential-flow checks in Brave and Firefox; it has not started yet. Read
+[UI-ACCEPTANCE.md](UI-ACCEPTANCE.md), [BROWSER-TESTS.md](BROWSER-TESTS.md) and the latest
+[TASKS.md](TASKS.md) entry before preparing synthetic data and checking available browsers/runtime.
+Keep historical A–L outcomes separate from new observations. Phase A still needs UI.06.2–UI.06.4/L
+acceptance before M9.
+
+The last canonical gate passed: 3315 backend tests / 22956 assertions, 467 DOM tests in 38 files,
+five quality-tool tests, formatter/static checks and production build. Only Markdown changed after
+that gate. Remote CI/PHP 8.5, real-browser/session, VoiceOver and native zoom checks remain unrun.
+This close operation did not stop the isolated test services or change application processes/data;
+check actual runtime state at restart. Git/gh were not run; branch/commit/synchronization remain
+user-managed and unverified. Suggested next branch: `test/browser-essential-flows`.
+
 ## Automated acceptance handoff — 2026-11-11
 
 UI.06.1 completed the audit of phase-A test coverage and the canonical verification pipeline. The only application fix

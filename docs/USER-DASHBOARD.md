@@ -1,10 +1,21 @@
 # Dashboard utenti — brief e piano di realizzazione
 
+## Ripartenza corrente — 2026-11-12
+
+UI.06.2 completato: [44 controlli browser superati](BROWSER-RESULTS-2026-11-12.md), 22 flussi per
+browser in Brave e Firefox Playwright headless, senza difetti applicativi confermati. Ripristini
+verificati; due note private e audit sintetici conservati. **21/27 sotto-task completati, 6 aperti**.
+Prossimo UI.06.3: guida/mappa corrente e L01–L08, inclusi VoiceOver reale e zoom nativo 200%.
+UI.06.4 deve ancora accettare la fase A; non iniziare M9. I riferimenti di inventario e handoff
+precedenti qui sotto restano storici. Stato operativo e verifiche nel piano e nel registro collegato.
+
 Decisione dell’utente del 2026-11-09: dare priorità a una dashboard e a una navigazione che rendano fruibile l’applicazione, partendo dallo screenshot UptimeRobot allegato nella conversazione e adattandolo progressivamente. Il riferimento rimane nella conversazione: non viene copiato nel repository. Il piano operativo e gli stati sono nel [macro task UI](TASKS.md#ui--dashboard-utenti-e-interfaccia-applicativa-scope-2026-11-02-priorità-aggiornata-2026-11-09).
 
 **Stato al 2026-11-11:** UI.01/UI.02/UI.03, UI.04.1–UI.04.4 e UI.06.1 completati. Il dettaglio presenta destinazione sicura, azioni, stato/check, storico 24h e schede temporali di uptime/copertura/SLA; lista e overview conservano il proprio contesto. **20 dei 27 sotto-task completati, 7 aperti**. Regole in [UI-GUIDELINES.md](UI-GUIDELINES.md), fonti/durate in [MONITOR-METRICS.md](MONITOR-METRICS.md); gate e prove realmente eseguite nel piano.
 
 ## Ripartenza della prossima sessione
+
+Sessione chiusa il 2026-11-11 su richiesta dell’utente. UI.06.2 è il prossimo task pronto e non è ancora avviato; partire dalla [consegna di chiusura](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-11) e dalla [matrice di accettazione](UI-ACCEPTANCE.md). Branch suggerito: `test/browser-essential-flows`; operazioni Git riservate all’utente. Verificare ambiente e browser disponibili alla ripresa.
 
 Proseguire con **UI.06.2**, collaudare i flussi essenziali reali in Brave e Firefox con dati sintetici, ruoli e confini di sessione. UI.06.1 ha completato la [matrice di copertura automatica](UI-ACCEPTANCE.md) e il gate canonico: 3315 test backend e 467 DOM, formatter, analisi statica e build superati. Corretta l’attribuzione degli errori delle GET per evitare interferenze da richieste estranee; nessun nuovo PASS browser. UI.04.4 integra directory/dettaglio operatore, override/password inline, audit Before/After e ritorni filtrati, senza selezione team o membership implicite. Il piano/trial/quote nelle impostazioni team proviene da TeamEntitlement/PlanLimits, con dati riservati operatore esclusi; nessuna azione di pagamento o stato Stripe inventato. UI.04.1–UI.04.4 e UI.01–UI.03 sono completi; UI.04 resta aperta per billing/API UI.04.5 dopo M9–M10. **La fase A non è ancora accettata**: UI.06.2–UI.06.4 e L richiedono le proprie prove, incluse Brave/Firefox, VoiceOver e zoom nativo, prima di M9. Nessun nuovo PASS browser o sessione reale attestato. Contratti in [PLATFORM-UI.md](PLATFORM-UI.md), [SETTINGS-UI.md](SETTINGS-UI.md) e [OPERATIONS-UI.md](OPERATIONS-UI.md).
 

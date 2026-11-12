@@ -1,0 +1,376 @@
+{
+  "scope": "UI.06.2 essential-flow probes; not a full rerun of historical A–L cases",
+  "origin": "http://localhost:8000",
+  "execution": "Playwright using real browsers in headless mode; no HTTP or database fakes",
+  "browsers": {
+    "Brave": {
+      "application": "157.1.99.56",
+      "engine": "157.0.8103.50"
+    },
+    "Firefox": {
+      "distribution": "Playwright",
+      "engine": "159.0",
+      "installed_desktop_version_not_used": "159.0.1"
+    }
+  },
+  "summary": {
+    "checks": 44,
+    "pass": 44,
+    "fail": 0,
+    "flows_per_browser": 22
+  },
+  "checks": [
+    {
+      "browser": "Brave",
+      "id": "BF01",
+      "time": "2026-11-12T08:43:06.420Z",
+      "detail": "Real login to account; browser 157.0.8103.50",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF02",
+      "time": "2026-11-12T08:43:07.258Z",
+      "detail": "Alpha → Beta → Alpha through real POST selection; dashboard and route agree.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF03",
+      "time": "2026-11-12T08:43:07.987Z",
+      "detail": "Search → detail → 7 days/US → equivalent data → filtered list; reload retains search.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF04",
+      "time": "2026-11-12T08:43:09.407Z",
+      "detail": "Invalid interval and loopback URL rejected; corrected HTTP monitor created; synthetic query secret redacted. /teams/3/monitors/31",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF05",
+      "time": "2026-11-12T08:43:10.196Z",
+      "detail": "Name-only edit returns to detail and survives reload; stored secret absent from edit HTML.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF06",
+      "time": "2026-11-12T08:43:10.861Z",
+      "detail": "Cancel has no effect; pause persists across reload; explicit resume succeeds.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF07",
+      "time": "2026-11-12T08:43:12.051Z",
+      "detail": "Delete cancellation preserves monitor; confirmation removes only the temporary monitor; old URL 404.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF08",
+      "time": "2026-11-12T08:43:12.720Z",
+      "detail": "Resolved filter → incident #9; one private resolved-state note saved and retained; filtered return preserved.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF09",
+      "time": "2026-11-12T08:43:25.918Z",
+      "detail": "Beta monitor bound under Alpha returns 404; correct Beta URL succeeds.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF10",
+      "time": "2026-11-12T08:43:26.266Z",
+      "detail": "Ordinary owner denied platform directory (404) and Horizon (403).",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF11",
+      "time": "2026-11-12T08:43:26.617Z",
+      "detail": "Viewer reads monitor and incident; mutation controls absent; direct create/edit 403.",
+      "outcome": "PASS",
+      "role": "viewer"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF12",
+      "time": "2026-11-12T08:43:28.319Z",
+      "detail": "Viewer outside GiGa Team gets 404 for dashboard, monitors, incident, channels and status management.",
+      "outcome": "PASS",
+      "role": "viewer"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF13",
+      "time": "2026-11-12T08:43:28.707Z",
+      "detail": "Owner preference Alpha retained; no unhandled pageerror during ordinary flow.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF01",
+      "time": "2026-11-12T08:43:34.743Z",
+      "detail": "Real login to account; browser 159.0",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF02",
+      "time": "2026-11-12T08:43:36.048Z",
+      "detail": "Alpha → Beta → Alpha through real POST selection; dashboard and route agree.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF03",
+      "time": "2026-11-12T08:43:36.962Z",
+      "detail": "Search → detail → 7 days/US → equivalent data → filtered list; reload retains search.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF04",
+      "time": "2026-11-12T08:43:38.596Z",
+      "detail": "Invalid interval and loopback URL rejected; corrected HTTP monitor created; synthetic query secret redacted. /teams/3/monitors/32",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF05",
+      "time": "2026-11-12T08:43:39.566Z",
+      "detail": "Name-only edit returns to detail and survives reload; stored secret absent from edit HTML.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF06",
+      "time": "2026-11-12T08:43:40.462Z",
+      "detail": "Cancel has no effect; pause persists across reload; explicit resume succeeds.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF07",
+      "time": "2026-11-12T08:43:42.403Z",
+      "detail": "Delete cancellation preserves monitor; confirmation removes only the temporary monitor; old URL 404.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF08",
+      "time": "2026-11-12T08:43:43.556Z",
+      "detail": "Resolved filter → incident #9; one private resolved-state note saved and retained; filtered return preserved.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF09",
+      "time": "2026-11-12T08:43:57.087Z",
+      "detail": "Beta monitor bound under Alpha returns 404; correct Beta URL succeeds.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF10",
+      "time": "2026-11-12T08:43:57.541Z",
+      "detail": "Ordinary owner denied platform directory (404) and Horizon (403).",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF11",
+      "time": "2026-11-12T08:43:57.949Z",
+      "detail": "Viewer reads monitor and incident; mutation controls absent; direct create/edit 403.",
+      "outcome": "PASS",
+      "role": "viewer"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF12",
+      "time": "2026-11-12T08:43:59.954Z",
+      "detail": "Viewer outside GiGa Team gets 404 for dashboard, monitors, incident, channels and status management.",
+      "outcome": "PASS",
+      "role": "viewer"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF13",
+      "time": "2026-11-12T08:44:00.320Z",
+      "detail": "Owner preference Alpha retained; no unhandled pageerror during ordinary flow.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF14",
+      "time": "2026-11-12T08:44:33.340Z",
+      "detail": "Filter hides nonmatching channel while keeping mounted drafts; delivery and maintenance links reach actual lists. No provider send.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF15",
+      "time": "2026-11-12T08:44:33.824Z",
+      "detail": "Status-page search/editor works; draft URL 404; published Stato Prova visible in a separate anonymous context without private shell.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF14",
+      "time": "2026-11-12T08:44:58.658Z",
+      "detail": "Filter hides nonmatching channel while keeping mounted drafts; delivery and maintenance links reach actual lists. No provider send.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF15",
+      "time": "2026-11-12T08:44:59.329Z",
+      "detail": "Status-page search/editor works; draft URL 404; published Stato Prova visible in a separate anonymous context without private shell.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF16",
+      "time": "2026-11-12T08:47:31.084Z",
+      "detail": "Cancel and wrong password do not apply draft; valid password applies once inline; reload persists; original absence of override restored through UI. Audit retained.",
+      "outcome": "PASS",
+      "role": "temporary synthetic platform operator"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF17",
+      "time": "2026-11-12T08:47:33.743Z",
+      "detail": "Members, invitations, real plan/usage and security page load after actual recent password confirmation; no 2FA setup/recovery read.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF18",
+      "time": "2026-11-12T08:47:34.114Z",
+      "detail": "Real UI PDF download signalbox-report-3-2026-11.pdf, 24232 bytes, valid PDF signature; visual document reading not asserted.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF16",
+      "time": "2026-11-12T08:47:49.937Z",
+      "detail": "Cancel and wrong password do not apply draft; valid password applies once inline; reload persists; original absence of override restored through UI. Audit retained.",
+      "outcome": "PASS",
+      "role": "temporary synthetic platform operator"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF17",
+      "time": "2026-11-12T08:47:52.867Z",
+      "detail": "Members, invitations, real plan/usage and security page load after actual recent password confirmation; no 2FA setup/recovery read.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF18",
+      "time": "2026-11-12T08:47:53.281Z",
+      "detail": "Real UI PDF download signalbox-report-3-2026-11.pdf, 24230 bytes, valid PDF signature; visual document reading not asserted.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF19",
+      "time": "2026-11-12T08:48:39.043Z",
+      "detail": "Channel name draft survives hide/show; save survives reload; original name restored. No verification or recipient change.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF20",
+      "time": "2026-11-12T08:48:40.047Z",
+      "detail": "Draft title saved/reloaded and original restored; slug, visibility, components and password unchanged.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF21",
+      "time": "2026-11-12T08:48:40.962Z",
+      "detail": "Filtered operator directory → detail → filtered directory; selected working team remains Alpha.",
+      "outcome": "PASS",
+      "role": "temporary synthetic platform operator"
+    },
+    {
+      "browser": "Brave",
+      "id": "BF22",
+      "time": "2026-11-12T08:48:41.441Z",
+      "detail": "Explicit logout reaches public home; later private URL requires login; no unhandled pageerror.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF19",
+      "time": "2026-11-12T08:48:45.216Z",
+      "detail": "Channel name draft survives hide/show; save survives reload; original name restored. No verification or recipient change.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF20",
+      "time": "2026-11-12T08:48:46.546Z",
+      "detail": "Draft title saved/reloaded and original restored; slug, visibility, components and password unchanged.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF21",
+      "time": "2026-11-12T08:48:47.707Z",
+      "detail": "Filtered operator directory → detail → filtered directory; selected working team remains Alpha.",
+      "outcome": "PASS",
+      "role": "temporary synthetic platform operator"
+    },
+    {
+      "browser": "Firefox",
+      "id": "BF22",
+      "time": "2026-11-12T08:48:48.193Z",
+      "detail": "Explicit logout reaches public home; later private URL requires login; no unhandled pageerror.",
+      "outcome": "PASS",
+      "role": "synthetic owner"
+    }
+  ]
+}

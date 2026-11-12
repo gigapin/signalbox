@@ -97,3 +97,13 @@ These automatic checks do not accept phase A.
   those in its assigned acceptance tasks rather than replacing its records with automatic PASS labels.
 - Resolve blocking findings and explicitly confirm phase-A exit in UI.06.4 before M9. UI.06.1 completion
   alone does not accept phase A, close UI.04's future billing/API work or certify production behavior.
+
+## Essential-flow execution — 2026-11-12
+
+UI.06.2 completed [22 supplementary flows per browser](BROWSER-RESULTS-2026-11-12.md),
+44 PASS using real headless Brave/Chromium and Playwright Firefox with synthetic fixtures and
+real sessions/HTTP/storage. This is a bounded essential-flow smoke, not a full A–L rerun or native
+accessibility acceptance. Fixture edits and temporary operator access were restored; private notes
+and append-only audits remain documented. No application source changed. Build and frontend
+checks pass; the previous full PHP/DOM gate above was not repeated. Next: UI.06.3, then UI.06.4;
+phase A remains unaccepted.

@@ -6,7 +6,20 @@ Guida passo per passo per provare l'applicazione com'è dopo M8, prima di inizia
 
 **Stato aggiornato al 2026-11-09:** l’utente conferma completati i blocchi obbligatori fino a K. Il blocco L — Accessibilità e usabilità è **rinviato su richiesta dell’utente a UI.06, dopo la nuova dashboard e navigazione applicativa**. Il registro delle precedenti prove dell’agente conserva 72 casi con 49 PASS, 0 FAIL, 18 BLOCCATO e 5 NON ESEGUITO: è una fotografia storica, non l’elenco attuale dei blocchi ancora aperti. Dettagli in [BROWSER-RESULTS-2026-11-09.md](BROWSER-RESULTS-2026-11-09.md). Nessun nuovo esito individuale viene dedotto per le prove facoltative realtime/dominio.
 
-## Ripresa della prossima sessione
+## Collaudo corrente — 2026-11-12
+
+**UI.06.2 completato:** [registro dei flussi essenziali](BROWSER-RESULTS-2026-11-12.md), 22 flussi
+per browser, 44 PASS in Brave e Firefox Playwright reali, headless. Include la nuova navigazione,
+mutazioni dei monitor, incidenti, notifiche/status page, dinieghi e password inline dell’override.
+Questi flussi supplementari non riscrivono gli esiti storici A–L né attestano la riesecuzione integrale
+delle precedenti prove. Fixture ripristinate, due note private e audit conservati; servizi nuovamente arrestati.
+
+**Prossimo UI.06.3:** aggiornare integralmente mappa/passaggi della guida conservando A–L ed eseguire
+L01–L08 sulla UI corrente, inclusi VoiceOver e zoom nativo. Le sezioni storiche sotto descrivono
+la versione precedente e possono avere nomi/istruzioni superati (grafici, conferme, percorsi).
+Il nuovo registro riporta i passi effettivamente provati; nessun nuovo PASS L, fase A non ancora accettata.
+
+## Ripresa storica — 2026-11-09
 
 La prossima sessione è dedicata a **UI.01.1**. Il riepilogo delle correzioni, l’ultima baseline verificata e i risultati attesi dell’inventario sono nella [chiusura di sessione](TASKS.md) e nel [brief dashboard](USER-DASHBOARD.md). Il collaudo obbligatorio non è chiuso: L01–L08 verrà eseguito sulla nuova interfaccia dopo la fase A.
 

@@ -4,6 +4,7 @@
 
 namespace App\Notifications;
 
+use App\Services\Mail\MarkdownText;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -28,14 +29,17 @@ final class TeamInvitationNotification extends Notification
     }
 
     /**
+     * The team name is chosen by the sender and reaches an address nobody has proved, so it stays literal text: one
+     * line in the subject and escaped Markdown in the body, never a link or formatting.
+     *
      * @param object $notifiable Intended recipient.
      * @return MailMessage English instructions with explicit verification and expiry.
      */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage())
-            ->subject('Invitation to '.$this->teamName)
-            ->line('You have been invited to join '.$this->teamName.'.')
+            ->subject('Invitation to '.MarkdownText::singleLine($this->teamName))
+            ->line('You have been invited to join '.MarkdownText::literal($this->teamName).'.')
             ->line('Sign in or create an account, verify this email address, then explicitly accept the invitation. This link expires in seven days.')
             ->action('Review invitation', $this->url);
     }

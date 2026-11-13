@@ -4,13 +4,17 @@
 
 namespace App\Actions\Identity;
 
+use App\Enums\Identity\TeamQuota;
 use App\Enums\Identity\TeamRole;
+use App\Exceptions\TeamQuotaExhausted;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Notifications\TeamInvitationNotification;
 use App\Services\Identity\TeamAccess;
+use App\Services\Identity\TeamDailyQuotas;
 use App\Services\Tenancy\TenantContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -23,9 +27,13 @@ final class IssueTeamInvitation
     /**
      * @param TeamAccess $access Shared role hierarchy, rechecked after taking the team lock.
      * @param TenantContext $context Explicit context for direct action calls as well as HTTP.
+     * @param TeamDailyQuotas $quotas Team-wide daily bound on invitation emails, new and resent alike.
      */
-    public function __construct(private readonly TeamAccess $access, private readonly TenantContext $context)
-    {
+    public function __construct(
+        private readonly TeamAccess $access,
+        private readonly TenantContext $context,
+        private readonly TeamDailyQuotas $quotas,
+    ) {
     }
 
     /**
@@ -81,6 +89,8 @@ final class IssueTeamInvitation
                 ]);
             }
 
+            $this->chargeDailyQuota($teamId);
+
             $token = Str::random(64);
             $invitation ??= new TeamInvitation();
             $invitation->forceFill([
@@ -132,5 +142,22 @@ final class IssueTeamInvitation
             $invitation->revoked_at = now()->toImmutable();
             $invitation->save();
         }));
+    }
+
+    /**
+     * Count one invitation email after every other refusal, so a rejected request never uses the quota.
+     *
+     * @param int $teamId Team sending the invitation, already locked by the caller's transaction.
+     * @throws ValidationException When the team reached its daily invitation limit.
+     */
+    private function chargeDailyQuota(int $teamId): void
+    {
+        try {
+            $this->quotas->consume($teamId, TeamQuota::Invitation, CarbonImmutable::now('UTC'));
+        } catch (TeamQuotaExhausted $exhausted) {
+            throw ValidationException::withMessages([
+                'email' => 'This team sent '.$exhausted->limit.' invitations in the last 24 hours. Try again after '.$exhausted->availableAt->format('Y-m-d H:i').' UTC.',
+            ]);
+        }
     }
 }

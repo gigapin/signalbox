@@ -70,7 +70,7 @@ it('binds the real verification sender and sends literal plain-text email throug
     Mail::fake();
     expect(app(ChannelVerificationSender::class))->toBeInstanceOf(AdapterChannelVerificationSender::class);
 
-    app(ChannelVerificationSender::class)->send('Ops <team>', adapterConfiguration('email'), '654321');
+    app(ChannelVerificationSender::class)->send(adapterConfiguration('email'), '654321');
 
     Mail::assertSent(ChannelNotificationMail::class, function (ChannelNotificationMail $mail): bool {
         expect($mail->message->event)->toBe('channel.verification')
@@ -80,7 +80,7 @@ it('binds the real verification sender and sends literal plain-text email throug
             ->and($mail->envelope()->subject)->toBe('Verify your Signalbox notification channel');
 
         $mail->assertSeeInText('654321');
-        $mail->assertSeeInText('Ops <team>');
+        $mail->assertSeeInText('If you did not expect this message, you can ignore it');
 
         return $mail->hasTo('oncall@example.test') && $mail->mailer === 'smtp';
     });
@@ -97,7 +97,7 @@ it('drops SMTP exception details and does not retry', function (): void {
     $mailer->shouldReceive('send')->once()->andThrow(new TransportException('private-password 654321 provider payload'));
 
     try {
-        app(ChannelVerificationSender::class)->send('Ops', adapterConfiguration('email'), '654321');
+        app(ChannelVerificationSender::class)->send(adapterConfiguration('email'), '654321');
         throw new LogicException('SMTP failure was accepted.');
     } catch (ChannelDeliveryFailed $error) {
         expect($error->getMessage())->toBe('The email provider could not accept the notification.')
@@ -174,7 +174,7 @@ it('records SMS metadata only and refuses to verify an undelivered SMS code', fu
     $receipt = app(ChannelAdapterRegistry::class)->for(ChannelType::Sms)->send(adapterConfiguration('sms'), $this->message);
     expect($receipt->status())->toBe(DeliveryStatus::Suppressed)
         ->and($receipt->summary())->toBe('SMS stub: recorded without sending.')
-        ->and(fn () => app(ChannelVerificationSender::class)->send('Ops', adapterConfiguration('sms'), '654321'))
+        ->and(fn () => app(ChannelVerificationSender::class)->send(adapterConfiguration('sms'), '654321'))
         ->toThrow(ChannelDeliveryFailed::class, 'SMS is a recording-only stub');
     Http::assertNothingSent();
 });

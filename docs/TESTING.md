@@ -716,3 +716,17 @@ Mutations on 2026-11-13, restored and compared afterwards: adding `HEADER_X_FORW
 ```sh
 docker compose run --rm php-test php vendor/bin/pest tests/Integration/AbsoluteLinkOriginTest.php
 ```
+
+## Transactional messages to unverified recipients — SEC.02
+
+Three files cover the limits on verification codes and invitation emails, which reach recipients nobody has proved:
+
+- `tests/Feature/MarkdownTextTest.php`, without infrastructure: Laravel's mail Markdown renderer turns an unescaped `[text](url)` line into a link (the risk being removed), `MarkdownText::literal()` keeps the same text literal without links, images, emphasis or code, ordinary team names stay unchanged, and control characters and line breaks become single spaces.
+- `tests/Integration/TeamDailyQuotasTest.php`, on PostgreSQL: refusal one second before the 24-hour boundary and a new window exactly at it, separate counters per team and quota, rollback of a use with the change that failed, refusal outside a transaction, and two sessions where the second waits for the first (`lock_timeout` 100 ms, SQLSTATE `55P03`) and then counts 2. The committed team comes from `CommittedTeamFixture` and is always cleaned up.
+- `tests/Integration/TransactionalMessageAbuseTest.php`, on PostgreSQL through the real actions and routes: a verification email contains neither a hostile label nor its phone number; the daily cap holds across deleted and recreated channels until exactly 24 hours later, separately per team; a cooldown refusal is not counted and a failed delivery is; the 21st channel request in a minute gets 429 for that user and team but not for another team; a legacy team name with a Markdown link and a line break reaches the invitation email (rendered at send time by the `array` mailer) as literal single-line text; the invitation cap counts resends, ignores refusals for other reasons and restarts after 24 hours; registration rejects nine team names that could carry links, addresses, markup or line breaks and accepts five ordinary ones.
+
+Mutations on 2026-11-13, restored and compared afterwards, each detected by the last file: removing the channel quota charge (3 failures), the invitation quota charge (2), the Markdown escaping (1), the team name pattern (9) or the throttle on channel deletion (1).
+
+```sh
+docker compose run --rm php-test php vendor/bin/pest tests/Feature/MarkdownTextTest.php tests/Integration/TeamDailyQuotasTest.php tests/Integration/TransactionalMessageAbuseTest.php
+```

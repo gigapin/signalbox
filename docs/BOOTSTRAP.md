@@ -613,3 +613,7 @@ M8.06 adds live status-page metadata, HTTP crawler headers and a Blade public su
 ## Production settings checked at startup (2026-11-13)
 
 Outside `local` and `testing` the application refuses to start with debug enabled, cookies without `Secure`, the `log` mailer, missing or wildcard trusted proxies, private-network CIDR exceptions or development WebSocket origins, and operators need a confirmed second factor. Development `.env` files are unaffected. The rules, the build-time consequence for the production image and the PostgreSQL/Redis TLS requirements are in [DOCKER.md](DOCKER.md#production-settings-enforced-at-startup-2026-11-13).
+
+## Private certificate admission authentication (SEC.07)
+
+The optional Caddy TLS admission endpoint now requires both an allowed raw peer and a shared `STATUS_DOMAIN_TLS_SECRET` (64 lowercase hex characters from 32 random bytes). Empty/malformed configuration refuses admission with 403; ordinary application/status-page routing keeps working. The Caddy template uses a separate loopback-only ask listener on port 9123 to add the secret header, strips it on public proxies, and blocks `/index.php*` alongside internal paths. Configure Laravel and Caddy together and reload their configuration at deployment; no migration, package, `.env` edit or process restart is performed by verification. See [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-deployment-contract) for generation, rotation, private-network boundaries and reproducible proxy tests.

@@ -6,7 +6,7 @@
 
 	# The backend must be private/loopback; this endpoint performs only an indexed ownership lookup.
 	on_demand_tls {
-		ask http://127.0.0.1:8000/internal/status-domains/allow
+		ask http://127.0.0.1:9123/internal/status-domains/allow
 	}
 
 	# Prevent serving an HTTP Host different from the TLS handshake's SNI name.
@@ -18,10 +18,11 @@
 # The primary account application has its own explicitly configured hostname/certificate.
 {$APP_HOST} {
 	# TLS admission is internal even when an external client reaches the primary application.
-	@internal path /internal/status-domains/*
+	@internal path /internal/status-domains/* /index.php*
 	respond @internal 404
 	reverse_proxy 127.0.0.1:8000 {
 		header_up Host {http.request.hostport}
+		header_up -SignalboxTlsSecret
 	}
 }
 
@@ -30,9 +31,28 @@ https:// {
 	tls {
 		on_demand
 	}
-	@internal path /internal/status-domains/*
+	@internal path /internal/status-domains/* /index.php*
 	respond @internal 404
 	reverse_proxy 127.0.0.1:8000 {
 		header_up Host {http.request.hostport}
+		header_up -SignalboxTlsSecret
+	}
+}
+
+# Only the on-demand ask client uses this loopback listener; never publish this port.
+http://127.0.0.1:9123 {
+	bind 127.0.0.1
+	@admission {
+		method GET HEAD
+		path /internal/status-domains/allow
+	}
+	handle @admission {
+		reverse_proxy 127.0.0.1:8000 {
+			# Runtime expansion keeps a missing secret empty, which Laravel refuses.
+			header_up SignalboxTlsSecret {env.STATUS_DOMAIN_TLS_SECRET}
+		}
+	}
+	handle {
+		respond 404
 	}
 }

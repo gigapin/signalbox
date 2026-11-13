@@ -13,13 +13,14 @@ use App\Http\Requests\StatusPages\StatusDomainRequest;
 use App\Models\StatusPage;
 use App\Services\StatusPages\StatusDomainNames;
 use App\Services\StatusPages\StatusDomainRegistry;
+use App\Services\StatusPages\StatusDomainTlsAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
-/** The host guard restricts the ask endpoint's raw peer before this controller or any session middleware runs. */
+/** The host guard authenticates the ask endpoint's peer and shared secret before this controller or any session middleware runs. */
 final class StatusDomainController extends Controller
 {
     /** @param ManageStatusDomains $domains Freshly authorized, fenced claim changes and verification. */
@@ -77,15 +78,16 @@ final class StatusDomainController extends Controller
     }
 
     /**
-     * @param Request $request Internal raw-peer-authorized request containing only a hostname.
+     * @param Request $request Internal peer-and-secret-authorized request containing only a hostname.
      * @param StatusDomainNames $names Shared canonical/reserved-name rules.
+     * @param StatusDomainTlsAccess $access Private caller authentication, repeated after routing.
      * @param StatusDomainRegistry $registry Current public association, never a DNS check inside the TLS handshake.
      * @return Response 204 permits certificate management; 404 denies, without page or tenant metadata.
      */
-    public function allow(Request $request, StatusDomainNames $names, StatusDomainRegistry $registry): Response
+    public function allow(Request $request, StatusDomainNames $names, StatusDomainRegistry $registry, StatusDomainTlsAccess $access): Response
     {
         // Check again at the actual route, including any path decoding performed after global host admission.
-        abort_unless($names->allowsTlsPeer($request->server('REMOTE_ADDR')), 403);
+        abort_unless($access->allows($request), 403);
         $value = $request->query('domain');
         abort_unless(is_string($value) && strlen($value) <= 242, 404);
 

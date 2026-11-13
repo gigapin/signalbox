@@ -18,6 +18,11 @@ const pages = import.meta.glob<PageModule>('./pages/**/*.tsx');
 
 void createInertiaApp({
     /**
+     * Keep Inertia's progress bar but not its runtime `<style>` injection, which carries no CSP nonce; the same
+     * rules are compiled into app.css instead.
+     */
+    progress: { includeCSS: false },
+    /**
      * Resolve a server-selected page from the statically discovered page modules.
      * @param name Page name returned by the Laravel Inertia response.
      * @returns Module exporting the requested React component.

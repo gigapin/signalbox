@@ -740,3 +740,13 @@ Mutations on 2026-11-13, restored and compared afterwards: restoring `isProducti
 ```sh
 docker compose run --rm php-test php vendor/bin/pest tests/Feature/SafeProductionSettingsTest.php tests/Integration/PlatformAdminAccessTest.php
 ```
+
+## Browser security headers — SEC.04
+
+`tests/Integration/SecurityHeadersTest.php` (8 cases, PostgreSQL) checks that home, login, account, a JSON response and a 404 carry the enforced policy and the other headers without `'unsafe-inline'` or `'unsafe-eval'`; that the 404 page's two inline styles carry the same nonce as the header and that each request gets a new one; HSTS only over HTTPS on the primary host, without subdomains; report-only mode under debug; the WebSocket source for a blank, explicit or disabled Reverb browser host; the Horizon-only widening with its nonce on four inline elements; the Vite development server sources only while a hot file exists (with the real Vite instead of the `withoutVite()` fake, which ignores hot files); and a malformed Host header, sent straight to the HTTP kernel because the test client refuses malformed URIs. `StatusDomainsTest` adds a custom-domain page and a refusal on that domain: same headers, `wss://` to the custom host, no HSTS.
+
+Mutations on 2026-11-13, restored and compared afterwards: removing the middleware registration failed 9 cases, sending HSTS on every HTTPS host failed 1, deleting the published error layout failed 1. The browser check is described in [SECURITY-HEADERS.md](SECURITY-HEADERS.md#verification).
+
+```sh
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/SecurityHeadersTest.php tests/Integration/StatusDomainsTest.php
+```

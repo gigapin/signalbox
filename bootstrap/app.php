@@ -7,6 +7,7 @@
 use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\GuardStatusPageHosts;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SetSecurityHeaders;
 use App\Http\Support\MonitorInputTransport;
 use App\Services\Monitoring\MonitorConfigurationMapper;
 use Illuminate\Foundation\Application;
@@ -39,6 +40,8 @@ $configureMiddleware = function (Middleware $middleware) use ($preserveExactInpu
     $middleware->trustProxies(at: [], headers:
         Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT);
     $middleware->append(GuardStatusPageHosts::class);
+    // First in the global stack, so error responses rendered by inner layers also receive the security headers.
+    $middleware->prepend(SetSecurityHeaders::class);
     $middleware->authenticateSessions();
     $middleware->prependToPriorityList(SubstituteBindings::class, EstablishTeamContext::class);
     $middleware->redirectGuestsTo('/login');

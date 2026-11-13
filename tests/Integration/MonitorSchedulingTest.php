@@ -352,7 +352,7 @@ it('routes scalar envelopes through real Redis and runs an idempotent test consu
             $job = $queue->pop($name);
             expect($job)->not->toBeNull();
             $payload = $job->payload();
-            expect($payload['data']['command'])->not->toContain('example.invalid');
+            expect($payload['data']['command'])->not->toContain('example.com');
             $job->fire();
         }
 

@@ -45,7 +45,7 @@ beforeEach(function (): void {
     }
     CarbonImmutable::setTestNow('2026-10-26T12:00:00Z');
     config(['monitor-scheduling.enabled' => true]);
-    app()->instance(HostResolver::class, new FakeHostResolver(['example.invalid' => ['93.184.216.34']]));
+    app()->instance(HostResolver::class, new FakeHostResolver(['example.com' => ['93.184.216.34']]));
     Http::fake(['*' => Http::response('healthy', 200)]);
 });
 afterEach(function (): void {
@@ -93,7 +93,7 @@ it('runs every checker variant and records genuine observations exactly once', f
     $team = Team::factory()->business()->create();
     $monitor = runnerMonitor($team, $type);
     $dns = new FakeDnsTransport();
-    $dns->answers['example.invalid.|1'] = Message::createResponseWithAnswersForQuery(new Query('example.invalid.', 1, 1), [new Record('example.invalid', 1, 1, 60, $type === 'tls' ? '93.184.216.34' : '192.0.2.1')]);
+    $dns->answers['example.com.|1'] = Message::createResponseWithAnswersForQuery(new Query('example.com.', 1, 1), [new Record('example.com', 1, 1, 60, $type === 'tls' ? '93.184.216.34' : '192.0.2.1')]);
     app()->instance(DnsTransport::class, $dns);
     app()->instance(TlsTransport::class, new FakeTlsTransport());
     $work = runnerWork($team)->sole();
@@ -243,8 +243,8 @@ it('executes a real mixed HTTP and keyword batch across a two-request socket bar
         $server->start();
         $server->waitUntil(static fn (string $type, string $output): bool => str_contains($output, 'READY '));
         preg_match('/READY 127\.0\.0\.1:(\d+)/', $server->getOutput(), $matches);
-        $origin = 'http://pinned.checker.test:'.$matches[1];
-        app()->instance(HostResolver::class, new FakeHostResolver(['pinned.checker.test' => ['127.0.0.1']]));
+        $origin = 'http://pinned.checker.example.com:'.$matches[1];
+        app()->instance(HostResolver::class, new FakeHostResolver(['pinned.checker.example.com' => ['127.0.0.1']]));
         config(['outbound-security.allowed_cidrs' => ['127.0.0.1/32']]);
         // Replace the generic fake with real loopback-only acquisition for this barrier assertion.
         Http::swap(new Illuminate\Http\Client\Factory());
@@ -380,7 +380,7 @@ it('publishes bounded same-team regional batches with distinct monitor identitie
         foreach (range(1, 2) as $ignored) {
             $delivery = $queue->pop('checks:eu');
             $payload = $delivery->payload();
-            expect($payload['data']['command'])->not->toContain('example.invalid', 'headers', 'configuration');
+            expect($payload['data']['command'])->not->toContain('example.com', 'headers', 'configuration');
             $job = unserialize($payload['data']['command']);
             expect($job)->toBeInstanceOf(DeliverCheckBatch::class)
                 ->and($job->teamId)->toBe($team->id)

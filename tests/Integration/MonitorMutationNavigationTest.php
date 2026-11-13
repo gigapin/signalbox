@@ -24,7 +24,7 @@ it('normalizes query-only navigation independently of each authorized mutation',
     $foreignBase = '/teams/'.($team->id + 100).'/monitors';
     $return = match ($hint) {
         'valid' => $base.'?q=api&type=http&page=2&unknown=discarded',
-        'external' => 'https://example.test'.$base,
+        'external' => 'https://example.com'.$base,
         'foreign' => $foreignBase.'?q=private',
         'detail' => $base.'/123',
         'array' => [$base],

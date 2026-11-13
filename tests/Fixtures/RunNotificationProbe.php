@@ -44,7 +44,7 @@ if ($argv[1] === 'prepare') {
     app(PrepareIncidentNotifications::class)->record(new IncidentNotificationRequested($teamId, $targetId, $monitorId, 0, 'incident.opened'));
 } else {
     $receipts = $argv[4];
-    app()->instance(HostResolver::class, new FakeHostResolver(['hooks.example.test' => ['93.184.216.34']]));
+    app()->instance(HostResolver::class, new FakeHostResolver(['hooks.example.com' => ['93.184.216.34']]));
     Http::preventStrayRequests();
     Http::fake(function () use ($receipts, $targetId) {
         if (DB::transactionLevel() !== 0) {

@@ -112,7 +112,7 @@ while (microtime(true) < $until) {
         $name = $request->questions[0]->name;
         file_put_contents($argv[1], ($socket === $udp ? 'udp ' : 'tcp ').$name."\n", FILE_APPEND | LOCK_EX);
 
-        if ($name === 'hang.example.test') {
+        if ($name === 'hang.example.com') {
             continue;
         }
 
@@ -130,7 +130,7 @@ while (microtime(true) < $until) {
             continue;
         }
 
-        $reply = $dumper->toBinary(dnsProbeReply($request, $name === 'tcp.example.test' && $socket === $udp));
+        $reply = $dumper->toBinary(dnsProbeReply($request, $name === 'tcp.example.com' && $socket === $udp));
 
         if ($socket === $udp) {
             stream_socket_sendto($udp, $reply, 0, $peer);

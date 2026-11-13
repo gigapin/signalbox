@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Build private checker inputs with synthetic scalar identities and reserved destinations. */
+/** Build private checker inputs with synthetic scalar identities and transport-faked destinations. */
 
 namespace Tests\Support;
 
@@ -27,7 +27,7 @@ final class CheckInputFixture
     {
         return new CheckInput(
             new CheckContext($teamId, $id, $id, MonitorRegion::Eu, CarbonImmutable::parse('2026-10-23T12:00:00Z')),
-            $configuration ?? new HttpMonitorConfiguration('https://checker.example.test/health'),
+            $configuration ?? new HttpMonitorConfiguration('https://checker.example.com/health'),
             $timeoutMs,
         );
     }

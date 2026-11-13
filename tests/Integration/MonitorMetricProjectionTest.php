@@ -151,10 +151,10 @@ it('allows a viewer to read metric controls and rejects a foreign route monitor 
 
 it('limits destination projection to a redacted URL without decrypting other settings', function (): void {
     app(TenantContext::class)->run($this->team->id, function (): void {
-        $this->monitor->forceFill(['url' => 'https://user:password@example.test/health?token=topsecret#private', 'headers_json' => ['authorization' => 'secret'], 'body' => 'private-body'])->save();
+        $this->monitor->forceFill(['url' => 'https://user:password@example.com/health?token=topsecret#private', 'headers_json' => ['authorization' => 'secret'], 'body' => 'private-body'])->save();
     });
     $this->actingAs($this->team->owner)->get('/teams/'.$this->team->id.'/monitors')->assertOk()
-        ->assertJsonPath('props.monitors.data.0.destination', 'https://example.test/health?token=[REDACTED]')
+        ->assertJsonPath('props.monitors.data.0.destination', 'https://example.com/health?token=[REDACTED]')
         ->assertDontSee('topsecret', false)->assertDontSee('private-body', false)->assertDontSee('authorization', false);
 });
 

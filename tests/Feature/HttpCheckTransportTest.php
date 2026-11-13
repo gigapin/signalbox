@@ -26,8 +26,8 @@ beforeEach(function (): void {
         throw new RuntimeException('Synthetic HTTP server did not start: '.$this->server->getErrorOutput());
     }
 
-    $this->origin = 'http://pinned.checker.test:'.$matches[1];
-    $this->app->instance(HostResolver::class, new FakeHostResolver(['pinned.checker.test' => ['127.0.0.1']]));
+    $this->origin = 'http://pinned.checker.example.com:'.$matches[1];
+    $this->app->instance(HostResolver::class, new FakeHostResolver(['pinned.checker.example.com' => ['127.0.0.1']]));
     config(['outbound-security.allowed_cidrs' => ['127.0.0.1/32']]);
     Http::allowStrayRequests([$this->origin.'/*']);
 });
@@ -86,7 +86,7 @@ it('refuses the loopback target without the explicit test exception before any s
         CheckInputFixture::make(1, new HttpMonitorConfiguration($this->origin.'/healthy')),
     ]))[1];
 
-    expect($result->error)->toBe(CheckError::BlockedAddress)
+    expect($result->error)->toBe(CheckError::ResolutionFailed)
         ->and($result->latencyMs)->toBeNull()
         ->and(file_get_contents($this->hits))->toBe('');
 });

@@ -104,7 +104,7 @@ it('merges authorized partial updates without exposing omitted secrets or persis
     $before = DB::table('monitors')->get()->toJson();
     $this->actingAs($this->team->owner)->{$method}("/teams/{$this->team->id}/monitors/{$this->monitor->id}", ['name' => ' Renamed '])->assertNoContent();
     expect($this->patch)->toBe(['name' => 'Renamed'])
-        ->and($this->captured->data->candidate()['url'])->toBe('https://example.invalid/health')
+        ->and($this->captured->data->candidate()['url'])->toBe('https://example.com/health')
         ->and(DB::table('monitors')->get()->toJson())->toBe($before);
 })->with(['patchJson', 'putJson']);
 
@@ -177,3 +177,21 @@ it('preserves monitor bytes for alternate numeric route representations too', fu
     $this->actingAs($this->team->owner)->postJson('/teams/00'.$this->team->id.'/monitors', [...MonitorInputFixture::cases()['keyword'][0], 'expected_keyword' => ' '])->assertNoContent();
     expect($this->captured->data->candidate()['expected_keyword'])->toBe(' ');
 });
+
+it('rejects internal DNS names on create and update without writing or flashing input', function (string $operation, string $transport): void {
+    $this->actingAs($this->team->owner);
+    $before = DB::table('monitors')->get()->toJson();
+    $url = "/teams/{$this->team->id}/monitors".($operation === 'update' ? '/'.$this->monitor->id : '');
+    $method = ($operation === 'update' ? 'patch' : 'post').($transport === 'json' ? 'Json' : '');
+    $payload = [...MonitorInputFixture::cases()['dns'][0], 'dns_name' => 'Postgres.'];
+    $response = $this->from('/account')->{$method}($url, $payload);
+
+    if ($transport === 'json') {
+        $response->assertUnprocessable()->assertJsonValidationErrors('dns_name')->assertDontSee('Postgres', false);
+    } else {
+        $response->assertRedirect('/account')->assertSessionHasErrors('dns_name')->assertSessionHas('_old_input', []);
+    }
+
+    expect(DB::table('monitors')->get()->toJson())->toBe($before)
+        ->and($this->captured)->toBeNull();
+})->with(['create', 'update'])->with(['json', 'web']);

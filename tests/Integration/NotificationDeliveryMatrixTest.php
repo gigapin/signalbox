@@ -56,7 +56,7 @@ beforeEach(function (): void {
     $this->baseline = DB::transactionLevel();
     $this->providerStatus = 204;
     $this->resolver = new FakeHostResolver([
-        'hooks.example.test' => ['93.184.216.34'],
+        'hooks.example.com' => ['93.184.216.34'],
         'hooks.slack.com' => ['93.184.216.34'],
         'api.telegram.org' => ['93.184.216.34'],
     ]);
@@ -437,7 +437,7 @@ it('restores worker context between interleaved tenant envelopes and rejects a f
     $other = Team::factory()->create();
     $foreign = matrixChannel($other, 'webhook');
     $monitor = app(TenantContext::class)->run($other->id, function () use ($foreign): Monitor {
-        $foreign->forceFill(['config_json' => [...$foreign->config_json, 'url' => 'https://hooks.example.test/tenant-b']])->save();
+        $foreign->forceFill(['config_json' => [...$foreign->config_json, 'url' => 'https://hooks.example.com/tenant-b']])->save();
 
         return Monitor::factory()->create();
     });
@@ -461,7 +461,7 @@ it('restores worker context between interleaved tenant envelopes and rejects a f
     expect(matrixRows($this->team)->sole()->status)->toBe(DeliveryStatus::Sent)
         ->and(matrixRows($other)->sole()->status)->toBe(DeliveryStatus::Sent);
     Http::assertSentCount(2);
-    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://hooks.example.test/tenant-b'
+    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://hooks.example.com/tenant-b'
         && $request['data']['incident_id'] === $incident->id
         && $request->header('X-Signalbox-Id') === [$remote->message_uuid]);
 });

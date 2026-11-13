@@ -32,8 +32,8 @@ $targetAttempts = 0;
 if (in_array($mode, ['pipeline', 'loopback'], true)) {
     $origin = (string) getenv('CHECK_WORKER_ORIGIN');
     $app->instance(HostResolver::class, new Tests\Support\FakeHostResolver([
-        'example.invalid' => ['93.184.216.34'],
-        'pinned.checker.test' => ['127.0.0.1'],
+        'example.com' => ['93.184.216.34'],
+        'pinned.checker.example.com' => ['127.0.0.1'],
     ]));
     Illuminate\Support\Facades\Http::preventStrayRequests();
 
@@ -52,7 +52,7 @@ if (in_array($mode, ['pipeline', 'loopback'], true)) {
             return Illuminate\Support\Facades\Http::response('healthy');
         });
     } else {
-        if (preg_match('~\Ahttp://pinned\.checker\.test:[0-9]+\z~D', $origin) !== 1) {
+        if (preg_match('~\Ahttp://pinned\.checker\.example\.com:[0-9]+\z~D', $origin) !== 1) {
             throw new InvalidArgumentException('The worker probe requires its explicit loopback origin.');
         }
 

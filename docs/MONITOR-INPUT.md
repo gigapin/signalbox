@@ -41,7 +41,7 @@ Global TrimStrings and ConvertEmptyStringsToNull skip only POST/PUT/PATCH reques
 
 JSON failures use Laravel's 422 field-error response without submitted or decrypted values in messages. Web failures redirect with errors and flash no original input. Existing decrypted fields are never merged into HTTP input, and global `dontFlash` also excludes known private monitor configuration for future service validation exceptions. No validation result is returned by the test routes. Future edit screens must provide safe projections explicitly rather than automatically repopulating private values.
 
-Syntax validation does not authorize a network destination. Since M2.03 the validator also applies the network-free part of the [outbound policy](OUTBOUND-SECURITY.md): HTTP/keyword URL hosts, TLS hosts and DNS resolvers that are local names or blocked literal addresses fail with a generic field error. Hostnames are not resolved at save time; the access-time guard repeats the complete policy, pins resolved addresses and validates redirects before checker or webhook I/O. M2.04 owns CRUD/policies, state transitions and concurrent plan limits.
+Syntax validation does not authorize a network destination. Since M2.03 the validator also applies the network-free part of the [outbound policy](OUTBOUND-SECURITY.md): HTTP/keyword URL hosts, TLS hosts, DNS question names and DNS resolvers that are local names or blocked literal addresses fail with a generic field error. Hostnames are not resolved at save time; the access-time guard repeats the complete policy, pins resolved addresses and validates redirects before checker or webhook I/O. M2.04 owns CRUD/policies, state transitions and concurrent plan limits.
 
 ## Verification
 
@@ -51,3 +51,9 @@ MonitorInputSyntaxTest covers local URL/IDNA/IP parsing, headers, DNS families a
 docker compose run --rm php-test composer test -- --filter=MonitorInput --fail-on-skipped --fail-on-warning
 ./scripts/verify.sh
 ```
+
+## Public DNS naming boundary (SEC.05)
+
+After syntax normalization, question names and outbound hostnames must contain multiple labels and must not end in `localhost`, `local`, `internal`, `test`, `invalid`, `example` or `onion`. This shares the status-domain suffix list without applying the status-page-only primary-origin or proof-length restrictions. DNS underscore labels remain supported. The `dns_name` field is checked with either the system or a custom resolver, including effective merged updates. Expected DNS values remain comparison data and are not subjected to outbound address authorization.
+
+Names that are syntactically public are not resolved during validation. Execution repeats the filter and rejects internal aliases before using their data. Existing forbidden configurations are not migrated automatically; replace their target when updating them. See [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md#internal-dns-names-sec05) for error compatibility and limitations.

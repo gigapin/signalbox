@@ -323,6 +323,10 @@ final readonly class MonitorInputValidator
             }
         }
 
+        if ($type === 'dns' && is_string($candidate['dns_name'] ?? null)) {
+            $hosts['dns_name'] = $candidate['dns_name'];
+        }
+
         foreach (['tls' => 'tls_host', 'dns' => 'dns_resolver'] as $variant => $field) {
             if ($type === $variant && is_string($candidate[$field] ?? null)) {
                 $hosts[$field] = $candidate[$field];

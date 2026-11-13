@@ -62,28 +62,28 @@ function networkDnsReply(string $name, int $type, array $records, int $rcode = M
 }
 
 it('starts mixed observations before replies and preserves input correlation and original TLS identity', function (): void {
-    $this->dns->answers['tls.example.test.|1'] = networkDnsReply('tls.example.test', 1, [new Record('tls.example.test', 1, 1, 60, '8.8.8.8')]);
-    $this->dns->answers['dns.example.test.|1'] = networkDnsReply('dns.example.test', 1, [new Record('dns.example.test', 1, 1, 90, '1.1.1.1')]);
+    $this->dns->answers['tls.example.com.|1'] = networkDnsReply('tls.example.com', 1, [new Record('tls.example.com', 1, 1, 60, '8.8.8.8')]);
+    $this->dns->answers['dns.example.com.|1'] = networkDnsReply('dns.example.com', 1, [new Record('dns.example.com', 1, 1, 90, '1.1.1.1')]);
     $this->dns->beforeReply = function (): void {
         expect($this->dns->queries)->toHaveCount(3);
     };
 
     $results = runNetworkChecks([
-        CheckInputFixture::make(9, new TlsMonitorConfiguration('tls.example.test', 8443)),
-        CheckInputFixture::make(2, new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['1.1.1.1'])),
+        CheckInputFixture::make(9, new TlsMonitorConfiguration('tls.example.com', 8443)),
+        CheckInputFixture::make(2, new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['1.1.1.1'])),
     ]);
 
     expect(array_keys($results))->toBe([9, 2])
         ->and($results[9]->status)->toBe(MonitorStatus::Up)
         ->and($results[9]->tlsExpiresAt)->not->toBeNull()
         ->and($results[2]->status)->toBe(MonitorStatus::Up)
-        ->and($this->tls->destinations[0]->host)->toBe('tls.example.test')
+        ->and($this->tls->destinations[0]->host)->toBe('tls.example.com')
         ->and($this->tls->destinations[0]->port)->toBe(8443)
         ->and($this->tls->destinations[0]->addresses)->toBe(['8.8.8.8']);
 });
 
 it('validates the complete batch before DNS or TLS I/O', function (string $case): void {
-    $tls = new TlsMonitorConfiguration('tls.example.test', 443);
+    $tls = new TlsMonitorConfiguration('tls.example.com', 443);
     $inputs = match ($case) {
         'duplicate' => [CheckInputFixture::make(configuration: $tls), CheckInputFixture::make(configuration: $tls)],
         'foreign' => [CheckInputFixture::make(configuration: $tls), CheckInputFixture::make(2, $tls, teamId: 2)],
@@ -92,7 +92,7 @@ it('validates the complete batch before DNS or TLS I/O', function (string $case)
         'timeout-large' => [CheckInputFixture::make(configuration: $tls, timeoutMs: 10001)],
         'size' => array_map(fn (int $id) => CheckInputFixture::make($id, $tls), range(1, 11)),
         'not-list' => [2 => CheckInputFixture::make(configuration: $tls)],
-        'invalid-dns' => [CheckInputFixture::make(configuration: $tls), CheckInputFixture::make(2, new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['invalid']))],
+        'invalid-dns' => [CheckInputFixture::make(configuration: $tls), CheckInputFixture::make(2, new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['invalid']))],
     };
 
     expect(fn () => runNetworkChecks($inputs))->toThrow(InvalidArgumentException::class)
@@ -110,30 +110,30 @@ it('rejects forbidden TLS and custom resolver destinations before I/O', function
     $configuration = match ($case) {
         'local' => new TlsMonitorConfiguration('localhost', 443),
         'private' => new TlsMonitorConfiguration('127.0.0.1', 443),
-        'resolver' => new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['8.8.8.8'], '127.0.0.1'),
+        'resolver' => new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['8.8.8.8'], '127.0.0.1'),
     };
     $result = runNetworkChecks([CheckInputFixture::make(configuration: $configuration)])[1];
 
-    expect($result->error)->toBe($case === 'local' ? CheckError::LocalName : CheckError::BlockedAddress)
+    expect($result->error)->toBe($case === 'local' ? CheckError::LocalName : CheckError::ResolutionFailed)
         ->and($result->latencyMs)->toBeNull()
         ->and($this->dns->queries)->toBeEmpty()
         ->and($this->tls->destinations)->toBeEmpty();
 })->with(['local', 'private', 'resolver']);
 
 it('refuses mixed public and private TLS answers without trying any connection', function (): void {
-    $this->dns->answers['tls.example.test.|1'] = networkDnsReply('tls.example.test', 1, [
-        new Record('tls.example.test', 1, 1, 60, '8.8.8.8'),
-        new Record('tls.example.test', 1, 1, 60, '127.0.0.1'),
+    $this->dns->answers['tls.example.com.|1'] = networkDnsReply('tls.example.com', 1, [
+        new Record('tls.example.com', 1, 1, 60, '8.8.8.8'),
+        new Record('tls.example.com', 1, 1, 60, '127.0.0.1'),
     ]);
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new TlsMonitorConfiguration('tls.example.test', 443))])[1];
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new TlsMonitorConfiguration('tls.example.com', 443))])[1];
 
-    expect($result->error)->toBe(CheckError::BlockedAddress)
+    expect($result->error)->toBe(CheckError::ResolutionFailed)
         ->and($this->tls->destinations)->toBeEmpty();
 });
 
 it('uses the guarded custom resolver but treats returned private record addresses as comparison data', function (): void {
-    $this->dns->answers['dns.example.test.|1'] = networkDnsReply('dns.example.test', 1, [new Record('dns.example.test', 1, 1, 0, '127.0.0.1')]);
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['127.0.0.1'], '8.8.8.8'))])[1];
+    $this->dns->answers['dns.example.com.|1'] = networkDnsReply('dns.example.com', 1, [new Record('dns.example.com', 1, 1, 0, '127.0.0.1')]);
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['127.0.0.1'], '8.8.8.8'))])[1];
 
     expect($result->status)->toBe(MonitorStatus::Up)
         ->and($this->dns->queries[0]['server'])->toBe('8.8.8.8:53')
@@ -141,31 +141,31 @@ it('uses the guarded custom resolver but treats returned private record addresse
 });
 
 it('evaluates all supported DNS wire payloads and ignores unrelated answer records', function (DnsRecordType $type, int $wireType, mixed $payload, string $expected): void {
-    $this->dns->answers['dns.example.test.|'.$wireType] = networkDnsReply('dns.example.test', $wireType, [
-        new Record('unrelated.example.test', $wireType, 1, 60, 'ignored'),
-        new Record('DNS.EXAMPLE.TEST.', $wireType, 1, 300, $payload),
+    $this->dns->answers['dns.example.com.|'.$wireType] = networkDnsReply('dns.example.com', $wireType, [
+        new Record('unrelated.example.com', $wireType, 1, 60, 'ignored'),
+        new Record('DNS.example.com.', $wireType, 1, 300, $payload),
     ]);
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', $type, [$expected]))])[1];
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', $type, [$expected]))])[1];
 
     expect($result->status)->toBe(MonitorStatus::Up);
 })->with([
     [DnsRecordType::A, 1, '8.8.8.8', '8.8.8.8'],
     [DnsRecordType::AAAA, 28, '2001:4860:4860:0:0:0:0:8888', '2001:4860:4860::8888'],
-    [DnsRecordType::CNAME, 5, 'TARGET.EXAMPLE.TEST.', 'target.example.test'],
-    [DnsRecordType::MX, 15, ['priority' => 10, 'target' => 'MAIL.EXAMPLE.TEST.'], '10 mail.example.test'],
+    [DnsRecordType::CNAME, 5, 'TARGET.example.com.', 'target.example.com'],
+    [DnsRecordType::MX, 15, ['priority' => 10, 'target' => 'MAIL.example.com.'], '10 mail.example.com'],
     [DnsRecordType::MX, 15, ['priority' => 0, 'target' => ''], '0 .'],
     [DnsRecordType::TXT, 16, [' a', "\tB "], " a\tB "],
 ]);
 
 it('follows inline or separately queried aliases under a shared deadline', function (bool $inline): void {
-    $records = [new Record('dns.example.test', 5, 1, 60, 'target.example.test')];
-    $answer = new Record('target.example.test', 1, 1, 60, '8.8.8.8');
-    $this->dns->answers['dns.example.test.|1'] = networkDnsReply('dns.example.test', 1, $inline ? [...$records, $answer] : $records);
-    $this->dns->answers['target.example.test.|1'] = networkDnsReply('target.example.test', 1, [$answer]);
+    $records = [new Record('dns.example.com', 5, 1, 60, 'target.example.com')];
+    $answer = new Record('target.example.com', 1, 1, 60, '8.8.8.8');
+    $this->dns->answers['dns.example.com.|1'] = networkDnsReply('dns.example.com', 1, $inline ? [...$records, $answer] : $records);
+    $this->dns->answers['target.example.com.|1'] = networkDnsReply('target.example.com', 1, [$answer]);
     $this->dns->beforeReply = function (): void {
         $this->clock->now += 10;
     };
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['8.8.8.8']))])[1];
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['8.8.8.8']))])[1];
 
     expect($result->status)->toBe(MonitorStatus::Up)
         ->and($this->dns->queries)->toHaveCount($inline ? 1 : 2);
@@ -177,9 +177,9 @@ it('follows inline or separately queried aliases under a shared deadline', funct
 
 it('classifies DNS negative, server and malformed responses safely', function (string $case, CheckError $expected): void {
     $records = match ($case) {
-        'bad-address' => [new Record('dns.example.test', 1, 1, 60, 'secret-invalid-payload')],
-        'cycle' => [new Record('dns.example.test', 5, 1, 60, 'dns.example.test')],
-        'ambiguous' => [new Record('dns.example.test', 5, 1, 60, 'a.example.test'), new Record('dns.example.test', 5, 1, 60, 'b.example.test')],
+        'bad-address' => [new Record('dns.example.com', 1, 1, 60, 'secret-invalid-payload')],
+        'cycle' => [new Record('dns.example.com', 5, 1, 60, 'dns.example.com')],
+        'ambiguous' => [new Record('dns.example.com', 5, 1, 60, 'a.example.com'), new Record('dns.example.com', 5, 1, 60, 'b.example.com')],
         default => [],
     };
     $rcode = match ($case) {
@@ -187,11 +187,11 @@ it('classifies DNS negative, server and malformed responses safely', function (s
         'servfail' => Message::RCODE_SERVER_FAILURE,
         default => Message::RCODE_OK,
     };
-    $this->dns->answers['dns.example.test.|1'] = networkDnsReply('dns.example.test', 1, $records, $rcode);
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['8.8.8.8']))])[1];
+    $this->dns->answers['dns.example.com.|1'] = networkDnsReply('dns.example.com', 1, $records, $rcode);
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['8.8.8.8']))])[1];
 
     expect($result->error)->toBe($expected)
-        ->and($result->errorMessage())->not->toContain('secret', 'dns.example.test');
+        ->and($result->errorMessage())->not->toContain('secret', 'dns.example.com');
 })->with([
     ['empty', CheckError::DnsMissing], ['nxdomain', CheckError::DnsMissing], ['servfail', CheckError::DnsResponse],
     ['bad-address', CheckError::DnsMalformed], ['cycle', CheckError::DnsMalformed], ['ambiguous', CheckError::DnsMalformed],
@@ -199,10 +199,10 @@ it('classifies DNS negative, server and malformed responses safely', function (s
 
 it('limits alias chains to eight hops', function (): void {
     foreach (range(0, 8) as $index) {
-        $name = 'alias'.$index.'.example.test';
-        $this->dns->answers[$name.'.|1'] = networkDnsReply($name, 1, [new Record($name, 5, 1, 60, 'alias'.($index + 1).'.example.test')]);
+        $name = 'alias'.$index.'.example.com';
+        $this->dns->answers[$name.'.|1'] = networkDnsReply($name, 1, [new Record($name, 5, 1, 60, 'alias'.($index + 1).'.example.com')]);
     }
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('alias0.example.test', DnsRecordType::A, ['8.8.8.8']))])[1];
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('alias0.example.com', DnsRecordType::A, ['8.8.8.8']))])[1];
     expect($result->error)->toBe(CheckError::DnsMalformed)
         ->and($this->dns->queries)->toHaveCount(9);
 });
@@ -211,17 +211,17 @@ it('rejects completion exactly at the DNS deadline without retry', function (): 
     $this->dns->beforeReply = function (): void {
         $this->clock->now = 1000;
     };
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['8.8.8.8']))])[1];
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['8.8.8.8']))])[1];
     expect($result->error)->toBe(CheckError::Timeout)
         ->and($this->dns->queries)->toHaveCount(1);
 });
 
 it('subtracts DNS acquisition from the TLS handshake budget', function (): void {
-    $this->dns->answers['tls.example.test.|1'] = networkDnsReply('tls.example.test', 1, [new Record('tls.example.test', 1, 1, 60, '8.8.8.8')]);
+    $this->dns->answers['tls.example.com.|1'] = networkDnsReply('tls.example.com', 1, [new Record('tls.example.com', 1, 1, 60, '8.8.8.8')]);
     $this->dns->beforeReply = function (): void {
         $this->clock->now += 10;
     };
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new TlsMonitorConfiguration('tls.example.test', 443))])[1];
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new TlsMonitorConfiguration('tls.example.com', 443))])[1];
     expect($result->status)->toBe(MonitorStatus::Up)
         ->and($result->latencyMs)->toBe(20.0)
         ->and($this->tls->budgets)->toBe([980.0]);
@@ -236,17 +236,17 @@ it('turns recognized TLS failures into safe outcomes and propagates programming 
 });
 
 it('resolves A and AAAA together for the HTTP guard and refuses partial data after a family failure', function (): void {
-    $this->dns->answers['http.example.test.|1'] = networkDnsReply('http.example.test', 1, [new Record('http.example.test', 1, 1, 60, '8.8.8.8')]);
-    expect(app(SystemHostResolver::class)->resolve('http.example.test'))->toBe(['8.8.8.8']);
-    $this->dns->answers['http.example.test.|28'] = new CheckTransportFailed(CheckError::DnsResponse);
-    expect(app(SystemHostResolver::class)->resolve('http.example.test'))->toBe([]);
-    $this->dns->answers['http.example.test.|28'] = new CheckTransportFailed(CheckError::Timeout);
-    expect(fn () => app(SystemHostResolver::class)->resolve('http.example.test'))->toThrow(CheckTransportFailed::class);
+    $this->dns->answers['http.example.com.|1'] = networkDnsReply('http.example.com', 1, [new Record('http.example.com', 1, 1, 60, '8.8.8.8')]);
+    expect(app(SystemHostResolver::class)->resolve('http.example.com'))->toBe(['8.8.8.8']);
+    $this->dns->answers['http.example.com.|28'] = new CheckTransportFailed(CheckError::DnsResponse);
+    expect(app(SystemHostResolver::class)->resolve('http.example.com'))->toBe([]);
+    $this->dns->answers['http.example.com.|28'] = new CheckTransportFailed(CheckError::Timeout);
+    expect(fn () => app(SystemHostResolver::class)->resolve('http.example.com'))->toThrow(CheckTransportFailed::class);
 });
 
 it('returns input order even when a later TLS observation completes before an earlier DNS observation', function (): void {
     $results = runNetworkChecks([
-        CheckInputFixture::make(9, new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['8.8.8.8'])),
+        CheckInputFixture::make(9, new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['8.8.8.8'])),
         CheckInputFixture::make(1, new TlsMonitorConfiguration('8.8.8.8', 443)),
     ]);
 
@@ -259,15 +259,15 @@ it('propagates programming errors and cancels unrelated pending acquisitions', f
     $this->tls->failure = new LogicException('Synthetic setup error.');
 
     expect(fn () => runNetworkChecks([
-        CheckInputFixture::make(1, new DnsMonitorConfiguration('dns.example.test', DnsRecordType::A, ['8.8.8.8'])),
+        CheckInputFixture::make(1, new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['8.8.8.8'])),
         CheckInputFixture::make(2, new TlsMonitorConfiguration('8.8.8.8', 443)),
     ]))->toThrow(LogicException::class)
         ->and($this->dns->cancelled)->toBe(1);
 });
 
 it('does not follow a direct CNAME monitor target', function (): void {
-    $this->dns->answers['dns.example.test.|5'] = networkDnsReply('dns.example.test', 5, [new Record('dns.example.test', 5, 1, 60, 'target.example.test')]);
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', DnsRecordType::CNAME, ['target.example.test']))])[1];
+    $this->dns->answers['dns.example.com.|5'] = networkDnsReply('dns.example.com', 5, [new Record('dns.example.com', 5, 1, 60, 'target.example.com')]);
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', DnsRecordType::CNAME, ['target.example.com']))])[1];
     expect($result->status)->toBe(MonitorStatus::Up)
         ->and($this->dns->queries)->toHaveCount(1);
 });
@@ -277,18 +277,18 @@ it('rejects malformed DNS data and mismatched questions', function (string $case
     $wire = $type === DnsRecordType::TXT ? 16 : 15;
     $payload = match ($case) {
         'txt' => ['good', 1],
-        'mx' => ['priority' => 'bad', 'target' => 'mail.example.test'],
-        default => ['priority' => 10, 'target' => 'mail.example.test'],
+        'mx' => ['priority' => 'bad', 'target' => 'mail.example.com'],
+        default => ['priority' => 10, 'target' => 'mail.example.com'],
     };
-    $reply = networkDnsReply($case === 'question' ? 'other.example.test' : 'dns.example.test', $wire, [new Record('dns.example.test', $wire, 1, 60, $payload)]);
-    $this->dns->answers['dns.example.test.|'.$wire] = $reply;
-    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', $type, [$type === DnsRecordType::TXT ? 'good' : '10 mail.example.test']))])[1];
+    $reply = networkDnsReply($case === 'question' ? 'other.example.com' : 'dns.example.com', $wire, [new Record('dns.example.com', $wire, 1, 60, $payload)]);
+    $this->dns->answers['dns.example.com.|'.$wire] = $reply;
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', $type, [$type === DnsRecordType::TXT ? 'good' : '10 mail.example.com']))])[1];
     expect($result->error)->toBe(CheckError::DnsMalformed);
 })->with(['txt', 'mx', 'question']);
 
 it('maps the HTTP guard DNS deadline to one safe timeout without sending a request', function (): void {
     Http::fake();
-    $this->dns->answers['checker.example.test.|1'] = new CheckTransportFailed(CheckError::Timeout);
+    $this->dns->answers['checker.example.com.|1'] = new CheckTransportFailed(CheckError::Timeout);
     $result = app(TenantContext::class)->run(1, fn (): array => app(HttpCheckCoordinator::class)->run([CheckInputFixture::make()]))[1];
     expect($result->error)->toBe(CheckError::Timeout)
         ->and($result->latencyMs)->toBeNull();
@@ -298,8 +298,53 @@ it('maps the HTTP guard DNS deadline to one safe timeout without sending a reque
 
 it('refuses malformed DNS and batch configuration instead of removing operational bounds', function (): void {
     config(['monitor-checks.resolution_timeout_ms' => 0]);
-    expect(fn () => app(SystemHostResolver::class)->resolve('checker.example.test'))->toThrow(LogicException::class);
+    expect(fn () => app(SystemHostResolver::class)->resolve('checker.example.com'))->toThrow(LogicException::class);
     config(['monitor-checks.max_batch_size' => null]);
     expect(fn () => runNetworkChecks([]))->toThrow(LogicException::class)
         ->and($this->dns->queries)->toBeEmpty();
 });
+
+it('refuses stored internal DNS and TLS names before any transport with either resolver', function (string $name, ?string $resolver): void {
+    $results = runNetworkChecks([
+        CheckInputFixture::make(1, new DnsMonitorConfiguration($name, DnsRecordType::A, ['127.0.0.1'], $resolver)),
+        CheckInputFixture::make(2, new TlsMonitorConfiguration($name, 443)),
+    ]);
+
+    foreach ($results as $result) {
+        expect($result->status)->toBe(MonitorStatus::Down)
+            ->and($result->error)->toBe(CheckError::LocalName)
+            ->and($result->latencyMs)->toBeNull();
+    }
+
+    expect($this->dns->queries)->toBe([])
+        ->and($this->tls->destinations)->toBe([]);
+})->with(['postgres', 'Redis.', 'DB.INTERNAL.', 'host.service.local', 'host.test', 'host.invalid', 'host.example', 'host.onion', 'api.localhost'])
+    ->with([null, '8.8.8.8']);
+
+it('refuses internal aliases before comparing inline data or sending another question', function (bool $inline, string $target): void {
+    $records = [new Record('dns.example.com', 5, 1, 60, $target)];
+
+    if ($inline) {
+        $records[] = new Record($target, 1, 1, 60, '127.0.0.1');
+    }
+
+    $this->dns->answers['dns.example.com.|1'] = networkDnsReply('dns.example.com', 1, $records);
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', DnsRecordType::A, ['127.0.0.1']))])[1];
+
+    expect($result->error)->toBe(CheckError::LocalName)
+        ->and($this->dns->queries)->toHaveCount(1)
+        ->and($this->tls->destinations)->toBe([]);
+})->with([true, false])->with(['postgres', 'DB.INTERNAL.']);
+
+it('uses identical TLS outcomes for empty private and mixed address answers', function (array $addresses): void {
+    $this->dns->answers['tls.example.com.|1'] = networkDnsReply(
+        'tls.example.com',
+        1,
+        array_map(static fn (string $address): Record => new Record('tls.example.com', 1, 1, 60, $address), $addresses)
+    );
+    $result = runNetworkChecks([CheckInputFixture::make(configuration: new TlsMonitorConfiguration('tls.example.com', 443))])[1];
+
+    expect($result->error)->toBe(CheckError::ResolutionFailed)
+        ->and($result->errorMessage())->toBe('The destination is unavailable.')
+        ->and($this->tls->destinations)->toBe([]);
+})->with([[[]], [['127.0.0.1']], [['8.8.8.8', '127.0.0.1']]]);

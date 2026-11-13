@@ -58,3 +58,9 @@ Certificates, trust anchors and private keys are generated in temporary test sto
 OpenSSL is an explicit platform requirement. ReactPHP DNS, event-loop, promise, promise-timer and socket are now direct requirements at their existing locked versions; see [DEPENDENCIES.md](DEPENDENCIES.md). No migration, environment variable, development key, route or application-process change is required.
 
 Official transport references: [ReactPHP DNS](https://reactphp.org/dns/), [ReactPHP Socket](https://reactphp.org/socket/) and [PHP TLS context options](https://www.php.net/manual/en/context.ssl.php).
+
+## Internal-name filtering (SEC.05)
+
+The coordinator refuses single-label and reserved/internal-suffix names before selecting a DNS resolver or starting either transport. The shared lookup checks followed CNAME targets before consuming inline answer records or sending another question, preserving its existing deadlines and alias limits. This protects both previously stored configurations and fresh form inputs. System resolver selection is unchanged; a custom resolver does not bypass naming restrictions.
+
+HTTP/keyword and TLS blocked-address versus empty-resolution observations share `resolution_failed` and `The destination is unavailable.` before results are persisted. The original guard reason remains internal. Private DNS answer addresses can still match expectations because the checker does not connect to them. Direct CNAME/MX comparison values also remain data. See [the outbound policy](OUTBOUND-SECURITY.md#internal-dns-names-sec05) for the suffix list, deployment adoption and split-horizon limitation.

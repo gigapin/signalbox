@@ -20,7 +20,7 @@
     "http": {
       "form": {
         "name": "Contract HTTP",
-        "url": "https://contract.example.invalid/health?token=contract-secret",
+        "url": "https://contract.example.com/health?token=contract-secret",
         "method": "POST",
         "headers": [
           {
@@ -53,7 +53,7 @@
         "method": "POST",
         "expected_status": "204",
         "follow_redirects": true,
-        "url": "https://contract.example.invalid/health?token=contract-secret",
+        "url": "https://contract.example.com/health?token=contract-secret",
         "headers": {
           "Authorization": "Bearer contract-secret"
         },
@@ -78,7 +78,7 @@
       "form": {
         "name": "Contract keyword",
         "type": "keyword",
-        "url": "https://contract.example.invalid/status",
+        "url": "https://contract.example.com/status",
         "expected_keyword": "all systems go",
         "keyword_mode": "absent"
       },
@@ -96,7 +96,7 @@
         "follow_redirects": false,
         "expected_keyword": "all systems go",
         "keyword_mode": "absent",
-        "url": "https://contract.example.invalid/status",
+        "url": "https://contract.example.com/status",
         "headers": {},
         "body": null
       },
@@ -120,7 +120,7 @@
       "form": {
         "name": "Contract TLS",
         "type": "tls",
-        "tls_host": "contract.example.invalid",
+        "tls_host": "contract.example.com",
         "tls_port": "8443"
       },
       "create": {
@@ -132,7 +132,7 @@
         "regions": [
           "eu"
         ],
-        "tls_host": "contract.example.invalid",
+        "tls_host": "contract.example.com",
         "tls_port": "8443",
         "tls_expiry_warning_days": null
       }
@@ -141,7 +141,7 @@
       "form": {
         "name": "Contract DNS",
         "type": "dns",
-        "dns_name": "contract.example.invalid",
+        "dns_name": "contract.example.com",
         "dns_record_type": "TXT",
         "dns_expected_values": [
           "v=spf1 -all"
@@ -156,7 +156,7 @@
         "regions": [
           "eu"
         ],
-        "dns_name": "contract.example.invalid",
+        "dns_name": "contract.example.com",
         "dns_record_type": "TXT",
         "dns_expected_values": [
           "v=spf1 -all"

@@ -99,7 +99,7 @@ function engineGateServer(string $hits, string $release): array
             throw new RuntimeException('Synthetic gate server did not become ready.');
         }
 
-        return [$server, 'http://pinned.checker.test:'.$matches[1]];
+        return [$server, 'http://pinned.checker.example.com:'.$matches[1]];
     } catch (Throwable $exception) {
         $server->stop();
 
@@ -117,9 +117,9 @@ it('uses one persistent worker across tenants and an exception without leaking c
     try {
         $ids = $alpha->connection->table('monitors')->where('team_id', $alpha->teamId)->orderBy('id')->pluck('id');
         $betaId = (int) $beta->connection->table('monitors')->where('team_id', $beta->teamId)->value('id');
-        $first = prepareWorkerSlots($alpha, (int) $ids[0], 'https://example.invalid/team/'.$alpha->teamId.'/healthy')[0];
-        $failed = prepareWorkerSlots($beta, $betaId, 'https://example.invalid/team/'.$beta->teamId.'/infrastructure')[0];
-        $last = prepareWorkerSlots($alpha, (int) $ids[1], 'https://example.invalid/team/'.$alpha->teamId.'/healthy')[0];
+        $first = prepareWorkerSlots($alpha, (int) $ids[0], 'https://example.com/team/'.$alpha->teamId.'/healthy')[0];
+        $failed = prepareWorkerSlots($beta, $betaId, 'https://example.com/team/'.$beta->teamId.'/infrastructure')[0];
+        $last = prepareWorkerSlots($alpha, (int) $ids[1], 'https://example.com/team/'.$alpha->teamId.'/healthy')[0];
 
         foreach ([$first, $failed] as $work) {
             $queue->push(new DeliverCheckBatch($work->team_id, [$work->id => $work->monitor_id], 'eu'), '', $name);

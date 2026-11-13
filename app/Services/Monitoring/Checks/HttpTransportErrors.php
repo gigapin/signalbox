@@ -30,7 +30,7 @@ final class HttpTransportErrors
         }
 
         if ($error instanceof OutboundDestinationRejected) {
-            return CheckError::from($error->reason->value);
+            return CheckError::fromOutboundRejection($error->reason);
         }
 
         $current = $error;

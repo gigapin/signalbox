@@ -163,10 +163,11 @@ final readonly class NetworkCheckCoordinator
             $configuration = $input->configuration;
 
             if ($configuration instanceof DnsMonitorConfiguration) {
+                $name = $this->syntax->host($configuration->name, allowIp: false, allowUnderscore: true);
+                $this->guard->assertLocallyAllowed($name);
                 $server = $this->servers->select($configuration->resolver, $this->guard);
                 $started = $this->clock->milliseconds();
                 $deadline = $started + $input->timeoutMs;
-                $name = $this->syntax->host($configuration->name, allowIp: false, allowUnderscore: true);
                 $pending = $this->dns->records($name, $configuration->recordType, $server, $deadline, $loop)
                     ->then(fn (array $values): CheckOutcome => $this->dnsStrategy->evaluate($input, $values, CarbonImmutable::now('UTC'), $this->elapsed($started, $deadline)));
             } elseif ($configuration instanceof TlsMonitorConfiguration) {
@@ -194,7 +195,7 @@ final readonly class NetworkCheckCoordinator
         return $pending->catch(function (Throwable $error) use ($input, $started): CheckOutcome {
             $reason = match (true) {
                 $error instanceof CheckTransportFailed => $error->reason,
-                $error instanceof OutboundDestinationRejected => CheckError::from($error->reason->value),
+                $error instanceof OutboundDestinationRejected => CheckError::fromOutboundRejection($error->reason),
                 default => throw $error,
             };
 

@@ -12,6 +12,33 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Chiusura sessione e ripartenza — SEC.05/SEC.07, 2026-11-13
+
+Questo è il riferimento corrente per la prossima sessione; le note di chiusura e i prossimi passi riportati più sotto sono storici.
+
+- **Avanzamento SEC: 6/14 completati**, SEC.01–SEC.05 e SEC.07. In questa ripresa sono stati completati SEC.05 (nomi/alias DNS interni ed esiti di destinazione uniformati) e SEC.07 (ammissione TLS autenticata e proxy Caddy protetto). Nessun task resta in corso.
+- **SEC.06 rinviato esplicitamente dall’utente**, che al momento non può fornire le decisioni amministrative/prodotto richieste. Non assumere approvate le opzioni suggerite nelle domande: nessuna decisione acquisita su limiti trial, registrazione, tetti per hostname o contatto antiabuso. Non ripartire da SEC.06 senza nuove indicazioni.
+- **Prossimo task tecnico SEC.08**: impedire che un membro rimosso continui a ricevere gli eventi del canale privato del team sul socket già aperto. Leggere AGENTS, specifica, questo piano, DEPENDENCIES, BOOTSTRAP, [TENANCY.md](TENANCY.md), [REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md). Punti di partenza: `app/Actions/Identity/ManageTeamMembers.php`, autorizzazione broadcast, gestione del socket/reconnect frontend e `tests/Feature/ReverbProtocolSecurityTest.php`; usare anche `BroadcastAuthorizationTest`, `RealtimeDeliveryTest` e `RealtimeAcceptance.test.tsx`. Verificare le capacità effettive della versione Reverb installata prima di scegliere tra chiusura server delle connessioni e riautorizzazione periodica; testare la mancata consegna dopo la revoca, non solo il rifiuto di una nuova autorizzazione. **M9.01 resta dopo la sequenza SEC**; SEC.09–SEC.14 ancora da fare, con eventuali decisioni specifiche richieste dalle rispettive voci.
+- **Git riservato all’utente**: nessun comando Git/gh eseguito e nessuno stato di commit, branch, push, PR o merge verificato. I branch effettivi non sono attestati. Commit suggeriti per le modifiche applicative: SEC.05 `git commit -m "fix: block internal DNS queries and normalize destination failures"`; SEC.07 `git commit -m "fix: authenticate internal TLS certificate admission"`. Branch suggerito per la ripartenza: `fix/revoke-removed-member-realtime-access`. L’utente gestisce lo stato Git e la separazione del lavoro fra branch.
+- **Ultima verifica applicativa completa: exit 0**, dopo SEC.07: audit Composer senza advisory; PHP-CS-Fixer dry-run 668 file; Larastan livello 8; **3508 test Pest / 23842 asserzioni in 646.37 s**, **5 test qualità**, **467 DOM / 38 file**, lint/formato/TypeScript e build. Suite mirata endpoint/isolamento: 118 test / 1090 asserzioni, con fail-on-skipped e fail-on-warning. Ulteriore prova finale Caddy/PHP: template di produzione validato e **18 controlli reali riusciti**, senza emissione ACME. Risultati e correzioni intermedie sono nei blocchi SEC.05/SEC.07 sotto. Nessuna CI remota PHP 8.4/8.5 attestata.
+- **Particolarità del gate locale**: `public/hot` di sviluppo è presente e non è stato modificato. Il gate verde ha usato `COMPOSE_FILE=compose.yaml:/tmp/signalbox-sec05-compose.yaml ./scripts/verify.sh`; l’override maschera solo quel file nel container `php-test` con un file vuoto read-only. I file in `/tmp` sono effimeri: se mancanti, ricreare l’override descritto qui sotto oppure usare il gate normale quando non esiste un hot file. Non eliminare il file di sviluppo né arrestare Vite per aggirare i test. La prova proxy è riproducibile tramite i comandi in [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-admission-proxy-regression-sec07), estraendo nuovamente il binario Caddy fissato dal progetto se necessario.
+- **Adozione e verifiche operative pendenti**: SEC.05 richiede il normale reload dei worker al deploy; nessuna migration. SEC.07 richiede lo stesso nuovo `STATUS_DOMAIN_TLS_SECRET` in Laravel e Caddy e il listener ask privato di loopback, da configurare insieme al deploy; nessun segreto reale generato e nessuna `.env` modificata. Restano da verificare CI remota, TLS pubblico/ACME e deploy multi-container. L’adozione nel database di sviluppo della precedente migration SEC.02 `2026_11_13_000026_create_team_daily_quotas.php` non è stata attestata; le scelte di quota di SEC.02 e le verifiche browser/hosting residue di SEC.04 restano nelle note precedenti, senza nuove conferme.
+- **Ambiente lasciato attivo**, senza arresti richiesti o eseguiti: web, queue, scheduler, Reverb, PostgreSQL, Redis e pgAdmin di sviluppo; PostgreSQL/Redis di test anch’essi attivi all’ultimo controllo. Container temporanei del gate e della prova proxy terminati, listener/child process/stato temporaneo Caddy ripuliti. Nessuna modifica ai dati di sviluppo; `public/build` aggiornato dal gate. Non assumere che i processi longevi di sviluppo abbiano già caricato le nuove classi.
+- **Questa chiusura modifica soltanto TASKS.md**: verifica testuale di stati, riferimenti e punto di ripartenza; test applicativi non ripetuti per il solo aggiornamento Markdown. Nessun nuovo risultato applicativo dichiarato oltre al gate già concluso.
+
+Per ricreare l’override effimero del gate quando serve (file vuoto in `/tmp/signalbox-sec05-empty-hot`, Compose override in `/tmp/signalbox-sec05-compose.yaml`):
+
+```yaml
+# Isolate only the backend test container from the development Vite hot file.
+services:
+  php-test:
+    volumes:
+      - type: bind
+        source: /tmp/signalbox-sec05-empty-hot
+        target: /var/www/html/public/hot
+        read_only: true
+```
+
 ## SEC.07 — Protezione dell’ammissione TLS — 2026-11-13
 
 - [x] **SEC.07 completato** su richiesta dell’utente di proseguire con un task tecnico che non richieda informazioni amministrative. **SEC.06 resta da fare e rinviato esplicitamente**: nessuna scelta implicita su trial, registrazione, quote o contatto antiabuso. Questa è l’eccezione autorizzata all’ordine numerico precedente. Nessun Git/gh; nome/stato del branch non verificati.

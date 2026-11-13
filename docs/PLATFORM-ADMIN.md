@@ -43,14 +43,14 @@ In Docker, prefix the commands with `docker compose exec web`.
 - whose flag, re-read from the database on every check, is true. A revocation therefore applies on the next request of an already open session.
 
 **Second factor:**
-- required in production, where a confirmed two-factor authentication is needed;
-- optional in every other environment (user choice);
-- the rule comes from `app()->isProduction()`, and no variable can switch it off in production.
+- required in every environment except `local` and `testing` (production, staging, demo and any misspelled name included), where a confirmed two-factor authentication is needed;
+- optional only in `local` and `testing` (user choice);
+- the rule comes from the environment name through `EnsureSafeProductionSettings::DEVELOPMENT_ENVIRONMENTS`, and no variable can switch it off. Until 2026-11-13 it applied only when the environment was exactly `production`, so a staging or demo deployment allowed operators without a second factor.
 
 **Admin panel (`/admin`):**
 - middleware `auth`, `verified`, `EnsurePlatformAdmin` and `NoStoreAuthentication`;
 - non-operators, whatever their team role, receive **404**, so the panel's existence is not revealed;
-- an operator without the production second factor is redirected to `/account/security` with a request to enable it;
+- an operator without the required second factor is redirected to `/account/security` with a request to enable it;
 - changes also need `password.confirm`.
 
 **Horizon (`/horizon`):** `viewHorizon` delegates to the same gate (user choice). `HORIZON_ADMIN_EMAILS` no longer exists. Remove it from any existing `.env`; it has no effect any more.
@@ -137,7 +137,7 @@ The form asks for confirmation before submitting. Teams and users carry no tenan
 
 | Suite | Coverage |
 |---|---|
-| tests/Integration/PlatformAdminAccessTest.php | Complete route catalogue with middleware; 404 for every team role on every route with nothing written; guest and unverified redirects; operator access and password confirmation; revocation applied to an open session; second factor in production only, for the panel and Horizon; Horizon denied to team owners; the shared flag |
+| tests/Integration/PlatformAdminAccessTest.php | Complete route catalogue with middleware; 404 for every team role on every route with nothing written; guest and unverified redirects; operator access and password confirmation; revocation applied to an open session; second factor outside `local`/`testing` (production, staging, demo, `Production`), for the panel and Horizon, and none in `local`; Horizon denied to team owners; the shared flag |
 | tests/Integration/PlatformAdminCommandTest.php | Grant with normalized email and audit event, declined confirmation, idempotence, revoke, identical refusal for unknown and unverified accounts, listing |
 | tests/Integration/PlanOverrideTest.php | Precedence and exclusive end; Internal never stored; incoherent rows refused by PostgreSQL; an unlimited test team exceeding the Free quota and cadence, then back to the limits once cleared; a granted plan until an inclusive date, then fallback; no write when an identical override is re-applied; 9 invalid inputs; gate re-checked inside the action; literal search, counts and no monitor configuration in the props; an override waiting on the Team lock (`55P03`) |
 | tests/Unit/PlanLimitsTest.php | The internal profile limits |

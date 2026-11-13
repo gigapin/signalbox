@@ -730,3 +730,13 @@ Mutations on 2026-11-13, restored and compared afterwards, each detected by the 
 ```sh
 docker compose run --rm php-test php vendor/bin/pest tests/Feature/MarkdownTextTest.php tests/Integration/TeamDailyQuotasTest.php tests/Integration/TransactionalMessageAbuseTest.php
 ```
+
+## Production settings refused at startup — SEC.03
+
+`tests/Feature/SafeProductionSettingsTest.php` needs no database. It checks `EnsureSafeProductionSettings` on an isolated configuration repository: development defaults pass in `local` and `testing`; a safe configuration passes in `production`, `staging`, `demo` and `Local` (case matters, so a capitalized name is treated as a deployment); each of 14 unsafe values is refused with its setting name; several violations are reported together without the configured value. A last case starts real `php artisan list` processes with production environment variables: the process fails with the expected messages while settings are unsafe and succeeds once they are safe, which proves the check runs at boot. `PlatformAdminAccessTest` now requires the operator second factor in `production`, `staging`, `demo` and `Production`, and not in `local`.
+
+Mutations on 2026-11-13, restored and compared afterwards: restoring `isProduction()` as the operator rule failed 3 cases (staging, demo, `Production`); removing the boot call failed the process case.
+
+```sh
+docker compose run --rm php-test php vendor/bin/pest tests/Feature/SafeProductionSettingsTest.php tests/Integration/PlatformAdminAccessTest.php
+```

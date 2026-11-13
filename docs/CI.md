@@ -27,6 +27,7 @@ Both backend jobs run on Ubuntu 24.04 with their respective PHP minor, Composer 
 | Step | Command / acceptance |
 |---|---|
 | Manifest and lock consistency | `composer validate --strict --no-check-publish` |
+| Locked package advisories | `composer audit:locked` (`composer audit --locked`), before installation; any published advisory fails the job |
 | Locked dependency installation | `composer install --prefer-dist --no-interaction --no-progress`, including development packages and package discovery |
 | Actual runtime compatibility | `composer check-platform-reqs`, checking installed extensions and real PHP independently of `config.platform.php` |
 | PHP formatting | `composer format:check -- --sequential`, dry-run with diff |
@@ -68,7 +69,8 @@ These are the commands aggregated by `npm run verify`. Backend gates likewise ma
 - Checkout v7, setup-node v7, cache v5 and setup-php v2 are pinned to verified public commit SHAs, annotated by major. Update pins explicitly and review upstream changes.
 - Composer archive caches include OS, architecture, PHP minor and the lock hash. setup-node caches npm downloads against the npm lock. Dependencies are installed on every run, including cache hits; neither vendor/node_modules nor Laravel/test caches are restored.
 - There are no path filters: documentation-only PRs also receive the same required checks.
-- Audit gates, coverage targets, browser E2E, Docker image builds and deployment are outside this task. No new dependency update or application API change is included.
+- Since 2026-11-13 the backend jobs audit the Composer lock against Packagist advisories. The result depends on the advisory database at run time: a newly published advisory fails every later run, including unrelated PRs, until the lock is updated. This is intended; do not add `continue-on-error` or ignore lists without a recorded decision. The equivalent `npm audit --omit=dev` gate is not active yet: it is planned with the npm lock update for `follow-redirects`, which would otherwise fail it (see TASKS, SEC.14).
+- Coverage targets, browser E2E, Docker image builds and deployment were outside M0.07; the Composer audit gate was added later, as described above. No new dependency update or application API change is included.
 
 Validate the workflow with [actionlint](https://github.com/rhysd/actionlint):
 

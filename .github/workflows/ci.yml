@@ -69,6 +69,9 @@ jobs:
           coverage: none
       - name: Validate Composer manifest and lock
         run: composer validate --strict --no-check-publish
+      - name: Audit locked PHP dependencies
+        # Newly published advisories intentionally fail every run, including unrelated changes, until the lock is fixed.
+        run: composer audit:locked
       - name: Locate Composer download cache
         id: composer-cache
         run: echo "path=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"

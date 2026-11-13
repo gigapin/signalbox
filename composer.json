@@ -71,6 +71,7 @@
         "format": "@php vendor/bin/php-cs-fixer fix",
         "format:check": "@php vendor/bin/php-cs-fixer fix --dry-run --diff",
         "analyse": "@php vendor/bin/phpstan analyse --memory-limit=512M",
+        "audit:locked": "@composer audit --locked",
         "verify": [
             "@format:check --sequential",
             "@analyse --debug",

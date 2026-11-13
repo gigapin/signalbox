@@ -387,6 +387,7 @@ These fields extend the baseline documented in DEPENDENCIES.md without changing 
 | `scripts.format` | Apply the configured PHP-CS-Fixer rules. |
 | `scripts.format:check` | Check PHP style with dry-run and show proposed changes without rewriting files. |
 | `scripts.analyse` | Run PHPStan/Larastan using the project configuration and a 512 MB memory limit. |
+| `scripts.audit:locked` | Added 2026-11-13: fail when any package pinned in `composer.lock` has a published advisory. Reads the lock only, needs no `vendor/`, but queries Packagist. Run in `php-test` with `--no-deps` locally and before installation in CI; see [DEPENDENCIES.md](DEPENDENCIES.md#symfony-security-advisories-2026-11-13). |
 
 ## npm manifest additions
 

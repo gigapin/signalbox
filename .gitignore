@@ -41,3 +41,5 @@ Thumbs.db
 
 # Keep browser acceptance screenshots local instead of versioning them.
 /docs/browser-evidence/**/*.png
+
+/reports

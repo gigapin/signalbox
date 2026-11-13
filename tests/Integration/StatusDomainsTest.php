@@ -272,6 +272,34 @@ it('does not let forwarded host headers bypass the selected origin or expose ano
     $this->get('http://localhost/status/domain-page', ['X-Forwarded-Host' => 'unknown.example.com'])->assertOk();
 });
 
+it('sends the shared security headers on a custom domain without HSTS or a primary-origin WebSocket', function (): void {
+    verifiedStatusDomain();
+    config([
+        'app.debug' => false,
+        'broadcasting.default' => 'reverb',
+        'broadcasting.browser.host' => null,
+        'broadcasting.browser.port' => 443,
+        'broadcasting.browser.scheme' => 'https',
+    ]);
+
+    $page = $this->get('https://status.example.com/status/domain-page')->assertOk();
+    $missing = $this->get('https://status.example.com/account')->assertNotFound();
+
+    foreach ([$page, $missing] as $response) {
+        $policy = (string) $response->headers->get('Content-Security-Policy');
+
+        expect($policy)->toContain("frame-ancestors 'none'")
+            ->toContain('connect-src \'self\' wss://status.example.com:443')
+            ->and($response->headers->get('X-Content-Type-Options'))->toBe('nosniff')
+            ->and($response->headers->get('X-Frame-Options'))->toBe('DENY')
+            ->and($response->headers->has('Strict-Transport-Security'))->toBeFalse();
+    }
+
+    // The page keeps the stricter policy set by the custom-origin guard; the refusal gets the global default.
+    expect($page->headers->get('Referrer-Policy'))->toBe('no-referrer')
+        ->and($missing->headers->get('Referrer-Policy'))->toBe('strict-origin-when-cross-origin');
+});
+
 it('revalidates only due claims within the CLI batch limit and restores tenant context', function (): void {
     $page = verifiedStatusDomain();
     $count = count($this->dns->queries);

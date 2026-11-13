@@ -1,4 +1,5 @@
 # Deployment template only: TLS and the public ingress are enabled deliberately during M12.
+# Security headers (CSP, HSTS, framing, nosniff) come from the application; see docs/SECURITY-HEADERS.md.
 {
 	# Supply an operational ACME account email and keep Caddy's certificate storage persistent.
 	email {$ACME_EMAIL}

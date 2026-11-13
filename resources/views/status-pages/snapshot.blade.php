@@ -31,7 +31,7 @@
                 <ol>
                     @foreach($incident['updates'] as $update)
                         <li>
-                            <p style="white-space: pre-line">{{ ucfirst($update['status']) }}: {{ $update['message'] }}</p>
+                            <p class="whitespace-pre-line">{{ ucfirst($update['status']) }}: {{ $update['message'] }}</p>
                             <time datetime="{{ $update['publishedAt'] }}">{{ str_replace('T', ' ', substr($update['publishedAt'], 0, 16)) }} UTC</time>
                         </li>
                     @endforeach

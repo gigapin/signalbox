@@ -9,16 +9,19 @@ namespace App\Actions\Notifications;
 use App\Contracts\Notifications\ChannelVerificationSender;
 use App\Data\Notifications\QuietHours;
 use App\Data\Notifications\WebhookChannelConfiguration;
+use App\Enums\Identity\TeamQuota;
 use App\Enums\Notifications\ChannelType;
 use App\Enums\Notifications\DeliveryStatus;
 use App\Exceptions\ChannelConfigurationInvalid;
 use App\Exceptions\ChannelDeliveryFailed;
 use App\Exceptions\NotificationChannelRejected;
+use App\Exceptions\TeamQuotaExhausted;
 use App\Models\EscalationPolicy;
 use App\Models\NotificationChannel;
 use App\Models\NotificationLog;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Identity\TeamDailyQuotas;
 use App\Services\Notifications\ChannelConfigurationParser;
 use App\Services\Notifications\ChannelVerificationCodes;
 use App\Services\Tenancy\TenantContext;
@@ -46,6 +49,7 @@ final readonly class ManageNotificationChannels
      * @param ChannelVerificationCodes $codes Code generation and keyed digests.
      * @param ChannelVerificationSender $sender Delivery of verification messages.
      * @param Repository $config Operational bounds in `notifications.*`.
+     * @param TeamDailyQuotas $quotas Team-wide daily bound on messages to unverified destinations.
      */
     public function __construct(
         private TenantContext $context,
@@ -53,6 +57,7 @@ final readonly class ManageNotificationChannels
         private ChannelVerificationCodes $codes,
         private ChannelVerificationSender $sender,
         private Repository $config,
+        private TeamDailyQuotas $quotas,
     ) {
     }
 
@@ -152,16 +157,18 @@ final readonly class ManageNotificationChannels
 
     /**
      * The digest is committed before the message is sent outside the transaction, so a slow provider holds no
-     * lock. A failed delivery withdraws that code and frees the resend cooldown.
+     * lock. A failed delivery withdraws that code and frees the resend cooldown, but the team's daily use stays
+     * counted: the per-channel cooldown alone does not bound a create → send → delete cycle.
      *
      * @param User $actor Owner or admin requesting the code.
      * @param int $teamId Active team.
      * @param int $channelId Channel of that team.
-     * @throws NotificationChannelRejected When a code was sent within the cooldown or the delivery failed.
+     * @throws NotificationChannelRejected When a code was sent within the cooldown, the team reached its daily
+     *                                     limit of verification messages, or the delivery failed.
      */
     public function sendVerification(User $actor, int $teamId, int $channelId): void
     {
-        [$name, $configuration, $code, $digest] = $this->locked($actor, $teamId, $channelId, function (NotificationChannel $channel, CarbonImmutable $now): array {
+        [$configuration, $code, $digest] = $this->locked($actor, $teamId, $channelId, function (NotificationChannel $channel, CarbonImmutable $now) use ($teamId): array {
             $cooldown = (int) $this->config->get('notifications.verification_resend_seconds');
             $sentAt = $channel->verification_sent_at;
 
@@ -169,6 +176,15 @@ final readonly class ManageNotificationChannels
                 $wait = (int) ceil($now->diffInSeconds($sentAt->addSeconds($cooldown)));
 
                 throw new NotificationChannelRejected('A verification code was sent recently. Try again in '.$wait.' seconds.');
+            }
+
+            try {
+                $this->quotas->consume($teamId, TeamQuota::ChannelVerification, $now);
+            } catch (TeamQuotaExhausted $exhausted) {
+                throw new NotificationChannelRejected(
+                    'This team sent '.$exhausted->limit.' verification codes in the last 24 hours. Try again after '.$exhausted->availableAt->format('Y-m-d H:i').' UTC.',
+                    previous: $exhausted,
+                );
             }
 
             $code = $this->codes->generate();
@@ -180,11 +196,11 @@ final readonly class ManageNotificationChannels
                 'verification_sent_at' => $now,
             ])->save();
 
-            return [$channel->name, $channel->configuration(), $code, $digest];
+            return [$channel->configuration(), $code, $digest];
         });
 
         try {
-            $this->sender->send($name, $configuration, $code);
+            $this->sender->send($configuration, $code);
         } catch (ChannelDeliveryFailed $exception) {
             $this->withdraw($teamId, $channelId, $digest);
 

@@ -54,7 +54,7 @@ Migration `2026_10_30_000020_add_channel_quiet_hours.php` adds optional daily lo
 
 `ManageNotificationChannels` locks Team → channel and re-runs `NotificationChannelPolicy` for every change.
 
-1. **Send** (`sendVerification`): refused within `verification_resend_seconds` (60 s) of the last send. A fresh code is generated, its HMAC (`ChannelVerificationCodes`, keyed by the application key and bound to the channel identity) is committed with a 15-minute expiry and zero attempts, then the message is sent **outside the transaction** through the `ChannelVerificationSender` contract. If the sender fails, that code is withdrawn (only if it is still the current one) and the cooldown is freed.
+1. **Send** (`sendVerification`): refused within `verification_resend_seconds` (60 s) of the last send, then charged to the team's daily verification quota (below). A fresh code is generated, its HMAC (`ChannelVerificationCodes`, keyed by the application key and bound to the channel identity) is committed with a 15-minute expiry and zero attempts, then the message is sent **outside the transaction** through the `ChannelVerificationSender` contract. If the sender fails, that code is withdrawn (only if it is still the current one) and the cooldown is freed.
 2. **Confirm** (`confirmVerification`): no pending or expired code → refusal. A correct code sets `verified_at`, activates the channel and clears the code. A wrong code is counted and **committed before** the refusal; the fifth wrong code discards the code, and a new one must be requested.
 3. **Activate/pause** (`setActive`): activating requires `verified_at`; pausing is always allowed.
 4. **Edit** (`update`): a label change keeps everything; any destination or credential change resets `verified_at`, deactivates the channel and discards a pending code.
@@ -62,7 +62,17 @@ Migration `2026_10_30_000020_add_channel_quiet_hours.php` adds optional daily lo
 
 The container binds `AdapterChannelVerificationSender`, which creates a `channel.verification` message and resolves the family through `ChannelAdapterRegistry`. Email, Slack, Telegram and webhook codes are sent through their real adapters. The SMS stub records metadata only and then verification is refused: no code could be received, so the action withdraws it and leaves the channel unverified/inactive. Domain/UI tests may still bind `Tests\Support\RecordingVerificationSender`; adapter tests keep the production binding and fake only HTTP/Mail/DNS.
 
-Brute force: five guesses per code and one code per minute limit an admin to about 7,200 guesses per day against a million values, and every new code is a visible message to the destination owner. Only owners and admins can try at all.
+Brute force: five guesses per code and one code per minute limit an admin to about 7,200 guesses per day against a million values, and every new code is a visible message to the destination owner. Only owners and admins can try at all. The daily quota below lowers this further, to 20 codes and so 100 guesses per team per day.
+
+### Messages to unverified destinations (2026-11-13)
+
+A verification code goes, by definition, to an address or endpoint nobody has proved. The security review found that a tenant could use it to send its own text to arbitrary recipients without limit: the channel label (up to 100 characters) was part of the message, and the 60-second wait applied per channel, so a create → send → delete cycle was unbounded. Three controls now apply:
+
+- **Fixed text.** `ChannelVerificationSender::send()` no longer receives the channel label. The message holds only fixed English text, the code and its lifetime, plus a line telling an unexpected recipient they can ignore it. This covers every channel type, since all of them build the same `channel.verification` message.
+- **Team-wide daily quota.** `verification_sends_per_team_per_day` (20) bounds codes per team in a rolling 24-hour window, across all its channels, deleted ones included. `TeamDailyQuotas` stores the counter in `team_daily_quotas`, keyed by team and quota, inside the transaction that commits the code digest, so a refusal or rollback records nothing. The window starts with the first code after the previous window ended; the refusal names the UTC instant when sending is allowed again. A code refused by the 60-second wait is not counted. A failed delivery still counts, even though the action withdraws the code and frees the 60-second wait: retrying a broken destination must not be free. The counter is shared with no other limit and reset only by time or by deleting the team.
+- **Route throttle.** All channel mutations (create, edit, delete, send and confirm code, activation, quiet hours, signing key rotation) use the `notification-channels` limiter: 20 requests per minute per user and team.
+
+Tests: `TransactionalMessageAbuseTest` (fixed text with a hostile label, quota across deleted and recreated channels, exact 24-hour boundary, isolation between teams, cooldown and failed-delivery accounting, route throttle) and `TeamDailyQuotasTest` (window boundary, rollback, two PostgreSQL sessions). See [TESTING.md](TESTING.md#transactional-messages-to-unverified-recipients--sec02).
 
 ## Escalation policies
 

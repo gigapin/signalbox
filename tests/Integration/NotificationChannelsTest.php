@@ -125,7 +125,6 @@ it('verifies and activates a channel with the code it received', function (): vo
     $code = $this->sender->lastCode();
 
     expect($this->sender->sent)->toHaveCount(1)
-        ->and($this->sender->sent[0]['name'])->toBe('On-call')
         ->and($code)->toMatch('/^\d{6}$/')
         ->and($pending->verification_code_hash)->not->toContain($code)
         ->and($pending->verification_expires_at?->toIso8601String())->toBe('2026-10-29T09:15:00+00:00')

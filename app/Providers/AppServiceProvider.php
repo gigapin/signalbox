@@ -101,6 +101,11 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(3)->by((string) $request->user()?->getAuthIdentifier().'|'.(string) $request->route('team').'|'.$identity);
         });
 
+        // Channel changes can trigger messages to unverified destinations; the team-wide daily quota is transactional.
+        RateLimiter::for('notification-channels', static fn (Request $request): Limit => Limit::perMinute(20)->by(
+            (string) $request->user()?->getAuthIdentifier().'|'.(string) $request->route('team')
+        ));
+
         $events->listen(IncidentNotificationRequested::class, [PrepareIncidentNotifications::class, 'record']);
 
         foreach ([IncidentOpened::class, IncidentReopened::class, IncidentResolved::class] as $event) {

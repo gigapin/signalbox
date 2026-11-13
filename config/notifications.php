@@ -32,6 +32,10 @@ return [
     // Minimum seconds between two verification messages for the same channel.
     'verification_resend_seconds' => 60,
 
+    // Verification messages a team may send to unverified destinations in a rolling 24-hour window, across all its
+    // channels, including channels deleted since. Bounds the create → send → delete cycle the per-channel wait misses.
+    'verification_sends_per_team_per_day' => 20,
+
     // Persistent provider retries are independent of queue redelivery and monitoring observations.
     'delivery' => [
         // Total acquired attempts, including crashed or timed-out attempts.

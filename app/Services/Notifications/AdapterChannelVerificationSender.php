@@ -26,13 +26,14 @@ final readonly class AdapterChannelVerificationSender implements ChannelVerifica
     }
 
     /**
-     * @param string $channelName Recognizable label, included only in recipient text.
+     * The text is fixed apart from the code and its lifetime: the destination is unverified, so tenant-chosen text
+     * such as the channel label is never included.
+     *
      * @param ChannelConfiguration $configuration Current destination and credentials.
      * @param string $code Six-digit plaintext code; never logged or serialized to the queue.
      * @throws ChannelDeliveryFailed On delivery failure or SMS stub suppression.
      */
     public function send(
-        #[\SensitiveParameter] string $channelName,
         #[\SensitiveParameter] ChannelConfiguration $configuration,
         #[\SensitiveParameter] string $code,
     ): void {
@@ -42,7 +43,7 @@ final readonly class AdapterChannelVerificationSender implements ChannelVerifica
             'channel.verification',
             CarbonImmutable::now('UTC'),
             'Verify your Signalbox notification channel',
-            'Your Signalbox verification code for "'.$channelName.'" is '.$code.'. It expires in '.$ttl.' seconds. Enter it in Signalbox to activate this channel.',
+            'Your Signalbox verification code is '.$code.'. It expires in '.$ttl.' seconds. If you did not expect this message, you can ignore it; nothing is sent here until the code is entered in Signalbox.',
             ['code' => $code, 'expires_in_seconds' => $ttl],
         );
         $receipt = $this->adapters->for($configuration->type())->send($configuration, $message);

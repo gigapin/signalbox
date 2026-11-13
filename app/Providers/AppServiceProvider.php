@@ -6,6 +6,7 @@
 
 namespace App\Providers;
 
+use App\Actions\EnsureSafeProductionSettings;
 use App\Actions\EnsureStripeTestCredentials;
 use App\Contracts\Monitoring\BatchCheckWorkConsumer;
 use App\Contracts\Monitoring\CheckClock;
@@ -71,15 +72,21 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Enforce test-only Stripe credentials before application requests or workers can run.
+     * Enforce test-only Stripe credentials and fail-closed production settings before requests or workers can run.
      *
      * @param EnsureStripeTestCredentials $ensureStripeTestCredentials Test credential validation action.
+     * @param EnsureSafeProductionSettings $ensureSafeProductionSettings Startup refusal of unsafe non-development settings.
      * @param Dispatcher $events Explicit listener registration, without convention-based duplicate discovery.
-     * @throws \LogicException When Stripe credentials outside the supported test-mode prefixes are configured.
+     * @throws \LogicException When Stripe credentials outside the supported test-mode prefixes are configured, or
+     *                          when a non-development environment has an unsafe setting.
      */
-    public function boot(EnsureStripeTestCredentials $ensureStripeTestCredentials, Dispatcher $events): void
-    {
+    public function boot(
+        EnsureStripeTestCredentials $ensureStripeTestCredentials,
+        EnsureSafeProductionSettings $ensureSafeProductionSettings,
+        Dispatcher $events,
+    ): void {
         $ensureStripeTestCredentials((string) config('cashier.key'), (string) config('cashier.secret'));
+        $ensureSafeProductionSettings((string) $this->app->environment(), $this->app->make('config'));
         // Configuration is loaded here, unlike the early middleware builder used by the console bootstrap.
         \Illuminate\Http\Middleware\TrustProxies::at((array) config('status-domains.proxy_ips'));
 

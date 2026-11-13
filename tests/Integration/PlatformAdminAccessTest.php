@@ -130,14 +130,14 @@ it('applies a revocation on the next request of an existing session', function (
     $this->get('/horizon')->assertForbidden();
 });
 
-it('requires a confirmed second factor only in production, for the panel and Horizon', function (): void {
+it('requires a confirmed second factor outside local and testing, for the panel and Horizon', function (string $environment): void {
     $operator = User::factory()->platformAdmin()->create();
     $this->actingAs($operator);
 
     $this->get('/admin/teams')->assertOk();
     $this->get('/horizon')->assertOk();
 
-    $this->app['env'] = 'production';
+    $this->app['env'] = $environment;
 
     try {
         $this->get('/admin/teams')
@@ -147,6 +147,18 @@ it('requires a confirmed second factor only in production, for the panel and Hor
 
         $operator->forceFill(['two_factor_confirmed_at' => now()])->save();
 
+        $this->get('/admin/teams')->assertOk();
+        $this->get('/horizon')->assertOk();
+    } finally {
+        $this->app['env'] = 'testing';
+    }
+})->with(['production', 'staging', 'demo', 'Production']);
+
+it('exempts local development from the operator second factor', function (): void {
+    $this->actingAs(User::factory()->platformAdmin()->create());
+    $this->app['env'] = 'local';
+
+    try {
         $this->get('/admin/teams')->assertOk();
         $this->get('/horizon')->assertOk();
     } finally {

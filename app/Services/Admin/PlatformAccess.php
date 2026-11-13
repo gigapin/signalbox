@@ -6,14 +6,16 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Actions\EnsureSafeProductionSettings;
 use App\Models\User;
 use Illuminate\Contracts\Foundation\Application;
 
 /**
  * Platform operators are separate from team roles: owning a team grants nothing here. The flag is read
  * afresh from the database on every check, so a revocation takes effect on the next request even for an
- * already authenticated session. In production a confirmed second factor is also required; the rule is
- * derived from the environment and has no switch that could disable it there.
+ * already authenticated session. Outside local development and tests (staging and demo included) a confirmed
+ * second factor is also required; the rule is derived from the environment and has no switch that could disable
+ * it there. Exempting only those two names means an unknown or misspelled environment fails closed.
  */
 final readonly class PlatformAccess
 {
@@ -44,7 +46,7 @@ final readonly class PlatformAccess
      */
     public function meetsSecondFactor(User $user): bool
     {
-        return !$this->app->isProduction() || $user->two_factor_confirmed_at !== null;
+        return $this->app->environment(EnsureSafeProductionSettings::DEVELOPMENT_ENVIRONMENTS) || $user->two_factor_confirmed_at !== null;
     }
 
     /**

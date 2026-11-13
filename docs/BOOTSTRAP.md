@@ -609,3 +609,7 @@ M8.05 adds `2026_11_02_000024_create_status_domain_bindings.php`, pending page c
 M8.06 adds live status-page metadata, HTTP crawler headers and a Blade public summary outside the Inertia root. Deploy the PHP/views and rebuild normal client assets; no migration, dependency, variable, worker or SSR process is added. The canonical always uses the configured primary `APP_URL`, including from verified aliases. Password pages, even unlocked, and mailbox capabilities remain generic and noindex. See [STATUS-PAGE-SEO.md](STATUS-PAGE-SEO.md).
 
 `scripts/verify-dates.sh` needs network access, because it installs libfaketime in a disposable container. See [TESTING.md](TESTING.md#fixed-dates-and-result-partitions).
+
+## Production settings checked at startup (2026-11-13)
+
+Outside `local` and `testing` the application refuses to start with debug enabled, cookies without `Secure`, the `log` mailer, missing or wildcard trusted proxies, private-network CIDR exceptions or development WebSocket origins, and operators need a confirmed second factor. Development `.env` files are unaffected. The rules, the build-time consequence for the production image and the PostgreSQL/Redis TLS requirements are in [DOCKER.md](DOCKER.md#production-settings-enforced-at-startup-2026-11-13).

@@ -154,3 +154,27 @@ The PHP image starts `artisan serve --no-reload` so its HTTP child inherits Comp
 ## Notification delivery processes (M5.03)
 
 The new outbox migration must be deliberately applied to the development database before using notification-producing incident transitions or `notifications:dispatch`. After migrating, recreate `queue` and `scheduler` with `docker compose up -d --no-deps --force-recreate queue scheduler` to load the dedicated notification supervisor and the 80-second queue shutdown grace. Tests run only isolated services and never perform these development operations. See [NOTIFICATION-DELIVERY.md](NOTIFICATION-DELIVERY.md#operations-and-remaining-scope).
+
+## Production settings enforced at startup (2026-11-13)
+
+The Compose environment above is for development (`APP_ENV=local`, and `testing` in `php-test`). Every other environment name, including `production`, `staging`, a demo or a misspelling, is treated as a deployment. There, `App\Actions\EnsureSafeProductionSettings`, called from `AppServiceProvider::boot()` next to the Stripe test-key check, stops every HTTP request, worker and `artisan` command while a setting would weaken security without any error. The message lists all violated settings at once, by name and never by value.
+
+| Setting | Required outside `local`/`testing` | Silent failure it prevents |
+|---|---|---|
+| `APP_DEBUG` | `false` | Debug pages with stack traces and environment details. |
+| `SESSION_SECURE_COOKIE` | `true` | Session and CSRF cookies sent over plain HTTP, for example when the proxy scheme header is not trusted. |
+| `MAIL_MAILER` | not `log` | Password reset and invitation tokens, which are in the URL path and not covered by log redaction, written to the log. |
+| `TRUSTED_PROXY_IPS` | explicit peers; not empty, `*`, `**`, `REMOTE_ADDR`, `PRIVATE_SUBNETS` or a `/0` range | Empty: every client shares the proxy address, so per-IP limits (registration, reset, heartbeat at 600/min) become global and can raise false heartbeat incidents. Wildcards: any client chooses its address with `X-Forwarded-For` and bypasses them. |
+| `OUTBOUND_ALLOWED_CIDRS` | empty | Checks and webhooks reaching private networks again (the SSRF guard's development exceptions). |
+| `REVERB_ALLOWED_ORIGINS` | production hostnames only; no `localhost`, loopback address or `*` | A WebSocket server accepting development origins. |
+
+Operator access follows the same environment split: outside `local` and `testing` a platform operator needs a confirmed second factor ([PLATFORM-ADMIN.md](PLATFORM-ADMIN.md)).
+
+Consequence for the future production image (M12.01): Composer's `post-autoload-dump` runs `php artisan package:discover`, which boots the application. When `APP_ENV` is unset, Laravel defaults to `production`, so a build step without the deployment settings would stop there. Either run that step with the real settings or with `APP_ENV` set to a build value **only for that step**; never ship an image whose runtime environment is `local` or `testing`. A cached configuration (`config:cache`) is checked the same way, since the rules read loaded configuration.
+
+Documented requirements not enforced at startup, to verify in M12.02 with the chosen hosting:
+
+- **PostgreSQL TLS:** set `DB_SSLMODE=verify-full` (the default `prefer` accepts an unencrypted or unauthenticated connection). `config/database.php` does not expose a CA path, so the server CA must reach libpq, for example through its `PGSSLROOTCERT` variable; this path has not been tested in the project.
+- **Redis:** authenticate with `REDIS_USERNAME`/`REDIS_PASSWORD` and use TLS whenever Redis is not on the same private host network. Queues carry serialized PHP objects and Redis holds sessions, so access to Redis is access to the application. How Predis is given TLS options in this configuration has not been verified.
+- **`SESSION_ENCRYPT`:** `false` keeps session contents readable by anyone who can read Redis; consider `true` once Redis exposure is settled.
+- The Docker image of this document is a development image (`php artisan serve`, Composer and Git included, source mounted) and must not be deployed; see the M12.01 note in TASKS.

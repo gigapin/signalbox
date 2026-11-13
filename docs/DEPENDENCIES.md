@@ -241,3 +241,38 @@ On 2026-11-01 M7.05 adds `require.dompdf/dompdf` with constraint `^3.1`, locked 
 
 The require surfaced an advisory on the **pre-existing** `symfony/mime` v8.0.15: [CVE-2026-45070](https://symfony.com/cve-2026-45070), email header injection through MIME parameter names, unrelated to Dompdf. A targeted `composer update symfony/mime --with-dependencies --minimal-changes --no-interaction --no-scripts --no-plugins --prefer-dist` changed only that package, to **v7.4.22** of the supported LTS branch, as the M1.02 update did for `symfony/http-foundation`. `composer audit --locked` then reports no advisories.
 
+
+## Symfony security advisories (2026-11-13)
+
+The security review of 2026-11-13 found advisories, published on 2026-11-04 after the last lock update, on five locked Symfony components. Every fix exists only in **7.4.23** (LTS) and **8.1.11**; the whole 8.0 branch is affected, so no 8.0.x patch release could close them.
+
+| Package | Before | After | Advisories |
+|---|---|---|---|
+| `symfony/http-foundation` | v7.4.21 | **v7.4.23** | GHSA-5mx8-mwrp-5693 (generated URLs pointing at a client-chosen host), GHSA-3h27-hjv7-fqjx (path rules in front of PHP bypassable), GHSA-xg2q-4rrq-657q (`private_ranges` trusted proxies shortcut), CVE-2026-118514 |
+| `symfony/http-kernel` | v8.0.15 | **v7.4.23** | CVE-2026-123339 (inline fragments let untrusted forwarded headers set host, scheme and port of generated URLs) |
+| `symfony/routing` | v8.0.15 | **v7.4.23** | CVE-2026-118516 (host placeholders matching the start of the path in compiled matchers) |
+| `symfony/serializer` | v8.0.15 | **v7.4.23** | CVE-2026-121623, CVE-2026-122053, CVE-2026-118515 |
+| `symfony/filesystem` (development only) | v8.0.15 | **v7.4.23** | GHSA-6prc-h956-hxjq |
+
+Command, run in the `php-test` container because host `composer audit` exits with a segmentation fault on PHP 8.5.9:
+
+```sh
+docker compose run --rm --no-deps php-test composer update \
+  symfony/http-foundation symfony/http-kernel symfony/routing symfony/serializer symfony/filesystem \
+  --with-dependencies --minimal-changes --no-interaction --no-scripts --no-plugins --prefer-dist
+```
+
+Composer 2.10.3 selected 7.4.23 for all five by itself: with `--minimal-changes` and its default refusal of versions with advisories, the closest secure release is the 7.4 LTS. This continues the M1.02 (`http-foundation`) and M7.05 (`symfony/mime`) choices. Symfony 7.4 has the same features as 8.0, which only removed deprecated code, so the downgrade adds no API change; 8.1.11 would have been a feature upgrade outside the purpose of a security fix. `laravel/framework` v13.36.0 requires `^7.4.0 || ^8.0.0` for `http-kernel` and `routing`; the other dependents accept 7.x as well. The lock diff changes only these five versions; `composer.json` constraints are unchanged. The other Symfony components remain on 8.0.15 and carry no advisory today. These advisories ship no 8.0 fix, so a future advisory on one of them will likely need the same choice between 7.4 LTS and a newer minor.
+
+After the update `composer audit --locked` reports no advisories and no abandoned package, so `config.audit` keeps Composer's defaults. The audit is now a gate in `scripts/verify.sh` and in both backend CI jobs through the `audit:locked` script ([BOOTSTRAP.md](BOOTSTRAP.md), [CI.md](CI.md)).
+
+Applicability to Signalbox, assessed by reading the code and not by exploiting each advisory:
+
+- Generated URLs: `GuardStatusPageHosts` rejects unknown raw Host values before any session or route, and `bootstrap/app.php` never trusts `X-Forwarded-Host`, even from `TRUSTED_PROXY_IPS`. `tests/Integration/AbsoluteLinkOriginTest.php` now pins this for password reset, verification and invitation emails; trusting the forwarded host or accepting every host each makes the corresponding cases fail.
+- Trusted proxies: the application lists explicit peers in `TRUSTED_PROXY_IPS` and never uses the `private_ranges` shortcut.
+- Path rules in front of PHP: this is the class of SEC.07 (`/index.php/internal/...` past the Caddy path rule), which remains a separate task; the update does not close it.
+- Routing: no route declares a host placeholder (`Route::domain`).
+- Serializer: required only by `web-auth/webauthn-lib`; passkeys are not exposed.
+- `CVE-2026-118514` and the serializer and filesystem advisories were not analysed one by one; the update removes them regardless.
+
+npm advisories are handled separately with their own lock update (SEC.14 in TASKS), which will also add `npm audit --omit=dev` to the gates.

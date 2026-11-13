@@ -90,7 +90,7 @@ docker compose run --rm node npm ci --ignore-scripts --strict-peer-deps
 ./scripts/verify.sh
 ```
 
-The executable POSIX shell script performs Compose validation, `composer verify` in `php-test`, and `npm run verify` in the Node container. It stops on the first failing command. Backend verification includes the PHP formatter dry-run, Larastan and all Pest suites; frontend verification includes lint, formatting, TypeScript, five quality-tool tests, React DOM tests and production compilation. It does not apply formatting fixes or run any Git command.
+The executable POSIX shell script performs Compose validation, `composer audit:locked` in a `php-test` container without PostgreSQL or Redis, `composer verify` in `php-test`, and `npm run verify` in the Node container. It stops on the first failing command. The audit queries Packagist, so the gate needs network access and can start failing without any local change when a new advisory is published for a locked package; fix the lock rather than skipping the step. Backend verification includes the PHP formatter dry-run, Larastan and all Pest suites; frontend verification includes lint, formatting, TypeScript, five quality-tool tests, React DOM tests and production compilation. It does not apply formatting fixes or run any Git command.
 
 The existing PHP/Node images, Composer dependencies and configured local `.env` are prerequisites. Compose still validates the development `DB_PASSWORD` setting while reading its full configuration, even though no application database is started. On a fresh checkout follow [DOCKER.md](DOCKER.md) first; do not overwrite an existing `.env` or regenerate its key. After a new npm lock, refresh both the host installation (if used) and the separate Node Docker volume as appropriate.
 
@@ -704,3 +704,15 @@ docker compose run --rm php-test php vendor/bin/pest tests/Integration/MonitorMe
 ```
 
 The benchmark's optional `RUN_CHART_DENSE_BENCHMARK=1` uses 172800 dual-region results at 30-second cadence instead of 1440 hourly results. Fixture statistics are analyzed before measurements. Reproduction, actual cost and memory limitations are in [MONITOR-METRICS.md](MONITOR-METRICS.md); this opt-in run does not establish a production or concurrency SLO. Final gates and native browser evidence are recorded in [TASKS.md](TASKS.md).
+
+## Absolute link origin in account emails — SEC.01
+
+`tests/Integration/AbsoluteLinkOriginTest.php` runs on isolated PostgreSQL and checks that password reset, verification and invitation emails link only to the primary origin. With `127.0.0.1` set as trusted proxy peer, each request carries `X-Forwarded-Host: attacker.example` plus forwarded HTTPS scheme and port: the links must use the `app.url` host with `https`, which proves the peer was trusted while the host header was ignored. Requests with an unknown raw Host (`attacker.example`, `localhost.attacker.example`) must return 404 with no email and no invitation row. The expected host follows `app.url` because it differs between the local `.env` and CI.
+
+Links are extracted from messages rendered at send time by the `array` mailer, not from `Notification::fake()`: the framework builds reset and verification URLs lazily in `toMail()`, so recomputing them after the request could hide the origin used during the request. `afterEach` restores the static `TrustProxies::at([])`.
+
+Mutations on 2026-11-13, restored and compared afterwards: adding `HEADER_X_FORWARDED_HOST` to the trusted headers in `bootstrap/app.php` failed the 3 forwarded-header cases; letting `GuardStatusPageHosts` accept every host failed the 6 unknown-host cases.
+
+```sh
+docker compose run --rm php-test php vendor/bin/pest tests/Integration/AbsoluteLinkOriginTest.php
+```

@@ -12,6 +12,20 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Chiusura sessione e ripartenza — 2026-11-13
+
+- **Stato SEC: 4 di 14 completati** (SEC.01–SEC.04), uno per branch come deciso dall'utente; **SEC.05–SEC.14 da fare**. M9.01 resta dopo la sequenza SEC. Nessun comando Git/gh eseguito dall'agente: commit, push, PR e merge dei quattro branch non sono attestati.
+- Branch suggeriti, nell'ordine: `fix/symfony-security-advisories` (SEC.01), `fix/limit-transactional-email-abuse` (SEC.02), `fix/fail-closed-production-settings` (SEC.03), `fix/security-response-headers` (SEC.04). L'utente ha dichiarato di essere sul branch nuovo prima di SEC.02, SEC.03 e SEC.04; i nomi effettivi non sono stati verificati.
+- **Azioni a cura dell'utente prima di proseguire:**
+  1. eseguire il commit di SEC.04 sul branch corrente: `git commit -m "feat: add CSP, HSTS and browser security headers to every response"`;
+  2. confermare la CI remota dei quattro branch (PHP 8.4 sulle PR, PHP 8.5 dopo il merge su main): nessun esito remoto è registrato. Da SEC.01 la CI fallisce se esce un nuovo advisory Composer, anche su PR non correlate;
+  3. applicare al database di sviluppo la migration `2026_11_13_000026_create_team_daily_quotas.php` di SEC.02: finché manca, invio di codici di verifica e inviti nell'ambiente locale fallisce;
+  4. confermare o cambiare i valori scelti dall'agente: quote giornaliere 20 codici e 50 inviti per team (SEC.02), limite di 20 richieste al minuto sui canali;
+  5. facoltativo: con un account operatore, aprire `/horizon` con `APP_DEBUG=false` e controllare la console, per decidere se `'unsafe-eval'` serve davvero (SEC.04).
+- Ambiente lasciato dall'agente: servizi di sviluppo già avviati all'inizio della sessione (web, queue, scheduler, Reverb, PostgreSQL, Redis, pgAdmin) lasciati invariati; container temporaneo della prova CSP arrestato e rimosso; `.env` e dati non modificati, salvo le sessioni Redis create dal login di prova di `owner@signalbox.test`. `playwright-core` e gli script di prova restano solo nello scratchpad della sessione, fuori dal repository. Build di produzione in `public/build` aggiornata dall'ultimo gate.
+- Note di processo per la prossima sessione: leggere il codice d'uscita dello script e non quello del wrapper in background (in SEC.02 un gate fallito è stato prima scambiato per riuscito); la suite backend dura circa 500–540 s, ma una volta ha superato il limite di 900 s di `composer test` senza test falliti, causa non accertata.
+- **Prossimo task pronto SEC.05** (monitor DNS verso nomi interni) su un nuovo branch, per esempio `fix/block-internal-dns-names`. Leggere prima AGENTS, questo piano (voce SEC.05 e blocchi SEC.01–SEC.04), [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md), [TLS-DNS-CHECKERS.md](TLS-DNS-CHECKERS.md) e [MONITOR-INPUT.md](MONITOR-INPUT.md); punti di partenza nel codice: `NetworkCheckCoordinator`, `DnsNameserver::system()`, `MonitorInputValidator::destinationHosts()`, `StatusDomainNames::normalize()`. SEC.06 richiederà una decisione di prodotto dell'utente su trial e registrazione prima dell'implementazione.
+
 ## SEC.04 — Header di sicurezza del browser — 2026-11-13
 
 - [x] **SEC.04 completato** su richiesta dell'utente, sul nuovo branch indicato dall'utente (nome suggerito `fix/security-response-headers`, non verificato dall'agente). Eseguito ora per la sequenza decisa dall'utente, anziché dentro M11.04 come nella proposta originaria. Nessun Git/gh eseguito dall'agente.
@@ -69,7 +83,7 @@ Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task su
 - Eseguito: `composer audit --locked` nel container `php-test` con `--no-deps` (nessun database o servizio avviato; sull'host il comando termina con segmentation fault su PHP 8.5.9), `npm audit --package-lock-only` anche con `--omit=dev`, una sonda PHP sul parsing di un path con prefisso `/index.php`. I due audit hanno inviato ai registri pubblici elenco e versioni dei pacchetti.
 - Non eseguito: scansione dei segreti nella cronologia Git, test dinamici su un'istanza in esecuzione, prova end-to-end attraverso Caddy, verifica della sfruttabilità dei singoli advisory Symfony, formatter/analisi statica/suite (nessun sorgente modificato).
 - File: aggiornato soltanto questo piano (nuova sezione SEC, note SEC su M10.02, M11.02–M11.04 e M12.01–M12.03, decisione aperta e registro sessioni). Report completo locale in `reports/security-review-2026-11-13.md`, cartella esclusa da Git: non è collegato da qui perché non è versionato.
-- **Prossimo task pronto resta M9.01** finché l'utente non decide l'ordine. Proposta dell'agente, non ancora decisa: anticipare SEC.01 e SEC.02, indipendenti dal billing; dettagli in [Ordine operativo e decisioni aperte](#ordine-operativo-e-decisioni-aperte).
+- Superato lo stesso giorno: l'utente ha deciso di svolgere i task SEC uno per branch prima di M9.01; stato corrente in [Chiusura sessione e ripartenza — 2026-11-13](#chiusura-sessione-e-ripartenza--2026-11-13). Testo originale: prossimo task pronto M9.01 finché l'utente non decide l'ordine; proposta dell'agente di anticipare SEC.01 e SEC.02.
 
 ## Chiusura fase A e handoff — 2026-11-12
 
@@ -1117,6 +1131,8 @@ Uscita soddisfatta il 2026-11-02 con M8.07, sulla base dei test automatici: matr
 **Uscita fase A:** navigazione completa sui flussi implementati, dashboard e dettaglio monitor con dati reali, azioni/ruoli/errore coerenti, nessuna regressione tenant o realtime, test automatici pertinenti e collaudo L sulla nuova UI superati. **Uscita macro UI prima di M12:** anche pagine aggiunte da M9–M10 e pagine pubbliche completate; identità definitiva o rinvio esplicito registrato. La dashboard non risulta implementata con la sola chiusura di UI.PLAN. **Fase A accettata il 2026-11-12 con UI.06.4**, nei limiti di [PHASE-A-ACCEPTANCE.md](PHASE-A-ACCEPTANCE.md); il macro UI e le sue parti successive restano aperti.
 
 ## SEC — Correzioni dalla revisione di sicurezza (2026-11-13)
+
+Avanzamento al 2026-11-13: SEC.01–SEC.04 completati, SEC.05–SEC.14 da fare; un branch per voce in ordine numerico, prima di M9.01.
 
 Dipendenze: M0–M8, cioè il codice analizzato. Fuori specifica, registrata su richiesta dell'utente il 2026-11-13. Evidenze da lettura del codice, `composer audit`, `npm audit` e una sonda sul parsing della richiesta; nessun test dinamico e nessuna correzione implementata. Il report completo è locale in `reports/security-review-2026-11-13.md` (cartella esclusa da Git), quindi ogni voce qui è autosufficiente; SEC.nn corrisponde al risultato F-nn del report. Severità fra parentesi: A alta, M media, B bassa.
 
@@ -2253,3 +2269,7 @@ Per le prossime sessioni aggiungere: data, ID task e stato, modifiche/file, coma
 - Richiesta dell'utente: proseguire con SEC.04 sul nuovo branch. SEC.04 segnato in corso prima delle modifiche. Git/gh non eseguiti.
 - Esito, decisioni, prova browser, file e verifiche nel blocco [SEC.04 in cima al piano](#sec04--header-di-sicurezza-del-browser--2026-11-13).
 - Prossimo passo: SEC.05 su un nuovo branch; l'utente conferma la CI remota.
+
+### 2026-11-13 — Chiusura sessione
+
+- Richiesta dell'utente: aggiornare i documenti prima di chiudere la sessione. Aggiunto il blocco [Chiusura sessione e ripartenza](#chiusura-sessione-e-ripartenza--2026-11-13) con stato SEC, azioni a cura dell'utente, ambiente lasciato e prossimo task; aggiornati il blocco della revisione di sicurezza e l'avanzamento della sezione SEC. Solo Markdown modificato dopo l'ultimo gate di SEC.04, quindi nessun test ripetuto. Git/gh non eseguiti.

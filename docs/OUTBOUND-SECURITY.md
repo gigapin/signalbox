@@ -31,7 +31,7 @@ IPv6 is allowed only inside global unicast 2000::/3, minus 2001::/23 (IETF assig
 
 `authorizeUrl()` normalizes the URL with the same `MonitorInputSyntax::url()` used by form validation (HTTP/HTTPS only, no userinfo or fragment, canonical host), applies the scheme default port, then:
 
-1. refuses `localhost` and `*.localhost`;
+1. refuses single-label names and names ending in `.localhost`, `.local`, `.internal`, `.test`, `.invalid`, `.example` or `.onion` through `PublicHostnamePolicy`;
 2. checks a literal IP directly, without DNS;
 3. otherwise resolves A and AAAA records and refuses the destination if the answer is empty or **any** address is blocked or malformed.
 
@@ -55,7 +55,7 @@ Method and body rewriting (301/302/303 versus 307/308) is a transport concern fo
 
 ## Save-time checks
 
-The validator stays network-free. For HTTP/keyword URLs, TLS hosts and DNS resolvers it calls `OutboundDestinationGuard::assertLocallyAllowed()`, rejecting local names and blocked literal addresses (honouring configured exceptions) with a generic field error that never echoes the value. Hostnames are not resolved when saving: their answers can change, so only the access-time guard is authoritative.
+The validator stays network-free. For HTTP/keyword URLs, TLS hosts, DNS question names and DNS resolvers it calls `OutboundDestinationGuard::assertLocallyAllowed()`, rejecting local names and blocked literal addresses (honouring configured exceptions) with a generic field error that never echoes the value. Hostnames are not resolved when saving: their answers can change, so only the access-time guard is authoritative.
 
 ## Secrets and redaction
 
@@ -103,3 +103,15 @@ Provider bodies, raw error messages and chained transport exceptions are discard
 [STATUS-DOMAINS.md](STATUS-DOMAINS.md) reuses the bounded DNS transport to read an exact `_signalbox.<hostname>` TXT proof from the operator's recursive resolver. Customer input never chooses a resolver or an HTTP/TLS destination; no connection is made to an A/AAAA answer. Question/owner/alias validation and exact concatenated TXT bytes come from `DnsLookup`. Proof requests run outside the domain transaction with a two-second cumulative deadline and no retry. A proof authorizes only the current tenant/page/nonce and a bounded registry lease, not access to any internal monitoring destination.
 
 Inbound Host validation is separate from outbound authorization: custom origins require a live public association, expose one page only and cannot reach account/team/API routes. The private TLS ask endpoint rechecks the raw socket peer at routing and at the actual controller, including decoded paths, and performs only an indexed live association lookup. It trusts neither forwarded host names nor forwarded client identities for certificate permission.
+
+## Internal DNS names (SEC.05)
+
+`PublicHostnamePolicy` supplies the suffix rules shared with custom status domains. Checks normalize IDNA, case and a terminal root dot before applying it. Save-time validation remains network-free; execution checks repeat the policy for previously saved monitors and redirected hosts. `DnsLookup` also refuses each followed alias before interpreting inline answers or sending a subsequent question. A direct CNAME/MX comparison value is data, not a followed destination; private A/AAAA comparison values remain valid.
+
+The system nameserver remains trusted infrastructure and may have a private address. Custom resolver addresses still pass the address policy. There is no new public fallback, configuration, exception for testing, dependency or migration. CIDR exceptions authorize literal addresses only and do not bypass hostname filtering.
+
+HTTP/keyword/TLS outcomes map both `blocked_address` and `resolution_failed` guard reasons to `resolution_failed`, with the message `The destination is unavailable.` before persistence, incident classification, notifications or broadcasting. New blocked-address observations therefore use the existing critical resolution-failure incident severity. The same mapping applies to a refused custom DNS resolver address. Internal guard exceptions retain their precise reasons for policy tests and network-free validation. Historical rows are not rewritten and their legacy enum values remain readable.
+
+This naming filter cannot detect private split-horizon zones beneath public domains or internal suffixes outside its explicit list. It does not replace a dedicated public recursive resolver or deployment network egress controls. Tests use syntactically public documentation names with fake transports or explicitly pinned loopback servers; ordinary checks never require external DNS or customer endpoints.
+
+Reload long-lived workers to adopt the policy. Existing monitors with newly forbidden names fail safely at execution; updates revalidate their effective configuration, so those monitors require a permitted target before they can be saved again. No existing development data or process is changed by the test gate.

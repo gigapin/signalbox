@@ -16,7 +16,7 @@ use Tests\Support\CheckInputFixture;
 
 it('evaluates TLS validity and the exact warning boundary', function (?int $days, int $seconds, ?CheckError $error): void {
     $now = CarbonImmutable::parse('2026-10-26T12:00:00Z');
-    $input = CheckInputFixture::make(configuration: new TlsMonitorConfiguration('tls.example.test', 443, $days));
+    $input = CheckInputFixture::make(configuration: new TlsMonitorConfiguration('tls.example.com', 443, $days));
     $expiry = $now->addSeconds($seconds);
     $result = app(TlsStrategy::class)->evaluate($input, $expiry, $now, 5.5);
 
@@ -36,7 +36,7 @@ it('evaluates TLS validity and the exact warning boundary', function (?int $days
 ]);
 
 it('compares complete DNS sets with canonical expectations', function (DnsRecordType $type, array $expected, array $actual, ?CheckError $error): void {
-    $input = CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.test', $type, $expected));
+    $input = CheckInputFixture::make(configuration: new DnsMonitorConfiguration('dns.example.com', $type, $expected));
     $result = app(DnsStrategy::class)->evaluate($input, $actual, CarbonImmutable::now('UTC'), 2);
 
     expect($result->error)->toBe($error)
@@ -45,8 +45,8 @@ it('compares complete DNS sets with canonical expectations', function (DnsRecord
 })->with([
     'A reordered duplicates' => [DnsRecordType::A, ['8.8.8.8', '1.1.1.1'], ['1.1.1.1', '8.8.8.8', '8.8.8.8'], null],
     'AAAA canonical' => [DnsRecordType::AAAA, ['2001:4860:4860:0:0:0:0:8888'], ['2001:4860:4860::8888'], null],
-    'CNAME canonical' => [DnsRecordType::CNAME, ['TARGET.EXAMPLE.TEST.'], ['target.example.test'], null],
-    'MX canonical' => [DnsRecordType::MX, ['10 MAIL.EXAMPLE.TEST.'], ['10 mail.example.test'], null],
+    'CNAME canonical' => [DnsRecordType::CNAME, ['TARGET.example.com.'], ['target.example.com'], null],
+    'MX canonical' => [DnsRecordType::MX, ['10 MAIL.example.com.'], ['10 mail.example.com'], null],
     'null MX' => [DnsRecordType::MX, ['0 .'], ['0 .'], null],
     'TXT exact' => [DnsRecordType::TXT, [" a\tB "], [" a\tB "], null],
     'TXT case-sensitive' => [DnsRecordType::TXT, ['Hello'], ['hello'], CheckError::DnsMismatch],

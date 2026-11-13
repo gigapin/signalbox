@@ -6,6 +6,8 @@ declare(strict_types=1);
 
 namespace App\Enums\Monitoring;
 
+use App\Enums\Security\OutboundRejection;
+
 /** These errors are observed check outcomes; programming failures remain exceptions. */
 enum CheckError: string
 {
@@ -13,9 +15,9 @@ enum CheckError: string
     case InvalidDestination = 'invalid_destination';
     /** The destination uses a forbidden local hostname. */
     case LocalName = 'local_name';
-    /** An address is denied by the outbound policy. */
+    /** Legacy persisted address refusal; new policy outcomes use ResolutionFailed. */
     case BlockedAddress = 'blocked_address';
-    /** The destination could not be resolved. */
+    /** The destination is unavailable because resolution is empty or an address is forbidden. */
     case ResolutionFailed = 'resolution_failed';
     /** The redirect chain exceeded the configured hop bound. */
     case RedirectLimit = 'redirect_limit';
@@ -50,6 +52,17 @@ enum CheckError: string
     /** No heartbeat was received before the scheduled rolling deadline. */
     case HeartbeatMissed = 'heartbeat_missed';
 
+    /**
+     * @param OutboundRejection $reason Internal policy diagnostic, never a tenant-visible resolution oracle.
+     * @return self A shared failure for blocked addresses and empty resolution, before persistence or incident evaluation.
+     */
+    public static function fromOutboundRejection(OutboundRejection $reason): self
+    {
+        return $reason === OutboundRejection::BlockedAddress || $reason === OutboundRejection::ResolutionFailed
+            ? self::ResolutionFailed
+            : self::from($reason->value);
+    }
+
     /** @return string Safe English diagnostic with no destination, credentials or server-provided text. */
     public function message(): string
     {
@@ -57,7 +70,7 @@ enum CheckError: string
             self::InvalidDestination => 'The destination is invalid.',
             self::LocalName => 'Local hostnames are not allowed.',
             self::BlockedAddress => 'The destination address is not allowed.',
-            self::ResolutionFailed => 'The destination could not be resolved.',
+            self::ResolutionFailed => 'The destination is unavailable.',
             self::RedirectLimit => 'The redirect limit was exceeded.',
             self::RedirectDowngrade => 'An HTTPS downgrade was refused.',
             self::CrossOriginBody => 'A cross-origin redirect carrying a request body was refused.',

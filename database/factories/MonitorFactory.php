@@ -41,28 +41,28 @@ final class MonitorFactory extends Factory
         });
     }
 
-    /** @return static Explicit HTTP fixture using a reserved synthetic destination. */
+    /** @return static Explicit HTTP fixture using a documentation domain; execution tests must fake transport. */
     public function http(): static
     {
-        return $this->variant(new HttpMonitorConfiguration('https://example.invalid/health'));
+        return $this->variant(new HttpMonitorConfiguration('https://example.com/health'));
     }
 
     /** @return static Explicit keyword fixture composed with the same synthetic HTTP transport. */
     public function keyword(): static
     {
-        return $this->variant(new KeywordMonitorConfiguration(new HttpMonitorConfiguration('https://example.invalid/health'), 'healthy'));
+        return $this->variant(new KeywordMonitorConfiguration(new HttpMonitorConfiguration('https://example.com/health'), 'healthy'));
     }
 
     /** @return static Explicit TLS fixture; the port is supplied rather than defaulted by production configuration. */
     public function tls(): static
     {
-        return $this->variant(new TlsMonitorConfiguration('example.invalid', 443));
+        return $this->variant(new TlsMonitorConfiguration('example.com', 443));
     }
 
     /** @return static Explicit DNS fixture using reserved documentation values. */
     public function dns(): static
     {
-        return $this->variant(new DnsMonitorConfiguration('example.invalid', DnsRecordType::A, ['192.0.2.1']));
+        return $this->variant(new DnsMonitorConfiguration('example.com', DnsRecordType::A, ['192.0.2.1']));
     }
 
     /** @return static Explicit heartbeat fixture with zero lateness tolerance. */

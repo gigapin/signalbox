@@ -101,11 +101,11 @@ it('preserves nullable values and clears earlier settings when cycling through a
     app(TenantContext::class)->run($team->id, function (): void {
         $monitor = Monitor::factory()->tls()->create();
         $variants = [
-            new TlsMonitorConfiguration('example.invalid', 443, 0),
-            new DnsMonitorConfiguration('example.invalid', DnsRecordType::AAAA, ['2001:db8::1']),
+            new TlsMonitorConfiguration('example.com', 443, 0),
+            new DnsMonitorConfiguration('example.com', DnsRecordType::AAAA, ['2001:db8::1']),
             new HeartbeatMonitorConfiguration(0),
-            new HttpMonitorConfiguration('https://example.invalid', body: ''),
-            new HttpMonitorConfiguration('https://example.invalid', body: null),
+            new HttpMonitorConfiguration('https://example.com', body: ''),
+            new HttpMonitorConfiguration('https://example.com', body: null),
         ];
 
         foreach ($variants as $configuration) {

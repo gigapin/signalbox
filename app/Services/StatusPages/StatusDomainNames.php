@@ -7,14 +7,18 @@ declare(strict_types=1);
 namespace App\Services\StatusPages;
 
 use App\Services\Monitoring\MonitorInputSyntax;
+use App\Services\Security\PublicHostnamePolicy;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\IpUtils;
 
 /** Domain input is a bare public DNS name, never a URL, IP literal, wildcard or platform subdomain. */
 final readonly class StatusDomainNames
 {
-    /** @param MonitorInputSyntax $syntax Existing IDNA/label normalization, without network I/O. */
-    public function __construct(private MonitorInputSyntax $syntax)
+    /**
+     * @param MonitorInputSyntax $syntax Existing IDNA/label normalization, without network I/O.
+     * @param PublicHostnamePolicy $names Shared public-name boundary.
+     */
+    public function __construct(private MonitorInputSyntax $syntax, private PublicHostnamePolicy $names)
     {
     }
 
@@ -27,10 +31,8 @@ final readonly class StatusDomainNames
     {
         $name = $this->syntax->host($value, allowIp: false);
         $primary = $this->primary();
-        $suffix = substr($name, (int) strrpos($name, '.') + 1);
 
-        if (!str_contains($name, '.') || strlen($name) > 242 || preg_match('/^[0-9.]+$/D', $name) === 1
-            || in_array($suffix, ['localhost', 'local', 'internal', 'test', 'invalid', 'example', 'onion'], true)
+        if (!$this->names->allows($name) || strlen($name) > 242 || preg_match('/^[0-9.]+$/D', $name) === 1
             || $name === $primary || str_ends_with($name, '.'.$primary)) {
             throw new InvalidArgumentException('Use a public DNS hostname outside the application domain.');
         }

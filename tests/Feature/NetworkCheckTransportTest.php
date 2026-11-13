@@ -125,15 +125,15 @@ it('cancels a stalled TLS handshake on its deadline and opens no retry connectio
 
 it('continues truncated UDP answers over TCP within one DNS observation', function (): void {
     [$this->process, $endpoint] = startNetworkTransportProbe('DnsLoopbackServer.php', [$this->hits]);
-    $response = app(AsyncCheckRuntime::class)->await(fn (LoopInterface $loop): PromiseInterface => app(ReactDnsTransport::class)->query('tcp.example.test.', Message::TYPE_A, $endpoint, 1000, $loop));
+    $response = app(AsyncCheckRuntime::class)->await(fn (LoopInterface $loop): PromiseInterface => app(ReactDnsTransport::class)->query('tcp.example.com.', Message::TYPE_A, $endpoint, 1000, $loop));
 
     expect($response->answers[0]->data)->toBe('8.8.8.8')
-        ->and(file($this->hits, FILE_IGNORE_NEW_LINES))->toBe(['udp tcp.example.test', 'tcp tcp.example.test']);
+        ->and(file($this->hits, FILE_IGNORE_NEW_LINES))->toBe(['udp tcp.example.com', 'tcp tcp.example.com']);
 });
 
 it('sends well-formed questions for absolute names so the real lookup accepts the answer', function (string $name): void {
     [$this->process, $endpoint] = startNetworkTransportProbe('DnsLoopbackServer.php', [$this->hits]);
-    $lookup = new DnsLookup(new ReactDnsTransport(), app(MonitorInputSyntax::class), app(CheckClock::class));
+    $lookup = new DnsLookup(new ReactDnsTransport(), app(MonitorInputSyntax::class), app(CheckClock::class), app(App\Services\Security\PublicHostnamePolicy::class));
     $deadline = app(CheckClock::class)->milliseconds() + 1000;
 
     $records = app(AsyncCheckRuntime::class)->await(fn (LoopInterface $loop): PromiseInterface => $lookup->records($name, DnsRecordType::A, $endpoint, $deadline, $loop));
@@ -144,8 +144,8 @@ it('sends well-formed questions for absolute names so the real lookup accepts th
         ->and($response->questions[0]->type)->toBe(Message::TYPE_A)
         ->and($response->questions[0]->class)->toBe(Message::CLASS_IN);
 })->with([
-    'udp answer' => 'lookup.example.test',
-    'truncated udp continued over tcp' => 'tcp.example.test',
+    'udp answer' => 'lookup.example.com',
+    'truncated udp continued over tcp' => 'tcp.example.com',
 ]);
 
 it('crosses a two-query DNS barrier and isolates a silent resolver response', function (): void {
@@ -154,9 +154,9 @@ it('crosses a two-query DNS barrier and isolates a silent resolver response', fu
         $transport = app(ReactDnsTransport::class);
 
         return all([
-            $transport->query('barrier-one.example.test.', Message::TYPE_A, $endpoint, 1000, $loop),
-            $transport->query('barrier-two.example.test.', Message::TYPE_A, $endpoint, 1000, $loop),
-            $transport->query('hang.example.test.', Message::TYPE_A, $endpoint, 100, $loop)->catch(static fn (CheckTransportFailed $error): CheckError => $error->reason),
+            $transport->query('barrier-one.example.com.', Message::TYPE_A, $endpoint, 1000, $loop),
+            $transport->query('barrier-two.example.com.', Message::TYPE_A, $endpoint, 1000, $loop),
+            $transport->query('hang.example.com.', Message::TYPE_A, $endpoint, 100, $loop)->catch(static fn (CheckTransportFailed $error): CheckError => $error->reason),
         ]);
     });
 

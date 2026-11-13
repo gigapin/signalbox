@@ -30,7 +30,7 @@ beforeEach(function (): void {
     app()->instance(HostResolver::class, new FakeHostResolver([
         'hooks.slack.com' => ['93.184.216.34'],
         'api.telegram.org' => ['93.184.216.35'],
-        'hooks.example.test' => ['93.184.216.36'],
+        'hooks.example.com' => ['93.184.216.36'],
     ]));
 });
 
@@ -87,7 +87,7 @@ it('delivers and confirms the code through the real sender without flashing secr
     Http::fake([
         'hooks.slack.com/*' => Http::response('ok'),
         'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 1]]),
-        'hooks.example.test/*' => Http::response('', 204),
+        'hooks.example.com/*' => Http::response('', 204),
     ]);
     $channel = verificationAdapterChannel($this->team, $family);
     $url = "/teams/{$this->team->id}/notification-channels/{$channel->id}";

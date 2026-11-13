@@ -225,7 +225,7 @@ it('refuses wrong creation input through the production route without persistenc
     'http to private network' => ['http', ['url' => 'http://10.0.0.8/'], 'url'],
     'http with oversized body' => ['http', ['body' => str_repeat('x', 65537)], 'body'],
     'http with invalid status' => ['http', ['expected_status' => '99'], 'expected_status'],
-    'http with TLS field' => ['http', ['tls_host' => 'contract.example.invalid'], 'tls_host'],
+    'http with TLS field' => ['http', ['tls_host' => 'contract.example.com'], 'tls_host'],
     'keyword without keyword' => ['keyword', ['expected_keyword' => '__omit__'], 'expected_keyword'],
     'keyword with unknown mode' => ['keyword', ['keyword_mode' => 'contains'], 'keyword_mode'],
     'tls with port out of range' => ['tls', ['tls_port' => '70000'], 'tls_port'],
@@ -235,7 +235,7 @@ it('refuses wrong creation input through the production route without persistenc
     'dns with private resolver' => ['dns', ['dns_resolver' => '10.0.0.53'], 'dns_resolver'],
     'dns without expected values' => ['dns', ['dns_expected_values' => []], 'dns_expected_values'],
     'heartbeat with negative grace' => ['heartbeat', ['heartbeat_grace_seconds' => '-1'], 'heartbeat_grace_seconds'],
-    'heartbeat with HTTP field' => ['heartbeat', ['url' => 'https://contract.example.invalid/'], 'url'],
+    'heartbeat with HTTP field' => ['heartbeat', ['url' => 'https://contract.example.com/'], 'url'],
     'timeout above the bound' => ['tls', ['timeout_ms' => '10001'], 'timeout_ms'],
     'interval below the minimum' => ['dns', ['interval_seconds' => '29'], 'interval_seconds'],
     'threshold above the bound' => ['heartbeat', ['confirmation_threshold' => '11'], 'confirmation_threshold'],
@@ -264,7 +264,7 @@ it('refuses wrong edits through the production route and keeps the stored config
 })->with([
     'type change without the new configuration' => ['http', ['type' => 'tls'], 'tls_host'],
     'secret-free edit with private URL' => ['keyword', ['url' => 'http://192.168.1.1/'], 'url'],
-    'field of another type' => ['tls', ['dns_name' => 'contract.example.invalid'], 'dns_name'],
+    'field of another type' => ['tls', ['dns_name' => 'contract.example.com'], 'dns_name'],
     'timeout below the bound' => ['heartbeat', ['timeout_ms' => '99'], 'timeout_ms'],
     'empty patch' => ['dns', [], 'monitor'],
 ]);
@@ -307,7 +307,7 @@ it('never lists another team’s monitors that share a searchable TLS host or DN
     }
 
     $this->actingAs($team->owner)
-        ->get("/teams/{$team->id}/monitors?q=contract.example.invalid")
+        ->get("/teams/{$team->id}/monitors?q=contract.example.com")
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('monitors.total', 2)
             ->where('monitors.data', fn ($rows): bool => collect($rows)->pluck('name')->sort()->values()->all() === ["dns of {$team->id}", "tls of {$team->id}"]));

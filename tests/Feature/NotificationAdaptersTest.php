@@ -34,7 +34,7 @@ beforeEach(function (): void {
     $this->resolver = new FakeHostResolver([
         'hooks.slack.com' => ['93.184.216.34'],
         'api.telegram.org' => ['93.184.216.35'],
-        'hooks.example.test' => ['93.184.216.36', '2606:4700:4700::1111'],
+        'hooks.example.com' => ['93.184.216.36', '2606:4700:4700::1111'],
     ]);
     app()->instance(HostResolver::class, $this->resolver);
     $this->message = new ChannelMessage(
@@ -61,7 +61,7 @@ function adapterConfiguration(string $family): ChannelConfiguration
         'email' => new EmailChannelConfiguration('oncall@example.test'),
         'slack' => new SlackChannelConfiguration('https://hooks.slack.com/services/T000/B000/private-slack-key'),
         'telegram' => new TelegramChannelConfiguration('123456:private-bot-token', '-1001234567890'),
-        'webhook' => new WebhookChannelConfiguration('https://hooks.example.test/private-hook?key=private-query', str_repeat('a1', 32)),
+        'webhook' => new WebhookChannelConfiguration('https://hooks.example.com/private-hook?key=private-query', str_repeat('a1', 32)),
         'sms' => new SmsChannelConfiguration('+15550001234'),
     };
 }
@@ -134,7 +134,7 @@ it('sends Telegram chat text without markup or previews', function (): void {
 });
 
 it('signs exact webhook bytes and changes the timestamp signature on a later attempt while retaining the event identity', function (): void {
-    Http::fake(['hooks.example.test/*' => Http::response('', 204)]);
+    Http::fake(['hooks.example.com/*' => Http::response('', 204)]);
     $adapter = app(ChannelAdapterRegistry::class)->for(ChannelType::Webhook);
     $configuration = adapterConfiguration('webhook');
     $adapter->send($configuration, $this->message);
@@ -157,7 +157,7 @@ it('signs exact webhook bytes and changes the timestamp signature on a later att
     expect($requests[0]->body())->toBe($requests[1]->body())
         ->and($requests[0]->header('X-Signalbox-Signature'))->not->toBe($requests[1]->header('X-Signalbox-Signature'))
         ->and($requests[0]->header('X-Signalbox-Timestamp'))->toBe(['1793264400'])
-        ->and($this->resolver->queries)->toBe(['hooks.example.test', 'hooks.example.test']);
+        ->and($this->resolver->queries)->toBe(['hooks.example.com', 'hooks.example.com']);
 });
 
 it('records SMS metadata only and refuses to verify an undelivered SMS code', function (): void {
@@ -182,7 +182,7 @@ it('records SMS metadata only and refuses to verify an undelivered SMS code', fu
 it('keeps an empty webhook field map as a JSON object and signs UTF-8 bytes with the current key', function (): void {
     Http::fake(['*' => Http::response('', 204)]);
     $message = new ChannelMessage($this->message->id, 'incident.resolved', CarbonImmutable::now(), 'Recovered', 'Checkout è operativo ✅');
-    $configuration = new WebhookChannelConfiguration('https://hooks.example.test/', str_repeat('b2', 32));
+    $configuration = new WebhookChannelConfiguration('https://hooks.example.com/', str_repeat('b2', 32));
     app(ChannelAdapterRegistry::class)->for(ChannelType::Webhook)->send($configuration, $message);
 
     Http::assertSent(function (Request $request): bool {
@@ -216,7 +216,7 @@ it('does not treat successful HTTP without a provider acknowledgement as deliver
 ]);
 
 it('refuses HTTP errors and redirects without following or retrying', function (string $family, int $status): void {
-    Http::fake(['*' => Http::response('private provider body 654321', $status, ['Location' => 'https://other.example.test/steal'])]);
+    Http::fake(['*' => Http::response('private provider body 654321', $status, ['Location' => 'https://other.example.com/steal'])]);
 
     try {
         app(ChannelAdapterRegistry::class)->for(ChannelType::from($family))->send(adapterConfiguration($family), $this->message);
@@ -234,7 +234,7 @@ it('refuses private or mixed DNS answers for each HTTP family before sending', f
     app()->instance(HostResolver::class, new FakeHostResolver([
         'hooks.slack.com' => $addresses,
         'api.telegram.org' => $addresses,
-        'hooks.example.test' => $addresses,
+        'hooks.example.com' => $addresses,
     ]));
     Http::fake();
 
@@ -249,7 +249,7 @@ it('refuses private or mixed DNS answers for each HTTP family before sending', f
 ]);
 
 it('re-resolves and refuses a destination that rebinds after a successful attempt', function (): void {
-    Http::fake(['hooks.example.test/*' => Http::response('', 204)]);
+    Http::fake(['hooks.example.com/*' => Http::response('', 204)]);
     $resolver = new class () implements HostResolver {
         /** @var int Number of authorization-time lookups performed. */
         public int $calls = 0;
@@ -282,7 +282,7 @@ it('keeps HTTPS verification, fresh pins, proxy bypass and strict transfer bound
             ->and($options['proxy'])->toBe('')
             ->and($options['timeout'])->toBe(5)
             ->and($options['connect_timeout'])->toBe(2)
-            ->and($options['curl'][CURLOPT_RESOLVE])->toBe(['hooks.example.test:443:93.184.216.36,[2606:4700:4700::1111]'])
+            ->and($options['curl'][CURLOPT_RESOLVE])->toBe(['hooks.example.com:443:93.184.216.36,[2606:4700:4700::1111]'])
             ->and($options['curl'][CURLOPT_FRESH_CONNECT])->toBeTrue()
             ->and($options['curl'][CURLOPT_FORBID_REUSE])->toBeTrue()
             ->and($options['curl'][CURLOPT_PROXY])->toBe('')
@@ -324,7 +324,7 @@ it('refuses cleartext endpoints and invalid content without an HTTP call', funct
     Http::fake();
     $http = app(NotificationHttpTransport::class);
 
-    expect(fn () => $http->post('http://hooks.example.test/', '{}'))->toThrow(ChannelDeliveryFailed::class, 'must use HTTPS')
+    expect(fn () => $http->post('http://hooks.example.com/', '{}'))->toThrow(ChannelDeliveryFailed::class, 'must use HTTPS')
         ->and(fn () => $http->encode(['text' => "\xff"]))->toThrow(ChannelDeliveryFailed::class, 'could not be encoded');
     Http::assertNothingSent();
 });

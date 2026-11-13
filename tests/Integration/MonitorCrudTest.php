@@ -229,7 +229,7 @@ it('preserves omitted secrets and keeps observation state for metadata-only edit
 
     expect($fresh->name)->toBe('Renamed')
         ->and($fresh->timeout_ms)->toBe(2000)
-        ->and($fresh->url)->toBe('https://example.invalid/Path?key=synthetic-secret')
+        ->and($fresh->url)->toBe('https://example.com/Path?key=synthetic-secret')
         ->and($fresh->headers_json)->toBe(['authorization' => ' Bearer synthetic-secret ', 'x.probe' => ''])
         ->and($fresh->body)->toBe(' exact body ')
         ->and($fresh->last_status)->toBe(MonitorStatus::Up)
@@ -243,7 +243,7 @@ it('resets the old target observation on configuration changes and the slot on c
     $observed = ['last_status' => 'down', 'consecutive_failures' => 3, 'last_checked_at' => now(), 'next_check_at' => now()->addMinute()];
 
     DB::table('monitors')->where('id', $monitor->id)->update($observed);
-    $this->actions->update($team->owner, $team->id, $monitor->id, ['url' => 'https://other.example.invalid/']);
+    $this->actions->update($team->owner, $team->id, $monitor->id, ['url' => 'https://other.example.com/']);
     $changed = reloadMonitor($team, $monitor->id);
 
     expect($changed->last_status)->toBe(MonitorStatus::Unknown)
@@ -269,10 +269,10 @@ it('revalidates the explicit patch against the latest locked state instead of an
     $team = Team::factory()->create();
     $monitor = $this->actions->create($team->owner, $team->id, MonitorInputFixture::http());
 
-    $this->actions->update($team->owner, $team->id, $monitor->id, ['url' => 'https://newer.example.invalid/']);
+    $this->actions->update($team->owner, $team->id, $monitor->id, ['url' => 'https://newer.example.com/']);
     $this->actions->update($team->owner, $team->id, $monitor->id, ['name' => 'Concurrent rename']);
 
-    expect(reloadMonitor($team, $monitor->id)->url)->toBe('https://newer.example.invalid/')
+    expect(reloadMonitor($team, $monitor->id)->url)->toBe('https://newer.example.com/')
         ->and(validationKeys(fn () => $this->actions->update($team->owner, $team->id, $monitor->id, ['heartbeat_grace_seconds' => 1])))->toBe(['heartbeat_grace_seconds']);
 });
 
@@ -345,7 +345,7 @@ it('serializes competing creations on the Team row before counting the quota', f
 
     $ownerId = $probe->table('users')->insertGetId([
         'name' => 'Quota owner',
-        'email' => 'quota-'.$suffix.'@example.test',
+        'email' => 'quota-'.$suffix.'@example.com',
         'email_verified_at' => now(),
         'password' => 'unused-test-hash',
     ]);

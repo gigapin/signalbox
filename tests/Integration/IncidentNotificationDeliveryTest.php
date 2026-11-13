@@ -53,7 +53,7 @@ beforeEach(function (): void {
     $this->team = Team::factory()->create();
     [$this->monitor, $this->channel] = app(TenantContext::class)->run($this->team->id, function (): array {
         $monitor = Monitor::factory()->create(['name' => 'Checkout']);
-        $monitor->applyConfiguration(new HttpMonitorConfiguration('https://private-target.example.test/path?secret=target-secret', headers: ['Authorization' => 'monitor-secret'], body: 'private-monitor-body'));
+        $monitor->applyConfiguration(new HttpMonitorConfiguration('https://private-target.example.com/path?secret=target-secret', headers: ['Authorization' => 'monitor-secret'], body: 'private-monitor-body'));
         $monitor->save();
         $channel = NotificationChannel::factory()->webhook()->active()->create();
         EscalationPolicy::factory()->create([
@@ -65,7 +65,7 @@ beforeEach(function (): void {
 
         return [$monitor, $channel];
     });
-    app()->instance(\App\Contracts\Security\HostResolver::class, new FakeHostResolver(['hooks.example.test' => ['93.184.216.34']]));
+    app()->instance(\App\Contracts\Security\HostResolver::class, new FakeHostResolver(['hooks.example.com' => ['93.184.216.34']]));
     $this->providerResponses = Http::sequence()->pushStatus(204)->whenEmpty(Http::response('', 204));
     $this->transactionBaseline = DB::transactionLevel();
     Http::fake(function (Request $request) {
@@ -341,7 +341,7 @@ it('rechecks pause, deletion and verified destination changes at attempt time', 
             $channel->forceFill(['is_active' => false])->save();
         } else {
             $values = $channel->config_json;
-            $values['url'] = 'https://new-destination.example.test/secret';
+            $values['url'] = 'https://new-destination.example.com/secret';
             $channel->forceFill(['config_json' => $values, 'verified_at' => CarbonImmutable::now()])->save();
         }
     });
@@ -1332,7 +1332,7 @@ it('rechecks the current interval and recipient eligibility before releasing def
     } elseif ($change === 'pause') {
         app(ManageNotificationChannels::class)->setActive($this->team->owner, $this->team->id, $this->channel->id, false);
     } else {
-        app(ManageNotificationChannels::class)->update($this->team->owner, $this->team->id, $this->channel->id, 'Changed', ['url' => 'https://hooks.example.test/new']);
+        app(ManageNotificationChannels::class)->update($this->team->owner, $this->team->id, $this->channel->id, 'Changed', ['url' => 'https://hooks.example.com/new']);
         DB::table('notification_channels')->where('id', $this->channel->id)->update(['is_active' => true, 'verified_at' => CarbonImmutable::now()]);
     }
 

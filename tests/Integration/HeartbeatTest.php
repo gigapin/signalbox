@@ -196,7 +196,7 @@ it('removes credentials and receipts on type exit or deletion and starts fresh o
     $token = app(ManageHeartbeatCredentials::class)->rotate($this->actor, $this->team->id, $this->monitor->id);
     app(ReceiveHeartbeat::class)->receive($token);
     $actions = app(ManageMonitors::class);
-    $actions->update($this->actor, $this->team->id, $this->monitor->id, ['type' => 'http', 'url' => 'https://example.invalid']);
+    $actions->update($this->actor, $this->team->id, $this->monitor->id, ['type' => 'http', 'url' => 'https://example.com']);
     expect(DB::table('monitor_heartbeats')->count())->toBe(0)->and(DB::table('heartbeat_receipts')->count())->toBe(0);
     $this->postJson('/heartbeats', [], ['Authorization' => 'Bearer '.$token])->assertNotFound();
     $actions->update($this->actor, $this->team->id, $this->monitor->id, ['type' => 'heartbeat', 'heartbeat_grace_seconds' => 0]);

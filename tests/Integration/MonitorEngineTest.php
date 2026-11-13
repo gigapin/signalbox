@@ -41,7 +41,7 @@ beforeEach(function (): void {
 
     CarbonImmutable::setTestNow('2026-10-26T12:00:00Z');
     config(['monitor-scheduling.enabled' => true]);
-    app()->instance(HostResolver::class, new FakeHostResolver(['example.invalid' => ['93.184.216.34']]));
+    app()->instance(HostResolver::class, new FakeHostResolver(['example.com' => ['93.184.216.34']]));
 });
 afterEach(function (): void {
     Queue::connection('redis')->clear('checks:eu');
@@ -90,7 +90,7 @@ function engineTick(Monitor $monitor): CheckExecution
 it('persists the complete success error timeout recovery sequence without automatic target retries', function (string $type): void {
     $team = Team::factory()->business()->create();
     $monitor = engineMonitor($team, $type);
-    $transport = new ConnectException('synthetic-private-timeout', new Request('GET', 'https://example.invalid/'), handlerContext: ['errno' => 28]);
+    $transport = new ConnectException('synthetic-private-timeout', new Request('GET', 'https://example.com/'), handlerContext: ['errno' => 28]);
     Http::fakeSequence()->push('healthy')->push('unhealthy', 503)
         ->pushResponse(Create::rejectionFor(new ConnectionException('synthetic-private-timeout', previous: $transport)))
         ->push('healthy');
@@ -132,10 +132,10 @@ it('records protocol failures and a later recovery through the same scheduled pi
     $monitor = engineMonitor($team, $type);
     $dns = new FakeDnsTransport();
     $tls = new FakeTlsTransport();
-    $name = 'example.invalid.|1';
+    $name = 'example.com.|1';
     $answer = Message::createResponseWithAnswersForQuery(
-        new Query('example.invalid.', 1, 1),
-        [new Record('example.invalid', 1, 1, 60, $type === 'tls' ? '93.184.216.34' : '192.0.2.1')],
+        new Query('example.com.', 1, 1),
+        [new Record('example.com', 1, 1, 60, $type === 'tls' ? '93.184.216.34' : '192.0.2.1')],
     );
     $dns->answers[$name] = $answer;
     app()->instance(DnsTransport::class, $dns);
@@ -145,7 +145,7 @@ it('records protocol failures and a later recovery through the same scheduled pi
     if ($type === 'tls') {
         $tls->failure = new CheckTransportFailed($error);
     } else {
-        $dns->answers[$name] = $error === CheckError::Timeout ? new CheckTransportFailed($error) : Message::createResponseWithAnswersForQuery(new Query('example.invalid.', 1, 1), []);
+        $dns->answers[$name] = $error === CheckError::Timeout ? new CheckTransportFailed($error) : Message::createResponseWithAnswersForQuery(new Query('example.com.', 1, 1), []);
     }
 
     $failed = engineTick($monitor);
@@ -243,3 +243,20 @@ it('retains the admitted observation during a real configuration mutation and us
         ->and(DB::table('monitors')->value('last_status'))->toBe('up');
     Http::assertSentCount(1);
 });
+
+it('persists identical destination failures without target requests or automatic retries', function (string $type, array $answers): void {
+    $team = Team::factory()->business()->create();
+    $monitor = engineMonitor($team, $type);
+    app()->instance(HostResolver::class, new FakeHostResolver(['example.com' => $answers]));
+    Http::fake();
+    $work = engineTick($monitor);
+    $result = DB::table('check_results')->where('execution_id', $work->id)->sole();
+
+    expect($work->state)->toBe('completed')
+        ->and($work->queue_attempt)->toBe(1)
+        ->and($result->status)->toBe('down')
+        ->and($result->error_code)->toBe('resolution_failed')
+        ->and($result->error_message)->toBe('The destination is unavailable.')
+        ->and(DB::table('check_results')->count())->toBe(1);
+    Http::assertNothingSent();
+})->with(['http', 'keyword'])->with([[[]], [['127.0.0.1']], [['8.8.8.8', '127.0.0.1']]]);

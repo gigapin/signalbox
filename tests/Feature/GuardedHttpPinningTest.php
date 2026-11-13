@@ -49,7 +49,7 @@ beforeEach(function (): void {
         usleep(20000);
     }
 
-    $this->app->instance(HostResolver::class, new FakeHostResolver(['pinned.signalbox.test' => ['127.0.0.1']]));
+    $this->app->instance(HostResolver::class, new FakeHostResolver(['pinned.example.com' => ['127.0.0.1']]));
 });
 
 afterEach(function (): void {
@@ -71,21 +71,21 @@ it('connects to the pinned address for a name unknown to system DNS, ignoring en
     putenv('HTTP_PROXY=http://127.0.0.1:9');
 
     // Only this synthetic origin bypasses the suite-wide stray request guard.
-    Http::allowStrayRequests(["http://pinned.signalbox.test:{$this->port}/*"]);
+    Http::allowStrayRequests(["http://pinned.example.com:{$this->port}/*"]);
 
-    $destination = app(OutboundDestinationGuard::class)->authorizeUrl("http://pinned.signalbox.test:{$this->port}/probe?token=secret");
+    $destination = app(OutboundDestinationGuard::class)->authorizeUrl("http://pinned.example.com:{$this->port}/probe?token=secret");
     $response = Http::withOptions(app(GuardedHttpOptions::class)->for($destination))->timeout(5)->get((string) $destination->url);
 
     expect($response->status())->toBe(200)
-        ->and($response->body())->toBe("pinned.signalbox.test:{$this->port}")
-        ->and(file($this->directory.'/hits', FILE_IGNORE_NEW_LINES))->toBe(["pinned.signalbox.test:{$this->port}"]);
+        ->and($response->body())->toBe("pinned.example.com:{$this->port}")
+        ->and(file($this->directory.'/hits', FILE_IGNORE_NEW_LINES))->toBe(["pinned.example.com:{$this->port}"]);
 });
 
 it('refuses the same loopback destination before connecting when no exception is configured', function (): void {
     config(['outbound-security.allowed_cidrs' => []]);
 
     try {
-        app(OutboundDestinationGuard::class)->authorizeUrl("http://pinned.signalbox.test:{$this->port}/");
+        app(OutboundDestinationGuard::class)->authorizeUrl("http://pinned.example.com:{$this->port}/");
     } catch (OutboundDestinationRejected $exception) {
         expect($exception->reason)->toBe(OutboundRejection::BlockedAddress)
             ->and(file_exists($this->directory.'/hits'))->toBeFalse();

@@ -52,7 +52,7 @@ final class NotificationChannelFactory extends Factory
         return $this->state(fn (): array => [
             'type' => ChannelType::Webhook,
             'name' => 'Ops webhook',
-            'config_json' => ['url' => 'https://hooks.example.test/signalbox', 'signing_secret' => bin2hex(random_bytes(32))],
+            'config_json' => ['url' => 'https://hooks.example.com/signalbox', 'signing_secret' => bin2hex(random_bytes(32))],
         ]);
     }
 

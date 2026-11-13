@@ -29,9 +29,9 @@ beforeEach(function (): void {
     $this->clock = new FakeCheckClock();
     app()->instance(CheckClock::class, $this->clock);
     $this->dns = new FakeHostResolver([
-        'checker.example.test' => ['93.184.216.34'],
-        'other.example.test' => ['93.184.216.35'],
-        'blocked.example.test' => ['127.0.0.1'],
+        'checker.example.com' => ['93.184.216.34'],
+        'other.example.com' => ['93.184.216.35'],
+        'blocked.example.com' => ['127.0.0.1'],
     ]);
     app()->instance(HostResolver::class, $this->dns);
 });
@@ -53,7 +53,7 @@ it('mixes HTTP and keyword checks in one pool with stable correlation and networ
     });
     $results = runHttpChecks([
         CheckInputFixture::make(7),
-        CheckInputFixture::make(3, new KeywordMonitorConfiguration(new HttpMonitorConfiguration('https://checker.example.test/second', expectedStatus: 201), 'healthy')),
+        CheckInputFixture::make(3, new KeywordMonitorConfiguration(new HttpMonitorConfiguration('https://checker.example.com/second', expectedStatus: 201), 'healthy')),
     ]);
 
     expect(array_keys($results))->toBe([7, 3])
@@ -72,7 +72,7 @@ it('validates an entire batch before any DNS lookup or HTTP request', function (
         'timeout-large' => [CheckInputFixture::make(timeoutMs: 10001)],
         'duplicate' => [CheckInputFixture::make(), CheckInputFixture::make()],
         'foreign' => [CheckInputFixture::make(), CheckInputFixture::make(2, teamId: 2)],
-        'type' => [CheckInputFixture::make(), CheckInputFixture::make(2, new TlsMonitorConfiguration('example.test', 443))],
+        'type' => [CheckInputFixture::make(), CheckInputFixture::make(2, new TlsMonitorConfiguration('example.com', 443))],
         'size' => array_map(fn (int $id) => CheckInputFixture::make($id), range(1, 11)),
     };
 
@@ -95,13 +95,13 @@ it('returns safe SSRF and resolution refusals before transport with nullable lat
     expect($result->error)->toBe($expected)
         ->and($result->latencyMs)->toBeNull()
         ->and($result->statusCode)->toBeNull()
-        ->and(json_encode($result))->not->toContain('private-token', 'checker.example.test');
+        ->and(json_encode($result))->not->toContain('private-token', 'checker.example.com');
     Http::assertNothingSent();
 })->with([
-    ['http://127.0.0.1/?token=private-token', CheckError::BlockedAddress],
+    ['http://127.0.0.1/?token=private-token', CheckError::ResolutionFailed],
     ['http://localhost/', CheckError::LocalName],
-    ['http://blocked.example.test/', CheckError::BlockedAddress],
-    ['http://unresolvable.example.test/', CheckError::ResolutionFailed],
+    ['http://blocked.example.com/', CheckError::ResolutionFailed],
+    ['http://unresolvable.example.com/', CheckError::ResolutionFailed],
 ]);
 
 it('sends exact configured methods and bodies through pinned non-proxying verified requests', function (HttpMethod $method): void {
@@ -113,7 +113,7 @@ it('sends exact configured methods and bodies through pinned non-proxying verifi
             ->and($options['proxy'])->toBe('')
             ->and($options['verify'])->toBeTrue()
             ->and($options['cookies'])->toBeFalse()
-            ->and($options['curl'][CURLOPT_RESOLVE])->toBe(['checker.example.test:443:93.184.216.34'])
+            ->and($options['curl'][CURLOPT_RESOLVE])->toBe(['checker.example.com:443:93.184.216.34'])
             ->and($options['curl'][CURLOPT_FRESH_CONNECT])->toBeTrue()
             ->and($options['curl'][CURLOPT_FORBID_REUSE])->toBeTrue()
             ->and($options['timeout'])->toBe(1.0);
@@ -121,7 +121,7 @@ it('sends exact configured methods and bodies through pinned non-proxying verifi
         return Http::response('', 204);
     });
     $result = runHttpChecks([CheckInputFixture::make(configuration: new HttpMonitorConfiguration(
-        'https://checker.example.test/health',
+        'https://checker.example.com/health',
         $method,
         ['authorization' => 'private-token'],
         $body,
@@ -142,7 +142,7 @@ it('rewrites redirect methods and removes entity headers when the body is droppe
     });
     $body = $method === HttpMethod::HEAD ? null : 'secret-payload';
     $result = runHttpChecks([CheckInputFixture::make(configuration: new HttpMonitorConfiguration(
-        'https://checker.example.test/start',
+        'https://checker.example.com/start',
         $method,
         ['content-type' => 'text/plain', 'authorization' => 'private-token'],
         $body,
@@ -171,13 +171,13 @@ it('never restores credentials after crossing origins or accepts implicit cookie
         $seen[] = $request;
 
         return match (count($seen)) {
-            1 => Http::response('', 302, ['Location' => 'https://other.example.test/second', 'Set-Cookie' => 'session=server-secret']),
-            2 => Http::response('', 302, ['Location' => 'https://checker.example.test/final']),
+            1 => Http::response('', 302, ['Location' => 'https://other.example.com/second', 'Set-Cookie' => 'session=server-secret']),
+            2 => Http::response('', 302, ['Location' => 'https://checker.example.com/final']),
             default => Http::response('healthy'),
         };
     });
     $result = runHttpChecks([CheckInputFixture::make(configuration: new HttpMonitorConfiguration(
-        'https://checker.example.test/start',
+        'https://checker.example.com/start',
         headers: ['authorization' => 'secret', 'cookie' => 'private', 'x-custom' => 'credential'],
         followRedirects: true,
     ))])[1];
@@ -194,7 +194,7 @@ it('never restores credentials after crossing origins or accepts implicit cookie
 it('refuses body disclosure and reauthorizes every redirect without contacting denied destinations', function (string $location, int $status, ?string $body, CheckError $expected): void {
     Http::fake(fn () => Http::response('', $status, ['Location' => $location]));
     $result = runHttpChecks([CheckInputFixture::make(configuration: new HttpMonitorConfiguration(
-        'https://checker.example.test/start',
+        'https://checker.example.com/start',
         HttpMethod::POST,
         body: $body,
         followRedirects: true,
@@ -203,21 +203,21 @@ it('refuses body disclosure and reauthorizes every redirect without contacting d
     expect($result->error)->toBe($expected);
     Http::assertSentCount(1);
 })->with([
-    ['https://other.example.test/final', 307, 'private-body', CheckError::CrossOriginBody],
-    ['http://checker.example.test/final', 302, null, CheckError::RedirectDowngrade],
-    ['https://blocked.example.test/final', 302, null, CheckError::BlockedAddress],
+    ['https://other.example.com/final', 307, 'private-body', CheckError::CrossOriginBody],
+    ['http://checker.example.com/final', 302, null, CheckError::RedirectDowngrade],
+    ['https://blocked.example.com/final', 302, null, CheckError::ResolutionFailed],
     ['', 302, null, CheckError::InvalidRedirect],
 ]);
 
 it('keeps redirect responses observable when following is disabled and bounds enabled loops', function (): void {
     Http::fake(fn () => Http::response('', 302, ['Location' => '/again']));
-    $plain = new HttpMonitorConfiguration('https://checker.example.test/start', expectedStatus: 302);
+    $plain = new HttpMonitorConfiguration('https://checker.example.com/start', expectedStatus: 302);
     expect(runHttpChecks([CheckInputFixture::make(configuration: $plain)])[1]->status)->toBe(MonitorStatus::Up);
     Http::assertSentCount(1);
 
     config(['outbound-security.max_redirects' => 2]);
     expect(runHttpChecks([CheckInputFixture::make(configuration: new HttpMonitorConfiguration(
-        'https://checker.example.test/start',
+        'https://checker.example.com/start',
         followRedirects: true,
     ))])[1]->error)->toBe(CheckError::RedirectLimit);
     Http::assertSentCount(4);
@@ -234,7 +234,7 @@ it('shares measured time across redirect hops rather than restarting the timeout
             : Http::response('healthy');
     });
     $result = runHttpChecks([CheckInputFixture::make(configuration: new HttpMonitorConfiguration(
-        'https://checker.example.test/start',
+        'https://checker.example.com/start',
         followRedirects: true,
     ))])[1];
 
@@ -247,7 +247,7 @@ it('rejects oversized responses instead of accepting keyword absence on a trunca
     config(['monitor-checks.max_response_bytes' => 5]);
     Http::fake(fn () => Http::response('123456'));
     $result = runHttpChecks([CheckInputFixture::make(configuration: new KeywordMonitorConfiguration(
-        new HttpMonitorConfiguration('https://checker.example.test/'),
+        new HttpMonitorConfiguration('https://checker.example.com/'),
         'absent-secret',
         KeywordMode::Absent,
     ))])[1];
@@ -259,7 +259,7 @@ it('applies the same response cap across all redirect bodies', function (): void
     config(['monitor-checks.max_response_bytes' => 5]);
     Http::fakeSequence()->push('123', 302, ['Location' => '/final'])->push('456', 200);
     $result = runHttpChecks([CheckInputFixture::make(configuration: new HttpMonitorConfiguration(
-        'https://checker.example.test/start',
+        'https://checker.example.com/start',
         followRedirects: true,
     ))])[1];
 
@@ -272,7 +272,7 @@ it('classifies transport errors safely without retrying or aborting other observ
         $attempts[] = $request->url();
 
         if (str_contains($request->url(), 'failed')) {
-            $error = new ConnectException('private-token https://checker.example.test/?token=private', new Request('GET', $request->url()), handlerContext: ['errno' => $errno]);
+            $error = new ConnectException('private-token https://checker.example.com/?token=private', new Request('GET', $request->url()), handlerContext: ['errno' => $errno]);
 
             return GuzzleHttp\Promise\Create::rejectionFor(new ConnectionException('private-token', previous: $error));
         }
@@ -280,13 +280,13 @@ it('classifies transport errors safely without retrying or aborting other observ
         return Http::response('healthy');
     });
     $results = runHttpChecks([
-        CheckInputFixture::make(1, new HttpMonitorConfiguration('https://checker.example.test/failed')),
+        CheckInputFixture::make(1, new HttpMonitorConfiguration('https://checker.example.com/failed')),
         CheckInputFixture::make(2),
     ]);
 
     expect($results[1]->error)->toBe($expected)
         ->and($results[2]->status)->toBe(MonitorStatus::Up)
-        ->and($results[1]->errorMessage())->not->toContain('private-token', 'checker.example.test');
+        ->and($results[1]->errorMessage())->not->toContain('private-token', 'checker.example.com');
     expect($attempts)->toHaveCount(2)
         ->and(count(array_filter($attempts, fn (string $url): bool => str_contains($url, 'failed'))))->toBe(1);
 })->with([[28, CheckError::Timeout], [60, CheckError::Tls], [7, CheckError::Connection], [6, CheckError::ResolutionFailed]]);
@@ -300,3 +300,17 @@ it('leaves scheduling disabled with the application consumer available', functio
     expect(config('monitor-scheduling.enabled'))->toBeFalse()
         ->and(app()->bound(CheckWorkConsumer::class))->toBeTrue();
 });
+
+it('hides empty private and mixed DNS answers equally for HTTP and keyword checks', function (array $answers, bool $keyword): void {
+    app()->instance(HostResolver::class, new FakeHostResolver(['probe.example.com' => $answers]));
+    Http::fake();
+    $http = new HttpMonitorConfiguration('https://probe.example.com/');
+    $configuration = $keyword ? new KeywordMonitorConfiguration($http, 'healthy') : $http;
+    $result = runHttpChecks([CheckInputFixture::make(configuration: $configuration)])[1];
+
+    expect($result->status)->toBe(MonitorStatus::Down)
+        ->and($result->error)->toBe(CheckError::ResolutionFailed)
+        ->and($result->errorMessage())->toBe('The destination is unavailable.')
+        ->and($result->latencyMs)->toBeNull();
+    Http::assertNothingSent();
+})->with([[[]], [['127.0.0.1']], [['8.8.8.8', '127.0.0.1']]])->with([true, false]);

@@ -25,7 +25,7 @@ it('normalizes safe metadata while preserving exact sensitive bytes', function (
     $values = $result->data->candidate();
     expect($result->data->name)->toBe('Synthetic input')
         ->and($result->data->intervalSeconds)->toBe(300)
-        ->and($values['url'])->toBe('https://example.invalid/Path?key=synthetic-secret')
+        ->and($values['url'])->toBe('https://example.com/Path?key=synthetic-secret')
         ->and($values['headers'])->toBe(['authorization' => ' Bearer synthetic-secret ', 'x.probe' => ''])
         ->and($values['body'])->toBe(' exact body ');
 });
@@ -98,11 +98,11 @@ it('requires new type configuration on a type change and never inherits old type
     $validator = app(MonitorInputValidator::class);
     $current = $validator->validate(MonitorInputFixture::http())->data;
     expect(fn () => $validator->validate(['type' => 'tls'], $current))->toThrow(ValidationException::class);
-    $result = $validator->validate(['type' => 'tls', 'tls_host' => 'Example.Invalid.', 'tls_port' => 443], $current);
+    $result = $validator->validate(['type' => 'tls', 'tls_host' => 'example.com.', 'tls_port' => 443], $current);
     expect($result->data->configuration->type())->toBe(MonitorType::Tls)
         ->and($result->data->name)->toBe($current->name)
         ->and($result->data->candidate()['url'])->toBeNull()
-        ->and($result->patch->values)->toBe(['type' => 'tls', 'tls_host' => 'example.invalid', 'tls_port' => 443]);
+        ->and($result->patch->values)->toBe(['type' => 'tls', 'tls_host' => 'example.com', 'tls_port' => 443]);
 });
 
 it('rejects empty patches including transport metadata alone', function (): void {
@@ -122,7 +122,7 @@ it('validates optional TLS and heartbeat ranges without treating empty values as
     [[...MonitorInputFixture::cases()['tls'][0], 'tls_expiry_warning_days' => '']],
     [[...MonitorInputFixture::cases()['heartbeat'][0], 'heartbeat_grace_seconds' => -1]],
     [[...MonitorInputFixture::cases()['heartbeat'][0], 'heartbeat_grace_seconds' => 86401]],
-    [[...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => 'resolver.example.invalid']],
+    [[...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => 'resolver.example.com']],
     [[...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => '']],
 ]);
 
@@ -169,7 +169,7 @@ it('accepts public literal destinations and leaves hostname resolution to access
     expect($validator->validate([...MonitorInputFixture::http(), 'url' => 'https://93.184.215.14/'])->data->candidate()['url'])->toBe('https://93.184.215.14/')
         ->and($validator->validate([...MonitorInputFixture::cases()['tls'][0], 'tls_host' => '2606:4700:4700::1111'])->data->candidate()['tls_host'])->toBe('2606:4700:4700::1111')
         ->and($validator->validate([...MonitorInputFixture::cases()['dns'][0], 'dns_resolver' => '9.9.9.9'])->data->candidate()['dns_resolver'])->toBe('9.9.9.9')
-        ->and($validator->validate([...MonitorInputFixture::http(), 'url' => 'https://internal.example.invalid/'])->data->candidate()['url'])->toBe('https://internal.example.invalid/');
+        ->and($validator->validate([...MonitorInputFixture::http(), 'url' => 'https://internal.example.com/'])->data->candidate()['url'])->toBe('https://internal.example.com/');
 });
 
 it('honours configured CIDR exceptions during save-time validation', function (): void {
@@ -179,3 +179,19 @@ it('honours configured CIDR exceptions during save-time validation', function ()
     expect(app(MonitorInputValidator::class)->validate([...MonitorInputFixture::http(), 'url' => 'http://127.0.0.1:8080/'])->data->candidate()['url'])
         ->toBe('http://127.0.0.1:8080/');
 });
+
+it('rejects internal questions and outbound hosts after normalization without resolving them', function (string $name, string $variant, string $field): void {
+    $payload = MonitorInputFixture::cases()[$variant][0];
+    $payload[$field] = $field === 'url' ? 'https://'.$name.'/health' : $name;
+
+    try {
+        app(MonitorInputValidator::class)->validate($payload);
+    } catch (ValidationException $error) {
+        expect($error->errors())->toHaveKey($field);
+
+        return;
+    }
+
+    throw new LogicException('Internal names must be rejected before persistence.');
+})->with(['postgres', 'Redis.', 'DB.INTERNAL.', 'host.local', 'host.test', 'host.invalid', 'host.example', 'host.onion', 'app.localhost'])
+    ->with([['dns', 'dns_name'], ['tls', 'tls_host'], ['http', 'url'], ['keyword', 'url']]);

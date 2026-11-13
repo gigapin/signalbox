@@ -22,12 +22,14 @@ final readonly class OutboundDestinationGuard
     /**
      * @param OutboundAddressPolicy $policy Literal address decision.
      * @param HostResolver $resolver Replaceable A/AAAA lookup.
+     * @param PublicHostnamePolicy $names Shared qualified public-name boundary.
      * @param MonitorInputSyntax $syntax Network-free URL and host normalization shared with form validation.
      */
     public function __construct(
         private OutboundAddressPolicy $policy,
         private HostResolver $resolver,
         private MonitorInputSyntax $syntax,
+        private PublicHostnamePolicy $names,
     ) {
     }
 
@@ -110,9 +112,7 @@ final readonly class OutboundDestinationGuard
             return;
         }
 
-        if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
-            throw new OutboundDestinationRejected(OutboundRejection::LocalName);
-        }
+        $this->names->assertAllowed($host);
     }
 
     /**

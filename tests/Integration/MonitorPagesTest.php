@@ -64,13 +64,13 @@ function listedNames(Team $team, array $query = []): array
 it('searches name, TLS host and DNS name case-insensitively but never encrypted URLs', function (): void {
     $team = Team::factory()->create();
     pageMonitor($team, 'Checkout API');
-    pageMonitor($team, 'Certificate', 'tls', ['tls_host' => 'shop.example.test']);
-    pageMonitor($team, 'Mail records', 'dns', ['dns_name' => 'mail.example.test']);
+    pageMonitor($team, 'Certificate', 'tls', ['tls_host' => 'shop.example.com']);
+    pageMonitor($team, 'Mail records', 'dns', ['dns_name' => 'mail.example.com']);
     pageMonitor($team, 'Unrelated');
 
     expect(listedNames($team, ['q' => 'checkout']))->toBe(['Checkout API'])
-        ->and(listedNames($team, ['q' => 'SHOP.example']))->toBe(['Certificate'])
-        ->and(listedNames($team, ['q' => 'mail.EXAMPLE']))->toBe(['Mail records'])
+        ->and(listedNames($team, ['q' => 'SHOP.example.com']))->toBe(['Certificate'])
+        ->and(listedNames($team, ['q' => 'mail.example.com']))->toBe(['Mail records'])
         // Factory HTTP URLs contain "/health", which only exists as ciphertext in the database.
         ->and(listedNames($team, ['q' => 'health']))->toBe([]);
 });
@@ -237,7 +237,7 @@ it('never exposes stored URL secrets, header values, bodies or ciphertext in pag
 
     if ($route !== 'index') {
         $response->assertInertia(fn (AssertableInertia $page) => $page
-            ->where('monitor.configuration.url', 'https://example.invalid/Path?key=[REDACTED]')
+            ->where('monitor.configuration.url', 'https://example.com/Path?key=[REDACTED]')
             ->where('monitor.configuration.header_names', ['authorization', 'x.probe'])
             ->where('monitor.configuration.body', ['present' => true, 'bytes' => 12])
             ->missing('monitor.configuration.headers'));
@@ -355,7 +355,7 @@ it('rejects return destinations outside the canonical route-team monitor list', 
     $this->actingAs($team->owner)->get('/teams/'.$team->id.'/monitors/'.$monitor->id.'?'.http_build_query(['returnTo' => $value]))
         ->assertOk()->assertInertia(fn (AssertableInertia $view) => $view->where('monitorListUrl', '/teams/'.$team->id.'/monitors'));
 })->with([
-    'https://evil.example/teams/{team}/monitors', '//evil.example/teams/{team}/monitors',
+    'https://evil.example.com/teams/{team}/monitors', '//evil.example.com/teams/{team}/monitors',
     'javascript:alert(1)', '/teams/999999/monitors', '/teams/{team}/monitors/1',
     '/teams/{team}/monitors/create', '/teams/{team}/incidents', '/teams/{team}/monitors/../monitors',
     '/teams/{team}/monitors%2f', '/teams/{team}/monitors\\evil', '/logout', str_repeat('x', 2049),
@@ -365,7 +365,7 @@ it('reconstructs return queries dropping invalid unknown nested fragmented and d
     $team = Team::factory()->create();
     $monitor = pageMonitor($team, 'Checkout');
     $base = '/teams/'.$team->id.'/monitors';
-    $target = $base.'?q=first&q=second&type=invalid&status=down&state=active&page=02&actor=99&returnTo=https%3A%2F%2Fevil.example#ignored';
+    $target = $base.'?q=first&q=second&type=invalid&status=down&state=active&page=02&actor=99&returnTo=https%3A%2F%2Fevil.example.com#ignored';
     $this->actingAs($team->owner)->get($base.'/'.$monitor->id.'?'.http_build_query(['returnTo' => $target]))
         ->assertOk()->assertInertia(fn (AssertableInertia $view) => $view->where('monitorListUrl', $base.'?status=down&state=active'));
 });

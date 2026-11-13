@@ -11,7 +11,9 @@ use App\Contracts\Monitoring\DnsTransport;
 use App\Enums\Monitoring\CheckError;
 use App\Enums\Monitoring\DnsRecordType;
 use App\Exceptions\CheckTransportFailed;
+use App\Exceptions\OutboundDestinationRejected;
 use App\Services\Monitoring\MonitorInputSyntax;
+use App\Services\Security\PublicHostnamePolicy;
 use InvalidArgumentException;
 use React\Dns\Model\Message;
 use React\Dns\Model\Record;
@@ -26,9 +28,10 @@ final readonly class DnsLookup
     /**
      * @param DnsTransport $transport Replaceable, cancellable DNS wire adapter.
      * @param MonitorInputSyntax $syntax Shared canonical IP/name/MX normalization.
+     * @param PublicHostnamePolicy $names Shared policy for each queried or followed hostname.
      * @param CheckClock $clock Monotonic clock shared across every query in an observation.
      */
-    public function __construct(private DnsTransport $transport, private MonitorInputSyntax $syntax, private CheckClock $clock)
+    public function __construct(private DnsTransport $transport, private MonitorInputSyntax $syntax, private CheckClock $clock, private PublicHostnamePolicy $names)
     {
     }
 
@@ -40,9 +43,12 @@ final readonly class DnsLookup
      * @param LoopInterface $loop Batch-owned loop.
      * @param list<string> $visited Already traversed names, used for cycle detection and an eight-alias limit.
      * @return PromiseInterface<list<string>> Canonical complete record values, possibly empty.
+     * @throws OutboundDestinationRejected When the initial name is internal; aliases reject the promise with the same safe reason.
      */
     public function records(string $name, DnsRecordType $type, string $server, float $deadlineMs, LoopInterface $loop, array $visited = []): PromiseInterface
     {
+        $this->names->assertAllowed($name);
+
         if (in_array($name, $visited, true) || count($visited) > 8) {
             return reject(new CheckTransportFailed(CheckError::DnsMalformed));
         }
@@ -89,6 +95,7 @@ final readonly class DnsLookup
      * @param list<string> $visited Traversed aliases.
      * @return list<string>|PromiseInterface<list<string>> Complete canonical values or an alias query.
      * @throws CheckTransportFailed On ambiguous, malformed or cyclic answers.
+     * @throws OutboundDestinationRejected Before interpreting or following an internal alias.
      */
     private function answers(Message $response, string $name, DnsRecordType $type, string $server, float $deadlineMs, LoopInterface $loop, array $visited): array|PromiseInterface
     {
@@ -125,6 +132,7 @@ final readonly class DnsLookup
         }
 
         $target = $aliases[0];
+        $this->names->assertAllowed($target);
         $visited[] = $name;
 
         if (in_array($target, $visited, true) || count($visited) > 8) {

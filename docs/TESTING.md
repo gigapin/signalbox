@@ -750,3 +750,11 @@ Mutations on 2026-11-13, restored and compared afterwards: removing the middlewa
 ```sh
 docker compose run --rm php-test php vendor/bin/pest tests/Integration/SecurityHeadersTest.php tests/Integration/StatusDomainsTest.php
 ```
+
+## Internal DNS naming regression (SEC.05)
+
+`PublicHostnamePolicyTest` covers single labels, every reserved suffix and qualified underscore/IDNA names. `MonitorInputValidationTest` and `MonitorInputRequestTest` verify normalized names, create/update field errors and unchanged PostgreSQL state without flashed input. `NetworkCheckCoordinatorTest` verifies stored configurations with system/custom resolvers, zero transport calls for refused names, and refusal of both inline and separately followed internal aliases. HTTP/keyword and TLS regressions assert the same code/message for empty, private and mixed address answers, without connecting. MonitorEngineTest also checks persisted code/message equality and one queue attempt through the actual scheduler, Redis delivery and PostgreSQL result path. Existing private DNS comparison, tenant isolation, redirect pinning and loopback transport suites remain active.
+
+Positive outbound fixtures use documentation names such as `example.com` with fake DNS/HTTP or explicitly pinned local servers; the reserved `.test` and `.example` suffixes are intentionally rejected even under testing. Mailboxes and inbound test origins may retain their reserved suffixes. The complete acceptance gate is `./scripts/verify.sh`.
+
+The CSP acceptance suite expects no development hot-server source in ordinary responses. If `public/hot` exists for a running local Vite server, leave it in place and mask it only in `php-test` with a temporary Compose override binding an empty file read-only to `/var/www/html/public/hot`. Keep the normal repository bind and test-service isolation. Pass that override through `COMPOSE_FILE` when running the gate; the explicit Vite test still uses its own temporary hot file. This avoids changing a developer’s running server or asset state. SEC.05 verification used this arrangement; actual outcomes are recorded in TASKS.md.

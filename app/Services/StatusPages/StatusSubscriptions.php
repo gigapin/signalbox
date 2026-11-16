@@ -7,10 +7,12 @@ declare(strict_types=1);
 namespace App\Services\StatusPages;
 
 use App\Enums\Notifications\DeliveryStatus;
+use App\Enums\Security\KeyPurpose;
 use App\Models\StatusPage;
 use App\Models\StatusPageDelivery;
 use App\Models\StatusPageSubscriber;
 use App\Services\Database\PublicIngressTransaction;
+use App\Services\Security\PurposeKeys;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Session\Session;
@@ -23,6 +25,7 @@ final readonly class StatusSubscriptions
      * @param TenantContext $tenants Explicit tenant boundary after public page resolution.
      * @param StatusPageUnlocks $unlocks Live session authorization for protected pages.
      * @param StatusSubscriptionLinks $links Revocable mailbox capabilities and password binding.
+     * @param PurposeKeys $keys Subscriber identity keys across the explicit rotation window.
      * @param PublicIngressTransaction $transactions Bounded lock waits that preserve outer transaction settings.
      */
     public function __construct(
@@ -30,6 +33,7 @@ final readonly class StatusSubscriptions
         private StatusPageUnlocks $unlocks,
         private StatusSubscriptionLinks $links,
         private PublicIngressTransaction $transactions,
+        private PurposeKeys $keys,
     ) {
     }
 
@@ -47,16 +51,17 @@ final readonly class StatusSubscriptions
             abort_unless($this->unlocks->allows($session, $current), 403);
 
             $address = mb_strtolower(trim($email));
-            $hash = hash_hmac('sha256', $address, (string) config('app.key'));
+            $hash = $this->keys->digest(KeyPurpose::SubscriberEmail, $current->id.':'.$address);
+            $candidates = $this->keys->candidates(KeyPurpose::SubscriberEmail, $current->id.':'.$address, $address);
             $subscriber = StatusPageSubscriber::query()
                 ->where('status_page_id', $current->id)
-                ->where('email_hash', $hash)
+                ->whereIn('email_hash', $candidates)
                 ->lockForUpdate()
                 ->first();
             $now = CarbonImmutable::now('UTC');
             $access = $this->links->accessHash($current);
 
-            if ($subscriber !== null && $subscriber->unsubscribed_at === null && hash_equals($subscriber->access_hash, $access)) {
+            if ($subscriber !== null && $subscriber->unsubscribed_at === null && $this->links->allowsConsent($current, $subscriber->access_hash)) {
                 if ($subscriber->verified_at !== null || $subscriber->requested_at->addMinutes(10)->isAfter($now)) {
                     return;
                 }
@@ -85,7 +90,7 @@ final readonly class StatusSubscriptions
     }
 
     /**
-     * Signature validation belongs to the route middleware and runs before this explicit tenant lookup.
+     * Signature or retained capability validation belongs to route middleware, before this explicit tenant lookup.
      * GET only validates; POST commits. Unsubscribing works even after a page becomes a draft or changes password.
      *
      * @param int $teamId Signed tenant identity.
@@ -113,7 +118,7 @@ final readonly class StatusSubscriptions
             if ($action === 'verify') {
                 abort_unless($page->is_public && $subscriber->unsubscribed_at === null
                     && $subscriber->verification_expires_at->isAfter($now)
-                    && hash_equals($subscriber->access_hash, $this->links->accessHash($page)), 404);
+                    && $this->links->allowsConsent($page, $subscriber->access_hash), 404);
 
                 if ($commit && $subscriber->verified_at === null) {
                     $subscriber->forceFill(['verified_at' => $now])->save();

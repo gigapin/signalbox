@@ -59,6 +59,6 @@ Route::middleware([NoStoreAuthentication::class, StatusPageIndexing::class])
             ->whereNumber(['teamId', 'pageId', 'subscriberId'])
             ->whereUuid('generation')
             ->whereIn('action', ['verify', 'unsubscribe'])
-            ->middleware(['signed:relative', 'throttle:60,1'])
+            ->middleware([\App\Http\Middleware\ValidateSubscriptionSignature::class, 'throttle:60,1'])
             ->name('status-subscriptions.action');
     });

@@ -173,7 +173,7 @@ it('does not grant a session when shared completion becomes unavailable', functi
     $connection->shouldReceive('command')->once()->andThrow(new RuntimeException('private backend diagnostics'));
     $factory = Mockery::mock(Factory::class);
     $factory->shouldReceive('connection')->with('cache')->twice()->andReturn($connection);
-    $unlocks = new StatusPageUnlocks(app('config'), new StatusPageUnlockLimiter($factory));
+    $unlocks = new StatusPageUnlocks(app(\App\Services\Security\PurposeKeys::class), new StatusPageUnlockLimiter($factory));
     expect(fn () => $unlocks->attempt(app('session.store'), $this->page, 'correct-password'))->toThrow(StatusPageUnlockUnavailable::class)
         ->and($unlocks->allows(app('session.store'), $this->page))->toBeFalse();
 });

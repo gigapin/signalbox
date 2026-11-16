@@ -256,6 +256,7 @@ it('reverses identity and dependent migrations without changing baseline identit
         'database/migrations/2026_11_05_000025_defer_quiet_hours_notifications.php',
         // Daily quota counters reference teams and are reversed before them.
         'database/migrations/2026_11_13_000026_create_team_daily_quotas.php',
+        'database/migrations/2026_11_16_000027_version_cryptographic_digests.php',
     ];
     foreach (array_reverse($files) as $file) {
         (require base_path($file))->down();

@@ -6,10 +6,11 @@ declare(strict_types=1);
 
 namespace App\Services\StatusPages;
 
+use App\Enums\Security\KeyPurpose;
 use App\Exceptions\StatusPageUnlockRateLimited;
 use App\Exceptions\StatusPageUnlockUnavailable;
 use App\Models\StatusPage;
-use Illuminate\Contracts\Config\Repository;
+use App\Services\Security\PurposeKeys;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Support\Facades\Hash;
 
@@ -20,10 +21,10 @@ use Illuminate\Support\Facades\Hash;
 final readonly class StatusPageUnlocks
 {
     /**
-     * @param Repository $config Application configuration holding the signing key.
+     * @param PurposeKeys $keys Dedicated session-proof keys and historical readers.
      * @param StatusPageUnlockLimiter $limiter Global admission and fenced completion for password verification.
      */
-    public function __construct(private Repository $config, private StatusPageUnlockLimiter $limiter)
+    public function __construct(private PurposeKeys $keys, private StatusPageUnlockLimiter $limiter)
     {
     }
 
@@ -40,7 +41,14 @@ final readonly class StatusPageUnlocks
 
         $stored = $session->get($this->key($page));
 
-        return is_string($stored) && hash_equals($this->fingerprint($page), $stored);
+        if (!is_string($stored) || !$this->keys->matches($stored, KeyPurpose::PageSession, $page->id.':'.$page->password_hash, (string) $page->password_hash)) {
+            return false;
+        }
+
+        // Upgrade only an authenticated proof; never reinterpret a consent digest as a new session proof.
+        $session->put($this->key($page), $this->fingerprint($page));
+
+        return true;
     }
 
     /**
@@ -88,6 +96,6 @@ final readonly class StatusPageUnlocks
      */
     private function fingerprint(StatusPage $page): string
     {
-        return hash_hmac('sha256', (string) $page->password_hash, (string) $this->config->get('app.key'));
+        return $this->keys->digest(KeyPurpose::PageSession, $page->id.':'.$page->password_hash);
     }
 }

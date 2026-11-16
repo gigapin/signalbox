@@ -48,7 +48,7 @@ final class StatusSubscriptionController extends Controller
     }
 
     /**
-     * Signed middleware authenticates all route coordinates before lookup. GET is inert for email scanners.
+     * Signature/capability middleware authenticates all route coordinates before lookup. GET is inert for scanners.
      *
      * @param Request $request Signed GET or CSRF-protected POST.
      * @param int $teamId Signed tenant identity.

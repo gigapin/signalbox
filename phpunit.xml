@@ -28,6 +28,9 @@
         <env name="APP_DEBUG" value="false" force="true"/>
         <!-- The static application key is public test data, never a production credential. -->
         <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" force="true"/>
+        <!-- Never inherit deployment roots or retirement flags into isolated cryptographic fixtures. -->
+        <env name="APP_PREVIOUS_KEYS" value="" force="true"/>
+        <env name="CRYPTOGRAPHY_ALLOW_LEGACY" value="true" force="true"/>
         <!-- Isolate integration configuration from real local package credentials and operator lists. -->
         <!-- Never inherit a deployment's certificate-admission credential or peer list from .env. -->
         <env name="STATUS_DOMAIN_TLS_SECRET" value="" force="true"/>

@@ -1,5 +1,21 @@
 # Test infrastructure
 
+## Shared status page password admission — SEC.10
+
+`StatusPageUnlockLimiterTest` runs against isolated PostgreSQL/Redis even when Laravel's default cache is `array`. Distributed-IP HTTP attempts must share the same failure budget and receive 429 with Retry-After without invoking password hashing. Service tests hold overlapping leases through independent limiter instances, advance only Redis state timestamps to exercise expiration without sleeps, reject stale success/failure completions, count abandoned work, check the complete backoff ladder/cap and prove that denied requests extend neither state nor TTL. Page identity/password changes and successful completion isolate/reset state; slug/host changes do not. HTTP checks cover safe 503 on backend admission failure, failure during completion, malformed state, stale successful verification, legacy passwords and continued access from unlocked sessions during cooldown.
+
+`StatusPageManagementTest` verifies refusal at eleven characters, acceptance at twelve through HTTP (including multibyte input and the 72-byte bcrypt boundary), retention of existing short hashes on ordinary editing and refusal of short replacements. `StatusPages.test.tsx` exercises accessible 429/503 feedback, one pending submission, no automatic replay, secret cleanup and listener disposal, plus management's projected minimum. Existing public/domain/isolation tests remain part of the acceptance matrix. See [STATUS-PAGES.md](STATUS-PAGES.md#shared-password-admission--sec10) for the protocol and compatibility decision. Actual outcomes and limitations are recorded in TASKS.
+
+```sh
+docker compose run --rm -e COMPOSER_ROOT_VERSION=dev-main php-test vendor/bin/pest \
+  tests/Integration/StatusPageUnlockLimiterTest.php \
+  tests/Integration/StatusPageManagementTest.php \
+  tests/Integration/PublicStatusPageTest.php \
+  tests/Integration/StatusDomainsTest.php \
+  tests/Integration/StatusPageIsolationMatrixTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npm test -- tests/frontend/StatusPages.test.tsx
+```
+
 ## Public ingress contention — SEC.09
 
 [PUBLIC-INGRESS.md](PUBLIC-INGRESS.md) maps the new PostgreSQL service/HTTP tests to timeout restoration, resource independence and consent/publication ordering. `PublicIngressTransactionTest` exercises real root/savepoint rollback and shorter caller limits. `PublicIngressContentionTest` uses an independent receiver connection outside RefreshDatabase's outer transaction, so successful probes release their row locks before committed-fixture cleanup. It checks actual 503/privacy/retry behavior and no partial state, including a delivery lock acquired after unsubscribe has already written its row.

@@ -1,6 +1,6 @@
 /** Exercise the status page settings, the public page and the password form through actual Inertia components. */
 import { router } from '@inertiajs/react';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { ManagedStatusPage } from '../../resources/js/components/status-pages/types';
@@ -18,7 +18,7 @@ const limits = {
     componentNameMaxLength: 100,
     componentsPerPage: 50,
     monitorsPerComponent: 100,
-    passwordMinLength: 8,
+    passwordMinLength: 12,
 };
 
 /** Monitors of the synthetic team. */
@@ -310,4 +310,50 @@ test('posts the password to the address of the page', async () => {
     expect(String(url)).toContain('/status/acme-status/unlock');
     expect(options.method).toBe('post');
     expect(options.data).toEqual({ password: 'secret-value' });
+});
+
+test.each([429, 503])(
+    'shows safe unlock feedback for HTTP %i and clears the submitted secret',
+    async (status) => {
+        const user = userEvent.setup();
+        const visit = spyOnVisits();
+        const { unmount } = renderInertia('Signalbox', Unlock, { slug: 'acme-status' });
+        const input = screen.getByLabelText('Password');
+        expect(input).not.toHaveAttribute('minlength');
+        await user.type(input, 'old-pass');
+        await user.click(screen.getByRole('button', { name: 'Open page' }));
+        await user.click(screen.getByRole('button', { name: 'Open page' }));
+        expect(visit).toHaveBeenCalledTimes(1);
+        const options = visit.mock.calls[0]?.[1];
+        const event = new CustomEvent('inertia:invalid', {
+            cancelable: true,
+            detail: {
+                response: {
+                    status,
+                    config: { url: '/status/acme-status/unlock' },
+                    data: 'private diagnostics',
+                },
+            },
+        });
+        act(() => {
+            document.dispatchEvent(event);
+            options?.onFinish?.({} as never);
+        });
+        expect(event.defaultPrevented).toBe(true);
+        expect(screen.getByRole('alert')).toHaveTextContent(
+            status === 429 ? 'Too many password attempts' : 'temporarily unavailable',
+        );
+        expect(screen.queryByText('private diagnostics')).not.toBeInTheDocument();
+        expect(input).toHaveValue('');
+        expect(visit).toHaveBeenCalledTimes(1);
+        unmount();
+        const late = new CustomEvent('inertia:invalid', { cancelable: true, detail: event.detail });
+        document.dispatchEvent(late);
+        expect(late.defaultPrevented).toBe(false);
+    },
+);
+
+test('projects the twelve character minimum only onto new page passwords', () => {
+    renderSettings();
+    expect(screen.getByLabelText('Password (optional)')).toHaveAttribute('minlength', '12');
 });

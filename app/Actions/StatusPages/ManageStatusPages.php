@@ -46,8 +46,8 @@ final readonly class ManageStatusPages
     /** @var int Most monitors in one component. */
     public const int MONITORS_PER_COMPONENT = 100;
 
-    /** @var int Shortest password in characters. */
-    public const int PASSWORD_MIN_LENGTH = 8;
+    /** @var int Shortest new or replacement password in characters; existing hashes remain valid. */
+    public const int PASSWORD_MIN_LENGTH = 12;
 
     /** @var int Longest password in bytes: bcrypt ignores whatever follows. */
     public const int PASSWORD_MAX_BYTES = 72;

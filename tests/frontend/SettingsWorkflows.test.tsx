@@ -49,7 +49,7 @@ const statusProps = {
         componentNameMaxLength: 100,
         componentsPerPage: 50,
         monitorsPerComponent: 100,
-        passwordMinLength: 8,
+        passwordMinLength: 12,
     },
     can: { manage: true },
 };

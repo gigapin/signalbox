@@ -6,6 +6,8 @@ declare(strict_types=1);
 
 namespace App\Services\StatusPages;
 
+use App\Exceptions\StatusPageUnlockRateLimited;
+use App\Exceptions\StatusPageUnlockUnavailable;
 use App\Models\StatusPage;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Session\Session;
@@ -17,8 +19,11 @@ use Illuminate\Support\Facades\Hash;
  */
 final readonly class StatusPageUnlocks
 {
-    /** @param Repository $config Application configuration holding the signing key. */
-    public function __construct(private Repository $config)
+    /**
+     * @param Repository $config Application configuration holding the signing key.
+     * @param StatusPageUnlockLimiter $limiter Global admission and fenced completion for password verification.
+     */
+    public function __construct(private Repository $config, private StatusPageUnlockLimiter $limiter)
     {
     }
 
@@ -45,10 +50,20 @@ final readonly class StatusPageUnlocks
      * @param StatusPage $page Published page with a password.
      * @param string $password Submitted plaintext.
      * @return bool Whether the password matched.
+     * @throws StatusPageUnlockRateLimited Shared admission or fenced completion refused the attempt.
+     * @throws StatusPageUnlockUnavailable Shared admission state could not be trusted; no session is granted.
      */
     public function attempt(Session $session, StatusPage $page, #[\SensitiveParameter] string $password): bool
     {
-        if ($page->password_hash === null || !Hash::check($password, $page->password_hash)) {
+        if ($page->password_hash === null) {
+            return false;
+        }
+
+        $token = $this->limiter->reserve($page);
+        $matched = Hash::check($password, $page->password_hash);
+        $this->limiter->finish($page, $token, $matched);
+
+        if (!$matched) {
             return false;
         }
 

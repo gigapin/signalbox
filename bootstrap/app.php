@@ -5,6 +5,8 @@
  */
 
 use App\Exceptions\PublicIngressBusy;
+use App\Exceptions\StatusPageUnlockRateLimited;
+use App\Exceptions\StatusPageUnlockUnavailable;
 use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\GuardStatusPageHosts;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -19,6 +21,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 /**
  * Preserve exact monitor payload and broadcast socket/channel bytes until their dedicated input boundaries.
@@ -61,6 +64,20 @@ $configureMiddleware = function (Middleware $middleware) use ($preserveExactInpu
  * @param Exceptions $exceptions Framework exception and validation configuration builder.
  */
 $configureExceptions = function (Exceptions $exceptions): void {
+    $exceptions->map(
+        StatusPageUnlockRateLimited::class,
+        static fn (StatusPageUnlockRateLimited $error): TooManyRequestsHttpException => new TooManyRequestsHttpException(
+            $error->retryAfter,
+            $error->getMessage(),
+        ),
+    );
+    $exceptions->map(
+        StatusPageUnlockUnavailable::class,
+        static fn (StatusPageUnlockUnavailable $error): ServiceUnavailableHttpException => new ServiceUnavailableHttpException(
+            1,
+            $error->getMessage(),
+        ),
+    );
     // Map only expected bounded contention; the public response never retains the database exception or its SQL.
     $exceptions->map(
         PublicIngressBusy::class,

@@ -34,7 +34,7 @@ A status page is a public page of a team: address, title, description, appearanc
 | Components | Up to 50 per page, with distinct names ignoring case, each grouping 1 to 100 monitors. A page may have no components. |
 | Monitors | Of the same team only, once per page. A foreign monitor gets the same refusal as one that does not exist. |
 | Theme | `mode` is `system`, `light` or `dark`. `accent` is `emerald`, `blue`, `violet`, `amber` or `slate`. Presets instead of free colors: no submitted value reaches the styles, and the accent only colors a decorative bar, so text contrast does not depend on it. |
-| Password | At least 8 characters and at most 72 bytes, the part bcrypt reads. Only the hash is stored, and it is never sent to the browser. |
+| Password | New/replacement passwords need at least 12 characters and at most 72 bytes, the part bcrypt reads. Existing hashes remain valid, including shorter legacy passwords. Only the hash is stored, and it is never sent to the browser. |
 | Plan limit | `status_pages` in `config/plans.php`: 1, 3, 10, 100 for Free, Pro, Business, Internal. Drafts count. |
 
 A component whose monitors were all deleted stays on the page, without monitors. The settings page says so, and the next save requires choosing at least one or removing the component.
@@ -50,13 +50,27 @@ Owners and admins manage pages; every member reads the settings page. The page p
 | Route | Behavior |
 |---|---|
 | `GET /status/{slug}` | A draft, an unknown address and an invalid one all answer 404, for members of the team too: there is no preview yet. A protected page answers with the password form, whose only data is the address. Otherwise it answers with the page. |
-| `POST /status/{slug}/unlock` | 5 attempts a minute per address and visitor. A draft answers 404 even with the right password. |
+| `POST /status/{slug}/unlock` | 5 attempts a minute per address/IP, plus shared per-page verification admission and progressive cooldown described below. A draft answers 404 even with the right password. |
 | `POST /status/{slug}/subscribe` | Live public page and session unlock required. Bounded RFC email, no DNS call. Five requests per minute per visitor IP across all pages. Generic acknowledgement for new, pending and active addresses. |
 | `GET/POST /status/subscriptions/{teamId}/{pageId}/{subscriberId}/{generation}/{action}` | Relative signed capability for `verify` or `unsubscribe`, with CSRF on POST. GET shows a generic confirmation form; only POST changes consent. No mailbox, title or page content is projected. |
 
 `PublicStatusPages` resolves public slugs; `StatusDomainRegistry` separately resolves live verified custom hosts. Apart from these public discovery boundaries and the boolean address check in the action, page reads require an explicit tenant. The visitor projection lists fields. Monitor names, identities, the team and the maintenance reason stay out, because they can be internal.
 
 Unlocking is per session and per page. The session holds a keyed fingerprint of the current hash, so a new password locks out whoever entered the old one, while removing the password opens the page for everyone. The session identity rotates on unlock.
+
+### Shared password admission — SEC.10
+
+`StatusPageUnlockLimiter` uses the explicit Redis `cache` connection independently of the default cache store. All application instances must share that connection/database and prefix. Its key contains the page ID and a SHA-256 digest of the saved password hash, excluding plaintext, IP, slug and domain. Renaming a page or switching between its primary/custom origin preserves the counter. Another page or a changed password has independent state; obsolete state expires without scanning Redis.
+
+A short Lua operation reserves one verification for ten seconds using a random ownership token. Password hashing runs outside Redis. A second atomic operation accepts the result only from the current, unexpired owner. An expired completion can neither clear newer failures nor grant a visitor session. An abandoned lease counts as a failure at the next admission, so crashes cannot repeatedly reset the budget. The clock is Redis server time, shared across PHP instances; no PHP sleep, SQL lock or queue retry is involved. This relies on [Redis atomic script execution](https://redis.io/docs/latest/develop/programmability/eval-intro/) through [Laravel's Redis connection](https://laravel.com/docs/13.x/redis#lua-scripts).
+
+Failures one through four have no cooldown; failure five starts one second, followed by 2/4/8/16/32 seconds and a cap of 60 seconds. The failed attempt itself receives the existing password validation error; subsequent requests during cooldown receive generic HTTP 429 and a positive `Retry-After`. An active lease also refuses overlapping verifications with 429. Requests refused by an already active lease or cooldown change neither state nor TTL. Recovering an abandoned lease records its failure and can start a new cooldown before returning 429. Accepted failed work retains state for one hour of inactivity; an accepted correct password deletes it before granting and rotating the session. The existing five-per-minute IP/page limit remains in addition to this shared guard.
+
+If Redis fails, returns invalid state, or cannot record completion, protected POSTs fail closed with generic HTTP 503 and `Retry-After: 1`; backend diagnostics are not chained into the response. A stale completion receives 429. The public unlock form presents safe accessible feedback for 429/503, never renders the raw response, performs no automatic retry and clears the submitted password after completion. Existing unlocked GETs do not consult this limiter. Password removal follows the ordinary unprotected-page behavior.
+
+Compatibility decision: no forced reset or migration. The 12-character minimum applies when creating/replacing a password through both Form Request and domain action, and is projected to management UI. Leaving a password empty on editing retains its existing hash; unlock continues accepting legacy passwords because their original length cannot be inferred from hashes. Re-entering a short legacy password as a replacement is refused. The existing 72-byte bcrypt maximum remains enforced by the action, including multibyte input.
+
+Operational limits: shared rate limiting deliberately permits temporary denial of new unlocks during an attack, capped at 60 seconds per cooldown; ongoing hostile attempts can renew it after expiry. Existing unlocked sessions remain usable. Clearing/evicting this Redis state resets the failure history, and a Redis outage prevents new password unlocks; this is bounded admission, not an availability or distributed load benchmark. No new environment variable, database migration, secret rotation or development-data rewrite is required. Deploy through the ordinary application/worker reload process.
 
 Responses use `Cache-Control: no-store, private`, also for pages without a password. Inertia adds shared props to every response, including `auth.user` for a logged-in visitor, and each response sets a session cookie, so none of them can go into a shared HTTP cache.
 

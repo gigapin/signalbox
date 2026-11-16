@@ -299,13 +299,42 @@ it('stores only a hash of the password and applies its changes', function (): vo
     expect(reloadStatusPage($team, $page->id)->password_hash)->toBeNull();
 });
 
+it('accepts the new twelve character minimum through HTTP and preserves it on editing', function (string $password): void {
+    $team = Team::factory()->create();
+    $this->actingAs($team->owner)->post("/teams/{$team->id}/status-pages", [
+        'slug' => 'minimum-password', 'title' => 'Minimum password',
+        'theme_mode' => 'system', 'theme_accent' => 'emerald', 'is_public' => false,
+        'password' => $password, 'components' => [],
+    ])->assertRedirect()->assertSessionHasNoErrors();
+    $page = app(TenantContext::class)->run($team->id, fn (): StatusPage => StatusPage::query()->sole());
+    expect(Hash::check($password, (string) $page->password_hash))->toBeTrue();
+    $this->actions->update($team->owner, $team->id, $page->id, statusPageInput());
+    expect(reloadStatusPage($team, $page->id)->password_hash)->toBe($page->password_hash);
+})->with([str_repeat('a', 12), str_repeat('è', 12), str_repeat('è', 36)]);
+
+it('keeps a legacy hash on ordinary edits and refuses a short replacement', function (): void {
+    $team = Team::factory()->create();
+    $page = $this->actions->create($team->owner, $team->id, statusPageInput());
+    $hash = Hash::make('old-pass');
+    app(TenantContext::class)->run($team->id, function () use ($page, $hash): void {
+        $page->password_hash = $hash;
+        $page->save();
+    });
+    $this->actions->update($team->owner, $team->id, $page->id, statusPageInput(['title' => 'Edited legacy page']));
+    expect(reloadStatusPage($team, $page->id)->password_hash)->toBe($hash)
+        ->and(fn () => $this->actions->update($team->owner, $team->id, $page->id, statusPageInput(['password' => 'old-pass'])))
+        ->toThrow(StatusPageRejected::class);
+    expect(reloadStatusPage($team, $page->id)->password_hash)->toBe($hash);
+});
+
 it('refuses unusable passwords', function (array $fields, string $message): void {
     $team = Team::factory()->create();
 
     expect(fn () => $this->actions->create($team->owner, $team->id, statusPageInput($fields)))
         ->toThrow(StatusPageRejected::class, $message);
 })->with([
-    'too short' => [['password' => 'short'], 'at least 8'],
+    'too short' => [['password' => 'short'], 'at least 12'],
+    'eleven characters' => [['password' => str_repeat('a', 11)], 'at least 12'],
     'bcrypt would truncate it' => [['password' => str_repeat('è', 37)], 'at most 72 bytes'],
     'contradictory' => [['password' => 'long-enough', 'removePassword' => true], 'either a new password'],
 ]);
@@ -392,6 +421,7 @@ it('refuses unknown theme values and shapes before the action', function (array 
     'missing components' => [['components' => null], 'components'],
     'component without monitors' => [['components' => [['name' => 'API', 'monitor_ids' => []]]], 'components.0.monitor_ids'],
     'short password' => [['password' => 'short'], 'password'],
+    'eleven character password' => [['password' => str_repeat('a', 11)], 'password'],
 ]);
 
 it('turns a domain refusal into an error on the page key', function (): void {

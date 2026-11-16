@@ -62,9 +62,15 @@ function fixture() {
         if (url === '/broadcasting/auth') {
             grants.push(options ?? {});
             return Promise.resolve(
-                new Response(JSON.stringify({ auth: 'public-key:synthetic-grant' }), {
-                    status: authStatus,
-                }),
+                new Response(
+                    JSON.stringify({
+                        auth: 'public-key:synthetic-grant',
+                        channel_data: '{"user_id":7}',
+                    }),
+                    {
+                        status: authStatus,
+                    },
+                ),
             );
         }
         reads.push(options ?? {});

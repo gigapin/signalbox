@@ -26,6 +26,7 @@ use App\Events\Incidents\IncidentResolved;
 use App\Events\Monitoring\CheckCompleted;
 use App\Models\StatusPage;
 use App\Services\Broadcasting\PublishTeamUpdates;
+use App\Services\Broadcasting\TeamChannelManager;
 use App\Services\Incidents\IncidentDetection;
 use App\Services\Monitoring\Checks\MonotonicCheckClock;
 use App\Services\Monitoring\Checks\ReactDnsTransport;
@@ -46,6 +47,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
+use Laravel\Reverb\Protocols\Pusher\Contracts\ChannelManager;
 
 /** Apply application-wide service boundaries before HTTP requests and queue workers run. */
 class AppServiceProvider extends ServiceProvider
@@ -58,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Cashier::ignoreRoutes();
         $this->app->scoped(TenantContext::class, fn (): TenantContext => new TenantContext());
+        $this->app->singleton(ChannelManager::class, TeamChannelManager::class);
         $this->app->bind(HostResolver::class, SystemHostResolver::class);
         $this->app->bind(CheckWorkPublisher::class, RedisCheckWorkPublisher::class);
         $this->app->bind(BatchCheckWorkConsumer::class, RunMonitorChecks::class);

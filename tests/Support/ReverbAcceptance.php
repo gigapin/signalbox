@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Services\Broadcasting\TeamChannelManager;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -27,10 +28,13 @@ use Psr\Http\Message\RequestInterface;
 /** Use native validation/routing with fake HTTP/socket I/O; no broker or listener is opened. */
 final class ReverbAcceptance
 {
-    /** Bind fresh native channel registries; per-channel connection managers must remain transient. */
-    public static function isolate(): void
+    /**
+     * @param bool $nativeOnly Use unextended upstream channels only for infrastructure-free native protocol tests.
+     * Bind fresh registries; application acceptance uses the production membership-aware manager.
+     */
+    public static function isolate(bool $nativeOnly = false): void
     {
-        app()->singleton(ChannelManager::class, ArrayChannelManager::class);
+        app()->singleton(ChannelManager::class, $nativeOnly ? ArrayChannelManager::class : TeamChannelManager::class);
         app()->bind(ChannelConnectionManager::class, ArrayChannelConnectionManager::class);
     }
 

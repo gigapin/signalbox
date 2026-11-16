@@ -118,13 +118,20 @@ test('uses the private team channel, short event names, browser TLS coordinates 
 test('signs with the current CSRF cookie and same-origin credentials without redirects or caching', async () => {
     const read = vi
         .fn<typeof fetch>()
-        .mockResolvedValue(new Response(JSON.stringify({ auth: 'public-key:signature' })));
+        .mockResolvedValue(
+            new Response(
+                JSON.stringify({ auth: 'public-key:signature', channel_data: '{"user_id":7}' }),
+            ),
+        );
     vi.stubGlobal('fetch', read);
     const f = fixture();
     const done = vi.fn();
     f.authorize({ socketId: '123.456', channelName: 'private-team.7' }, done);
     await vi.waitFor(() =>
-        expect(done).toHaveBeenCalledWith(null, { auth: 'public-key:signature' }),
+        expect(done).toHaveBeenCalledWith(null, {
+            auth: 'public-key:signature',
+            channel_data: '{"user_id":7}',
+        }),
     );
     expect(read.mock.calls[0]?.[0]).toBe('/broadcasting/auth');
     expect(read.mock.calls[0]?.[1]).toMatchObject({
@@ -173,7 +180,7 @@ test('aborts a pending grant on disposal and refuses its late successful respons
     f.authorize({ socketId: '123.456', channelName: 'private-team.7' }, done);
     const signal = read.mock.calls[0]?.[1]?.signal;
     f.close();
-    finish(new Response(JSON.stringify({ auth: 'old-grant' })));
+    finish(new Response(JSON.stringify({ auth: 'old-grant', channel_data: '{"user_id":7}' })));
     await Promise.resolve();
     await Promise.resolve();
     expect(signal?.aborted).toBe(true);
@@ -190,13 +197,16 @@ test('distinguishes connection state changes from private subscription success',
     expect(f.signals.subscribed).not.toHaveBeenCalled();
 });
 
-test.each(['server-error', 'invalid-grant'])(
+test.each(['server-error', 'invalid-grant', 'missing-identity', 'invalid-identity'])(
     'reports %s without passing an invalid grant to Pusher',
     async (failure) => {
-        const reply =
-            failure === 'server-error'
-                ? new Response('{}', { status: 503 })
-                : new Response(JSON.stringify({ auth: 123 }));
+        const responses = {
+            'server-error': new Response('{}', { status: 503 }),
+            'invalid-grant': new Response(JSON.stringify({ auth: 123 })),
+            'missing-identity': new Response(JSON.stringify({ auth: 'legacy-grant' })),
+            'invalid-identity': new Response(JSON.stringify({ auth: 'grant', channel_data: {} })),
+        };
+        const reply = responses[failure as keyof typeof responses];
         vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(reply));
         const f = fixture();
         const done = vi.fn();
@@ -240,7 +250,11 @@ test('cancels an old socket grant on disconnect without poisoning the replacemen
                     finishOld = resolve;
                 }),
         )
-        .mockResolvedValueOnce(new Response(JSON.stringify({ auth: 'new-socket-grant' })));
+        .mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({ auth: 'new-socket-grant', channel_data: '{"user_id":7}' }),
+            ),
+        );
     vi.stubGlobal('fetch', read);
     const f = fixture();
     const oldDone = vi.fn();
@@ -252,9 +266,14 @@ test('cancels an old socket grant on disconnect without poisoning the replacemen
     socket.states.get('state_change')?.({ current: 'connected' });
     f.authorize({ socketId: '333.444', channelName: 'private-team.7' }, newDone);
     await vi.waitFor(() =>
-        expect(newDone).toHaveBeenCalledWith(null, { auth: 'new-socket-grant' }),
+        expect(newDone).toHaveBeenCalledWith(null, {
+            auth: 'new-socket-grant',
+            channel_data: '{"user_id":7}',
+        }),
     );
-    finishOld(new Response(JSON.stringify({ auth: 'old-socket-grant' })));
+    finishOld(
+        new Response(JSON.stringify({ auth: 'old-socket-grant', channel_data: '{"user_id":7}' })),
+    );
     await Promise.resolve();
     await Promise.resolve();
     expect(oldDone).not.toHaveBeenCalled();
@@ -284,7 +303,14 @@ test.each(['resolve', 'reject'])(
             vi
                 .fn<typeof fetch>()
                 .mockResolvedValueOnce(oldResponse)
-                .mockResolvedValueOnce(new Response(JSON.stringify({ auth: 'replacement-grant' }))),
+                .mockResolvedValueOnce(
+                    new Response(
+                        JSON.stringify({
+                            auth: 'replacement-grant',
+                            channel_data: '{"user_id":7}',
+                        }),
+                    ),
+                ),
         );
         const f = fixture();
         const oldDone = vi.fn();
@@ -295,10 +321,14 @@ test.each(['resolve', 'reject'])(
         socket.states.get('state_change')?.({ current: 'connected' });
         f.authorize({ socketId: '333.444', channelName: 'private-team.7' }, newDone);
         await vi.waitFor(() =>
-            expect(newDone).toHaveBeenCalledWith(null, { auth: 'replacement-grant' }),
+            expect(newDone).toHaveBeenCalledWith(null, {
+                auth: 'replacement-grant',
+                channel_data: '{"user_id":7}',
+            }),
         );
         socket.bindings.get('pusher:subscription_succeeded')?.({});
-        if (completion === 'resolve') resolveBody({ auth: 'stale-grant' });
+        if (completion === 'resolve')
+            resolveBody({ auth: 'stale-grant', channel_data: '{"user_id":7}' });
         else rejectBody(new TypeError('Stale body failed'));
         await vi.advanceTimersByTimeAsync(0);
         expect(oldDone).not.toHaveBeenCalled();

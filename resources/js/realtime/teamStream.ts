@@ -74,9 +74,14 @@ export const openTeamStream: TeamStreamFactory = (configuration, teamId, callbac
                         if (!response.ok)
                             throw new Error('Live updates authorization unavailable.');
                         const data: unknown = await response.json();
-                        if (!isRecord(data) || typeof data.auth !== 'string')
+                        if (
+                            !isRecord(data) ||
+                            typeof data.auth !== 'string' ||
+                            typeof data.channel_data !== 'string'
+                        )
                             throw new Error('Invalid live updates grant.');
-                        if (active()) callback(null, { auth: data.auth });
+                        if (active())
+                            callback(null, { auth: data.auth, channel_data: data.channel_data });
                     } catch {
                         if (active()) {
                             callback(new Error('Live updates authorization unavailable.'), null);

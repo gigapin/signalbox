@@ -1,0 +1,21 @@
+<?php
+
+/** Correct the installed Reverb v1.12.0 channel registry PHPDoc without changing vendor code. */
+
+namespace Laravel\Reverb\Protocols\Pusher\Channels;
+
+/** Make the referenced native type available to PHPStan's isolated stub validator. */
+class Channel
+{
+}
+
+namespace Laravel\Reverb\Protocols\Pusher\Managers;
+
+use Laravel\Reverb\Protocols\Pusher\Channels\Channel;
+
+/** Describe the native registry's actual two-level application/channel indexing. */
+class ArrayChannelManager
+{
+    /** @var array<string, array<string, Channel>> Channels indexed by application ID and channel name. */
+    protected $applications;
+}

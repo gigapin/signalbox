@@ -5,6 +5,9 @@ includes:
 parameters:
     # Reject type errors at the required project baseline.
     level: 8
+    # Reverb 1.12 declares one extra array level for its actual application/channel registry.
+    stubFiles:
+        - stubs/reverb.stub
     # Include bootstrap and routes as well as application classes and database helpers.
     paths:
         - app

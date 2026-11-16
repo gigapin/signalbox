@@ -27,6 +27,8 @@ Use PHP 8.4 to match the minimum runtime. Local PHP 8.5 also runs the checks but
 
 ## Readability and declaration documentation
 
+SEC.08 adds `stubs/reverb.stub` to PHPStan's `stubFiles` and PHP-CS-Fixer's explicit file list. The installed Reverb v1.12.0 `ArrayChannelManager::$applications` PHPDoc declares three array levels, while its implementation indexes two (application ID → channel name → Channel). The stub corrects only that vendor type and declares the referenced Channel symbol for isolated stub validation. No errors are suppressed, no vendor source is edited, and Larastan remains level 8. Recheck/remove this correction when upgrading Reverb.
+
 The 2026-10-21 user clarification in [AGENTS.md](../AGENTS.md) places PHPDoc/TSDoc before declarations. Method bodies contain no local `@var` assertions or docblocks embedded in callback arguments. Use inferred types, explicit signatures and actual type checks; retain ordinary comments only for non-obvious constraints. Separate logical stages with blank lines, expand long arrays/query chains and extract complex projections into named methods. Short callbacks need clear types and names rather than embedded documentation.
 
 PHP-CS-Fixer explicitly enforces `array_indentation` and `method_chaining_indentation` alongside the existing baseline. Prettier continues to own frontend formatting. These formatting rules do not replace reviewing the structure and spacing of the code itself.

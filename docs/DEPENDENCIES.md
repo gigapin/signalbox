@@ -6,6 +6,10 @@ M8.05 adds no Composer/npm constraint or lockfile change. Its optional deploymen
 
 ## Outcome and decisions
 
+SEC.08 (2026-11-16) changes no manifest, locked version or package. Reverb remains v1.12.0; its installed factory's `singletonIf` and private HMAC custom-data verification support the application-owned membership-aware channel adapter. `stubs/reverb.stub` corrects the upstream channel registry's PHPDoc nesting for Larastan without editing vendor code or suppressing diagnostics. [BROADCASTING.md](BROADCASTING.md#current-membership-on-delivery-sec08) records the inspected native boundaries and official source links; recheck this adapter/stub when upgrading Reverb.
+
+The SEC.08 canonical gate on 2026-11-16 stops at `composer audit:locked`: the existing `laravel/framework` v13.36.0 now has [GHSA-63hm-g96r-2m2q](https://github.com/laravel/framework/security/advisories/GHSA-63hm-g96r-2m2q) / CVE-2026-128083 (low), fixed from 13.40.0. This is a pre-existing lockfile issue, tracked separately as SEC.15; the audit gate remains unchanged. No direct application use of Concurrency was found, without asserting indirect unreachability. The previous SEC.01 clean audit below remains historical and is not the current audit status.
+
 The initial backend and frontend dependency graphs resolve successfully with stable packages. Exact versions are recorded in the root `composer.lock` and `package-lock.json`; constraints in the manifests intentionally permit compatible updates within the selected majors. At M0.01 this was a dependency baseline without an initialized application or installed packages. M0.02 subsequently added the application and installed these locked dependencies; see [BOOTSTRAP.md](BOOTSTRAP.md) for the current bootstrap state and verification evidence.
 
 - Keep PHP 8.4 as the deployment and Composer resolution baseline; test PHP 8.5 in CI. Laravel 13 officially supports both. [Laravel release policy](https://laravel.com/docs/13.x/releases).

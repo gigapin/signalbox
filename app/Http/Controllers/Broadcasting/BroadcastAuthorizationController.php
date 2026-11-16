@@ -9,6 +9,7 @@ namespace App\Http\Controllers\Broadcasting;
 use App\Broadcasting\TeamChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Broadcasting\AuthorizeBroadcastRequest;
+use App\Models\User;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Broadcasting\BroadcastManager;
 use Illuminate\Contracts\Config\Repository;
@@ -27,7 +28,7 @@ final class BroadcastAuthorizationController extends Controller
 
     /**
      * @param AuthorizeBroadcastRequest $request Validated private channel/socket identifiers from an authenticated browser.
-     * @return JsonResponse Only the native auth signature; no user data, presence payload or application secret.
+     * @return JsonResponse Native auth signature plus its signed actor ID; no presence list or application secret.
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException When signing is unavailable or current membership denies access.
      */
     public function __invoke(AuthorizeBroadcastRequest $request): JsonResponse
@@ -59,6 +60,15 @@ final class BroadcastAuthorizationController extends Controller
             'Broadcast authorization is unavailable.',
         );
 
-        return response()->json(['auth' => $result['auth']]);
+        $actor = $request->user('web');
+        abort_unless($actor instanceof User, 403);
+        $data = json_encode(['user_id' => $actor->id], JSON_THROW_ON_ERROR);
+        $grant = json_decode($broadcaster->getPusher()->authorizeChannel(
+            $request->string('channel_name')->toString(),
+            $request->string('socket_id')->toString(),
+            $data,
+        ), true, 512, JSON_THROW_ON_ERROR);
+
+        return response()->json(['auth' => $grant['auth'], 'channel_data' => $data]);
     }
 }

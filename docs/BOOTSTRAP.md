@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## Realtime membership revocation (SEC.08, 2026-11-16)
+
+Private grants now include signed actor metadata and the Reverb server rechecks membership before every team publication. Deploy the HTTP code and rebuilt browser assets together, reload long-lived application/worker code and recreate Reverb so old subscriptions are discarded. Fully reload old pages: older assets discard the new metadata and cannot subscribe to the hardened listener. No migration, dependency, environment variable or key change. Verification uses isolated test storage and does not reload development services. See [BROADCASTING.md](BROADCASTING.md#current-membership-on-delivery-sec08) for exact ordering, database cost, failure behavior and rollout. The current next-task/status reference remains [TASKS.md](TASKS.md); earlier handoffs below are historical.
+
 ## Phase A accepted; next billing foundation — 2026-11-12
 
 **UI.06.4/UI.06 are complete and phase A is accepted.** Read [PHASE-A-ACCEPTANCE.md](PHASE-A-ACCEPTANCE.md)

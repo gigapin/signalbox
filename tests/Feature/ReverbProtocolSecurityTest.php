@@ -22,7 +22,8 @@ use Tests\Support\RecordingReverbSocket;
 use Tests\Support\ReverbAcceptance;
 
 beforeEach(function (): void {
-    ReverbAcceptance::isolate();
+    // Application membership and revocation use PostgreSQL in ReverbMembershipTest and RealtimeDeliveryTest.
+    ReverbAcceptance::isolate(nativeOnly: true);
     config(['broadcasting.default' => 'reverb']);
 });
 

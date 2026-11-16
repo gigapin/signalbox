@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## Shared status page password admission (SEC.10, 2026-11-16)
+
+New and replacement status page passwords require twelve characters, with the existing 72-byte bcrypt cap. Stored hashes remain valid without migration or forced reset. All PHP instances must use the same configured Redis `cache` connection/database and prefix for per-page admission, independently of `CACHE_STORE`; failed shared admission/completion returns generic 503, active verification/cooldown returns 429 with Retry-After. Redis eviction/flush resets failure history; a Redis outage prevents new unlocks but does not affect the limiter-free reads of already unlocked sessions. Adopt through the ordinary PHP deployment/reload. No package, schema, environment, key or development-data change is introduced. [STATUS-PAGES.md](STATUS-PAGES.md#shared-password-admission--sec10) records the protocol, compatibility choice and operational limits; actual checks are in TASKS.
+
 ## Bounded public admission (SEC.09, 2026-11-16)
 
 Deploy/reload PHP code normally to adopt page-scoped consent locks, shared heartbeat Team admission and bounded public lock waits. Busy attempts return generic HTTP 503 with `Retry-After: 1`, with no receipt/consent/outbox side effects. No dependency, migration, environment variable or application key changes; no development service is restarted by verification. [PUBLIC-INGRESS.md](PUBLIC-INGRESS.md) records lock order, timeout restoration, client behavior and regression evidence. Current task state remains in [TASKS.md](TASKS.md).

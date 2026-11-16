@@ -1,5 +1,19 @@
 # Test infrastructure
 
+## Public registration privacy — SEC.12
+
+`PublicRegistrationPrivacyTest` compares valid new/verified/unverified JSON and browser/Inertia outcomes and guest state, protects existing credential/2FA/team/trial rows, checks static notice rendering, input validation, per-IP and cross-IP per-account admission, original/lowercase PostgreSQL indexes, unrelated constraints, notification/cache failure, callback rollback, hash-looking plaintext and login-before-verification continuation. A real HTTP client waits on a competing uncommitted registration in a second PostgreSQL connection, then receives the same guest acknowledgement after commit; exactly one identity/team/membership survives. It uses the isolated server/array mailer and cleans committed fixtures in `finally`, with no real provider or development storage.
+
+The DOM test covers anonymous confirmation navigation with no email input/resend button. Existing authentication/antiabuse assertions now expect the guest confirmation redirect; invited registration retains its explicit unique-email validation and lifecycle. Fake notifications are used for message assertions; Redis tests vary/expire only their own test keys and do not sleep for TTL. Operational contracts and primary sources are in [AUTHENTICATION.md](AUTHENTICATION.md#registration-and-email-identity); outcomes are recorded in TASKS.
+
+```sh
+docker compose run --rm -e COMPOSER_ROOT_VERSION=dev-main php-test vendor/bin/pest \
+  tests/Integration/PublicRegistrationPrivacyTest.php tests/Integration/AuthenticationTest.php \
+  tests/Integration/TeamMembershipTest.php tests/Integration/TransactionalMessageAbuseTest.php \
+  tests/Feature/AuthenticationSurfaceTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npm test -- tests/frontend/Authentication.test.tsx
+```
+
 ## Purpose keys and retirement — SEC.11
 
 `PurposeKeysTest` covers independent protocol keys/MACs, strict root decoding, purpose/message binding, a stable cross-implementation protocol vector, historical derived reads, and the explicit original-format switch. `CryptographicRotationTest` exercises the real providers and PostgreSQL schema/command: exact-byte rewrap of every registered encrypted field including Fortify serialization, paired synthetic row/key restoration, subscriber deduplication, stale-consent non-renewal, code confirmation/expiry, destination preservation, missing keys/corrupt data, idempotent check/resume, finite signed URLs, and real two-connection advisory contention. Old original/derived unsubscribe links survive complete key retirement only for exact capabilities/current generations; mutation of route, query or tenant is refused and scanner GET remains inert.

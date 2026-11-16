@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## Uniform public registration (SEC.12, 2026-11-16)
+
+Public registration now remains anonymous for both new and existing emails and redirects to `/register/check-email` (same HTTP 200 message for JSON). New users sign in before authenticated email verification; existing owners receive bounded static guidance without credential/team changes. Deploy PHP and rebuilt assets together and reload long-lived PHP code normally. The explicit shared Redis cache store bounds existing-owner notices to one per account/minute; delivery/cache failures receive the same acknowledgement. No dependency, migration, `.env` or key change; no development data or process is modified by verification. [AUTHENTICATION.md](AUTHENTICATION.md#registration-and-email-identity) documents transport, post-commit behavior, invited-flow boundary and operational limits. Prior SEC.11 schema/key-adoption requirements remain separate and are not assumed completed.
+
 ## Purpose-separated cryptography (SEC.11, 2026-11-16)
 
 Apply the additive `2026_11_16_000027_version_cryptographic_digests` migration before serving the new digest writers. Keep the existing root and historical roots at adoption; `CRYPTOGRAPHY_ALLOW_LEGACY=true` preserves original ciphertext/digests/signatures while all new writes use independent HKDF keys. `.env.example` documents this switch and `APP_PREVIOUS_KEYS`; no real `.env` or root is changed automatically. Deploy/reload all PHP code/configuration consistently. The explicit `security:rotate-data` command and non-mutating `--check` migrate stored values and retain non-expiring unsubscribe capabilities before retirement. **Follow [CRYPTOGRAPHY.md](CRYPTOGRAPHY.md)** for paired backup, compatibility/expiry/cookie windows, staged cutover, failure/resume and rollback. An empty preflight alone does not authorize key removal. Verification changes only isolated test storage; the development migration/adoption remains operator-managed.

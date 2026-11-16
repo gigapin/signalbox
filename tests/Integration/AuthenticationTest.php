@@ -31,10 +31,10 @@ beforeEach(/** Guard the database lifecycle and isolate rate/replay state betwee
 
 it('registers an unverified account and complete team before sending verification', /** Check the actual public form action and post-commit notification. */ function (): void {
     $this->post('/register', ['name' => 'First Owner', 'team_name' => 'Example team', 'email' => ' OWNER@EXAMPLE.TEST ', 'password' => 'secure-password-123', 'password_confirmation' => 'secure-password-123', 'owner_id' => 999, 'plan' => 'business'])
-        ->assertRedirect('/email/verify')->assertSessionHasNoErrors();
-    /** @var User $user Newly authenticated unverified owner. */
+        ->assertRedirect('/register/check-email')->assertSessionHasNoErrors();
+    // Public registration creates an unverified owner without authenticating the requester.
     $user = User::query()->sole();
-    $this->assertAuthenticatedAs($user);
+    $this->assertGuest();
     expect($user->email)->toBe('owner@example.test')->and($user->email_verified_at)->toBeNull()
         ->and(Hash::check('secure-password-123', $user->password))->toBeTrue()
         ->and(Team::query()->sole()->owner_id)->toBe($user->id)
@@ -42,8 +42,8 @@ it('registers an unverified account and complete team before sending verificatio
         ->and($user->resolveCurrentTeam()?->timezone)->toBe('UTC')
         ->and($user->resolveCurrentTeam()?->plan->value)->toBe('free');
     Notification::assertSentTo($user, VerifyEmail::class);
-    $this->get('/account')->assertRedirect('/email/verify');
-    $this->get('/account/security')->assertRedirect('/email/verify');
+    $this->get('/account')->assertRedirect('/login');
+    $this->get('/account/security')->assertRedirect('/login');
 });
 
 it('permits duplicate team names with independent generated slugs', /** Registration must not treat presentation names as team identities. */ function (): void {
@@ -63,9 +63,9 @@ it('rejects invalid registration without writing any aggregate', /** @param arra
     [['password' => str_repeat('x', 129), 'password_confirmation' => str_repeat('x', 129)]],
 ]);
 
-it('rejects case variants at both validation and PostgreSQL uniqueness boundaries', /** A raw competing insert cannot bypass normalized-email uniqueness. */ function (): void {
+it('acknowledges case variants uniformly while PostgreSQL still rejects duplicate identities', /** A raw competing insert cannot bypass normalized-email uniqueness. */ function (): void {
     User::factory()->create(['email' => 'owner@example.test']);
-    $this->post('/register', ['name' => 'Name', 'team_name' => 'Team', 'email' => 'OWNER@EXAMPLE.TEST', 'password' => 'secure-password-123', 'password_confirmation' => 'secure-password-123'])->assertSessionHasErrors('email');
+    $this->post('/register', ['name' => 'Name', 'team_name' => 'Team', 'email' => 'OWNER@EXAMPLE.TEST', 'password' => 'secure-password-123', 'password_confirmation' => 'secure-password-123'])->assertRedirect('/register/check-email')->assertSessionHasNoErrors();
     expect(fn () => DB::transaction(/** Attempt a raw write outside the User email mutator. */ fn () => DB::table('users')->insert(['name' => 'Duplicate', 'email' => 'OWNER@EXAMPLE.TEST', 'password' => 'unused'])))->toThrow(QueryException::class);
     expect(User::query()->count())->toBe(1)->and(Team::query()->count())->toBe(0);
 });

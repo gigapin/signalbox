@@ -14,6 +14,8 @@ final class InvitedRegistrationRequest extends RegisterRequest
     {
         $rules = parent::rules();
         unset($rules['team_name']);
+        // This separate capability-backed flow retains its explicit account-conflict behavior.
+        $rules['email'][] = 'unique:users,email';
 
         return $rules;
     }

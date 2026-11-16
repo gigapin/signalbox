@@ -1,40 +1,36 @@
 <?php
 
-/** Adapt validated registration into an atomic domain action and a web session. */
+/** Acknowledge public registration uniformly without authenticating a requester-selected identity. */
 
 namespace App\Http\Controllers\Auth;
 
-use App\Actions\Identity\RegisterUser;
+use App\Actions\Identity\RequestPublicRegistration;
 use App\Http\Requests\Auth\RegisterRequest;
-use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
-/** Keep browser login orchestration outside account persistence rules. */
+/** Browser, Inertia and JSON outcomes disclose neither account existence nor notification delivery. */
 final class RegisterController
 {
+    /** @var string Same public acknowledgement for new and existing accounts. */
+    public const string ACKNOWLEDGEMENT = 'Check your email for the next steps. You can also sign in or reset your password.';
+
     /**
      * @param RegisterRequest $request Validated public registration form.
-     * @param RegisterUser $register Atomic identity aggregate creator.
-     * @return RedirectResponse Mandatory email verification screen.
+     * @param RequestPublicRegistration $register Persistence/conflict handling without a login side effect.
+     * @return RedirectResponse|JsonResponse Uniform anonymous confirmation for valid input.
      */
-    public function __invoke(RegisterRequest $request, RegisterUser $register): RedirectResponse
+    public function __invoke(RegisterRequest $request, RequestPublicRegistration $register): RedirectResponse|JsonResponse
     {
-        try {
-            /** @var \App\Models\User $user Newly committed identity, never trusted from client-owned role fields. */
-            $user = $register($request->string('name')->toString(), $request->string('email')->toString(), $request->string('password')->toString(), $request->string('team_name')->toString());
-        } catch (UniqueConstraintViolationException $exception) {
-            // Concurrent validated registrations still compete on PostgreSQL's email constraint.
-            if (str_contains($exception->getMessage(), 'users_email')) {
-                throw ValidationException::withMessages(['email' => 'The email has already been taken.']);
-            }
-            throw $exception;
-        }
-        Auth::login($user);
-        $request->session()->regenerate();
-        $request->session()->put('password_hash_web', $user->password);
+        $register(
+            $request->string('name')->toString(),
+            $request->string('email')->toString(),
+            $request->string('password')->toString(),
+            $request->string('team_name')->toString(),
+        );
 
-        return redirect()->route('verification.notice');
+        return $request->wantsJson()
+            ? response()->json(['message' => self::ACKNOWLEDGEMENT])
+            : redirect()->route('register.confirmed')->with('status', self::ACKNOWLEDGEMENT);
     }
 }

@@ -295,6 +295,8 @@ La protezione SSRF rifiuta localhost e reti private, quindi servono siti pubblic
 
 ## Blocco A — Accesso e account
 
+SEC.12 aggiorna A04–A06 alla conferma anonima e al login esplicito. Gli esiti browser già registrati restano storici; le istruzioni aggiornate non attestano una nuova prova manuale.
+
 **Preparazione:** tieni il tuo account principale nella finestra **Gestione**. A01–A10 si eseguono in un altro profilo, usando per A04 un indirizzo nuovo, per esempio `accesso-02@example.test`. Mailtrap deve essere disponibile. Per uscire usa **Account menu → Sign out** nell’intestazione privata; il logout porta alla home pubblica. Un successivo ingresso privato deve richiedere login.
 
 | Caso | Cosa fare | Risultato atteso |
@@ -302,8 +304,8 @@ La protezione SSRF rifiuta localhost e reti private, quindi servono siti pubblic
 | A01 | In un profilo senza login apri `http://localhost:8000/` | Home con **Sign in** e testo provvisorio **The application is being built** (UI.05); nessun dato del team |
 | A02 | Nello stesso profilo senza login incolla `/teams` nella barra indirizzi | Sei portato a `/login`; nessun elenco team visibile |
 | A03 | Su `/login` inserisci in **Email** un account inesistente e una password qualsiasi, poi **Sign in**. Ripeti con il tuo account e la password corretta | Primo tentativo rifiutato con messaggio; secondo riuscito. Apri `/account` e verifica la tua email |
-| A04 | In un profilo separato apri `/register`. Compila **Your name** `Collaudo Accesso`, **Team name** `Collaudo Accesso`, **Email** con un nuovo indirizzo sintetico, **Password (12–128 characters)** e **Confirm password** uguali; premi **Create account**. Annota privatamente indirizzo e password | Pagina **Verify your email** e nuova email al destinatario indicato in Mailtrap |
-| A05 | Con il nuovo account di A04 ancora non verificato apri `/teams` | Torni a **Verify your email**, senza dati dei team |
+| A04 | In un profilo separato apri `/register`. Compila **Your name** `Collaudo Accesso`, **Team name** `Collaudo Accesso`, **Email** con un nuovo indirizzo sintetico, **Password (12–128 characters)** e **Confirm password** uguali; premi **Create account**. Annota privatamente indirizzo e password | Pagina anonima **Check your email**, nessun login automatico, e nuova verifica al destinatario sintetico in Mailtrap |
+| A05 | Dopo A04 apri `/teams` da ospite: compare **Sign in**. Accedi con le credenziali di A04, poi riapri `/teams` | Dopo il login compare **Verify your email**, senza dati dei team |
 | A06 | In Mailtrap apri l'email di A04 e il suo collegamento di verifica nello stesso profilo dove hai registrato l'account. Poi visita `/teams` | Verifica riuscita; puoi aprire il team creato in A04 |
 | A07 | Nel profilo di A04 usa **Account menu → Sign out**, poi visita `/forgot-password`. Inserisci la stessa email e premi **Send reset link**. Apri il nuovo link Mailtrap, compila la nuova password e la conferma, premi **Reset password**. Su `/login` prova prima la vecchia password e poi la nuova | La vecchia è rifiutata; la nuova permette **Sign in**. Annota privatamente la nuova password per A08 |
 | A08 | Con l'account A04 vai su `/account/security`, premi **Enable two-factor authentication**. Se appare **Confirm your password**, inserisci la password attuale e premi **Confirm password**, poi riprendi la configurazione. Se il QR non è già visibile premi **Show authenticator setup**. Scansionalo con un'app autenticatore, inserisci il codice corrente in **Authentication code** e premi **Confirm authenticator**; poi **Show recovery codes** e conserva privatamente almeno due codici per A10 | Testo **Two-factor authentication is enabled.** e codici di recupero visibili su richiesta. Non inserire codici o QR nel registro degli esiti |

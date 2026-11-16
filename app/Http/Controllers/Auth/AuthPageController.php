@@ -22,6 +22,7 @@ final class AuthPageController
     {
         $page = match ($request->route()?->getName()) {
             'register' => 'Auth/Register',
+            'register.confirmed' => 'Auth/RegistrationPending',
             'login' => 'Auth/Login',
             'password.request' => 'Auth/ForgotPassword',
             'password.reset' => 'Auth/ResetPassword',

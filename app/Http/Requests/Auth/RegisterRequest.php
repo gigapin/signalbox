@@ -35,7 +35,7 @@ class RegisterRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'team_name' => ['required', 'string', 'max:255', 'regex:'.self::TEAM_NAME_PATTERN],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:12', 'max:128', 'confirmed'],
         ];
     }

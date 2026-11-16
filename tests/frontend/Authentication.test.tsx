@@ -5,11 +5,26 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import Login from '../../resources/js/pages/Auth/Login';
 import Register from '../../resources/js/pages/Auth/Register';
+import RegistrationPending from '../../resources/js/pages/Auth/RegistrationPending';
 import TwoFactorChallenge from '../../resources/js/pages/Auth/TwoFactorChallenge';
 import VerifyEmail from '../../resources/js/pages/Auth/VerifyEmail';
 import Security from '../../resources/js/pages/Account/Security';
 import Overview from '../../resources/js/pages/Account/Overview';
 import { renderInertia } from './renderInertia';
+
+test('offers anonymous sign-in and reset after registration without exposing an identity or resend action', () => {
+    renderInertia('Signalbox', RegistrationPending, { auth: { user: null } });
+    expect(screen.getByRole('heading', { name: 'Check your email' })).toBeInTheDocument();
+    const navigation = screen.getByRole('navigation', { name: 'Registration next steps' });
+    expect(navigation).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('link', { name: 'Reset your password' })).toHaveAttribute(
+        'href',
+        '/forgot-password',
+    );
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
+});
 
 /** Submit the actual login useForm through a mocked transport boundary, retaining its validation state. */
 async function submitsLoginAndShowsErrors(): Promise<void> {

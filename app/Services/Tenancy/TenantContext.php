@@ -29,6 +29,7 @@ final class TenantContext
      * @template TResult
      * @param int $teamId Positive, previously authorized tenant identifier.
      * @param Closure(): TResult $operation Work that must not escape its tenant boundary.
+     * @param-immediately-invoked-callable $operation
      * @return TResult Result produced by the operation.
      * @throws InvalidArgumentException When the identifier is not positive.
      */

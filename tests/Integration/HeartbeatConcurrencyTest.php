@@ -32,7 +32,8 @@ it('serializes receipt calls against concurrent receipt, rotation, pause and res
         ]));
         $token = $fixture->committed(fn () => app(ManageHeartbeatCredentials::class)->rotate($fixture->owner, $fixture->teamId, $monitor->id));
         $server = IsolatedHttpServer::start();
-        $handler = new CurlMultiHandler();
+        // Inspect the PostgreSQL barrier before the public lock deadline, instead of waiting curl's default second.
+        $handler = new CurlMultiHandler(['select_timeout' => 0.01]);
         $client = $server->client(new CookieJar(), HandlerStack::create($handler));
         $clients = [$client];
 

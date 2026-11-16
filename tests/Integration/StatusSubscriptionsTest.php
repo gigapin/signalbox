@@ -582,7 +582,14 @@ it('serializes real concurrent subscription publication and email admission in s
         }
 
         $fixture->connection->beginTransaction();
-        $fixture->connection->table('teams')->where('id', $fixture->teamId)->lockForUpdate()->first();
+
+        if ($mode === 'subscribe') {
+            // Public consent serializes on its page, independently of unrelated team management.
+            $fixture->connection->table('status_pages')->where('id', $target)->lockForUpdate()->first();
+        } else {
+            $fixture->connection->table('teams')->where('id', $fixture->teamId)->lockForUpdate()->first();
+        }
+
         foreach (range(1, 2) as $ignored) {
             $child = statusEmailProbe($mode, $fixture->teamId, $target, $receipts);
             $child->start();

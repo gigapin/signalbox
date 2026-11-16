@@ -11,6 +11,7 @@ use App\Exceptions\HeartbeatRateLimited;
 use App\Models\Monitor;
 use App\Models\MonitorHeartbeat;
 use App\Models\Team;
+use App\Services\Database\PublicIngressTransaction;
 use App\Services\Monitoring\HeartbeatLimits;
 use App\Services\Monitoring\Scheduling\ExecutionEligibility;
 use App\Services\Tenancy\TenantContext;
@@ -25,15 +26,21 @@ final readonly class ReceiveHeartbeat
      * @param TenantContext $tenants Bounded tenant lifetime derived exclusively from the validated digest.
      * @param ExecutionEligibility $eligibility Shared plan/quota/cadence/pause admission.
      * @param HeartbeatLimits $limits Mandatory per-credential traffic bound.
+     * @param PublicIngressTransaction $transactions Bounded lock waits without changing the caller's timeout.
      */
-    public function __construct(private TenantContext $tenants, private ExecutionEligibility $eligibility, private HeartbeatLimits $limits)
-    {
+    public function __construct(
+        private TenantContext $tenants,
+        private ExecutionEligibility $eligibility,
+        private HeartbeatLimits $limits,
+        private PublicIngressTransaction $transactions,
+    ) {
     }
 
     /**
      * @param string|null $token Dedicated 64-character hexadecimal secret from Authorization only.
      * @return bool Whether the credential is valid; inactive monitors deliberately succeed without recording.
      * @throws HeartbeatRateLimited When a valid credential exceeds its configured request limit.
+     * @throws \App\Exceptions\PublicIngressBusy When bounded team, monitor or state locks cannot be obtained.
      */
     public function receive(#[\SensitiveParameter] ?string $token): bool
     {
@@ -52,8 +59,9 @@ final readonly class ReceiveHeartbeat
         $teamId = (int) $owner->team_id;
         $monitorId = (int) $owner->monitor_id;
 
-        return $this->tenants->run($teamId, fn (): bool => DB::transaction(function () use ($teamId, $monitorId, $hash): bool {
-            $team = Team::query()->lockForUpdate()->find($teamId);
+        return $this->tenants->run($teamId, fn (): bool => $this->transactions->run(function () use ($teamId, $monitorId, $hash): bool {
+            // Share admission across monitors while excluding quota, entitlement and lifecycle mutations.
+            $team = Team::query()->sharedLock()->find($teamId);
             $monitor = Monitor::query()->where('team_id', $teamId)->lockForUpdate()->find($monitorId);
             $state = MonitorHeartbeat::query()->where('monitor_id', $monitorId)->lockForUpdate()->first();
 

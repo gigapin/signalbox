@@ -17,7 +17,7 @@ final class HeartbeatController
     /**
      * @param HeartbeatRequest $request Authorization-only ingress; all supplied payload values are ignored.
      * @param ReceiveHeartbeat $receive Lock-aware receiver with fresh credential and plan admission.
-     * @return Response Empty 204, uniform 404, or a generic retryable 429.
+     * @return Response Empty 204, uniform 404, or a generic retryable 429; bounded lock contention maps to HTTP 503.
      */
     public function __invoke(HeartbeatRequest $request, ReceiveHeartbeat $receive): Response
     {

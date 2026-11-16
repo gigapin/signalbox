@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## Bounded public admission (SEC.09, 2026-11-16)
+
+Deploy/reload PHP code normally to adopt page-scoped consent locks, shared heartbeat Team admission and bounded public lock waits. Busy attempts return generic HTTP 503 with `Retry-After: 1`, with no receipt/consent/outbox side effects. No dependency, migration, environment variable or application key changes; no development service is restarted by verification. [PUBLIC-INGRESS.md](PUBLIC-INGRESS.md) records lock order, timeout restoration, client behavior and regression evidence. Current task state remains in [TASKS.md](TASKS.md).
+
 ## Laravel security update (SEC.15, 2026-11-16)
 
 Install the committed Composer lock to adopt Laravel 13.40.0 and reload long-lived PHP processes through the normal deployment procedure. The root minimum is now `^13.40`; no other package, migration, environment variable or application key changes. The update corrects child-process result authentication and restores the audit gate that blocked SEC.08. [DEPENDENCIES.md](DEPENDENCIES.md#laravel-concurrency-security-update--2026-11-16-sec15) records official compatibility sources and the minimal package update; [TASKS.md](TASKS.md) records actual verification. Tests use only synthetic process output and isolated services. No development worker, scheduler or Reverb service is restarted by this verification.

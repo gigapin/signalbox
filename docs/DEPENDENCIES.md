@@ -2,13 +2,35 @@
 
 Verified on 2026-10-15 for M0.01. Product requirements remain in [the specification](03-Progetto-B-Signalbox-Laravel.md); work status is in [TASKS.md](TASKS.md).
 
+## Laravel Concurrency security update — 2026-11-16 (SEC.15)
+
+The reported CI failure is the mandatory `composer audit:locked` gate finding [GHSA-63hm-g96r-2m2q](https://github.com/laravel/framework/security/advisories/GHSA-63hm-g96r-2m2q) / CVE-2026-128083 in the previously locked Laravel 13.36.0. The [official 13.40.0 release](https://github.com/laravel/framework/releases/tag/v13.40.0) is the first corrected 13.x release. Root `laravel/framework` now requires `^13.40` to record that security floor, and the lock pins **v13.40.0**. All other manifest constraints and every other package record remain unchanged; no packages are added or removed.
+
+The [13.40.0 manifest](https://raw.githubusercontent.com/laravel/framework/v13.40.0/composer.json) still accepts PHP `^8.3`, this project's PHP 8.4 resolution/deployment baseline and PHP 8.5 CI, and the existing Symfony 7.4/8.x constraints. Composer's minimal-change resolution confirms that the existing full graph satisfies the corrected framework without collateral upgrades. The remaining Laravel packages, Reverb adapter/stub and Pest 4 stay at their previous versions.
+
+The [corrected process driver](https://github.com/laravel/framework/blob/v13.40.0/src/Illuminate/Concurrency/ProcessDriver.php) authenticates child-process result envelopes with a random per-task HMAC key; the corresponding Artisan command removes that key from the task environment before invocation. `LaravelConcurrencySecurityTest` executes real bounded PHP child processes using synthetic stdout to distinguish the real return/exception from forged output and verifies keyed results/key disposal. No application feature using Concurrency is introduced; existing source inspection found no direct usage without claiming indirect unreachability. Gate and before/after results are recorded in TASKS.
+
+Reproduction of the lock update (Composer 2.10.3 in the PHP 8.4 test container):
+
+```sh
+docker compose run --rm --no-deps -e COMPOSER_ROOT_VERSION=dev-main php-test composer update \
+  laravel/framework:13.40.0 --with-dependencies --minimal-changes --no-install \
+  --no-interaction --no-scripts --no-plugins --prefer-dist
+docker compose run --rm --no-deps -e COMPOSER_ROOT_VERSION=dev-main php-test composer install \
+  --no-interaction --no-scripts --no-plugins --prefer-dist
+```
+
+`COMPOSER_ROOT_VERSION` is command-local and prevents Composer from inspecting Git to infer the root version; no `.env` or production setting is added. Dist-to-source fallback was verified disabled, and installation downloaded/extracted only the framework archive. No dependency installation scripts, Git commands, migration or application-process restart are part of this update. Deploy by installing the committed lock and reloading long-lived PHP processes normally.
+
+## Status-domain validation tooling
+
 M8.05 adds no Composer/npm constraint or lockfile change. Its optional deployment template was adapted/validated with the official `caddy:2.11.7-alpine` image, digest `sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5`, in a disposable container with networking disabled. This is validation tooling, not a new running Compose service or a production image selection. Caddy is the chosen ACME/TLS termination boundary for custom status domains; pin/recheck the production image during M12. Protocol and operational boundaries are in [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-deployment-contract). The version is documented in the [official Caddy release](https://github.com/caddyserver/caddy/releases/tag/v2.11.7); the syntax/permission contract follows [Caddy's documentation](https://caddyserver.com/docs/caddyfile/options#on-demand-tls).
 
 ## Outcome and decisions
 
 SEC.08 (2026-11-16) changes no manifest, locked version or package. Reverb remains v1.12.0; its installed factory's `singletonIf` and private HMAC custom-data verification support the application-owned membership-aware channel adapter. `stubs/reverb.stub` corrects the upstream channel registry's PHPDoc nesting for Larastan without editing vendor code or suppressing diagnostics. [BROADCASTING.md](BROADCASTING.md#current-membership-on-delivery-sec08) records the inspected native boundaries and official source links; recheck this adapter/stub when upgrading Reverb.
 
-The SEC.08 canonical gate on 2026-11-16 stops at `composer audit:locked`: the existing `laravel/framework` v13.36.0 now has [GHSA-63hm-g96r-2m2q](https://github.com/laravel/framework/security/advisories/GHSA-63hm-g96r-2m2q) / CVE-2026-128083 (low), fixed from 13.40.0. This is a pre-existing lockfile issue, tracked separately as SEC.15; the audit gate remains unchanged. No direct application use of Concurrency was found, without asserting indirect unreachability. The previous SEC.01 clean audit below remains historical and is not the current audit status.
+The original SEC.08 canonical gate on 2026-11-16 stopped at `composer audit:locked` for the previously locked framework. SEC.15 above applies the corrected version; the audit gate remains unchanged and the current verification outcome is recorded in TASKS. The SEC.01/SEC.08 audit outcomes below are historical snapshots.
 
 The initial backend and frontend dependency graphs resolve successfully with stable packages. Exact versions are recorded in the root `composer.lock` and `package-lock.json`; constraints in the manifests intentionally permit compatible updates within the selected majors. At M0.01 this was a dependency baseline without an initialized application or installed packages. M0.02 subsequently added the application and installed these locked dependencies; see [BOOTSTRAP.md](BOOTSTRAP.md) for the current bootstrap state and verification evidence.
 
@@ -30,7 +52,7 @@ All versions below are read from `composer.lock`, including packages intended fo
 |---|---|---|---|
 | `inertiajs/inertia-laravel` | `^2.0` | `v2.0.28` | Laravel adapter for the required Inertia 2 protocol. |
 | `laravel/cashier` | `^16.0` | `v16.9.0` | Stripe subscriptions; configuration and tenant billing remain in M9. |
-| `laravel/framework` | `^13.0` | `v13.36.0` | Laravel 13 application framework and native JSON:API resources. |
+| `laravel/framework` | `^13.40` | `v13.40.0` | Laravel 13 application framework and native JSON:API resources; corrected Concurrency result parsing. |
 | `laravel/horizon` | `^5.0` | `v5.50.1` | Redis queue supervision and operational dashboard. |
 | `laravel/reverb` | `^1.0` | `v1.12.0` | First-party WebSocket server for team broadcasts. |
 | `laravel/sanctum` | `^4.0` | `v4.3.3` | Scoped API tokens; web authentication continues to use sessions. |

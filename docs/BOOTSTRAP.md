@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## Laravel security update (SEC.15, 2026-11-16)
+
+Install the committed Composer lock to adopt Laravel 13.40.0 and reload long-lived PHP processes through the normal deployment procedure. The root minimum is now `^13.40`; no other package, migration, environment variable or application key changes. The update corrects child-process result authentication and restores the audit gate that blocked SEC.08. [DEPENDENCIES.md](DEPENDENCIES.md#laravel-concurrency-security-update--2026-11-16-sec15) records official compatibility sources and the minimal package update; [TASKS.md](TASKS.md) records actual verification. Tests use only synthetic process output and isolated services. No development worker, scheduler or Reverb service is restarted by this verification.
+
 ## Realtime membership revocation (SEC.08, 2026-11-16)
 
 Private grants now include signed actor metadata and the Reverb server rechecks membership before every team publication. Deploy the HTTP code and rebuilt browser assets together, reload long-lived application/worker code and recreate Reverb so old subscriptions are discarded. Fully reload old pages: older assets discard the new metadata and cannot subscribe to the hardened listener. No migration, dependency, environment variable or key change. Verification uses isolated test storage and does not reload development services. See [BROADCASTING.md](BROADCASTING.md#current-membership-on-delivery-sec08) for exact ordering, database cost, failure behavior and rollout. The current next-task/status reference remains [TASKS.md](TASKS.md); earlier handoffs below are historical.

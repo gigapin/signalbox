@@ -1,5 +1,16 @@
 # Test infrastructure
 
+## Framework process-output integrity — SEC.15
+
+`tests/Feature/LaravelConcurrencySecurityTest.php` drives the installed Laravel process driver and actual Artisan child processes with a ten-second per-task deadline. Synthetic JSON followed by the legacy binary delimiter must not replace the real result or hide the real exception; ordinary stdout must not corrupt keyed results, and tasks cannot read the per-task signing key from `$_SERVER`, `$_ENV` or `getenv`. The tests need no provider/network traffic, sleeps or application-data writes. The serializable tasks are declared in global fixture functions because Pest's generated test class is absent in the child Artisan runtime.
+
+The same regressions are executed before/after the framework update; actual outcomes are in TASKS. These checks exercise dependency behavior and do not add a Concurrency feature to Signalbox. Composer's mandatory audit remains unchanged in local/CI gates.
+
+```sh
+docker compose run --rm -e COMPOSER_ROOT_VERSION=dev-main php-test vendor/bin/pest \
+  tests/Feature/LaravelConcurrencySecurityTest.php --fail-on-skipped --fail-on-warning
+```
+
 ## Realtime membership revocation — SEC.08
 
 `ReverbMembershipTest` drives the installed startup factory, production channel-manager binding, real HTTP signer, native private-channel HMAC and signed server publication over recorded socket transports. It covers all roles, self-departure, multiple sockets, authorized/foreign recipients, signed metadata tampering, legacy grants, role changes, rollback, verification/team loss and direct/internal/sender-excluded delivery. Two real PostgreSQL connections prove NOWAIT rejection during a pending removal, commit/rollback recovery, and that the shared lock remains held at transport handoff and is released afterwards. A temporary table rename in a rollback-isolated fixture verifies that a membership query failure sends nothing and can recover. No real provider, browser or development database is used.

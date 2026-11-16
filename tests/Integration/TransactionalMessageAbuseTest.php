@@ -323,7 +323,7 @@ it('accepts ordinary team names', function (string $teamName): void {
         'email' => 'owner@example.test',
         'password' => 'secure-password-123',
         'password_confirmation' => 'secure-password-123',
-    ])->assertRedirect('/email/verify')->assertSessionHasNoErrors();
+    ])->assertRedirect('/register/check-email')->assertSessionHasNoErrors();
 
     expect(Team::query()->sole()->name)->toBe($teamName);
 })->with([

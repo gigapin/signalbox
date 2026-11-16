@@ -1,4 +1,4 @@
-/** Register an unverified account and its first team in one operation. */
+/** Request public registration with anonymous acknowledgement and email-guided next steps. */
 import AuthForm from '../../components/auth/AuthForm';
 
 /** Present the minimal explicit account and team registration inputs. */
@@ -6,7 +6,7 @@ export default function Register() {
     return (
         <AuthForm
             title="Create your account"
-            description="Start with your first team. Verify your email before entering your account."
+            description="Start with your first team. Check your email, then sign in to verify your address and access your account."
             action="/register"
             submit="Create account"
             fields={[

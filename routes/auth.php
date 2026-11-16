@@ -22,6 +22,7 @@ use Laravel\Fortify\Http\Controllers\VerifyEmailController;
 Route::middleware(NoStoreAuthentication::class)->group(/** Register only authentication and account routes, never tenant domain resources. */ function (): void {
     Route::middleware('guest')->group(/** Guest entrypoints, keeping incomplete second-factor sessions unauthenticated. */ function (): void {
         Route::get('/register', AuthPageController::class)->name('register');
+        Route::get('/register/check-email', AuthPageController::class)->name('register.confirmed');
         Route::post('/register', RegisterController::class)->middleware('throttle:auth-public')->name('register.store');
         Route::get('/login', AuthPageController::class)->name('login');
         Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:login')->name('login.store');

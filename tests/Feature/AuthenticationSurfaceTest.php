@@ -7,7 +7,7 @@ use Inertia\Testing\AssertableInertia;
 it('renders declared public authentication pages without database access', /** @param string $url Public entrypoint. @param string $component Expected explicitly declared React page. */ function (string $url, string $component): void {
     $this->withoutVite()->get($url)->assertOk()->assertInertia(/** @param AssertableInertia $page Guest-only page response. */ fn (AssertableInertia $page): AssertableInertia => $page->component($component)->where('auth.user', null));
 })->with([
-    ['/register', 'Auth/Register'], ['/login', 'Auth/Login'], ['/forgot-password', 'Auth/ForgotPassword'], ['/reset-password/example-token?email=owner@example.test', 'Auth/ResetPassword'],
+    ['/register', 'Auth/Register'], ['/register/check-email', 'Auth/RegistrationPending'], ['/login', 'Auth/Login'], ['/forgot-password', 'Auth/ForgotPassword'], ['/reset-password/example-token?email=owner@example.test', 'Auth/ResetPassword'],
 ]);
 
 it('redirects unauthenticated account requests to login', /** @param string $url Protected destination. */ function (string $url): void {

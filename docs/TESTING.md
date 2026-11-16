@@ -1,5 +1,25 @@
 # Test infrastructure
 
+## Last verified state at session close — 2026-11-16
+
+The session stops after SEC.12; SEC.13 is not started. Latest canonical gate: **exit 0**, **3639 Pest / 24841 assertions in 783.57 s**, **473 DOM tests / 38 files**, **5 quality tests**, PHP-CS-Fixer 695 files, Larastan level 8, frontend lint/format/TypeScript and production build. Composer audit found no advisory; npm production audit is still pending SEC.14. No tests were skipped in the summaries. SEC.12's targeted matrix passed 129 cases / 804 assertions and its three isolated mutation probes failed as expected.
+
+These are the preceding implementation results, not checks rerun during the Markdown-only closing update. No new browser/SMTP/provider, remote PHP 8.4/8.5 CI, deployment, real key-retirement or infrastructure restore evidence is asserted. See [TASKS](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-16) for next work, outstanding adoption and the temporary verification override; runtime services were inspected read-only and left running. Never substitute a developer's storage or secrets for the guarded test services when resuming.
+
+## Public registration privacy — SEC.12
+
+`PublicRegistrationPrivacyTest` compares valid new/verified/unverified JSON and browser/Inertia outcomes and guest state, protects existing credential/2FA/team/trial rows, checks static notice rendering, input validation, per-IP and cross-IP per-account admission, original/lowercase PostgreSQL indexes, unrelated constraints, notification/cache failure, callback rollback, hash-looking plaintext and login-before-verification continuation. A real HTTP client waits on a competing uncommitted registration in a second PostgreSQL connection, then receives the same guest acknowledgement after commit; exactly one identity/team/membership survives. It uses the isolated server/array mailer and cleans committed fixtures in `finally`, with no real provider or development storage.
+
+The DOM test covers anonymous confirmation navigation with no email input/resend button. Existing authentication/antiabuse assertions now expect the guest confirmation redirect; invited registration retains its explicit unique-email validation and lifecycle. Fake notifications are used for message assertions; Redis tests vary/expire only their own test keys and do not sleep for TTL. Operational contracts and primary sources are in [AUTHENTICATION.md](AUTHENTICATION.md#registration-and-email-identity); outcomes are recorded in TASKS.
+
+```sh
+docker compose run --rm -e COMPOSER_ROOT_VERSION=dev-main php-test vendor/bin/pest \
+  tests/Integration/PublicRegistrationPrivacyTest.php tests/Integration/AuthenticationTest.php \
+  tests/Integration/TeamMembershipTest.php tests/Integration/TransactionalMessageAbuseTest.php \
+  tests/Feature/AuthenticationSurfaceTest.php --fail-on-skipped --fail-on-warning
+docker compose run --rm node npm test -- tests/frontend/Authentication.test.tsx
+```
+
 ## Purpose keys and retirement — SEC.11
 
 `PurposeKeysTest` covers independent protocol keys/MACs, strict root decoding, purpose/message binding, a stable cross-implementation protocol vector, historical derived reads, and the explicit original-format switch. `CryptographicRotationTest` exercises the real providers and PostgreSQL schema/command: exact-byte rewrap of every registered encrypted field including Fortify serialization, paired synthetic row/key restoration, subscriber deduplication, stale-consent non-renewal, code confirmation/expiry, destination preservation, missing keys/corrupt data, idempotent check/resume, finite signed URLs, and real two-connection advisory contention. Old original/derived unsubscribe links survive complete key retirement only for exact capabilities/current generations; mutation of route, query or tenant is refused and scanner GET remains inert.

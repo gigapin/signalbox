@@ -35,7 +35,11 @@ final readonly class PreparePublicUpdateEmails
             ->select(['selection.status_page_id', 'component.name'])->get();
 
         foreach ($components as $component) {
-            $page = StatusPage::query()->where('is_public', true)->find((int) $component->status_page_id);
+            // Public consent no longer locks Team; the Page lock orders its commits with this audience snapshot.
+            $page = StatusPage::query()
+                ->where('is_public', true)
+                ->lockForUpdate()
+                ->find((int) $component->status_page_id);
 
             if ($page === null) {
                 continue;

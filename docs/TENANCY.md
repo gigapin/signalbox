@@ -83,7 +83,11 @@ Scout's database engine builds its query from `Monitor::newQuery()`, so TeamScop
 
 ## Heartbeat ingress (M3.05)
 
-The dedicated public Bearer route resolves only state/team/monitor identities by a one-way digest before establishing TenantContext. It then locks Team → Monitor → state and revalidates ownership, credential, type and central eligibility. MonitorHeartbeat uses TeamScope; receipt queries always include explicit owner, state and generation predicates, with composite PostgreSQL foreign keys enforcing ownership. Credential management uses existing route-team binding and MonitorPolicy update, including a fresh check under lock. No public caller-supplied tenant identity is trusted. See [HEARTBEATS.md](HEARTBEATS.md).
+The dedicated public Bearer route resolves only state/team/monitor identities by a one-way digest before establishing TenantContext. It then locks Team (shared) → Monitor → state (exclusive) and revalidates ownership, credential, type and central eligibility. SEC.09 permits parallel admissions for different monitors while retaining the entitlement/quota fence against exclusive Team mutations. MonitorHeartbeat uses TeamScope; receipt queries always include explicit owner, state and generation predicates, with composite PostgreSQL foreign keys enforcing ownership. Credential management uses existing route-team binding and MonitorPolicy update, including a fresh check under lock. No public caller-supplied tenant identity is trusted. See [HEARTBEATS.md](HEARTBEATS.md).
+
+## Public consent and bounded waits (SEC.09)
+
+Public subscription/consent writes now lock their Page and Subscriber instead of Team. Signed GETs read only generic capability state without row locks; POST validates the current page/password/generation again. Publication takes that same Page lock before its recipient snapshot, and delivery admission preserves Team → Page → Subscriber → Delivery order. TenantContext and composite ownership remain mandatory throughout. The shared public transaction wrapper restores caller timeout settings on success and rollback, including nested savepoints; expected contention yields generic HTTP 503 with no partial write or private database details. [PUBLIC-INGRESS.md](PUBLIC-INGRESS.md) documents invariants and isolated PostgreSQL evidence. TenantContext's synchronous-callback annotation changes static analysis only.
 
 ## Private broadcast producers (M6.01)
 

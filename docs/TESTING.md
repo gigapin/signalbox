@@ -1,5 +1,11 @@
 # Test infrastructure
 
+## Public ingress contention — SEC.09
+
+[PUBLIC-INGRESS.md](PUBLIC-INGRESS.md) maps the new PostgreSQL service/HTTP tests to timeout restoration, resource independence and consent/publication ordering. `PublicIngressTransactionTest` exercises real root/savepoint rollback and shorter caller limits. `PublicIngressContentionTest` uses an independent receiver connection outside RefreshDatabase's outer transaction, so successful probes release their row locks before committed-fixture cleanup. It checks actual 503/privacy/retry behavior and no partial state, including a delivery lock acquired after unsubscribe has already written its row.
+
+The original heartbeat HTTP concurrency tests now poll curl every 10 ms to observe database waiters before the public 250 ms deadline. Subscription race barriers lock the Page instead of the Team. Existing rotation/pause/generation, duplicate consent, publication and provider-admission assertions remain. Ordinary tests use real-clock PostgreSQL with no provider network; the normal PHP-only date simulation does not freeze PostgreSQL timeouts. Actual outcomes, mutation checks and non-executed boundaries are recorded in TASKS.
+
 ## Framework process-output integrity — SEC.15
 
 `tests/Feature/LaravelConcurrencySecurityTest.php` drives the installed Laravel process driver and actual Artisan child processes with a ten-second per-task deadline. Synthetic JSON followed by the legacy binary delimiter must not replace the real result or hide the real exception; ordinary stdout must not corrupt keyed results, and tasks cannot read the per-task signing key from `$_SERVER`, `$_ENV` or `getenv`. The tests need no provider/network traffic, sleeps or application-data writes. The serializable tasks are declared in global fixture functions because Pest's generated test class is absent in the child Artisan runtime.

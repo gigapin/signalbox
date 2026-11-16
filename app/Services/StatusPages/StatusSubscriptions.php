@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Apply mailbox consent under the same Team lock used by page edits and incident publication. */
+/** Apply mailbox consent under page locks shared with page edits, publication and delivery admission. */
 
 namespace App\Services\StatusPages;
 
@@ -10,11 +10,10 @@ use App\Enums\Notifications\DeliveryStatus;
 use App\Models\StatusPage;
 use App\Models\StatusPageDelivery;
 use App\Models\StatusPageSubscriber;
-use App\Models\Team;
+use App\Services\Database\PublicIngressTransaction;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Session\Session;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /** Neither subscription state nor email existence is returned to an anonymous requester. */
@@ -24,11 +23,13 @@ final readonly class StatusSubscriptions
      * @param TenantContext $tenants Explicit tenant boundary after public page resolution.
      * @param StatusPageUnlocks $unlocks Live session authorization for protected pages.
      * @param StatusSubscriptionLinks $links Revocable mailbox capabilities and password binding.
+     * @param PublicIngressTransaction $transactions Bounded lock waits that preserve outer transaction settings.
      */
     public function __construct(
         private TenantContext $tenants,
         private StatusPageUnlocks $unlocks,
         private StatusSubscriptionLinks $links,
+        private PublicIngressTransaction $transactions,
     ) {
     }
 
@@ -36,11 +37,11 @@ final readonly class StatusSubscriptions
      * @param StatusPage $page Page discovered through the public lookup; reloaded under locks.
      * @param Session $session Visitor session proving the current password when required.
      * @param string $email Validated mailbox, canonicalized case-insensitively.
+     * @throws \App\Exceptions\PublicIngressBusy When the page or recipient is busy beyond the public lock bound.
      */
     public function subscribe(StatusPage $page, Session $session, #[\SensitiveParameter] string $email): void
     {
-        $this->tenants->run($page->team_id, fn () => DB::transaction(function () use ($page, $session, $email): void {
-            Team::query()->lockForUpdate()->findOrFail($page->team_id);
+        $this->tenants->run($page->team_id, fn () => $this->transactions->run(function () use ($page, $session, $email): void {
             $current = StatusPage::query()->lockForUpdate()->findOrFail($page->id);
             abort_unless($current->is_public && $current->slug === $page->slug, 404);
             abort_unless($this->unlocks->allows($session, $current), 403);
@@ -93,13 +94,19 @@ final readonly class StatusSubscriptions
      * @param string $generation Revocable signed consent generation.
      * @param string $action Closed route choice: verify or unsubscribe.
      * @param bool $commit Whether the visitor explicitly submitted the form.
+     * @throws \App\Exceptions\PublicIngressBusy When bounded consent locks cannot be obtained.
      */
     public function act(int $teamId, int $pageId, int $subscriberId, string $generation, string $action, bool $commit): void
     {
-        $this->tenants->run($teamId, fn () => DB::transaction(function () use ($teamId, $pageId, $subscriberId, $generation, $action, $commit): void {
-            Team::query()->lockForUpdate()->findOrFail($teamId);
-            $page = StatusPage::query()->lockForUpdate()->findOrFail($pageId);
-            $subscriber = StatusPageSubscriber::query()->where('status_page_id', $pageId)->lockForUpdate()->findOrFail($subscriberId);
+        $this->tenants->run($teamId, fn () => $this->transactions->run(function () use ($pageId, $subscriberId, $generation, $action, $commit): void {
+            // Scanner GETs disclose no data and mutate nothing; POST revalidates under the write locks.
+            $page = StatusPage::query()
+                ->when($commit, static fn ($query) => $query->lockForUpdate())
+                ->findOrFail($pageId);
+            $subscriber = StatusPageSubscriber::query()
+                ->where('status_page_id', $pageId)
+                ->when($commit, static fn ($query) => $query->lockForUpdate())
+                ->findOrFail($subscriberId);
             abort_unless(hash_equals($subscriber->generation, $generation), 404);
             $now = CarbonImmutable::now('UTC');
 
@@ -120,7 +127,7 @@ final readonly class StatusSubscriptions
     }
 
     /**
-     * Caller holds the Team lock and transaction; one intent is frozen per recipient/generation/publication.
+     * Caller holds the Page lock and transaction; one intent is frozen per recipient/generation/publication.
      *
      * @param StatusPageSubscriber $subscriber Current verified recipient, or pending recipient for verification.
      * @param string $kind Verification or update.

@@ -113,7 +113,9 @@ Several visitors can calculate the same page at once when an entry expires; ther
 
 ## Email subscriptions
 
-`StatusSubscriptions` serializes requests under the Team lock used by page edits and incident publication. A lowercase, trimmed RFC mailbox is encrypted at rest; an HMAC under the application key supplies the per-page uniqueness key. The same address can subscribe independently to several pages, including pages of different teams. Subscriber and delivery models require `TenantContext`; composite PostgreSQL keys additionally bind deliveries to their page, recipient and published entry.
+`StatusSubscriptions` serializes writes under the Page → Subscriber locks also used by page edits, publication snapshots and email admission. SEC.09 removes the anonymous Team row lock, so unrelated pages/team management can proceed. Signed scanner GETs validate without row locks or consent writes; POST rechecks current state under locks. A lowercase, trimmed RFC mailbox is encrypted at rest; an HMAC under the application key supplies the per-page uniqueness key. The same address can subscribe independently to several pages, including pages of different teams. Subscriber and delivery models require `TenantContext`; composite PostgreSQL keys additionally bind deliveries to their page, recipient and published entry.
+
+The bounded public transaction wrapper preserves the caller's earlier timeout and caps each lock wait at 250 ms. Expected contention rolls back the complete consent/outbox operation and returns generic HTTP 503 with `Retry-After: 1`; it discloses no recipient, SQL or credential values. No automatic retry is introduced. [PUBLIC-INGRESS.md](PUBLIC-INGRESS.md) records the savepoint/FX.01 fix, lock orders, HTTP contract and two-connection proofs.
 
 Consent, publication snapshots and attempt admission are separate services. A separate transactional outbox keeps anonymous mailbox consent out of team notification channels and escalation rules, while reusing their queue, bounded SMTP configuration and delivery policy. Laravel's mailer supplies the provider boundary; there is no additional transport abstraction for this single email path.
 
@@ -126,7 +128,7 @@ Consent, publication snapshots and attempt admission are separate services. A se
 
 ### Publication and recipients
 
-`ManageIncidents::publish` calls `PreparePublicUpdateEmails` only when an entry first becomes public, inside its existing transaction. It snapshots verified, non-revoked subscribers whose consent matches the password of a currently public page selecting the incident's monitor. Pages sharing a monitor send independently. Private notes, automatic incident transitions and publication replays send nothing. New subscribers get future publications only; there is no backfill.
+`ManageIncidents::publish` calls `PreparePublicUpdateEmails` only when an entry first becomes public, inside its existing transaction. SEC.09 acquires the selected Page lock before each audience query, coordinating the snapshot with public consent that no longer locks Team. It snapshots verified, non-revoked subscribers whose consent matches the password of a currently public page selecting the incident's monitor. Pages sharing a monitor send independently. Private notes, automatic incident transitions and publication replays send nothing. New subscribers get future publications only; there is no backfill.
 
 The encrypted email snapshot contains the public page title, public component label, published entry status/time/text, page URL and a revocable unsubscribe link. It excludes monitor names, team information, author identities, private cause notes and private timeline entries. Text is rendered literally in a plain-text email. Publication and every recipient intent commit or roll back together. Preparation does no network I/O and iterates recipients in batches of 100.
 

@@ -4,6 +4,7 @@
  * Configure framework routing and the Inertia web middleware stack.
  */
 
+use App\Exceptions\PublicIngressBusy;
 use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\GuardStatusPageHosts;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
 /**
  * Preserve exact monitor payload and broadcast socket/channel bytes until their dedicated input boundaries.
@@ -54,10 +56,19 @@ $configureMiddleware = function (Middleware $middleware) use ($preserveExactInpu
 /**
  * Prevent second-factor credentials, private monitor configuration, notification channel configuration and
  * verification codes from being flashed after validation errors, including domain refusals rethrown by controllers.
+ * Translate bounded public lock contention to a generic retryable response without exposing database errors.
  *
  * @param Exceptions $exceptions Framework exception and validation configuration builder.
  */
 $configureExceptions = function (Exceptions $exceptions): void {
+    // Map only expected bounded contention; the public response never retains the database exception or its SQL.
+    $exceptions->map(
+        PublicIngressBusy::class,
+        static fn (PublicIngressBusy $error): ServiceUnavailableHttpException => new ServiceUnavailableHttpException(
+            1,
+            $error->getMessage(),
+        ),
+    );
     $exceptions->dontFlash([
         'code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes', 'credential', 'token', 'token_hash',
         ...MonitorConfigurationMapper::COLUMNS, 'headers', 'config',

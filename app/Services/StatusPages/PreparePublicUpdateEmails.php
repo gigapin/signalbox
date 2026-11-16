@@ -46,7 +46,7 @@ final readonly class PreparePublicUpdateEmails
             }
 
             StatusPageSubscriber::query()->where('status_page_id', $page->id)->whereNotNull('verified_at')
-                ->whereNull('unsubscribed_at')->where('access_hash', $this->links->accessHash($page))
+                ->whereNull('unsubscribed_at')->whereIn('access_hash', $this->links->accessCandidates($page))
                 ->chunkById(100, function ($subscribers) use ($page, $component, $update): void {
                     foreach ($subscribers as $subscriber) {
                         $text = $page->title."\n".$component->name.': '.$update->status->value."\n"

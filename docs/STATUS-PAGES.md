@@ -1,5 +1,7 @@
 # Status pages
 
+SEC.11 changes cryptographic storage/signing: subscriber lookup/consent, visitor proofs and native URL signatures use separate derived keys, with explicit historical readers and a resumable migration. Original/previous non-expiring unsubscribe links are retained as exact hashed capabilities before key retirement; generation/CSRF/tenant checks remain. Read [CRYPTOGRAPHY.md](CRYPTOGRAPHY.md) before adoption or rotation. Earlier implementation descriptions below retain domain behavior; references to generic keyed fingerprints now use these purpose-separated protocols.
+
 ## Private management integration — UI.04.3
 
 [SETTINGS-UI.md](SETTINGS-UI.md) describes shared mutation feedback, retained page/password drafts,

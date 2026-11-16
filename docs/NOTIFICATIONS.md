@@ -1,5 +1,7 @@
 # Notification channels, provider adapters, escalation policies and delivery log
 
+SEC.11 derives independent keys for channel verification and frozen destination digests. Current/previous key candidates preserve pending delivery admission, deferred grouping and opening/resolution matching during rotation; webhook signing secrets keep their existing external protocol. The resumable operator migration rewraps configuration/payload ciphertext, converts only matching destinations and waits for historical pending codes to confirm/expire. Read [CRYPTOGRAPHY.md](CRYPTOGRAPHY.md) before deployment or key retirement; no actual key/configuration change is performed automatically.
+
 ## Operational navigation — UI.04.2
 
 [OPERATIONS-UI.md](OPERATIONS-UI.md) documents the team maintenance list, paginated safe delivery list,

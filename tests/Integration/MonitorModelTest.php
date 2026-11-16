@@ -276,7 +276,9 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $statusSubscriptions = require base_path('database/migrations/2026_11_02_000023_create_status_page_subscriptions.php');
     $statusDomains = require base_path('database/migrations/2026_11_02_000024_create_status_domain_bindings.php');
     $deferredNotifications = require base_path('database/migrations/2026_11_05_000025_defer_quiet_hours_notifications.php');
-    // Roll back subscriber, status page, rollup, escalation, notification, pause, maintenance, sequence, incident, result, heartbeat and execution dependents in reverse order.
+    $cryptography = require base_path('database/migrations/2026_11_16_000027_version_cryptographic_digests.php');
+    // Roll back retained grants before their subscriber/page parents and the remaining monitor dependents.
+    $cryptography->down();
     $deferredNotifications->down();
     $statusDomains->down();
     $statusSubscriptions->down();
@@ -312,6 +314,7 @@ it('preserves identity on monitor rollback and uses the declared cascading owner
     $statusSubscriptions->up();
     $statusDomains->up();
     $deferredNotifications->up();
+    $cryptography->up();
     app(TenantContext::class)->run($team->id, function () use ($team): void {
         expect(Monitor::query()->count())->toBe(0);
         Monitor::factory()->create();

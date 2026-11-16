@@ -58,7 +58,7 @@ final readonly class StatusEmailLedger
 
             $allowed = $page->is_public && $subscriber->unsubscribed_at === null
                 && hash_equals($row->generation, $subscriber->generation)
-                && hash_equals($subscriber->access_hash, $this->links->accessHash($page));
+                && $this->links->allowsConsent($page, $subscriber->access_hash);
 
             if ($row->kind === 'verification') {
                 $allowed = $allowed && $subscriber->verified_at === null && $subscriber->verification_expires_at->isAfter($now);

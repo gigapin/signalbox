@@ -371,7 +371,7 @@ function isolationSubscriber(object $tenant, string $email, bool $verified = tru
 
     app(StatusSubscriptions::class)->subscribe($page, app('session.store'), $email);
 
-    $hash = hash_hmac('sha256', $email, (string) config('app.key'));
+    $hash = app(\App\Services\Security\PurposeKeys::class)->digest(\App\Enums\Security\KeyPurpose::SubscriberEmail, $page->id.':'.$email);
 
     $subscriber = app(TenantContext::class)->run($tenant->team->id, static fn (): StatusPageSubscriber => StatusPageSubscriber::query()
         ->where('status_page_id', $page->id)
@@ -798,7 +798,7 @@ it('sends a publication only to the current consenting audience of the pages sho
 
     // Consent is per page: leaving the other tenant's page leaves this one untouched.
     $sharedBeta = app(TenantContext::class)->run($beta->team->id, static fn (): StatusPageSubscriber => StatusPageSubscriber::query()
-        ->where('email_hash', hash_hmac('sha256', 'active@example.test', (string) config('app.key')))
+        ->where('email_hash', app(\App\Services\Security\PurposeKeys::class)->digest(\App\Enums\Security\KeyPurpose::SubscriberEmail, $beta->page->id.':active@example.test'))
         ->firstOrFail());
 
     app(StatusSubscriptions::class)->act($beta->team->id, $beta->page->id, $sharedBeta->id, $sharedBeta->generation, 'unsubscribe', true);

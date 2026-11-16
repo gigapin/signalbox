@@ -225,7 +225,7 @@ final readonly class ManageNotificationChannels
                 return 'No valid code is pending. Request a new verification code.';
             }
 
-            if (hash_equals((string) $channel->verification_code_hash, $this->codes->digest($channel->id, trim($code)))) {
+            if ($this->codes->matches((string) $channel->verification_code_hash, $channel->id, trim($code))) {
                 $channel->forceFill(['is_active' => true, 'verified_at' => $now, ...$this->clearedCode()])->save();
 
                 return $channel;

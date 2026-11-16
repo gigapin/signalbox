@@ -113,7 +113,7 @@ final readonly class NotificationDeliveryLedger
             }
 
             if ($channel->type !== $log->channel_type
-                || !hash_equals($log->destination_hash ?? '', $this->destinations->for($configuration))) {
+                || !$this->destinations->matches($log->destination_hash ?? '', $configuration)) {
                 $this->suppress($log, 'The verified destination changed after this delivery was prepared.');
 
                 return null;
@@ -127,7 +127,7 @@ final readonly class NotificationDeliveryLedger
 
             if ($resolved && !NotificationLog::query()->where('incident_id', $incident->id)->where('channel_id', $channel->id)
                 ->where('kind', '!=', NotificationKind::Resolved->value)->where('status', DeliveryStatus::Sent)
-                ->where('destination_hash', $log->destination_hash)->exists()) {
+                ->whereIn('destination_hash', $this->destinations->candidates($configuration))->exists()) {
                 $this->suppress($log, 'No opening or escalation was accepted for this recipient.');
 
                 return null;
@@ -139,7 +139,7 @@ final readonly class NotificationDeliveryLedger
                 return null;
             }
 
-            if (!$resolved && !$this->coalesceDeferred($log, $now)) {
+            if (!$resolved && !$this->coalesceDeferred($log, $now, $this->destinations->candidates($configuration))) {
                 return null;
             }
 
@@ -228,15 +228,16 @@ final readonly class NotificationDeliveryLedger
     /**
      * @param NotificationLog $log Current pending opening/escalation, under the shared Team and incident locks.
      * @param CarbonImmutable $now Current UTC admission instant outside quiet hours.
+     * @param list<string> $destinations Equivalent fingerprints for the authenticated current destination.
      * @return bool Whether this row is the earliest pending alert retained for the recipient's deferred group.
      */
-    private function coalesceDeferred(NotificationLog $log, CarbonImmutable $now): bool
+    private function coalesceDeferred(NotificationLog $log, CarbonImmutable $now, array $destinations): bool
     {
         $rows = NotificationLog::query()
             ->where('incident_id', $log->incident_id)
             ->where('channel_id', $log->channel_id)
             ->where('cycle', $log->cycle)
-            ->where('destination_hash', $log->destination_hash)
+            ->whereIn('destination_hash', $destinations)
             ->where('kind', '!=', NotificationKind::Resolved->value)
             ->where('status', DeliveryStatus::Pending)
             ->where('attempts', '<', $this->settings->maxAttempts)

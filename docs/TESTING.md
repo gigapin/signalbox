@@ -1,5 +1,19 @@
 # Test infrastructure
 
+## Purpose keys and retirement — SEC.11
+
+`PurposeKeysTest` covers independent protocol keys/MACs, strict root decoding, purpose/message binding, a stable cross-implementation protocol vector, historical derived reads, and the explicit original-format switch. `CryptographicRotationTest` exercises the real providers and PostgreSQL schema/command: exact-byte rewrap of every registered encrypted field including Fortify serialization, paired synthetic row/key restoration, subscriber deduplication, stale-consent non-renewal, code confirmation/expiry, destination preservation, missing keys/corrupt data, idempotent check/resume, finite signed URLs, and real two-connection advisory contention. Old original/derived unsubscribe links survive complete key retirement only for exact capabilities/current generations; mutation of route, query or tenant is refused and scanner GET remains inert.
+
+Existing 2FA, notification delivery, public page/subscription/domain and isolation matrices remain mandatory. The isolation helper now calculates the versioned page-bound email digest rather than an obsolete raw-root HMAC; its authorization assertions remain unchanged. PHPUnit forces an empty previous-key list and an explicit legacy flag alongside its existing public test root, preventing inheritance of deployment keys/retirement settings. No real deployment key, `.env`, development migration or provider network is used. [CRYPTOGRAPHY.md](CRYPTOGRAPHY.md) records operational limits, including client cookies and the separate M11.05 infrastructure restore drill. Outcomes are in TASKS.
+
+```sh
+docker compose run --rm -e COMPOSER_ROOT_VERSION=dev-main php-test vendor/bin/pest \
+  tests/Unit/PurposeKeysTest.php tests/Integration/CryptographicRotationTest.php \
+  tests/Integration/IncidentNotificationDeliveryTest.php \
+  tests/Integration/StatusSubscriptionsTest.php tests/Integration/StatusPageIsolationMatrixTest.php \
+  --fail-on-skipped --fail-on-warning
+```
+
 ## Shared status page password admission — SEC.10
 
 `StatusPageUnlockLimiterTest` runs against isolated PostgreSQL/Redis even when Laravel's default cache is `array`. Distributed-IP HTTP attempts must share the same failure budget and receive 429 with Retry-After without invoking password hashing. Service tests hold overlapping leases through independent limiter instances, advance only Redis state timestamps to exercise expiration without sleeps, reject stale success/failure completions, count abandoned work, check the complete backoff ladder/cap and prove that denied requests extend neither state nor TTL. Page identity/password changes and successful completion isolate/reset state; slug/host changes do not. HTTP checks cover safe 503 on backend admission failure, failure during completion, malformed state, stale successful verification, legacy passwords and continued access from unlocked sessions during cooldown.

@@ -1,5 +1,7 @@
 # Dependency compatibility and manifest reference
 
+SEC.11 adds no package or lockfile change: PHP 8.4's built-in `hash_hkdf` derives versioned purpose keys, while the installed Laravel 13.40 Encrypter/UrlGenerator retain encryption, MAC, URL and expiry semantics. Application providers adapt only their key sources. [CRYPTOGRAPHY.md](CRYPTOGRAPHY.md) records the exact labels, keyring/legacy protocol, installed framework behavior and retirement runbook. Recheck these adapter boundaries when upgrading Laravel/Fortify.
+
 Verified on 2026-10-15 for M0.01. Product requirements remain in [the specification](03-Progetto-B-Signalbox-Laravel.md); work status is in [TASKS.md](TASKS.md).
 
 ## Laravel Concurrency security update — 2026-11-16 (SEC.15)

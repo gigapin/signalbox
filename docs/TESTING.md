@@ -1,5 +1,11 @@
 # Test infrastructure
 
+## Last verified state at session close — 2026-11-16
+
+The session stops after SEC.12; SEC.13 is not started. Latest canonical gate: **exit 0**, **3639 Pest / 24841 assertions in 783.57 s**, **473 DOM tests / 38 files**, **5 quality tests**, PHP-CS-Fixer 695 files, Larastan level 8, frontend lint/format/TypeScript and production build. Composer audit found no advisory; npm production audit is still pending SEC.14. No tests were skipped in the summaries. SEC.12's targeted matrix passed 129 cases / 804 assertions and its three isolated mutation probes failed as expected.
+
+These are the preceding implementation results, not checks rerun during the Markdown-only closing update. No new browser/SMTP/provider, remote PHP 8.4/8.5 CI, deployment, real key-retirement or infrastructure restore evidence is asserted. See [TASKS](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-16) for next work, outstanding adoption and the temporary verification override; runtime services were inspected read-only and left running. Never substitute a developer's storage or secrets for the guarded test services when resuming.
+
 ## Public registration privacy — SEC.12
 
 `PublicRegistrationPrivacyTest` compares valid new/verified/unverified JSON and browser/Inertia outcomes and guest state, protects existing credential/2FA/team/trial rows, checks static notice rendering, input validation, per-IP and cross-IP per-account admission, original/lowercase PostgreSQL indexes, unrelated constraints, notification/cache failure, callback rollback, hash-looking plaintext and login-before-verification continuation. A real HTTP client waits on a competing uncommitted registration in a second PostgreSQL connection, then receives the same guest acknowledgement after commit; exactly one identity/team/membership survives. It uses the isolated server/array mailer and cleans committed fixtures in `finally`, with no real provider or development storage.

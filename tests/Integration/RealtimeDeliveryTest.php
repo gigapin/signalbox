@@ -119,10 +119,10 @@ it('delivers committed check and incident transitions only to a freshly authoriz
     $socket = new RecordingReverbSocket(1);
     $connection = ReverbAcceptance::connection($socket);
     $channel = 'private-team.'.$this->fixture->teamId;
-    $auth = $this->actingAs($this->fixture->owner, 'web')->postJson('/broadcasting/auth', [
+    $grant = $this->actingAs($this->fixture->owner, 'web')->postJson('/broadcasting/auth', [
         'channel_name' => $channel, 'socket_id' => $connection->id(),
-    ])->assertOk()->assertHeader('Cache-Control', 'no-store, private')->json('auth');
-    app(EventHandler::class)->subscribe($connection, $channel, $auth);
+    ])->assertOk()->assertHeader('Cache-Control', 'no-store, private')->json();
+    app(EventHandler::class)->subscribe($connection, $channel, $grant['auth'], $grant['channel_data']);
     $socket->messages = [];
     $url = '/teams/'.$this->fixture->teamId.'/dashboard';
 
@@ -148,7 +148,7 @@ it('delivers committed check and incident transitions only to a freshly authoriz
     foreach ($jobs as $job) {
         $request = ReverbAcceptance::publication($job);
         expect((string) $request->getBody())->not->toContain('canary-');
-        expect(ReverbAcceptance::deliver($request))->toBe(200);
+        expect($this->fixture->committed(fn (): int => ReverbAcceptance::deliver($request)))->toBe(200);
     }
 
     expect($socket->messages)->toHaveCount(6)
@@ -158,8 +158,12 @@ it('delivers committed check and incident transitions only to a freshly authoriz
     $this->fixture->committed(fn () => DB::table('team_user')->where('team_id', $this->fixture->teamId)->delete());
     $this->postJson('/broadcasting/auth', ['channel_name' => $channel, 'socket_id' => $connection->id()])->assertForbidden();
     $this->get($url, realtimeDashboardHeaders())->assertNotFound();
-    // Standard private admission does not evict existing sockets; the client closes on the denied recovery read.
     expect(app(ChannelManager::class)->for($connection->app())->find($channel)?->subscribed($connection))->toBeTrue();
+    $socket->messages = [];
+    expect($this->fixture->committed(fn (): int => ReverbAcceptance::deliver(ReverbAcceptance::publication($jobs->first()))))->toBe(200)
+        ->and($socket->messages)->toBe([])
+        ->and($socket->closed)->toBeTrue()
+        ->and(app(ChannelManager::class)->for($connection->app())->find($channel))->toBeNull();
 });
 
 it('keeps duplicate terminal work from duplicating frames latency samples or incident rows', function (): void {

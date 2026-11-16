@@ -32,6 +32,7 @@ use App\Models\StatusPageDelivery;
 use App\Models\StatusPageSubscriber;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\StatusPages\StatusDomainTlsAccess;
 use App\Services\StatusPages\StatusSubscriptionLinks;
 use App\Services\StatusPages\StatusSubscriptions;
 use App\Services\Tenancy\TenantContext;
@@ -71,7 +72,7 @@ beforeEach(function (): void {
     Cache::flush();
 
     // A custom origin builds a new session manager per request, so its unlocks persist only through Redis and the cookie.
-    config(['session.driver' => 'redis']);
+    config(['session.driver' => 'redis', 'status-domains.tls_secret' => str_repeat('b', 64)]);
 
     $this->dns = new FakeDnsTransport();
     $this->app->instance(DnsTransport::class, $this->dns);
@@ -315,7 +316,8 @@ function isolationAssertNothingPrivate(TestResponse $response, object $tenant): 
         ->not->toContain('team_id')
         ->not->toContain('monitor_id')
         ->not->toContain('password_hash')
-        ->not->toContain('domain_challenge');
+        ->not->toContain('domain_challenge')
+        ->not->toContain(str_repeat('b', 64));
 
     if ($page->domain_challenge !== null) {
         expect($exposure)->not->toContain($page->domain_challenge);
@@ -933,7 +935,7 @@ it('serves every surface of a live verified domain, as the control of the refusa
     isolationAlias('HEAD', '/status/alpha-status')->assertOk();
     isolationAlias('POST', '/status/alpha-status/unlock', ['password' => 'anything'])->assertRedirect();
     isolationAlias('POST', '/status/alpha-status/subscribe', ['email' => 'reader@example.test'])->assertRedirect();
-    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST)->assertNoContent();
+    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST, [StatusDomainTlsAccess::HEADER => str_repeat('b', 64)])->assertNoContent();
 
     expect(DB::table('status_page_subscribers')->count())->toBe(1);
 });
@@ -976,7 +978,7 @@ it('refuses every surface of a hostname without a live proof, for routing and ce
 
     expect(DB::table('status_page_subscribers')->count())->toBe(0);
 
-    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST)->assertNotFound();
+    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST, [StatusDomainTlsAccess::HEADER => str_repeat('b', 64)])->assertNotFound();
 })->with([
     'never proved',
     'proof no longer published',
@@ -997,7 +999,7 @@ it('does not let a pending claim of another tenant route, reserve, reveal or rev
     // The pending claim changes nothing for visitors or certificates, and serves only the first tenant's page.
     isolationAlias('GET', '/status/beta-status')->assertNotFound();
     isolationAlias('GET', '/status/alpha-status')->assertOk();
-    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST)->assertNoContent();
+    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST, [StatusDomainTlsAccess::HEADER => str_repeat('b', 64)])->assertNoContent();
 
     // Each settings page shows only its own proof generation.
     $alphaSettings = $this->actingAs($alpha->team->owner)->get("http://localhost/teams/{$alpha->team->id}/status-pages")->assertOk();
@@ -1069,7 +1071,7 @@ it('moves a hostname to a new verified owner without carrying sessions, pages or
     expect(DB::table('status_domain_bindings')->where('hostname', ISOLATION_HOST)->value('team_id'))->toBe($beta->team->id)
         ->and(DB::table('status_page_subscribers')->count())->toBe(0);
 
-    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST)->assertNoContent();
+    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST, [StatusDomainTlsAccess::HEADER => str_repeat('b', 64)])->assertNoContent();
     isolationAlias('POST', '/status/beta-status/unlock', ['password' => ISOLATION_PASSWORD])->assertRedirect();
     isolationAlias('GET', '/status/beta-status')->assertInertia(fn (AssertableInertia $page) => $page
         ->component('StatusPages/Public')
@@ -1092,7 +1094,7 @@ it('closes every public surface of a deleted team and frees its hostname, leavin
     $this->get('http://localhost/status/alpha-status')->assertNotFound();
     $this->post('http://localhost'.$path)->assertNotFound();
     $this->call('GET', 'https://'.ISOLATION_HOST.'/status/alpha-status')->assertNotFound();
-    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST)->assertNotFound();
+    $this->get('http://localhost/internal/status-domains/allow?domain='.ISOLATION_HOST, [StatusDomainTlsAccess::HEADER => str_repeat('b', 64)])->assertNotFound();
 
     expect(DB::table('status_domain_bindings')->count())->toBe(0)
         ->and(DB::table('status_page_subscribers')->where('team_id', $alpha->team->id)->count())->toBe(0)

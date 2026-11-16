@@ -11,6 +11,8 @@ return [
     'recheck_seconds' => 3600,
     // One cumulative deadline, including aliases and TCP continuation; no HTTP probe or selected resolver.
     'dns_timeout_ms' => 2000,
+    // Empty or malformed secrets deny every certificate request; share only with the private ask listener.
+    'tls_secret' => env('STATUS_DOMAIN_TLS_SECRET', ''),
     // Compare raw socket peers, never forwarded client IP headers. Configure exact proxy peers for deployment.
     'tls_peers' => array_values(array_filter(explode(',', (string) env('STATUS_DOMAIN_TLS_PEERS', '127.0.0.1,::1')))),
     // Explicit reverse proxy IPs/CIDRs. Forwarded Host is deliberately excluded even for these peers.

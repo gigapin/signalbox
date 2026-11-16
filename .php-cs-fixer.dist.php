@@ -11,7 +11,7 @@ use PhpCsFixer\Finder;
 $finder = Finder::create()
     ->in([__DIR__.'/app', __DIR__.'/bootstrap', __DIR__.'/config', __DIR__.'/database', __DIR__.'/routes', __DIR__.'/tests'])
     ->exclude(['cache'])
-    ->append([__FILE__, __DIR__.'/artisan', __DIR__.'/public/index.php']);
+    ->append([__FILE__, __DIR__.'/artisan', __DIR__.'/public/index.php', __DIR__.'/stubs/reverb.stub']);
 
 return (new Config())
     ->setRules([

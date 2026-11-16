@@ -74,15 +74,16 @@ function broadcastAuthPayload(Team $team, string $socket = '12345.67890'): array
     return ['channel_name' => 'private-team.'.$team->id, 'socket_id' => $socket];
 }
 
-it('grants every current team role with the exact native socket-bound signature and no private data', function (string $role): void {
+it('grants every current team role with the exact native signature covering the socket channel and actor', function (string $role): void {
     $actor = broadcastMember($this->team, $role);
     $before = $actor->getRawOriginal('current_team_id');
     $payload = broadcastAuthPayload($this->team);
-    $expected = 'public-test-key:'.hash_hmac('sha256', $payload['socket_id'].':'.$payload['channel_name'], 'fake-test-secret');
+    $data = json_encode(['user_id' => $actor->id], JSON_THROW_ON_ERROR);
+    $expected = 'public-test-key:'.hash_hmac('sha256', $payload['socket_id'].':'.$payload['channel_name'].':'.$data, 'fake-test-secret');
     $this->actingAs($actor, 'web')->postJson('/broadcasting/auth', $payload)
         ->assertOk()->assertHeader('Cache-Control', 'no-store, private')
         ->assertHeader('Content-Type', 'application/json')
-        ->assertExactJson(['auth' => $expected])
+        ->assertExactJson(['auth' => $expected, 'channel_data' => $data])
         ->assertDontSee('fake-test-secret', false)
         ->assertDontSee($actor->email, false)
         ->assertDontSee($this->team->name, false);
@@ -231,21 +232,21 @@ it('uses grants accepted by the real Reverb private channel verifier and refuses
     $connection = new Connection($socket, $application, 'http://localhost:8000');
     $socketId = $connection->id();
     $payload = broadcastAuthPayload($this->team, $tamper === 'socket' ? $socketId.'0' : $socketId);
-    $grant = $this->actingAs($this->team->owner, 'web')->postJson('/broadcasting/auth', $payload)->assertOk()->json('auth');
+    $grant = $this->actingAs($this->team->owner, 'web')->postJson('/broadcasting/auth', $payload)->assertOk()->json();
     app()->bind(ChannelConnectionManager::class, ArrayChannelConnectionManager::class);
     $channel = new PrivateChannel($tamper === 'channel' ? 'private-team.'.$this->other->id : $payload['channel_name']);
 
     if ($tamper === 'signature') {
-        $grant = 'public-test-key:'.str_repeat('0', 64);
+        $grant['auth'] = 'public-test-key:'.str_repeat('0', 64);
     }
 
     if ($tamper !== 'none') {
-        expect(fn () => $channel->subscribe($connection, $grant))->toThrow(ConnectionUnauthorized::class);
+        expect(fn () => $channel->subscribe($connection, $grant['auth'], $grant['channel_data']))->toThrow(ConnectionUnauthorized::class);
 
         return;
     }
 
-    $channel->subscribe($connection, $grant);
+    $channel->subscribe($connection, $grant['auth'], $grant['channel_data']);
     expect($channel->subscribed($connection))->toBeTrue();
 })->with(['none', 'socket', 'channel', 'signature']);
 

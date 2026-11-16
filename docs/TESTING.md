@@ -1,5 +1,24 @@
 # Test infrastructure
 
+## Framework process-output integrity — SEC.15
+
+`tests/Feature/LaravelConcurrencySecurityTest.php` drives the installed Laravel process driver and actual Artisan child processes with a ten-second per-task deadline. Synthetic JSON followed by the legacy binary delimiter must not replace the real result or hide the real exception; ordinary stdout must not corrupt keyed results, and tasks cannot read the per-task signing key from `$_SERVER`, `$_ENV` or `getenv`. The tests need no provider/network traffic, sleeps or application-data writes. The serializable tasks are declared in global fixture functions because Pest's generated test class is absent in the child Artisan runtime.
+
+The same regressions are executed before/after the framework update; actual outcomes are in TASKS. These checks exercise dependency behavior and do not add a Concurrency feature to Signalbox. Composer's mandatory audit remains unchanged in local/CI gates.
+
+```sh
+docker compose run --rm -e COMPOSER_ROOT_VERSION=dev-main php-test vendor/bin/pest \
+  tests/Feature/LaravelConcurrencySecurityTest.php --fail-on-skipped --fail-on-warning
+```
+
+## Realtime membership revocation — SEC.08
+
+`ReverbMembershipTest` drives the installed startup factory, production channel-manager binding, real HTTP signer, native private-channel HMAC and signed server publication over recorded socket transports. It covers all roles, self-departure, multiple sockets, authorized/foreign recipients, signed metadata tampering, legacy grants, role changes, rollback, verification/team loss and direct/internal/sender-excluded delivery. Two real PostgreSQL connections prove NOWAIT rejection during a pending removal, commit/rollback recovery, and that the shared lock remains held at transport handoff and is released afterwards. A temporary table rename in a rollback-isolated fixture verifies that a membership query failure sends nothing and can recover. No real provider, browser or development database is used.
+
+`RealtimeDeliveryTest` uses the same production manager for committed domain-event acceptance and now asserts actual non-delivery/socket closure after membership removal. Committed fixtures run publications on the independent connection: otherwise RefreshDatabase's enclosing transaction retains shared locks and can block a fixture's second-connection cleanup. The infrastructure-free `ReverbProtocolSecurityTest` explicitly selects native-only channels so it continues testing upstream protocol behavior separately from database-backed membership enforcement.
+
+The frontend authorizer tests assert exact forwarding of signed `channel_data` and refuse missing/non-string metadata; existing reconnect/late-response/DOM tests use the revised grant. Reproduce with the commands in [REALTIME-ACCEPTANCE.md](REALTIME-ACCEPTANCE.md#reproduce). Rollout and the in-flight/idle socket limits are in [BROADCASTING.md](BROADCASTING.md#current-membership-on-delivery-sec08); results and the disposable-container mutation check are recorded in [TASKS.md](TASKS.md).
+
 ## Phase A automatic acceptance audit — UI.06.1
 
 [UI-ACCEPTANCE.md](UI-ACCEPTANCE.md) maps each implemented UI criterion to concrete DOM and PHP
@@ -758,3 +777,7 @@ docker compose run --rm php-test php vendor/bin/pest tests/Integration/SecurityH
 Positive outbound fixtures use documentation names such as `example.com` with fake DNS/HTTP or explicitly pinned local servers; the reserved `.test` and `.example` suffixes are intentionally rejected even under testing. Mailboxes and inbound test origins may retain their reserved suffixes. The complete acceptance gate is `./scripts/verify.sh`.
 
 The CSP acceptance suite expects no development hot-server source in ordinary responses. If `public/hot` exists for a running local Vite server, leave it in place and mask it only in `php-test` with a temporary Compose override binding an empty file read-only to `/var/www/html/public/hot`. Keep the normal repository bind and test-service isolation. Pass that override through `COMPOSE_FILE` when running the gate; the explicit Vite test still uses its own temporary hot file. This avoids changing a developer’s running server or asset state. SEC.05 verification used this arrangement; actual outcomes are recorded in TASKS.md.
+
+## Private TLS admission regression (SEC.07)
+
+`StatusDomainsTest` authenticates certificate requests using both the raw socket peer and a shared fake secret, refuses missing/malformed/duplicate/incorrect credentials before reading bindings, and drives the real Laravel kernel through front-controller and encoded paths. [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-admission-proxy-regression-sec07) documents the separate reproducible Caddy/PHP proxy probe with the pinned binary. It validates the production template and runs 18 loopback checks with temporary HTTP listeners, a public fake secret, the dedicated test database and no ACME issuance. It is an explicit infrastructure probe rather than a skipped test in the ordinary suite.

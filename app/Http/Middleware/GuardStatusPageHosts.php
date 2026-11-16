@@ -9,6 +9,7 @@ namespace App\Http\Middleware;
 use App\Services\StatusPages\StatusDomainNames;
 use App\Services\StatusPages\StatusDomainRegistry;
 use App\Services\StatusPages\StatusDomainSessions;
+use App\Services\StatusPages\StatusDomainTlsAccess;
 use Closure;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
@@ -22,9 +23,10 @@ final readonly class GuardStatusPageHosts
     /**
      * @param StatusDomainNames $names Primary-origin classification and canonical customer names.
      * @param StatusDomainRegistry $registry Live verified associations, without authorization caching.
+     * @param StatusDomainTlsAccess $tls Private certificate admission authentication.
      * @param StatusDomainSessions $sessions Isolated public session and cookie scope.
      */
-    public function __construct(private StatusDomainNames $names, private StatusDomainRegistry $registry, private StatusDomainSessions $sessions)
+    public function __construct(private StatusDomainNames $names, private StatusDomainRegistry $registry, private StatusDomainSessions $sessions, private StatusDomainTlsAccess $tls)
     {
     }
 
@@ -37,7 +39,7 @@ final readonly class GuardStatusPageHosts
     {
         if ($request->getPathInfo() === '/internal/status-domains/allow') {
             abort_unless($request->isMethod('GET') || $request->isMethod('HEAD'), 404);
-            abort_unless($this->names->allowsTlsPeer($request->server('REMOTE_ADDR')), 403);
+            abort_unless($this->tls->allows($request), 403);
 
             return $next($request);
         }

@@ -178,3 +178,7 @@ Documented requirements not enforced at startup, to verify in M12.02 with the ch
 - **Redis:** authenticate with `REDIS_USERNAME`/`REDIS_PASSWORD` and use TLS whenever Redis is not on the same private host network. Queues carry serialized PHP objects and Redis holds sessions, so access to Redis is access to the application. How Predis is given TLS options in this configuration has not been verified.
 - **`SESSION_ENCRYPT`:** `false` keeps session contents readable by anyone who can read Redis; consider `true` once Redis exposure is settled.
 - The Docker image of this document is a development image (`php artisan serve`, Composer and Git included, source mounted) and must not be deployed; see the M12.01 note in TASKS.
+
+## Private Caddy admission listener (SEC.07)
+
+The deployment template sends certificate `ask` requests through an explicit loopback-only listener on port 9123. Only that listener injects `SignalboxTlsSecret`; both public virtual hosts remove this header and block internal and `/index.php*` paths. Laravel requires both an allowed raw peer and the shared `STATUS_DOMAIN_TLS_SECRET` (64 lowercase hex characters), refusing admission when missing. Keep the backend and ask listener private, provision the same secret securely on both sides and reload configuration together. The ordinary Compose development stack is unchanged. See [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-deployment-contract) for generation, rotation and separate-container considerations.

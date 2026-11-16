@@ -14,6 +14,7 @@ use App\Models\StatusPage;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\StatusPages\StatusDomainRegistry;
+use App\Services\StatusPages\StatusDomainTlsAccess;
 use App\Services\Tenancy\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -256,6 +257,8 @@ it('requires tenant ownership for management proof projections independently of 
 
 it('keeps TLS admission internal stateless and limited to currently verified public domains', function (): void {
     verifiedStatusDomain();
+    config(['status-domains.tls_secret' => str_repeat('a', 64)]);
+    $this->withHeader(StatusDomainTlsAccess::HEADER, str_repeat('a', 64));
     $count = count($this->dns->queries);
     $response = $this->get('/internal/status-domains/allow?domain=status.example.com')->assertNoContent();
     expect($response->headers->getCookies())->toBeEmpty()->and(count($this->dns->queries))->toBe($count);
@@ -430,3 +433,48 @@ it('admits exactly one owner when different tenants prove the same hostname conc
         $fixture->cleanup();
     }
 });
+
+
+it('refuses TLS admission without a unique valid secret even from an allowed loopback peer', function (mixed $configured, array $headers): void {
+    verifiedStatusDomain();
+    config(['status-domains.tls_secret' => $configured]);
+    $queries = [];
+    DB::listen(static function (\Illuminate\Database\Events\QueryExecuted $query) use (&$queries): void {
+        $queries[] = $query->sql;
+    });
+    $response = $this->get('/internal/status-domains/allow?domain=status.example.com', $headers)->assertForbidden();
+
+    expect($response->headers->getCookies())->toBeEmpty()
+        ->and(implode(' ', $queries))->not->toContain('status_domain_bindings');
+})->with([
+    'unset secret' => ['', []],
+    'null secret' => [null, [StatusDomainTlsAccess::HEADER => str_repeat('a', 64)]],
+    'short secret' => ['abc', [StatusDomainTlsAccess::HEADER => 'abc']],
+    'malformed secret' => [str_repeat('z', 64), [StatusDomainTlsAccess::HEADER => str_repeat('z', 64)]],
+    'missing header' => [str_repeat('a', 64), []],
+    'null header' => [str_repeat('a', 64), [StatusDomainTlsAccess::HEADER => null]],
+    'wrong secret' => [str_repeat('a', 64), [StatusDomainTlsAccess::HEADER => str_repeat('b', 64)]],
+    'duplicate header' => [str_repeat('a', 64), [StatusDomainTlsAccess::HEADER => [str_repeat('a', 64), str_repeat('a', 64)]]],
+    'comma joined header' => [str_repeat('a', 64), [StatusDomainTlsAccess::HEADER => str_repeat('a', 64).','.str_repeat('a', 64)]],
+    'query is not a credential' => [str_repeat('a', 64), ['X-Forwarded-For' => '127.0.0.1']],
+]);
+
+it('authenticates the actual TLS controller after front-controller or encoded path routing', function (string $uri, string $scriptName, string $header): void {
+    verifiedStatusDomain();
+    config(['status-domains.tls_secret' => str_repeat('a', 64)]);
+    $request = \Illuminate\Http\Request::create($uri.'?domain=status.example.com', server: [
+        'REMOTE_ADDR' => '127.0.0.1', 'SCRIPT_NAME' => $scriptName,
+        'SCRIPT_FILENAME' => public_path('index.php'), 'HTTP_HOST' => 'localhost',
+    ]);
+
+    if ($header !== '') {
+        $request->headers->set(StatusDomainTlsAccess::HEADER, $header);
+    }
+
+    $response = app(\Illuminate\Contracts\Http\Kernel::class)->handle($request);
+    expect($response->getStatusCode())->toBe($header === str_repeat('a', 64) ? 204 : 403)
+        ->and($response->headers->getCookies())->toBeEmpty();
+})->with([
+    ['/index.php/internal/status-domains/allow', '/index.php'],
+    ['/internal/status-domains/%61llow', '/index.php'],
+])->with(['', str_repeat('b', 64), str_repeat('a', 64)]);

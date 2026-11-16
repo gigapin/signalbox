@@ -52,7 +52,11 @@ Production custom origins require HTTPS. `TRUSTED_PROXY_IPS` supplies explicit p
 
 The deployment terminates TLS with Caddy and ACME. The [Caddyfile template](../docker/caddy/Caddyfile.example) defines an explicit primary site, an on-demand custom-domain site and `strict_sni_host on`, preventing an HTTP Host from differing from TLS SNI. The application implements the private `GET /internal/status-domains/allow?domain=...` admission endpoint. It returns 204 only for a live, verified, public binding; every other name returns 404. Admission is an indexed database lookup with no DNS/provider call, session or account response. Missing/unavailable storage cannot authorize issuance. The template passed Caddy 2.11.7 adaptation/validation in a disposable container with networking disabled; the exact image digest is in [DEPENDENCIES.md](DEPENDENCIES.md).
 
-The endpoint checks raw `REMOTE_ADDR` against `STATUS_DOMAIN_TLS_PEERS`, default loopback, both before routing and at the actual endpoint, including decoded path variants. Forwarded client IPs confer no authority. The Caddy template blocks this path on both public virtual hosts, and its internal ask call uses the private loopback backend. For separate containers, configure exact internal proxy peers and the private ask/backend addresses; do not publish the backend or an unprotected admission endpoint.
+The endpoint checks both raw `REMOTE_ADDR` against `STATUS_DOMAIN_TLS_PEERS` (default loopback) and exactly one `SignalboxTlsSecret` header against `STATUS_DOMAIN_TLS_SECRET`, before routing and again at the actual endpoint. The configured secret must be 32 random bytes encoded as 64 lowercase hex characters; absent, malformed, wrong or duplicated credentials return 403 before the ownership lookup. Forwarded client identities confer no authority. This second check also covers front-controller `/index.php/...` and decoded path variants, for which a path-only ingress filter is insufficient.
+
+The template directs `ask` to a separate `http://127.0.0.1:9123` listener bound explicitly to loopback. That listener forwards only GET/HEAD on the exact admission path to the private backend and sets the secret header using Caddy's runtime environment placeholder. Both public virtual hosts remove any client-supplied `SignalboxTlsSecret` and block `/internal/status-domains/*` plus `/index.php*`. The separator-free header name avoids PHP's dot/underscore/hyphen field-name collisions. The secret is never placed in a URL, query, redirect or response. Caddy's configured request mechanism is described under [on-demand TLS](https://caddyserver.com/docs/caddyfile/options#on-demand-tls); the private adapter uses the documented [bind](https://caddyserver.com/docs/caddyfile/directives/bind) and [upstream header](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#headers) directives.
+
+Share the same secret with Laravel and this Caddy listener, protect their environment/configuration and never expose port 9123 or the PHP backend to public clients. Other local processes inside this trust boundary can access the private listener. For separate containers, adapt private bind/network/backend addresses deliberately and permit only the actual raw ask proxy peers; do not turn the dedicated listener into a public proxy. Secret absence denies only certificate admission, without blocking the rest of the application. Existing loaded certificates are unaffected until Caddy needs a new admission decision.
 
 The response contract, need for an issuance allowlist and avoiding network calls inside admission follow [Caddy's on-demand TLS documentation](https://caddyserver.com/docs/caddyfile/options#on-demand-tls). The SNI/Host check follows [Caddy's server options](https://caddyserver.com/docs/caddyfile/options#strict-sni-host). Proxy/host trust follows [Laravel's request documentation](https://laravel.com/docs/13.x/requests#configuring-trusted-proxies).
 
@@ -60,14 +64,14 @@ Before deployment:
 
 1. Set the primary HTTPS `APP_URL` and matching Caddy `APP_HOST`; publish the primary application DNS and supply an operational ACME email.
 2. Point a customer hostname's CNAME to the public application ingress hostname. For an apex name, use the ingress's published A/AAAA addresses or an appropriate DNS-provider flattening feature. TXT verification proves ownership, not traffic routing or certificate readiness.
-3. Apply migrations, rebuild assets and load scheduler code. Set `TRUSTED_PROXY_IPS` to the actual proxy peers and restrict/firewall the backend. Configure `STATUS_DOMAIN_TLS_PEERS` for the internal ask caller.
+3. Apply migrations, rebuild assets and load scheduler code. Set `TRUSTED_PROXY_IPS` to the actual proxy peers and restrict/firewall the backend. Configure `STATUS_DOMAIN_TLS_PEERS` for the internal ask proxy. Generate a secret with `php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'` and install the same `STATUS_DOMAIN_TLS_SECRET` securely in Laravel and Caddy; never commit its value. Deploy the PHP authentication and Caddy listener together, refresh cached configuration and reload long-lived processes. For rotation, update both sides together; mismatched keys deny issuance until they agree.
 4. Keep ACME challenge ports reachable, persist/protect Caddy certificate/account storage, validate the template with the pinned deployment version and test first against ACME staging. Test renewal, expiry, removal, password/CSRF forms, DNS changes and SNI/Host mismatches before enabling public traffic.
 
 Certificate issuance and renewal belong to Caddy. An already loaded certificate is not removed merely because a binding expires; HTTP routing still checks the live association on every request. The example does not start a service, issue a certificate, alter Compose or claim a production deployment. Production image pinning, persistent certificate storage, staging/live issuance and operational deployment remain M12.
 
 ## Local adoption and verification
 
-Apply `2026_11_02_000024_create_status_domain_bindings.php` deliberately to development, rebuild assets and reload scheduler/long-lived application code. `.env.example` documents the two optional peer settings; no Composer/npm dependency or lockfile changes. The local Compose application still runs over HTTP and issues no TLS certificate.
+Apply `2026_11_02_000024_create_status_domain_bindings.php` deliberately to development, rebuild assets and reload scheduler/long-lived application code. `.env.example` documents the peer settings and the secret required only when enabling certificate admission; no Composer/npm dependency or lockfile changes. The local Compose application still runs over HTTP and issues no TLS certificate.
 
 ```sh
 docker compose exec web php artisan migrate
@@ -78,3 +82,19 @@ docker compose run --rm node npx vitest run tests/frontend/StatusDomains.test.ts
 ```
 
 `StatusDomainsTest` uses synthetic DNS, PostgreSQL and isolated Redis sessions. Its child-process race checks that DNS runs outside a transaction and only one of two valid tenant proofs wins. The complete role/membership matrix includes all three managing routes and raw snapshots of page/registry state. Schema rollback tests include the new dependent registry. Backend HTML tests must also pass without `public/build`, matching CI.
+
+## TLS admission proxy regression (SEC.07)
+
+`StatusDomainsTest` covers absent/malformed/incorrect/duplicate secrets from allowed peers, refusal before ownership queries, valid stateless admission, untrusted raw peers despite forwarded headers, and actual kernel routing of prefixed/encoded paths. The endpoint keeps returning 204 for verified public bindings and 404 for unknown/malformed domains only after authentication.
+
+The additional `RunTlsAdmissionProxyProbe.php` exercises the real Caddy binary and PHP built-in server on three temporary loopback ports using the isolated test database. It validates the unchanged production template, then derives an HTTP-only runtime with ACME and the admin API disabled. Its 18 checks cover direct PHP authentication, public path blocking on both virtual hosts, removal of spoofed credentials on a test sentinel path, and authentication through the private ask listener. An unclaimed synthetic domain is used, so authenticated requests return 404 without creating fixture records. Child processes and temporary Caddy state are cleaned up in `finally`.
+
+After running the normal isolated database suite, extract the already pinned Caddy binary and execute the probe:
+
+```sh
+docker run --rm --network none --entrypoint cat caddy:2.11.7-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5 /usr/bin/caddy > /tmp/signalbox-caddy
+chmod +x /tmp/signalbox-caddy
+docker compose run --rm -v /tmp/signalbox-caddy:/tmp/caddy:ro php-test php tests/Fixtures/RunTlsAdmissionProxyProbe.php
+```
+
+No actual certificate is issued, no production secret is generated, and no development service or `.env` file is changed. Public TLS, ACME staging/renewal and deployment networking remain M12 acceptance work.

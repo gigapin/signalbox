@@ -478,6 +478,11 @@
         min-width: 0;
     }
 
+    /* Direct sibling cards need their own separation outside page-owned grids and section stacks. */
+    .ui-page-content > .ui-panel + .ui-panel {
+        margin-block-start: var(--spacing-ui-6);
+    }
+
     .ui-account {
         position: relative;
         min-width: 0;

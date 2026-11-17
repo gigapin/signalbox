@@ -32,11 +32,6 @@ export default function Overview() {
                         : 'No accessible team is currently selected.'}
                 </p>
                 <div className="ui-actions">
-                    {currentTeam?.id && (
-                        <Link className="ui-link" href={`/teams/${currentTeam.id}/dashboard`}>
-                            Open dashboard
-                        </Link>
-                    )}
                     {hasPendingInvitation && (
                         <Link className="ui-link" href="/invitations/accept">
                             Review invitation

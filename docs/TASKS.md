@@ -1,5 +1,20 @@
 # Signalbox — Piano dei task
 
+## UI — Distanza selettore/lista Teams — 2026-11-17
+
+- [x] Applicato chiarimento utente sulla pagina `/teams`: la prima card è attaccata al selettore e al pulsante, non alle altre card. Aggiungere 24 px sopra la lista, conservando il gap interno esistente. Stesso branch, nessun Git/gh.
+- File: Teams/Index.tsx, aggiunto mt-6 alla lista; **24 px** tra form selezione e prima card, gap tra card invariato. Prettier mirato, ESLint senza warning, **10 test Teams** e TypeScript/build **8.03 s** tutti exit 0. Backend/CI e browser non ripetuti per la singola utility di spaziatura; nessuna modifica PHP/rotta/dipendenza.
+- Commit suggerito sullo stesso branch: `git commit -m "style: space team cards below the selector"`.
+
+
+## UI — Spazio card account/team — 2026-11-17
+
+- [x] Corretto: distanziare card adiacenti Account/Teams e rimuovere il collegamento Open dashboard da Team access. Identificati pannelli consecutivi senza spaziatura nel contenuto (Account e dettaglio team amministrativo); lista team ha già gap e sezioni team hanno margini propri. Stesso branch grafico, nessun Git/gh.
+- File: app.css, Account/Overview.tsx, test Authentication.test.tsx e UI-GUIDELINES. Regola limitata ai Panel consecutivi direttamente nel contenuto pagina: **24 px** di distacco, preservando griglie e margini delle sezioni già distanziate. Rimosso soltanto il link Open dashboard della card Team access; sidebar Dashboard, inviti e gestione team conservati. Nessun PHP/rotta/API/dipendenza modificato.
+- Verifiche exit 0: npm check (lint/Prettier/TypeScript e **6 qualità**), **41 test / 4 suite** Account/Team/Admin/layout, inclusa nuova regressione del link rimosso; build **7.55 s**. Fixture Firefox con CSS compilato: card adiacenti **24 px**, griglia annidata **16 px** senza raddoppi, PASS e screenshot verificato. Backend/CI e flussi browser autenticati completi non ripetuti per questa correzione solo frontend.
+- Commit suggerito sullo stesso branch: `git commit -m "style: separate workspace cards and simplify team access"`.
+
+
 ## UI — Account, team e admin nella dashboard — 2026-11-17
 
 - [x] Implementato su richiesta utente: unificare cornice sidebar/header/menu mobile delle pagine account/team/admin con dashboard. Conservare confini di autorizzazione e nessun team dedotto da risorse amministrative ispezionate; nessuna modifica URL o API necessaria. Stesso branch grafico, nessun Git/gh.

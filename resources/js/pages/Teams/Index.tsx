@@ -34,7 +34,7 @@ function PageContent() {
                 (teams.length === 0 ? (
                     <p>You do not belong to any teams yet. Open your invitation to join one.</p>
                 ) : (
-                    <ul className="grid gap-4">
+                    <ul className="mt-6 grid gap-4">
                         {teams.map((team) => (
                             <li key={team.id} className="ui-panel">
                                 <Link href={`/teams/${team.id}/dashboard`} className="ui-link">

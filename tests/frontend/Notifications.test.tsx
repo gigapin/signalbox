@@ -289,9 +289,8 @@ test('builds policy steps with increasing delays and submits integers', async ()
         Index,
         pageProps(true, { errors: { policy: 'Step 2 must wait longer than the step before it.' } }),
     );
-    expect(screen.getByText('Step 2 must wait longer than the step before it.')).toHaveAttribute(
-        'role',
-        'alert',
+    expect(screen.getByRole('alert')).toHaveTextContent(
+        'Step 2 must wait longer than the step before it.',
     );
 
     const form = screen.getByRole('heading', { name: 'Add a policy' }).parentElement as HTMLElement;
@@ -488,4 +487,22 @@ test('announces per-field quiet-hours errors and retains the submitted interval'
     expect(screen.getByLabelText('Quiet hours timezone')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText('Quiet hours timezone')).toHaveValue('Mars/Olympus');
     expect(screen.getByLabelText('Quiet hours start')).toHaveValue('22:00');
+});
+
+test('activates channel verification from the keyboard without submitting a configuration form twice', async () => {
+    const user = userEvent.setup();
+    const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Index, pageProps(true, { channels: [channel(1)], policies: [] }));
+    const send = screen.getByRole('button', { name: 'Send verification code' });
+    expect(send).toHaveAttribute('type', 'button');
+    send.focus();
+    await user.keyboard('{Enter}');
+    expect(post).toHaveBeenCalledExactlyOnceWith(
+        '/teams/7/notification-channels/1/verification',
+        {},
+        expect.any(Object),
+    );
+    expect(send).toBeDisabled();
+    await user.keyboard(' ');
+    expect(post).toHaveBeenCalledTimes(1);
 });

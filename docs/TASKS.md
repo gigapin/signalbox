@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## UI — Cursori e spaziatura dei blocchi — 2026-11-17
+
+- [x] Completato: pointer applicativo per link, pulsanti nativi/role button, submit/reset, select e scelte; disabled nativi conservano not-allowed. Tutte le azioni nei sette componenti notifications adottano Button con varianti esplicite e submit espliciti; verifiche, toggle, eliminazioni e segreti restano type=button. Margini top/bottom condivisi: 12px form/card/alert/righe operative/feedback non vuoti, 8px gruppi campo e azioni. Label/controllo mantengono gap interno 10px; regioni errore vuote restano nascoste. Utilities contestuali restano disponibili. Stesso branch grafico, nessun Git/gh.
+- File: app.css, notifications ChannelForm/ChannelRow/EscalationPanel/PolicyForm/PolicyRow/QuietHoursForm/SigningSecret, Notifications/Index (warning/errori compongono Alert), Notifications.test.tsx e UI-GUIDELINES. Nessuna modifica PHP, rotta, dipendenza, migrazione o dato applicativo.
+- Verifiche: suite completa iniziale **493 passati / 1 fallito su 494, 125.89 s**: sola asserzione che richiedeva role=alert sul testo figlio invece che sul nuovo Alert contenitore. Aggiornata a verificare il contenuto della regione alert accessibile; ripetuta l’intera suite Notifications: **15/15, 4.21 s**, incluso nuovo test attivazione Enter/type=button e blocco invii ripetuti. Nessun altro fallimento. Check finale **exit 0**: ESLint/Prettier/TypeScript e **6 qualità**; build finale **10.01 s**, exit 0. La sola aggiunta finale di ui-actions al selettore margini è inclusa nella build/browser; non richiede un nuovo controllo TypeScript.
+- Firefox fixture sintetica con componenti reali/CSS compilato e CSP nonce, desktop e 390px: **PASS**, cursori pointer/not-allowed, margini positivi sopra/sotto e gap label 10px verificati automaticamente; screenshot ispezionati, pulsanti vanno a capo su mobile. Fixture solo /tmp: non rappresenta una nuova accettazione autenticata completa. Backend, audit dipendenze e CI remota non ripetuti: nessuna modifica pertinente a PHP o dipendenze. Prossimo passo: continuare la revisione grafica sullo stesso branch; SEC/billing sospesi.
+- Commit suggerito: `git commit -m "fix: unify action cursors and vertical spacing"`.
+
 ## UI — Refactoring componenti dei form — 2026-11-17
 
 - [x] Refactoring richiesto completato: FormField centralizza label, ID, hint, errori e associazioni accessibili; InputField, SelectField, TextareaField e ChoiceField adottati nei 26 componenti/pagine dei form esistenti. MonitorForm conserva soltanto adapter dei valori/opzioni di dominio; il prefisso slug compone FormField. Rimossi markup ripetuto, costanti INPUT e stili locali duplicati. Stesso branch grafico, nessun Git/gh, dipendenza, PHP o rotta modificati.

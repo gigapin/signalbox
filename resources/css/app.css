@@ -7,11 +7,27 @@
 
 /* Application-wide link presentation includes public pages and native disclosure controls. */
 @layer base {
+    button,
+    input[type='button'],
+    input[type='submit'],
+    input[type='reset'],
+    [role='button'],
+    select,
+    input[type='checkbox'],
+    input[type='radio'],
     a[href],
     [role='link'],
     summary {
         cursor: pointer;
         text-decoration: none;
+    }
+
+    /* Unavailable actions retain a distinct cursor rather than suggesting activation. */
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    [role='button'][aria-disabled='true'] {
+        cursor: not-allowed;
     }
 
     a[href]:hover,
@@ -67,8 +83,25 @@
     --radius-ui: 0.625rem;
 }
 
-/* Opt-in primitives: no global element selectors or overrides of public status-page themes. */
+/* Shared layout primitives retain the palette of their containing private or public theme. */
 @layer components {
+    /* Field groups own breathing room without separating labels from their controls. */
+    :where(.ui-field, .ui-choice-field, .ui-actions) {
+        margin-block: var(--spacing-ui-2);
+    }
+
+    /* Both sides remain spaced even when feedback appears between previously adjacent blocks. */
+    :where(
+        form,
+        .ui-panel,
+        .ui-alert,
+        .ui-operation-row,
+        [role='alert']:not(:empty):not(.ui-field-error),
+        [role='status']:not(:empty)
+    ) {
+        margin-block: var(--spacing-ui-3);
+    }
+
     .ui-theme {
         color: var(--color-ui-text);
         background: var(--color-ui-canvas);

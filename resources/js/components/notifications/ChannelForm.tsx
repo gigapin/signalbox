@@ -1,4 +1,5 @@
 /** Create a notification channel or change one, without ever receiving its stored secrets. */
+import Button from '../ui/Button';
 import SelectField from '../ui/SelectField';
 import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
@@ -150,12 +151,9 @@ export default function ChannelForm({
                             verified again.
                         </p>
                     )}
-                    <button
-                        disabled={form.processing}
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
+                    <Button disabled={form.processing} variant="primary" type="submit">
                         {form.processing ? 'Saving…' : submitLabel}
-                    </button>
+                    </Button>
                 </div>
             </fieldset>
             <MutationFeedback

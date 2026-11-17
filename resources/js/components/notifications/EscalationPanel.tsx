@@ -1,4 +1,5 @@
 /** Let a monitor manager choose the escalation policy of one monitor. */
+import Button from '../ui/Button';
 import SelectField from '../ui/SelectField';
 import { useFormProtection } from '../app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
@@ -125,12 +126,9 @@ function EscalationEditor({ action, escalation }: EditorProps) {
                         </option>
                     ))}
                 </SelectField>
-                <button
-                    disabled={form.processing || missingDraft}
-                    className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                >
+                <Button disabled={form.processing || missingDraft} variant="primary" type="submit">
                     {form.processing ? 'Saving…' : 'Save'}
-                </button>
+                </Button>
             </form>
         </>
     );

@@ -305,3 +305,10 @@ FormField owns labels, stable IDs, help/error associations and the persistent po
 All existing visible field groups now use these components, including authentication, team/account/admin, operational filters, monitors, incidents, notifications and status pages. The public slug prefix uses FormField's render boundary; MonitorForm's adapters map domain values and options without rebuilding labels or errors. Group-level validation summaries remain with their domain forms. No domain action, permission, draft persistence or secret replacement rule is owned by the primitives.
 
 The field grid supplies the shared 10px label gap; there is no global label margin fallback or duplicated per-form input style. Choice labels align beside native controls, with help and errors below the label. The team switcher explicitly requests a hidden label rather than relying on a shell CSS selector. Keep new field groups on this shared path rather than duplicating label/control/help/error markup.
+
+
+## Action cursors and vertical spacing — 2026-11-17
+
+Enabled links, buttons (including native submit/reset inputs and role buttons), selects and native choices use the pointer cursor application-wide. Disabled native actions retain not-allowed. Notification actions use the shared Button with explicit secondary/danger/primary variants; submits remain explicit, while verification, editor toggles and secret actions remain non-submitting.
+
+Shared cards, alerts, forms, operational rows and nonempty feedback blocks have 12px top and bottom margins. Field groups and action groups have 8px top and bottom margins. Existing contextual spacing utilities remain available; labels and native controls stay together with their existing 10px internal gap, and empty persistent error regions stay hidden without extra margins. Spacing applies inside grid/flex layouts as well as normal flow; adjacent normal-flow margins may collapse naturally. Notification warnings and section refusals compose Alert rather than rebuilding notice styles locally.

@@ -1,4 +1,5 @@
 /** Configure daily channel silencing separately from provider credentials and verification. */
+import Button from '../ui/Button';
 import ChoiceField from '../ui/ChoiceField';
 import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
@@ -107,12 +108,14 @@ export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursForm
                         {errors.quiet_hours}
                     </p>
                 )}
-                <button
+                <Button
                     disabled={form.processing}
-                    className="justify-self-start rounded border border-emerald-400 px-3 py-2 disabled:opacity-50"
+                    className="justify-self-start"
+                    variant="secondary"
+                    type="submit"
                 >
                     {form.processing ? 'Saving…' : 'Save quiet hours'}
-                </button>
+                </Button>
             </fieldset>
             <MutationFeedback
                 phase={mutation.phase}

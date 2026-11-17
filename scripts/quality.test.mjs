@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import test from 'node:test';
 import { ESLint } from 'eslint';
 import * as prettier from 'prettier';
@@ -170,3 +171,31 @@ test('rejects conditional hooks and unhandled promises', rejectsInvalidHooksAndP
 test('rejects undefined assignments to exact optional properties', rejectsInvalidOptionalValue);
 test('detects formatting drift and accepts the formatted result', checksFormattingRoundTrip);
 test('excludes generated browser bundles from linting', ignoresGeneratedBundles);
+
+/** Verify that an audit rejection stops the real npm verification aggregate before later commands run. */
+async function stopsVerificationAfterAuditFailure() {
+    const directory = await mkdtemp(join(tmpdir(), 'signalbox-audit-gate-'));
+
+    try {
+        await writeFile(
+            join(directory, 'npm'),
+            '#!/bin/sh\n# Simulate a rejected audit; every later invocation is unexpected.\nif [ "$*" = "run audit:production" ]; then exit 23; fi\nexit 99\n',
+            { mode: 0o700 },
+        );
+        assert.ok(process.env.npm_execpath, 'Run quality tests through npm run test:quality.');
+        const result = spawnSync(process.execPath, [process.env.npm_execpath, 'run', 'verify'], {
+            cwd: projectRoot,
+            encoding: 'utf8',
+            timeout: 30000,
+            env: { ...process.env, PATH: `${directory}:${process.env.PATH}` },
+        });
+        assert.equal(result.status, 23, result.stdout + result.stderr);
+    } finally {
+        await rm(directory, { recursive: true, force: true });
+    }
+}
+
+test(
+    'stops frontend verification when the production audit fails',
+    stopsVerificationAfterAuditFailure,
+);

@@ -8,4 +8,5 @@ docker compose config --quiet
 # Fail on published advisories for locked PHP packages; needs Packagist access but no database or Redis.
 docker compose run --rm --no-deps php-test composer audit:locked
 docker compose run --rm php-test composer verify
+# The frontend aggregate includes the production npm audit before lint, DOM tests and build.
 docker compose run --rm node npm run verify

@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## npm audit gate and corrected lock (SEC.14, 2026-11-17)
+
+Install the updated npm lock with `npm ci --ignore-scripts --strict-peer-deps` and rebuild frontend assets through the normal workflow. `npm run verify` now begins with the production audit (`npm audit --omit=dev`), also required by frontend CI; registry access is needed. ESLint/typescript-eslint and the vulnerable transitive dependencies are updated within the existing stack, as documented in [DEPENDENCIES.md](DEPENDENCIES.md#npm-security-updates-and-production-audit--2026-11-17-sec14). No PHP dependency, migration, environment/key change or process restart is required by this update. See TASKS for actual verification and outstanding remote results.
+
 ## Database exception redaction (SEC.13, 2026-11-17)
 
 `LoggingServiceProvider` now precedes other application providers and installs the fallback-safe logging manager. Deploy PHP/config normally and reload long-lived PHP processes; there is no dependency, migration, environment/key change or asset rebuild requirement. Database records retain safe exception class/code/origin and numeric context, while free text and full exception stacks are suppressed. See [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md#database-exception-logging-sec13). Development services/data are not reconfigured by verification; current progress and checks are recorded at the top of TASKS, superseding the historical handoff below.

@@ -4,6 +4,33 @@ SEC.11 adds no package or lockfile change: PHP 8.4's built-in `hash_hkdf` derive
 
 Verified on 2026-10-15 for M0.01. Product requirements remain in [the specification](03-Progetto-B-Signalbox-Laravel.md); work status is in [TASKS.md](TASKS.md).
 
+## npm security updates and production audit — 2026-11-17 (SEC.14)
+
+The initial production audit found one high-severity entry, `follow-redirects` 1.16.1 ([maintainer advisory GHSA-mrwp-f3q8-3g9p](https://github.com/follow-redirects/follow-redirects/security/advisories/GHSA-mrwp-f3q8-3g9p)). The complete audit also found nine moderate entries propagated from `minimatch` 10.2.6 through the lint graph ([maintainer advisory GHSA-g3hv-75wg-m249](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249)). These are two underlying advisories, not ten independent flaws. The production dependency is reached through Inertia core → Axios; the lint dependency is development-only. Neither SSR nor a new Node application service is enabled.
+
+| Package / family | Before | Resolved after | Reason |
+|---|---|---|---|
+| `follow-redirects` | 1.16.1 | **1.16.3** | Compatible patch in Axios's existing `^1.16.0` range; first fix is 1.16.2. |
+| `eslint` | 10.12.0 | **10.15.0** | First safe release identified by npm audit; requires corrected minimatch/config-array. |
+| `@eslint/config-array` | 0.23.5 | **0.23.6** | Corrected minimatch range, selected by ESLint. |
+| `typescript-eslint` and its ten `@typescript-eslint/*` packages | 8.71.2 | **8.73.0** | First safe release identified by npm audit; estree accepts minimatch 11. |
+| `minimatch` | 10.2.6 | **11.0.9** | Supported upstream dependency ranges, replacing vulnerable 10.x without overrides. |
+
+Only the two existing exact development pins (`eslint`, `typescript-eslint`) change in the manifest. The npm resolver updates their graph: `ignore` 7.0.12 → 7.0.16, nested `semver` 7.8.5 → 7.8.6, `brace-expansion` 5.0.12 → 5.0.13, and new development-only `@isaacs/nonrecursive-glob-match` 1.1.0 required by minimatch 11.0.9. All other package records retain their versions; no production root dependency, PHP constraint, Node/npm engine or lock format changes. There are no forced audit fixes, overrides or advisory exclusions.
+
+Compatibility references: [ESLint 10.15.0 release](https://github.com/eslint/eslint/releases/tag/v10.15.0), [typescript-eslint 8.73.0 release](https://github.com/typescript-eslint/typescript-eslint/releases/tag/v8.73.0), plus official registry metadata inspected with `npm view`. ESLint/config-array require Node `^20.19.0 || ^22.13.0 || >=24`, minimatch requires `20 || >=22`, and typescript-eslint accepts ESLint 10 and TypeScript `>=4.8.4 <6.1.0`. The project's Node 22.22.2 minimum, CI Node 22.23.2 and existing TypeScript satisfy these requirements. Local resolution uses the existing container's npm 10.9.9; the recorded CI npm 10.9.8 remains unchanged and its execution is not attested by local tests.
+
+Reproduction (no dependency lifecycle scripts):
+
+```sh
+docker compose run --rm --no-deps node npm install --save-dev --save-exact eslint@10.15.0 typescript-eslint@8.73.0 --package-lock-only --ignore-scripts --strict-peer-deps --no-audit
+docker compose run --rm --no-deps node npm update follow-redirects --package-lock-only --ignore-scripts --strict-peer-deps --no-audit
+docker compose run --rm --no-deps node npm ci --ignore-scripts --strict-peer-deps
+docker compose run --rm --no-deps node npm audit
+```
+
+The new manifest script `audit:production` runs `npm audit --omit=dev`; `verify` runs it before the existing check/test/build aggregate. The frontend CI job invokes the same audit after strict locked installation. [npm's audit documentation](https://docs.npmjs.com/cli/v10/commands/npm-audit/) defines omission and exit behavior: no severity threshold is configured, so any production advisory fails. Network/registry errors also remain failures. Development advisories were cleared by this update, but the mandatory ongoing gate covers production only. Install the committed lock and rebuild browser assets to adopt it; no migration, key, environment setting or application-service restart is introduced. See TASKS for actual checks.
+
 ## Laravel Concurrency security update — 2026-11-16 (SEC.15)
 
 The reported CI failure is the mandatory `composer audit:locked` gate finding [GHSA-63hm-g96r-2m2q](https://github.com/laravel/framework/security/advisories/GHSA-63hm-g96r-2m2q) / CVE-2026-128083 in the previously locked Laravel 13.36.0. The [official 13.40.0 release](https://github.com/laravel/framework/releases/tag/v13.40.0) is the first corrected 13.x release. Root `laravel/framework` now requires `^13.40` to record that security floor, and the lock pins **v13.40.0**. All other manifest constraints and every other package record remain unchanged; no packages are added or removed.
@@ -303,4 +330,4 @@ Applicability to Signalbox, assessed by reading the code and not by exploiting e
 - Serializer: required only by `web-auth/webauthn-lib`; passkeys are not exposed.
 - `CVE-2026-118514` and the serializer and filesystem advisories were not analysed one by one; the update removes them regardless.
 
-npm advisories are handled separately with their own lock update (SEC.14 in TASKS), which will also add `npm audit --omit=dev` to the gates.
+SEC.14 subsequently updates the npm lock and adds the production audit gate; see the current npm security section above.

@@ -317,11 +317,12 @@
         text-align: left;
     }
 
+    /* Row labels, badges and wrapped values share padding and vertical centering. */
     .ui-table th,
     .ui-table td {
         padding: var(--spacing-ui-3) var(--spacing-ui-4);
         border-bottom: 1px solid var(--color-ui-border);
-        vertical-align: top;
+        vertical-align: middle;
     }
 }
 

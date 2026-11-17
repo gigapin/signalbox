@@ -34,9 +34,7 @@ export default function IncidentTable({
         <DataTable caption={caption}>
             <thead>
                 <tr className="border-b border-slate-700">
-                    <th scope="col" className="py-2">
-                        Incident
-                    </th>
+                    <th scope="col">Incident</th>
                     {showMonitor && <th scope="col">Monitor</th>}
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
@@ -49,7 +47,7 @@ export default function IncidentTable({
             <tbody>
                 {incidents.map((incident) => (
                     <tr key={incident.id} className="border-b border-slate-800">
-                        <th scope="row" className="py-2 font-medium">
+                        <th scope="row" className="font-medium">
                             <Link
                                 href={incidentDetailUrl(teamId, incident.id, returnTo)}
                                 className="ui-link"

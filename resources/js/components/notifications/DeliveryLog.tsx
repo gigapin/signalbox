@@ -31,9 +31,7 @@ export default function DeliveryLog({ deliveries }: DeliveryLogProps) {
                 <DataTable caption="Notification deliveries, oldest first">
                     <thead>
                         <tr className="border-b border-slate-700">
-                            <th scope="col" className="py-2">
-                                Channel
-                            </th>
+                            <th scope="col">Channel</th>
                             <th scope="col">Reason</th>
                             <th scope="col">Status</th>
                             <th scope="col">Attempts</th>
@@ -44,7 +42,7 @@ export default function DeliveryLog({ deliveries }: DeliveryLogProps) {
                     <tbody>
                         {deliveries.map((delivery) => (
                             <tr key={delivery.id} className="border-b border-slate-800">
-                                <th scope="row" className="py-2 font-medium">
+                                <th scope="row" className="font-medium">
                                     {delivery.channelName ??
                                         `Deleted ${delivery.channelType} channel`}
                                 </th>

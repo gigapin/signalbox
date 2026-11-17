@@ -293,9 +293,7 @@ function PageContent() {
                     <DataTable caption={`Monitors of ${team.name}`}>
                         <thead>
                             <tr className="border-b border-slate-700">
-                                <th scope="col" className="py-2">
-                                    Name
-                                </th>
+                                <th scope="col">Name</th>
                                 <th scope="col">Type</th>
                                 <th scope="col">Destination</th>
                                 <th scope="col">Status</th>
@@ -308,7 +306,7 @@ function PageContent() {
                         <tbody>
                             {monitors.data.map((monitor) => (
                                 <tr key={monitor.id} className="border-b border-slate-800">
-                                    <th scope="row" className="py-2 font-medium">
+                                    <th scope="row" className="font-medium">
                                         <Link
                                             href={withMonitorListReturn(
                                                 monitorPath(team.id, monitor.id),

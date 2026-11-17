@@ -264,3 +264,7 @@ The latest user refinement sets the shared sidebar/panel/header surface to `#0f1
 ### Application-wide links — 2026-11-17
 
 The user now requires links throughout the application (including public/authenticated pages) to have no underline in normal, hover, active or focused states, with a pointer cursor. This supersedes the previous content-link underline convention. Shared CSS covers native anchors, link roles and disclosure summaries; link-like action controls lose their former underline utility and gain an explicit pointer. Existing keyboard focus rings and disabled action behavior are preserved. Graphical work uses one user-managed branch with separate commits when appropriate.
+
+### Table cell alignment — 2026-11-17
+
+Shared DataTable headers and data cells use equal padding and middle vertical alignment, including multi-line values and badges. Monitor/incident lists and notification delivery logs no longer override the first column's block padding. Other DataTable consumers (dashboard overview, maintenance, delivery history, team directory and monitor statistics/availability) inherit the same rule; the compact chart data disclosure is a separate native table without the conflicting override. Text remains left-aligned.

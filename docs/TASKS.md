@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## UI — Allineamento verticale tabelle — 2026-11-17
+
+- [x] Corretto: prima colonna Monitor/Incidenti disallineata per padding py-2 locale rispetto alle altre celle, con allineamento top comune. Stesso override trovato nel DeliveryLog notifiche. Uniformare padding e centrare verticalmente tutte le celle DataTable. Unico branch grafico, nessun Git/gh.
+- File: app.css, Monitors/Index, IncidentTable, DeliveryLog e UI-GUIDELINES. Rimossi i padding locali py-2 di prima colonna/intestazione; tutte le celle DataTable condividono padding 12 px verticale e allineamento middle. Ispezionate anche dashboard overview, manutenzioni, consegne, directory team, statistiche/disponibilità monitor: usano DataTable e ricevono la correzione. L’unica altra tabella è la disclosure compatta TimeSeriesChart, con allineamento nativo middle e senza override top, non richiede modifica.
+- Verifiche: npm check exit 0 (ESLint/Prettier/TypeScript, **6 qualità**), regressioni pertinenti **100 test / 6 file, 21.71 s**, build **7.83 s** exit 0. Fixture Firefox con CSS compilato: tutte le celle th/td middle e padding 12 px uniforme, con link, badge e valore multilinea; screenshot verificato e controllo automatico della fixture PASS. Nessun dato reale, nessuna nuova accettazione dei flussi browser completi. Backend/CI non ripetuti: nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "style: align table row headers with other cells"`.
+
+
 ## UI — Link senza sottolineature — 2026-11-17
 
 - [x] Applicata richiesta utente su tutta l’applicazione, link senza underline anche hover e cursore pointer; focus da tastiera conservato. Preferenza utente: unico branch per le modifiche grafiche, più commit se opportuno; non suggerire un nuovo branch per ogni intervento grafico. Nessun Git/gh.

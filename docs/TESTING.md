@@ -1,6 +1,20 @@
 # Test infrastructure
 
+## Last verified state at session close — 2026-11-17
+
+This is the current verification handoff; earlier closing summaries below are historical. The user is stopping during UI review, with functional security/billing work suspended. See [TASKS](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) for scope and restart instructions. No test, formatter, build or audit is rerun for this Markdown-only close.
+
+- Backend, earlier today after dashboard route/CSP corrections: **3652 Pest tests / 24942 assertions, 555.75 s, exit 0**; PHP-CS-Fixer and Larastan level 8 passed. Backend was not repeated for the later frontend-only changes.
+- Shared form refactor: **493 DOM tests / 42 files, 122.99 s, exit 0**, lint/format/TypeScript, **6 quality tests**, production audit with zero vulnerabilities and build passed.
+- Latest cursor/spacing and notification action changes: the complete run reported **493 passed / 1 failed out of 494, 125.89 s**. The single assertion expected role=alert on the message text itself; the shared Alert now owns that role around the content. The test was updated to assert the accessible alert region's content. The entire Notifications file then passed **15/15 in 4.21 s**, including keyboard verification and duplicate-submission protection. No full 494/494 rerun is asserted; complete it at the next frontend verification.
+- Latest static check passed ESLint, Prettier, TypeScript and **6 quality tests**. Final build passed in **10.01 s**, including the final action-group margin rule. Production dependencies are unchanged by these UI edits; the zero-vulnerability audit predates the last spacing change.
+- Synthetic Firefox desktop/390px probes used real components and compiled CSS under nonce-only CSP. They passed cursor checks (pointer for enabled actions, not-allowed for disabled), top/bottom block margins, 10px internal label clearance and wrapping; earlier probes also checked below-field select positioning, selection and nonce handling. Screenshots were inspected. Fixtures under /tmp are disposable and do not certify authenticated end-to-end flows, screen readers, Safari/Chromium, live providers or remote CI.
+
+Restart with the real `/notifications` flows and shared-style visual review; preserve existing developer services and `public/hot`. No new deployment, migration, key retirement or infrastructure adoption is implied by these results.
+
 ## Last verified state at session close — 2026-11-16
+
+Historical record, superseded by the 2026-11-17 handoff above.
 
 The session stops after SEC.12; SEC.13 is not started. Latest canonical gate: **exit 0**, **3639 Pest / 24841 assertions in 783.57 s**, **473 DOM tests / 38 files**, **5 quality tests**, PHP-CS-Fixer 695 files, Larastan level 8, frontend lint/format/TypeScript and production build. Composer audit found no advisory; npm production audit is still pending SEC.14. No tests were skipped in the summaries. SEC.12's targeted matrix passed 129 cases / 804 assertions and its three isolated mutation probes failed as expected.
 

@@ -1,5 +1,13 @@
 # Application bootstrap reference
 
+## Session close and restart — 2026-11-17
+
+The session is closed at the user's request. Read the [current handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) before resuming; it supersedes earlier restart instructions. Security is **14/15 complete**, SEC.06 remains deferred, and billing/M9.01 has not started. The user paused functional tasks to continue visual corrections. Resume the UI review on the same user-managed graphics branch; do not start billing or another security task automatically. No Git/gh operation or branch/commit state is verified by the agent.
+
+Today's UI work covers the dashboard shell and landing, account/team/admin integration, dark olive palette, table alignment, link cursors, label/select spacing, below-field select picker, shared form components and notification Button/Alert adoption. Latest shared spacing is 12px above/below cards, alerts and forms, and 8px for field/action groups; labels retain 10px internal clearance. Continue from `/notifications`, checking real dynamic notices, verification, editors, quiet hours, secret controls and mobile wrapping, then other pages affected by shared styles. See [UI-GUIDELINES](UI-GUIDELINES.md) for the component contracts and current palette.
+
+[TESTING](TESTING.md#last-verified-state-at-session-close--2026-11-17) distinguishes the last fully green 493-test frontend run from the subsequent 494-test run with one corrected alert-structure assertion and the passing 15-test notifications rerun. The whole 494-test suite was not repeated after that correction. Complete that check when next verifying the frontend. Production assets were rebuilt; do not delete `public/hot`, stop Vite, run development migrations or infer that long-lived services/deployments have adopted earlier changes. Browser probes were synthetic Firefox fixtures, not authenticated acceptance or remote CI evidence. This documentation-only close performs no new checks, environment changes or service operations.
+
 ## npm audit gate and corrected lock (SEC.14, 2026-11-17)
 
 Install the updated npm lock with `npm ci --ignore-scripts --strict-peer-deps` and rebuild frontend assets through the normal workflow. `npm run verify` now begins with the production audit (`npm audit --omit=dev`), also required by frontend CI; registry access is needed. ESLint/typescript-eslint and the vulnerable transitive dependencies are updated within the existing stack, as documented in [DEPENDENCIES.md](DEPENDENCIES.md#npm-security-updates-and-production-audit--2026-11-17-sec14). No PHP dependency, migration, environment/key change or process restart is required by this update. See TASKS for actual verification and outstanding remote results.
@@ -9,6 +17,8 @@ Install the updated npm lock with `npm ci --ignore-scripts --strict-peer-deps` a
 `LoggingServiceProvider` now precedes other application providers and installs the fallback-safe logging manager. Deploy PHP/config normally and reload long-lived PHP processes; there is no dependency, migration, environment/key change or asset rebuild requirement. Database records retain safe exception class/code/origin and numeric context, while free text and full exception stacks are suppressed. See [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md#database-exception-logging-sec13). Development services/data are not reconfigured by verification; current progress and checks are recorded at the top of TASKS, superseding the historical handoff below.
 
 ## Session close and restart — 2026-11-16
+
+Historical record, superseded by the 2026-11-17 handoff above.
 
 The user has stopped this session after SEC.12. **12/15 security corrections are complete; none is in progress. Next: SEC.13**, database-exception redaction and the emergency logging tap, followed by SEC.14 npm dependency/audit work. SEC.06 remains explicitly deferred pending the user's product decisions; M9.01 is not started and M11's broader criteria remain open. Read the [current TASKS handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-16) before making changes. Suggested next branch: `fix/redact-database-exceptions-in-logs`; Git/gh and all branch/commit/remote operations remain exclusively user-managed and unverified.
 

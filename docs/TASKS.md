@@ -1,5 +1,12 @@
 # Signalbox — Piano dei task
 
+## UI — Opzioni select senza bordo verde — 2026-11-17
+
+- [x] Rimosso outline verde dalle opzioni attive/hover, conservando il solo sfondo più chiaro, selezione e tastiera. Focus del campo invariato. Stesso branch grafico, nessun Git/gh.
+- File: app.css, UI-GUIDELINES e piano. Rimossi solo outline/offset della regola hover e data-active delle opzioni; sfondo raised e segno di selezione conservati, focus del campo non alterato. Prettier CSS, **9 test Select** e TypeScript/build **7.89 s** tutti exit 0. Suite completa, backend, CI e browser non ripetuti per la sola rimozione di due dichiarazioni CSS; nessuna modifica a comportamento, PHP/rotte/dipendenze.
+- Commit suggerito sullo stesso branch: `git commit -m "style: simplify select option highlights"`.
+
+
 ## UI — Menu select sotto il campo — 2026-11-17
 
 - [x] Implementato: menu singolo sotto il campo, senza sovrapporre il valore, aggiornamento immediato al click. Posizione del popup OS non uniforme; componente condiviso mantiene select/eventi/form nativi e rende un listbox posizionato sotto il campo. Tastiera, disabled e CSP da verificare; nessun Git/gh, stesso branch grafico. Nessuna modifica alle azioni di dominio o conferme esplicite del cambio team.

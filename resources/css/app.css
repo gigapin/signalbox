@@ -1083,8 +1083,6 @@
     .ui-select-option:hover:not([aria-disabled='true']),
     .ui-select-option[data-active='true'] {
         background: var(--color-ui-raised);
-        outline: 2px solid var(--color-ui-focus);
-        outline-offset: -2px;
     }
 
     .ui-select-option[aria-selected='true'] {

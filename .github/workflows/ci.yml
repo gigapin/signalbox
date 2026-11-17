@@ -130,6 +130,9 @@ jobs:
         run: npm install --global npm@10.9.8
       - name: Install locked frontend dependencies with strict peers
         run: npm ci --ignore-scripts --strict-peer-deps
+      - name: Audit production npm dependencies
+        # Newly published advisories fail the job at every severity; do not hide audit/network failures.
+        run: npm run audit:production
       - name: Lint frontend and tooling without warnings
         run: npm run lint
       - name: Check frontend formatting without changes

@@ -49,6 +49,7 @@ Node 22.23.2 satisfies the project's minimum 22.22.2. npm is explicitly selected
 | Step | Command |
 |---|---|
 | Locked installation with strict peer resolution | `npm ci --ignore-scripts --strict-peer-deps` |
+| Production npm advisories at every severity | `npm run audit:production` (`npm audit --omit=dev`) |
 | Typed ESLint, React hooks and zero warnings | `npm run lint` |
 | Prettier without rewriting files | `npm run format:check` |
 | Strict TypeScript | `npm run types:check` |
@@ -69,7 +70,7 @@ These are the commands aggregated by `npm run verify`. Backend gates likewise ma
 - Checkout v7, setup-node v7, cache v5 and setup-php v2 are pinned to verified public commit SHAs, annotated by major. Update pins explicitly and review upstream changes.
 - Composer archive caches include OS, architecture, PHP minor and the lock hash. setup-node caches npm downloads against the npm lock. Dependencies are installed on every run, including cache hits; neither vendor/node_modules nor Laravel/test caches are restored.
 - There are no path filters: documentation-only PRs also receive the same required checks.
-- Since 2026-11-13 the backend jobs audit the Composer lock against Packagist advisories. The result depends on the advisory database at run time: a newly published advisory fails every later run, including unrelated PRs, until the lock is updated. This is intended; do not add `continue-on-error` or ignore lists without a recorded decision. The equivalent `npm audit --omit=dev` gate is not active yet: it is planned with the npm lock update for `follow-redirects`, which would otherwise fail it (see TASKS, SEC.14).
+- Since 2026-11-13 the backend jobs audit the Composer lock against Packagist advisories. The result depends on the advisory database at run time: a newly published advisory fails every later run, including unrelated PRs, until the lock is updated. This is intended; do not add `continue-on-error` or ignore lists without a recorded decision. Since SEC.14 (2026-11-17), the frontend job also runs `npm run audit:production` (`npm audit --omit=dev`) after strict locked installation. Every severity fails, as do registry/network errors; there is no ignore list or continue-on-error. The same audit starts `npm run verify`, invoked by `scripts/verify.sh`. The initial complete audit also covered development packages, which are outside the ongoing production gate. See DEPENDENCIES for the targeted lock update.
 - Coverage targets, browser E2E, Docker image builds and deployment were outside M0.07; the Composer audit gate was added later, as described above. No new dependency update or application API change is included.
 
 Validate the workflow with [actionlint](https://github.com/rhysd/actionlint):

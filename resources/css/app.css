@@ -526,11 +526,17 @@
         border-right: 1px solid var(--color-ui-border);
     }
 
-    .ui-sidebar .ui-team-links {
+    .ui-sidebar-navigation {
         position: sticky;
         top: var(--spacing-ui-4);
         max-height: calc(100dvh - 2 * var(--spacing-ui-4));
         overflow-y: auto;
+    }
+
+    .ui-sidebar-navigation > nav + nav {
+        margin-top: var(--spacing-ui-4);
+        padding-top: var(--spacing-ui-4);
+        border-top: 1px solid var(--color-ui-border);
     }
 
     .ui-team-links {

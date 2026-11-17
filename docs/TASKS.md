@@ -1,5 +1,15 @@
 # Signalbox — Piano dei task
 
+## UI — Account, team e admin nella dashboard — 2026-11-17
+
+- [x] Implementato su richiesta utente: unificare cornice sidebar/header/menu mobile delle pagine account/team/admin con dashboard. Conservare confini di autorizzazione e nessun team dedotto da risorse amministrative ispezionate; nessuna modifica URL o API necessaria. Stesso branch grafico, nessun Git/gh.
+- Motivazione: AppLayout richiede identità di un team autorizzato; account/admin possono esistere senza membership e non devono dedurre un team dalle risorse ispezionate. Mantenuto questo confine semantico, unificata la cornice visiva tramite classi condivise e navigazione WorkspaceLinks. Sidebar desktop a tutta altezza e gruppo sticky unico, menu mobile nativo condiviso, brand verso `/dashboard`, voci attive Teams/Account/Security/Administration; quest’ultima solo per operatori. Il contesto account può mostrare i link del team personale selezionato e presente nella proiezione membership; quello platform li ignora sempre. Nessun selettore duplicato, URL/API/middleware invariati.
+- File: AppLayout, PrivateContextLayout, nuovo WorkspaceLinks, MobileNavigation, TeamLinks e app.css; nuova WorkspaceLayout.test.tsx, MobileNavigation.test.tsx esteso, aspettative NavigationGuard/Authentication aggiornate. Documenti UI-GUIDELINES, TESTING, BOOTSTRAP e piano. Nessun PHP, migration, dipendenza, dato di sviluppo o processo applicativo modificato; nessun Git/gh.
+- Verifiche finali tutte exit 0: **479 DOM / 40 file in 123.25 s**, **6 test qualità**, ESLint/Prettier/TypeScript, audit npm produzione **0 vulnerabilità**, build **8.95 s**. Quattro nuove casistiche: cornice/account con membership personale, amministrazione indipendente dal tenant ispezionato, diniego operatore senza residui e menu mobile piattaforma con cancel/ripristino focus. Risolti durante il lavoro callback render-prop segnalato da react-hooks/refs (sostituito da componenti dichiarativi), tipi exactOptionalPropertyTypes espliciti e quattro aspettative di test (marchio/sidebar e cancel nativo jsdom); nessuna soppressione o riduzione dei controlli.
+- Browser: fixture sintetica Firefox desktop con CSS compilato, header/sidebar/main amministrativi ispezionati; non una nuova sessione autenticata end-to-end. Mobile verificato automaticamente con i componenti reali; test browser nativo/zoom generale e CI remota non rieseguiti. Backend non ripetuto perché nessuna modifica PHP/rotte/autorizzazioni; il gate backend completo precedente resta storico.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "feat: unify private pages under dashboard navigation"`.
+
+
 ## UI — Distanza label dal focus — 2026-11-17
 
 - [x] Applicata ulteriore richiesta utente di alzare le label sopra input/select di circa 2 px per evitare contatto con l’outline verde. Distanza condivisa da 8 a 10 px, mantenendo focus e freccia select. Stesso branch, nessun Git/gh.

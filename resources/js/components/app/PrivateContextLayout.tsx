@@ -1,10 +1,14 @@
-/** Render account and platform workspaces without inferring membership from an inspected team. */
+/** Render account and platform pages inside the dashboard frame without inferring an inspected tenant. */
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useCallback, useId, useState, type ReactNode } from 'react';
 import type { AuthProps } from '../auth/AuthLayout';
 import Alert from '../ui/Alert';
 import { PageHeading } from '../ui/Panel';
 import AccountMenu from './AccountMenu';
+import MobileNavigation from './MobileNavigation';
+import WorkspaceLinks from './WorkspaceLinks';
+import TeamLinks from './TeamLinks';
+import { useDesktopNavigation } from './useDesktopNavigation';
 import { TeamAccessContext } from './TeamAccessContext';
 
 /** Explicit non-tenant workspace inputs; platform context never offers a team selector. */
@@ -24,7 +28,7 @@ interface ContextLayoutProps {
  * @returns The shared private visual shell with a context-specific navigation.
  */
 function ContextShell({ title, context = 'account', description, children }: ContextLayoutProps) {
-    const { appName, auth, status } = usePage<AuthProps>().props;
+    const { appName, auth, status, teamNavigation } = usePage<AuthProps>().props;
     const [denied, setDenied] = useState(false);
     const deny = useCallback(() => setDenied(true), []);
     const platform = context === 'platform';
@@ -32,6 +36,19 @@ function ContextShell({ title, context = 'account', description, children }: Con
         denied || auth?.user === null || (platform && auth?.user?.isPlatformAdmin !== true);
     const deniedTitle = platform ? 'Platform access unavailable' : 'Account access unavailable';
     const mainId = useId();
+    const desktop = useDesktopNavigation();
+    const selectedTeam = platform
+        ? undefined
+        : teamNavigation?.teams.find((team) => team.id === teamNavigation.selectedTeamId);
+    /** Offer only the actor's membership navigation; inspected platform teams never supply it. */
+    function navigation(onNavigate?: () => void): ReactNode {
+        return (
+            <>
+                {selectedTeam && <TeamLinks teamId={selectedTeam.id} onNavigate={onNavigate} />}
+                <WorkspaceLinks includeDashboard={!selectedTeam} onNavigate={onNavigate} />
+            </>
+        );
+    }
     return (
         <TeamAccessContext.Provider value={deny}>
             <div className="ui-theme ui-app-shell">
@@ -40,12 +57,19 @@ function ContextShell({ title, context = 'account', description, children }: Con
                     Skip to content
                 </a>
                 <header className="ui-app-header">
-                    <Link className="ui-brand ui-link" href="/account">
+                    <Link className="ui-brand ui-link" href="/dashboard">
                         {appName}
                     </Link>
                     <p className="ui-team-identity">
                         {platform ? 'Platform administration' : 'Account'}
                     </p>
+                    {!hidden && !desktop && (
+                        <MobileNavigation
+                            mainId={mainId}
+                            teamId={selectedTeam?.id}
+                            workspaceNavigation
+                        />
+                    )}
                     {!hidden && auth?.user && (
                         <AccountMenu
                             name={auth.user.name}
@@ -53,48 +77,40 @@ function ContextShell({ title, context = 'account', description, children }: Con
                         />
                     )}
                 </header>
-                <main id={mainId} tabIndex={-1} className="ui-app-main">
-                    <nav aria-label="Workspace navigation" className="ui-actions">
-                        <Link className="ui-link" href="/account">
-                            Your account
-                        </Link>
-                        {platform && !hidden ? (
-                            <Link className="ui-link" href="/admin/teams">
-                                All teams
-                            </Link>
-                        ) : (
-                            <>
-                                <Link className="ui-link" href="/teams">
-                                    Your teams
-                                </Link>
-                                <Link className="ui-link" href="/account/security">
-                                    Account security
-                                </Link>
-                            </>
-                        )}
-                    </nav>
-                    <PageHeading
-                        title={hidden ? deniedTitle : title}
-                        {...(hidden || description === undefined ? {} : { description })}
-                    />
-                    {!hidden && status && (
-                        <Alert title="Update" tone="success" announce="polite">
-                            {status}
-                        </Alert>
+                <div className="ui-app-frame">
+                    {!hidden && desktop && (
+                        <aside className="ui-sidebar">
+                            <div className="ui-sidebar-navigation">{navigation()}</div>
+                        </aside>
                     )}
-                    <div className="ui-page-content">
-                        {hidden ? (
-                            <Alert title="Private data hidden" tone="warning" announce="assertive">
-                                <p>Sign in again or reload to verify your current access.</p>
-                                <Link className="ui-link" href="/login">
-                                    Sign in
-                                </Link>
+                    <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">
+                        <PageHeading
+                            title={hidden ? deniedTitle : title}
+                            {...(hidden || description === undefined ? {} : { description })}
+                        />
+                        {!hidden && status && (
+                            <Alert title="Update" tone="success" announce="polite">
+                                {status}
                             </Alert>
-                        ) : (
-                            children
                         )}
-                    </div>
-                </main>
+                        <div className="ui-page-content">
+                            {hidden ? (
+                                <Alert
+                                    title="Private data hidden"
+                                    tone="warning"
+                                    announce="assertive"
+                                >
+                                    <p>Sign in again or reload to verify your current access.</p>
+                                    <Link className="ui-link" href="/login">
+                                        Sign in
+                                    </Link>
+                                </Alert>
+                            ) : (
+                                children
+                            )}
+                        </div>
+                    </main>
+                </div>
             </div>
         </TeamAccessContext.Provider>
     );

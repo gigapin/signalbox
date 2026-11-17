@@ -8,13 +8,13 @@ interface TeamLinksProps {
     /** Controller-authorized route team identifier. */
     teamId: number;
     /** Current page family; detail pages retain their parent's active section. */
-    section: TeamSection;
+    section?: TeamSection | undefined;
     /** Close the mobile dialog for a same-tab visit; modified clicks retain normal browser behavior. */
-    onNavigate?: () => void;
+    onNavigate?: (() => void) | undefined;
 }
 
 /** Focus the destination heading after Inertia has committed its new page, without stealing later visits' focus. */
-function focusDestination(): void {
+export function focusDestination(): void {
     const destination = window.location.href;
     window.requestAnimationFrame(() => {
         if (window.location.href !== destination) return;

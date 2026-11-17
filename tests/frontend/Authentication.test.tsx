@@ -207,7 +207,7 @@ function showsMissingTeam(): void {
         currentTeam: null,
     });
     expect(screen.getByText('No accessible team is currently selected.')).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Account security' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Security' })).toHaveAttribute(
         'href',
         '/account/security',
     );

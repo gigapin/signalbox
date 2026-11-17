@@ -1,4 +1,5 @@
 /** Manage authenticator security while keeping credentials in removable, ephemeral component state. */
+import InputField from '../../components/ui/InputField';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useContext, useEffect, useRef, useState, type FormEvent } from 'react';
 import {
@@ -269,12 +270,10 @@ function SecurityContent() {
                             )}
                             <form onSubmit={confirmSetup} noValidate>
                                 <fieldset disabled={blocked} className="grid min-w-0 gap-3">
-                                    <label htmlFor="security-code" className="ui-label">
-                                        Authentication code
-                                    </label>
-                                    <input
+                                    <InputField
+                                        label="Authentication code"
+                                        error={form.errors.code}
                                         id="security-code"
-                                        className="ui-input"
                                         value={form.data.code}
                                         onChange={(event) =>
                                             form.setData('code', event.target.value)
@@ -283,20 +282,7 @@ function SecurityContent() {
                                         inputMode="numeric"
                                         maxLength={6}
                                         required
-                                        aria-invalid={Boolean(form.errors.code)}
-                                        aria-describedby={
-                                            form.errors.code ? 'security-code-error' : undefined
-                                        }
                                     />
-                                    {form.errors.code && (
-                                        <p
-                                            id="security-code-error"
-                                            role="alert"
-                                            className="ui-field-error"
-                                        >
-                                            {form.errors.code}
-                                        </p>
-                                    )}
                                     <Button type="submit">Confirm authenticator</Button>
                                 </fieldset>
                             </form>

@@ -1,4 +1,6 @@
 /** Render cohesive authentication forms with shared validation and submission behavior. */
+import InputField from '../ui/InputField';
+import ChoiceField from '../ui/ChoiceField';
 import { Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import AuthLayout from './AuthLayout';
@@ -85,49 +87,31 @@ export default function AuthForm({
                         </p>
                     ))}
                 {fields.map((field, index) => (
-                    <div key={field.name}>
-                        <label htmlFor={field.name} className="block text-sm font-medium">
-                            {field.label}
-                        </label>
-                        <input
-                            id={field.name}
-                            name={field.name}
-                            type={field.type ?? 'text'}
-                            autoComplete={field.autoComplete}
-                            inputMode={field.numeric ? 'numeric' : undefined}
-                            autoFocus={index === 0}
-                            required
-                            value={form.data[field.name] ?? ''}
-                            onChange={(event) => form.setData(field.name, event.target.value)}
-                            aria-invalid={Boolean(form.errors[field.name])}
-                            aria-describedby={
-                                form.errors[field.name] ? `${field.name}-error` : undefined
-                            }
-                            className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400"
-                        />
-                        {form.errors[field.name] && (
-                            <p
-                                id={`${field.name}-error`}
-                                role="alert"
-                                className="mt-2 text-sm text-red-300"
-                            >
-                                {form.errors[field.name]}
-                            </p>
-                        )}
-                    </div>
+                    <InputField
+                        label={field.label}
+                        error={form.errors[field.name]}
+                        key={field.name}
+                        id={field.name}
+                        name={field.name}
+                        type={field.type ?? 'text'}
+                        autoComplete={field.autoComplete}
+                        inputMode={field.numeric ? 'numeric' : undefined}
+                        autoFocus={index === 0}
+                        required
+                        value={form.data[field.name] ?? ''}
+                        onChange={(event) => form.setData(field.name, event.target.value)}
+                    />
                 ))}
                 {remember && (
-                    <label className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            name="remember"
-                            checked={form.data.remember === '1'}
-                            onChange={(event) =>
-                                form.setData('remember', event.target.checked ? '1' : '0')
-                            }
-                        />
-                        Remember me
-                    </label>
+                    <ChoiceField
+                        label="Remember me"
+                        type="checkbox"
+                        name="remember"
+                        checked={form.data.remember === '1'}
+                        onChange={(event) =>
+                            form.setData('remember', event.target.checked ? '1' : '0')
+                        }
+                    />
                 )}
                 <button
                     disabled={form.processing}

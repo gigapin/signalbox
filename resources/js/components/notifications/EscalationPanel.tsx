@@ -1,5 +1,5 @@
 /** Let a monitor manager choose the escalation policy of one monitor. */
-import Select from '../ui/Select';
+import SelectField from '../ui/SelectField';
 import { useFormProtection } from '../app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
@@ -102,36 +102,29 @@ function EscalationEditor({ action, escalation }: EditorProps) {
                 </p>
             )}
             <form onSubmit={submit} noValidate className="mt-3 flex flex-wrap items-end gap-3">
-                <div>
-                    <label htmlFor="monitor-escalation" className="block text-sm font-medium">
-                        Escalation policy
-                    </label>
-                    <Select
-                        id="monitor-escalation"
-                        value={form.data.escalation_policy_id}
-                        disabled={form.processing}
-                        onChange={(event) =>
-                            form.setData('escalation_policy_id', event.target.value)
-                        }
-                        className="rounded border border-slate-600 bg-slate-900 px-3 py-2"
-                    >
-                        <option value="">
-                            {fallback === undefined
-                                ? 'Team default (none set)'
-                                : `Team default (${fallback.name})`}
+                <SelectField
+                    label="Escalation policy"
+                    id="monitor-escalation"
+                    value={form.data.escalation_policy_id}
+                    disabled={form.processing}
+                    onChange={(event) => form.setData('escalation_policy_id', event.target.value)}
+                >
+                    <option value="">
+                        {fallback === undefined
+                            ? 'Team default (none set)'
+                            : `Team default (${fallback.name})`}
+                    </option>
+                    {missingDraft && (
+                        <option value={form.data.escalation_policy_id} disabled>
+                            Draft policy unavailable
                         </option>
-                        {missingDraft && (
-                            <option value={form.data.escalation_policy_id} disabled>
-                                Draft policy unavailable
-                            </option>
-                        )}
-                        {escalation.options.map((option) => (
-                            <option key={option.id} value={String(option.id)}>
-                                {option.name}
-                            </option>
-                        ))}
-                    </Select>
-                </div>
+                    )}
+                    {escalation.options.map((option) => (
+                        <option key={option.id} value={String(option.id)}>
+                            {option.name}
+                        </option>
+                    ))}
+                </SelectField>
                 <button
                     disabled={form.processing || missingDraft}
                     className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"

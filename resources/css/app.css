@@ -167,15 +167,49 @@
         color-scheme: dark;
     }
 
-    /* Associated labels have breathing room even outside the grid-based field primitive. */
-    label[for] {
-        display: block;
-        margin-bottom: var(--spacing-ui-field-gap);
+    /* Field components own spacing; compact editors and choices retain native labels. */
+    .ui-field > .ui-label,
+    .ui-choice-field > .ui-label {
+        margin: 0;
     }
 
-    /* The field grid already supplies the same ten-pixel separation. */
-    .ui-field > label[for] {
-        margin-bottom: 0;
+    .ui-field-inline {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+    }
+
+    .ui-choice-field {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 0.5rem;
+        row-gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .ui-choice-field > .ui-label {
+        grid-column: 2;
+        grid-row: 1;
+        font-weight: 400;
+    }
+
+    .ui-choice {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: start;
+        margin-top: 0.25rem;
+        accent-color: var(--color-ui-accent);
+    }
+
+    .ui-choice:focus-visible {
+        outline: 2px solid var(--color-ui-accent);
+        outline-offset: 3px;
+    }
+
+    .ui-choice-field > .ui-help,
+    .ui-choice-field > .ui-field-error,
+    .ui-field-inline > .ui-help,
+    .ui-field-inline > .ui-field-error {
+        grid-column: 2;
     }
 
     /* Draw the single-select arrow inside reserved padding while retaining native selection behavior. */
@@ -570,17 +604,8 @@
         max-width: 100%;
     }
 
-    .ui-team-switcher label,
     .ui-team-switcher [role='status'] {
         grid-column: 1 / -1;
-    }
-
-    .ui-team-switcher label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
     }
 
     .ui-brand,

@@ -1,4 +1,5 @@
 /** Ask a visitor for the password of a protected status page. */
+import InputField from '../../components/ui/InputField';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import StatusPageHead from '../../components/status-pages/StatusPageHead';
@@ -69,35 +70,17 @@ export default function Unlock() {
                         </p>
                     )}
                     <form onSubmit={submit} noValidate className="mt-6 grid gap-4">
-                        <div>
-                            <label
-                                htmlFor="status-page-password"
-                                className="block text-sm font-medium"
-                            >
-                                Password
-                            </label>
-                            <input
-                                id="status-page-password"
-                                type="password"
-                                required
-                                disabled={form.processing}
-                                autoComplete="current-password"
-                                value={form.data.password}
-                                onChange={(event) => form.setData('password', event.target.value)}
-                                aria-invalid={form.errors.password !== undefined}
-                                aria-describedby="status-page-password-error"
-                                className="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400"
-                            />
-                            {form.errors.password && (
-                                <p
-                                    id="status-page-password-error"
-                                    role="alert"
-                                    className="mt-1 text-red-300"
-                                >
-                                    {form.errors.password}
-                                </p>
-                            )}
-                        </div>
+                        <InputField
+                            label="Password"
+                            error={form.errors.password}
+                            id="status-page-password"
+                            type="password"
+                            required
+                            disabled={form.processing}
+                            autoComplete="current-password"
+                            value={form.data.password}
+                            onChange={(event) => form.setData('password', event.target.value)}
+                        />
                         <button
                             disabled={form.processing}
                             className="justify-self-start rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"

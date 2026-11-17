@@ -1,16 +1,17 @@
 /** Keep native select values and form events while presenting a consistent list below the field. */
 import {
+    useCallback,
     useEffect,
     useId,
     useRef,
     useState,
-    type ComponentPropsWithoutRef,
+    type ComponentPropsWithRef,
     type KeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
 
 /** Native select attributes and children remain the public contract. */
-type SelectProps = ComponentPropsWithoutRef<'select'>;
+type SelectProps = ComponentPropsWithRef<'select'>;
 
 /** Safe option projection read from the rendered native options when opening. */
 interface Choice {
@@ -47,6 +48,7 @@ interface Picker {
  */
 export default function Select({
     children,
+    ref: forwardedRef,
     onChange,
     onKeyDown,
     onPointerDown,
@@ -56,6 +58,15 @@ export default function Select({
     ...props
 }: SelectProps) {
     const control = useRef<HTMLSelectElement>(null);
+    /** Keep the internal picker reference and the caller's native ref synchronized. */
+    const setControl = useCallback(
+        (element: HTMLSelectElement | null) => {
+            control.current = element;
+            if (typeof forwardedRef === 'function') return forwardedRef(element);
+            if (forwardedRef) forwardedRef.current = element;
+        },
+        [forwardedRef],
+    );
     const popup = useRef<HTMLDivElement>(null);
     const [picker, setPicker] = useState<Picker | null>(null);
     const generated = useId().replace(/[^a-z0-9_-]/gi, '');
@@ -231,7 +242,7 @@ export default function Select({
         <>
             <select
                 {...props}
-                ref={control}
+                ref={setControl}
                 aria-expanded={custom ? picker !== null : undefined}
                 aria-controls={picker ? popupId : props['aria-controls']}
                 aria-activedescendant={

@@ -1,5 +1,6 @@
 /** List, search and filter one team's monitors with pagination and explicit empty and error states. */
-import Select from '../../components/ui/Select';
+import SelectField from '../../components/ui/SelectField';
+import InputField from '../../components/ui/InputField';
 import DataTable from '../../components/ui/DataTable';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
@@ -83,31 +84,23 @@ interface CreateControlProps {
     returnTo: string;
 }
 
-/** Field styling shared by the filter inputs. */
-const INPUT = 'ui-input';
-
 /** Render a labelled select whose first option clears the filter. */
 function FilterSelect({ name, label, value, values, format, onChange }: FilterSelectProps) {
     return (
-        <div>
-            <label htmlFor={`filter-${name}`} className="ui-label block">
-                {label}
-            </label>
-            <Select
-                id={`filter-${name}`}
-                name={name}
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                className={INPUT}
-            >
-                <option value="">Any</option>
-                {values.map((option) => (
-                    <option key={option} value={option}>
-                        {format(option)}
-                    </option>
-                ))}
-            </Select>
-        </div>
+        <SelectField
+            label={label}
+            id={`filter-${name}`}
+            name={name}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+        >
+            <option value="">Any</option>
+            {values.map((option) => (
+                <option key={option} value={option}>
+                    {format(option)}
+                </option>
+            ))}
+        </SelectField>
     );
 }
 
@@ -171,25 +164,17 @@ function PageContent() {
             <form role="search" aria-label="Search monitors" onSubmit={submit} className="ui-panel">
                 <fieldset disabled={loading} className="ui-monitor-filters">
                     <legend className="ui-section-title mb-4">Find monitors</legend>
-                    <div className="ui-monitor-search">
-                        <label htmlFor="filter-q" className="ui-label block">
-                            Search
-                        </label>
-                        <input
-                            id="filter-q"
-                            name="q"
-                            type="search"
-                            maxLength={100}
-                            value={draft.q}
-                            onChange={(event) => setDraft({ ...draft, q: event.target.value })}
-                            aria-describedby="filter-q-hint"
-                            className={INPUT}
-                        />
-                        <p id="filter-q-hint" className="ui-help mt-1">
-                            Matches name, TLS host or DNS name. HTTP URLs are stored encrypted and
-                            are not searchable.
-                        </p>
-                    </div>
+                    <InputField
+                        label="Search"
+                        hint="Matches name, TLS host or DNS name. HTTP URLs are stored encrypted and are not searchable."
+                        wrapperClassName="ui-monitor-search"
+                        id="filter-q"
+                        name="q"
+                        type="search"
+                        maxLength={100}
+                        value={draft.q}
+                        onChange={(event) => setDraft({ ...draft, q: event.target.value })}
+                    />
                     <FilterSelect
                         name="type"
                         label="Type"

@@ -1,4 +1,5 @@
 /** Browse the operator-only directory without creating tenant membership or changing the active team. */
+import InputField from '../../../components/ui/InputField';
 import { Link, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { planLabel, sourceLabel } from '../../../components/admin/labels';
@@ -52,24 +53,16 @@ function PageContent() {
                 onSubmit={submit}
                 className="ui-panel ui-settings-fields"
             >
-                <div>
-                    <label htmlFor="team-search" className="ui-label">
-                        Search
-                    </label>
-                    <input
-                        id="team-search"
-                        type="search"
-                        maxLength={100}
-                        value={q}
-                        onChange={(event) => setQ(event.target.value)}
-                        disabled={read.loading}
-                        aria-describedby="team-search-hint"
-                        className="ui-input"
-                    />
-                    <p id="team-search-hint" className="ui-help">
-                        Matches team name, slug or owner email.
-                    </p>
-                </div>
+                <InputField
+                    label="Search"
+                    hint="Matches team name, slug or owner email."
+                    id="team-search"
+                    type="search"
+                    maxLength={100}
+                    value={q}
+                    onChange={(event) => setQ(event.target.value)}
+                    disabled={read.loading}
+                />
                 <div className="ui-actions">
                     <Button type="submit" busy={read.loading} busyLabel="Searching…">
                         Search

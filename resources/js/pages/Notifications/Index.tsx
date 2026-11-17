@@ -1,4 +1,5 @@
 /** Manage the team's notification channels and escalation policies. */
+import InputField from '../../components/ui/InputField';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { useNavigationGuard } from '../../components/app/NavigationGuard';
@@ -44,22 +45,16 @@ function PageContent() {
                     Assign a policy to a monitor
                 </Link>
             </nav>
-            <div className="ui-panel mb-6">
-                <label className="ui-label" htmlFor="notification-search">
-                    Find channels or policies
-                </label>
-                <input
-                    className="ui-input"
-                    id="notification-search"
-                    type="search"
-                    disabled={guard.busy}
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                />
-                <p className="ui-help">
-                    Filters names on this page. Hidden editors retain their drafts.
-                </p>
-            </div>
+            <InputField
+                label="Find channels or policies"
+                hint="Filters names on this page. Hidden editors retain their drafts."
+                wrapperClassName="ui-panel mb-6"
+                id="notification-search"
+                type="search"
+                disabled={guard.busy}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+            />
             {channels.length > 0 && !channels.some((item) => channelMatch(item.name)) && (
                 <p role="status">No channels match this search.</p>
             )}

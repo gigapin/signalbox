@@ -1,5 +1,14 @@
 # Signalbox — Piano dei task
 
+## UI — Refactoring componenti dei form — 2026-11-17
+
+- [x] Refactoring richiesto completato: FormField centralizza label, ID, hint, errori e associazioni accessibili; InputField, SelectField, TextareaField e ChoiceField adottati nei 26 componenti/pagine dei form esistenti. MonitorForm conserva soltanto adapter dei valori/opzioni di dominio; il prefisso slug compone FormField. Rimossi markup ripetuto, costanti INPUT e stili locali duplicati. Stesso branch grafico, nessun Git/gh, dipendenza, PHP o rotta modificati.
+- File: components/ui/FormField/InputField/SelectField/TextareaField/ChoiceField/Select, moduli auth/monitor/incidenti/notifiche/status page, filtri operativi, switch team/report, pagine account/admin/team; app.css, UiPrimitives/FormFields/SettingsWorkflows e UI-GUIDELINES. Il picker inoltra anche ref nativi React 19. Label/controllo separati da 10px nel componente, nessun margine globale sui label; checkbox/radio hanno layout e focus comuni. Required resta nativo senza alterare i testi esistenti. Errori di gruppo e regole dei segreti restano ai form di dominio.
+- Prima suite completa: 485 passati, 8 falliti su 493. Corrette nel sorgente la conservazione di aria-invalid=false del monitor e l’inoltro ref del select; nuovi test limitano la ricerca delle opzioni al listbox. I test dei ruoli usano ora click reali sul picker condiviso, evitando che la selezione sintetica nativa lasci il popup riaperto e renda ambigue le query per label. Asserzioni su draft, revoche e ruoli conservate. Corretto anche import within e annotazione generica nel nuovo test prima della verifica finale.
+- Verifiche finali: **493 test / 42 file, 122.99 s, exit 0**; npm check finale exit 0 (ESLint, Prettier, TypeScript e **6 qualità**); audit produzione **0 vulnerabilità**; build TypeScript/Vite **9.89 s**, exit 0. Quattro nuovi test coprono ref/draft multilinea, selezione/eventi/FormData, checkbox/radio/fieldset disabled e composizione/errori escapati. Fixture Firefox sintetica desktop e 390px con CSS compilato/CSP nonce: PASS, gap label 10px, checkbox allineata e layout inline/label nascosta verificati; screenshot ispezionati. Fixture solo in /tmp, nessun dato reale o modifica a Vite/public/hot.
+- Limiti: backend e CI remota non eseguiti perché questa modifica riguarda soltanto il frontend; fixture browser non equivale a una nuova accettazione autenticata completa o certificazione assistive technology. Prossimo passo: continuare la revisione grafica sullo stesso branch; task SEC/billing ancora sospesi.
+- Commit suggerito sullo stesso branch: `git commit -m "refactor: centralize frontend form fields"`.
+
 ## UI — Opzioni select senza bordo verde — 2026-11-17
 
 - [x] Rimosso outline verde dalle opzioni attive/hover, conservando il solo sfondo più chiaro, selezione e tastiera. Focus del campo invariato. Stesso branch grafico, nessun Git/gh.

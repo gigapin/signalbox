@@ -1,5 +1,5 @@
 /** List one team's incidents, open first, with state and severity filters and explicit empty and error states. */
-import Select from '../../components/ui/Select';
+import SelectField from '../../components/ui/SelectField';
 import { Link, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import Button from '../../components/ui/Button';
@@ -32,9 +32,6 @@ interface IndexProps extends IncidentPageProps {
     /** Enum values offered by the filter selects. */
     options: IncidentOptions;
 }
-
-/** Field styling shared by the filter selects. */
-const INPUT = 'ui-input';
 
 /** Filter through GET navigation so results stay bookmarkable and keyboard-operable. */
 function PageContent() {
@@ -82,54 +79,44 @@ function PageContent() {
                 onSubmit={submit}
                 className="ui-panel ui-incident-filters"
             >
-                <div>
-                    <label htmlFor="filter-state" className="ui-label">
-                        State
-                    </label>
-                    <Select
-                        id="filter-state"
-                        disabled={loading}
-                        value={draft.state ?? ''}
-                        onChange={(event) =>
-                            setDraft({
-                                ...draft,
-                                state: event.target.value === '' ? null : event.target.value,
-                            })
-                        }
-                        className={INPUT}
-                    >
-                        <option value="">Any</option>
-                        {options.states.map((value) => (
-                            <option key={value} value={value}>
-                                {incidentStateLabel(value)}
-                            </option>
-                        ))}
-                    </Select>
-                </div>
-                <div>
-                    <label htmlFor="filter-severity" className="ui-label">
-                        Severity
-                    </label>
-                    <Select
-                        id="filter-severity"
-                        disabled={loading}
-                        value={draft.severity ?? ''}
-                        onChange={(event) =>
-                            setDraft({
-                                ...draft,
-                                severity: event.target.value === '' ? null : event.target.value,
-                            })
-                        }
-                        className={INPUT}
-                    >
-                        <option value="">Any</option>
-                        {options.severities.map((value) => (
-                            <option key={value} value={value}>
-                                {severityLabel(value)}
-                            </option>
-                        ))}
-                    </Select>
-                </div>
+                <SelectField
+                    label="State"
+                    id="filter-state"
+                    disabled={loading}
+                    value={draft.state ?? ''}
+                    onChange={(event) =>
+                        setDraft({
+                            ...draft,
+                            state: event.target.value === '' ? null : event.target.value,
+                        })
+                    }
+                >
+                    <option value="">Any</option>
+                    {options.states.map((value) => (
+                        <option key={value} value={value}>
+                            {incidentStateLabel(value)}
+                        </option>
+                    ))}
+                </SelectField>
+                <SelectField
+                    label="Severity"
+                    id="filter-severity"
+                    disabled={loading}
+                    value={draft.severity ?? ''}
+                    onChange={(event) =>
+                        setDraft({
+                            ...draft,
+                            severity: event.target.value === '' ? null : event.target.value,
+                        })
+                    }
+                >
+                    <option value="">Any</option>
+                    {options.severities.map((value) => (
+                        <option key={value} value={value}>
+                            {severityLabel(value)}
+                        </option>
+                    ))}
+                </SelectField>
                 <div className="ui-actions">
                     <Button type="submit" busy={loading} busyLabel="Loading…">
                         Apply filters

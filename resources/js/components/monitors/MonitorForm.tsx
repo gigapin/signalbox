@@ -1,5 +1,8 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
-import Select from '../ui/Select';
+import InputField from '../ui/InputField';
+import TextareaField from '../ui/TextareaField';
+import SelectField from '../ui/SelectField';
+import ChoiceField from '../ui/ChoiceField';
 import { useFormProtection } from '../app/NavigationGuard';
 import Button from '../ui/Button';
 import MutationFeedback from '../MutationFeedback';
@@ -68,7 +71,7 @@ interface FieldProps {
 }
 
 /** Inputs for a select bound to server-supplied values. */
-interface SelectFieldProps {
+interface MonitorSelectFieldProps {
     /** Select identity and server error key. */
     name: string;
     /** Visible label. */
@@ -103,24 +106,7 @@ type TextField = {
     [K in keyof MonitorFormData]: MonitorFormData[K] extends string ? K : never;
 }[keyof MonitorFormData];
 
-/** Field styling shared by inputs, selects and text areas. */
-const INPUT = 'ui-input w-full';
-
-/**
- * @param name Field identity.
- * @param error Server message, if any.
- * @param hint Whether a hint element exists.
- * @returns Space-separated IDs of the descriptions, or undefined when none apply.
- */
-function describedBy(name: string, error: string | undefined, hint: boolean): string | undefined {
-    const ids = [hint ? `${name}-hint` : '', error ? `${name}-error` : ''].filter(
-        (id) => id !== '',
-    );
-
-    return ids.length > 0 ? ids.join(' ') : undefined;
-}
-
-/** Render one labelled input with its hint and inline error. */
+/** Adapt monitor text and numeric values to shared native field components. */
 function Field({
     name,
     label,
@@ -135,70 +121,51 @@ function Field({
     const shared = {
         id: name,
         name,
+        label,
         value,
+        error,
+        hint,
         required,
         'aria-invalid': Boolean(error),
-        'aria-describedby': describedBy(name, error, hint !== undefined),
-        className: INPUT,
     };
 
-    return (
-        <div>
-            <label htmlFor={name} className="ui-label">
-                {label}
-            </label>
-            {multiline ? (
-                <textarea {...shared} rows={4} onChange={(event) => onChange(event.target.value)} />
-            ) : (
-                <input
-                    {...shared}
-                    type="text"
-                    inputMode={numeric ? 'numeric' : undefined}
-                    onChange={(event) => onChange(event.target.value)}
-                />
-            )}
-            {hint !== undefined && (
-                <p id={`${name}-hint`} className="ui-help">
-                    {hint}
-                </p>
-            )}
-            {error && (
-                <p id={`${name}-error`} role="alert" className="ui-field-error">
-                    {error}
-                </p>
-            )}
-        </div>
+    return multiline ? (
+        <TextareaField {...shared} rows={4} onChange={(event) => onChange(event.target.value)} />
+    ) : (
+        <InputField
+            {...shared}
+            type="text"
+            inputMode={numeric ? 'numeric' : undefined}
+            onChange={(event) => onChange(event.target.value)}
+        />
     );
 }
 
 /** Render one labelled select with its inline error. */
-function SelectField({ name, label, value, values, onChange, error, format }: SelectFieldProps) {
+function MonitorSelectField({
+    name,
+    label,
+    value,
+    values,
+    onChange,
+    error,
+    format,
+}: MonitorSelectFieldProps) {
     return (
-        <div>
-            <label htmlFor={name} className="ui-label">
-                {label}
-            </label>
-            <Select
-                id={name}
-                name={name}
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? `${name}-error` : undefined}
-                className={INPUT}
-            >
-                {values.map((option) => (
-                    <option key={option} value={option}>
-                        {format ? format(option) : option}
-                    </option>
-                ))}
-            </Select>
-            {error && (
-                <p id={`${name}-error`} role="alert" className="ui-field-error">
-                    {error}
-                </p>
-            )}
-        </div>
+        <SelectField
+            label={label}
+            error={error}
+            id={name}
+            name={name}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+        >
+            {values.map((option) => (
+                <option key={option} value={option}>
+                    {format ? format(option) : option}
+                </option>
+            ))}
+        </SelectField>
     );
 }
 
@@ -419,7 +386,7 @@ export default function MonitorForm({
                         error={errors.name}
                         required
                     />
-                    <SelectField
+                    <MonitorSelectField
                         name="type"
                         label="Type"
                         value={data.type}
@@ -471,18 +438,15 @@ export default function MonitorForm({
                         <legend className="mb-2 text-sm font-medium">Regions</legend>
                         <div className="flex flex-wrap gap-4">
                             {options.regions.map((region) => (
-                                <label key={region} className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        name="regions"
-                                        value={region}
-                                        checked={data.regions.includes(region)}
-                                        onChange={(event) =>
-                                            toggleRegion(region, event.target.checked)
-                                        }
-                                    />
-                                    {regionLabel(region)}
-                                </label>
+                                <ChoiceField
+                                    label={regionLabel(region)}
+                                    key={region}
+                                    type="checkbox"
+                                    name="regions"
+                                    value={region}
+                                    checked={data.regions.includes(region)}
+                                    onChange={(event) => toggleRegion(region, event.target.checked)}
+                                />
                             ))}
                         </div>
                         {nestedErrors(errors, 'regions').map((message) => (
@@ -506,16 +470,14 @@ export default function MonitorForm({
                             </p>
                         )}
                         {!mustSendSecrets && (
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={data.replace_url}
-                                    onChange={(event) =>
-                                        form.setData('replace_url', event.target.checked)
-                                    }
-                                />
-                                Replace URL
-                            </label>
+                            <ChoiceField
+                                label="Replace URL"
+                                type="checkbox"
+                                checked={data.replace_url}
+                                onChange={(event) =>
+                                    form.setData('replace_url', event.target.checked)
+                                }
+                            />
                         )}
                         {showUrl && (
                             <Field
@@ -528,7 +490,7 @@ export default function MonitorForm({
                             />
                         )}
                         <div className="grid gap-4 md:grid-cols-2">
-                            <SelectField
+                            <MonitorSelectField
                                 name="method"
                                 label="Method"
                                 value={data.method}
@@ -546,16 +508,14 @@ export default function MonitorForm({
                                 required
                             />
                         </div>
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={data.follow_redirects}
-                                onChange={(event) =>
-                                    form.setData('follow_redirects', event.target.checked)
-                                }
-                            />
-                            Follow redirects
-                        </label>
+                        <ChoiceField
+                            label="Follow redirects"
+                            type="checkbox"
+                            checked={data.follow_redirects}
+                            onChange={(event) =>
+                                form.setData('follow_redirects', event.target.checked)
+                            }
+                        />
 
                         {storedHttp && (
                             <p className="text-sm text-slate-300">
@@ -567,16 +527,14 @@ export default function MonitorForm({
                             </p>
                         )}
                         {!mustSendSecrets && (
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={data.replace_headers}
-                                    onChange={(event) =>
-                                        form.setData('replace_headers', event.target.checked)
-                                    }
-                                />
-                                Replace all headers
-                            </label>
+                            <ChoiceField
+                                label="Replace all headers"
+                                type="checkbox"
+                                checked={data.replace_headers}
+                                onChange={(event) =>
+                                    form.setData('replace_headers', event.target.checked)
+                                }
+                            />
                         )}
                         {showHeaders && (
                             <fieldset>
@@ -589,8 +547,9 @@ export default function MonitorForm({
                                         key={index}
                                         className="mb-2 grid gap-2 md:grid-cols-[1fr_2fr_auto]"
                                     >
-                                        <input
-                                            aria-label={`Header ${index + 1} name`}
+                                        <InputField
+                                            labelHidden
+                                            label={`Header ${index + 1} name`}
                                             value={row.name}
                                             onChange={(event) =>
                                                 setHeader(index, {
@@ -598,10 +557,10 @@ export default function MonitorForm({
                                                     name: event.target.value,
                                                 })
                                             }
-                                            className={INPUT}
                                         />
-                                        <input
-                                            aria-label={`Header ${index + 1} value`}
+                                        <InputField
+                                            labelHidden
+                                            label={`Header ${index + 1} value`}
                                             value={row.value}
                                             onChange={(event) =>
                                                 setHeader(index, {
@@ -609,7 +568,6 @@ export default function MonitorForm({
                                                     value: event.target.value,
                                                 })
                                             }
-                                            className={INPUT}
                                         />
                                         <button
                                             type="button"
@@ -657,16 +615,14 @@ export default function MonitorForm({
                             </p>
                         )}
                         {!mustSendSecrets && (
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={data.replace_body}
-                                    onChange={(event) =>
-                                        form.setData('replace_body', event.target.checked)
-                                    }
-                                />
-                                Replace or clear body
-                            </label>
+                            <ChoiceField
+                                label="Replace or clear body"
+                                type="checkbox"
+                                checked={data.replace_body}
+                                onChange={(event) =>
+                                    form.setData('replace_body', event.target.checked)
+                                }
+                            />
                         )}
                         {showBody && (
                             <Field
@@ -690,7 +646,7 @@ export default function MonitorForm({
                                     error={errors.expected_keyword}
                                     hint="Matched exactly, including spaces and case."
                                 />
-                                <SelectField
+                                <MonitorSelectField
                                     name="keyword_mode"
                                     label="Keyword must be"
                                     value={data.keyword_mode}
@@ -747,7 +703,7 @@ export default function MonitorForm({
                                 error={errors.dns_name}
                                 required
                             />
-                            <SelectField
+                            <MonitorSelectField
                                 name="dns_record_type"
                                 label="Record type"
                                 value={data.dns_record_type}
@@ -760,11 +716,12 @@ export default function MonitorForm({
                             <legend className="mb-2 text-sm font-medium">Expected values</legend>
                             {data.dns_expected_values.map((value, index) => (
                                 <div key={index} className="mb-2 flex gap-2">
-                                    <input
-                                        aria-label={`Expected value ${index + 1}`}
+                                    <InputField
+                                        labelHidden
+                                        label={`Expected value ${index + 1}`}
+                                        wrapperClassName="min-w-0 flex-1"
                                         value={value}
                                         onChange={(event) => setDnsValue(index, event.target.value)}
-                                        className={INPUT}
                                     />
                                     {data.dns_expected_values.length > 1 && (
                                         <button

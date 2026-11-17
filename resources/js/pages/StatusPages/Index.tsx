@@ -1,4 +1,5 @@
 /** Manage the team's public status pages. */
+import InputField from '../../components/ui/InputField';
 import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { useNavigationGuard } from '../../components/app/NavigationGuard';
@@ -23,12 +24,9 @@ function PageContent() {
                     Private management. Draft addresses return 404; only published pages can be
                     opened by visitors. Draft pages have no visitor preview.
                 </p>
-                <label htmlFor="status-page-search" className="ui-label">
-                    Find a status page
-                </label>
-                <input
+                <InputField
+                    label="Find a status page"
                     id="status-page-search"
-                    className="ui-input"
                     type="search"
                     maxLength={120}
                     disabled={guard.busy}

@@ -1,4 +1,6 @@
 /** List a monitor's maintenance windows and let managers schedule, reschedule, end or delete them. */
+import InputField from '../ui/InputField';
+import TextareaField from '../ui/TextareaField';
 import { useFormProtection } from '../app/NavigationGuard';
 import { useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
@@ -56,10 +58,6 @@ interface MaintenanceFields {
     reason: string;
 }
 
-/** Field styling shared by the inputs. */
-const INPUT =
-    'w-full min-w-0 rounded border border-slate-600 bg-slate-900 px-3 py-2 focus:outline-2 focus:outline-emerald-400';
-
 /** Values of a blank scheduling form. */
 const BLANK: MaintenanceFields = { starts_at: '', ends_at: '', reason: '' };
 
@@ -95,83 +93,41 @@ function MaintenanceForm({
         });
     }
 
-    /**
-     * @param field Form field.
-     * @returns Element identity of the field's error message.
-     */
-    function errorId(field: keyof MaintenanceFields): string {
-        return `${idPrefix}-${field}-error`;
-    }
-
     return (
         <form
             onSubmit={submit}
             noValidate
             className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2"
         >
-            <div>
-                <label htmlFor={`${idPrefix}-starts_at`} className="block text-sm font-medium">
-                    Start (your local time)
-                </label>
-                <input
-                    id={`${idPrefix}-starts_at`}
-                    type="datetime-local"
-                    value={form.data.starts_at}
-                    onChange={(event) => form.setData('starts_at', event.target.value)}
-                    aria-invalid={form.errors.starts_at !== undefined}
-                    aria-describedby={`${idPrefix}-starts_at-hint ${errorId('starts_at')}`}
-                    className={INPUT}
-                />
-                <p id={`${idPrefix}-starts_at-hint`} className="mt-1 text-xs text-slate-400">
-                    Leave empty to start now. A start in the past is refused.
-                </p>
-                {form.errors.starts_at && (
-                    <p id={errorId('starts_at')} role="alert" className="mt-1 text-red-300">
-                        {form.errors.starts_at}
-                    </p>
-                )}
-            </div>
-            <div>
-                <label htmlFor={`${idPrefix}-ends_at`} className="block text-sm font-medium">
-                    End (your local time)
-                </label>
-                <input
-                    id={`${idPrefix}-ends_at`}
-                    type="datetime-local"
-                    required
-                    value={form.data.ends_at}
-                    onChange={(event) => form.setData('ends_at', event.target.value)}
-                    aria-invalid={form.errors.ends_at !== undefined}
-                    aria-describedby={errorId('ends_at')}
-                    className={INPUT}
-                />
-                {form.errors.ends_at && (
-                    <p id={errorId('ends_at')} role="alert" className="mt-1 text-red-300">
-                        {form.errors.ends_at}
-                    </p>
-                )}
-            </div>
-            <div className="md:col-span-2">
-                <label htmlFor={`${idPrefix}-reason`} className="block text-sm font-medium">
-                    Reason
-                </label>
-                <textarea
-                    id={`${idPrefix}-reason`}
-                    required
-                    rows={2}
-                    maxLength={reasonMaxLength}
-                    value={form.data.reason}
-                    onChange={(event) => form.setData('reason', event.target.value)}
-                    aria-invalid={form.errors.reason !== undefined}
-                    aria-describedby={errorId('reason')}
-                    className={INPUT}
-                />
-                {form.errors.reason && (
-                    <p id={errorId('reason')} role="alert" className="mt-1 text-red-300">
-                        {form.errors.reason}
-                    </p>
-                )}
-            </div>
+            <InputField
+                label="Start (your local time)"
+                error={form.errors.starts_at}
+                hint="Leave empty to start now. A start in the past is refused."
+                id={`${idPrefix}-starts_at`}
+                type="datetime-local"
+                value={form.data.starts_at}
+                onChange={(event) => form.setData('starts_at', event.target.value)}
+            />
+            <InputField
+                label="End (your local time)"
+                error={form.errors.ends_at}
+                id={`${idPrefix}-ends_at`}
+                type="datetime-local"
+                required
+                value={form.data.ends_at}
+                onChange={(event) => form.setData('ends_at', event.target.value)}
+            />
+            <TextareaField
+                label="Reason"
+                error={form.errors.reason}
+                wrapperClassName="md:col-span-2"
+                id={`${idPrefix}-reason`}
+                required
+                rows={2}
+                maxLength={reasonMaxLength}
+                value={form.data.reason}
+                onChange={(event) => form.setData('reason', event.target.value)}
+            />
             <div className="md:col-span-2">
                 <button
                     disabled={form.processing}

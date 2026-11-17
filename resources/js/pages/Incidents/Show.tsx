@@ -1,5 +1,6 @@
 /** Show one incident with its timeline and let managers take responsibility, post, classify and publish. */
-import Select from '../../components/ui/Select';
+import SelectField from '../../components/ui/SelectField';
+import TextareaField from '../../components/ui/TextareaField';
 import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
@@ -96,9 +97,6 @@ interface EntryProps {
     canPublish: boolean;
 }
 
-/** Field styling shared by the inputs. */
-const INPUT = 'ui-input w-full';
-
 /** Primary button styling. */
 const BUTTON = 'ui-button';
 
@@ -165,62 +163,42 @@ function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps
                 <h3 id="post-update-heading" className="font-medium">
                     Add a timeline update
                 </h3>
-                <div>
-                    <label htmlFor="update-status" className="ui-label">
-                        Status after this update
-                    </label>
-                    <Select
-                        id="update-status"
-                        value={form.data.status}
-                        onChange={(event) => form.setData('status', event.target.value)}
-                        aria-invalid={form.errors.status !== undefined}
-                        aria-describedby="update-status-error"
-                        className={INPUT}
-                    >
-                        {unavailable && (
-                            <option value={form.data.status} disabled>
-                                Draft status unavailable
-                            </option>
-                        )}
-                        {statuses.map((value) => (
-                            <option key={value} value={value}>
-                                {incidentStatusLabel(value)}
-                            </option>
-                        ))}
-                    </Select>
-                    {form.errors.status && (
-                        <p id="update-status-error" role="alert" className="mt-1 text-red-300">
-                            {form.errors.status}
-                        </p>
+                <SelectField
+                    label="Status after this update"
+                    error={form.errors.status}
+                    id="update-status"
+                    value={form.data.status}
+                    onChange={(event) => form.setData('status', event.target.value)}
+                >
+                    {unavailable && (
+                        <option value={form.data.status} disabled>
+                            Draft status unavailable
+                        </option>
                     )}
-                </div>
-                <div>
-                    <label htmlFor="update-message" className="ui-label">
-                        Message
-                    </label>
-                    <textarea
-                        id="update-message"
-                        required
-                        rows={3}
-                        maxLength={maxLength}
-                        value={form.data.message}
-                        onChange={(event) => form.setData('message', event.target.value)}
-                        aria-invalid={form.errors.message !== undefined}
-                        aria-describedby="update-message-hint update-message-error"
-                        className={INPUT}
-                    />
-                    <p id="update-message-hint" className="ui-help">
-                        Updates are private until you publish them.
-                        {incident.status === 'resolved'
-                            ? ' A resolved incident accepts notes only; a new confirmed failure reopens it.'
-                            : ''}
-                    </p>
-                    {form.errors.message && (
-                        <p id="update-message-error" role="alert" className="mt-1 text-red-300">
-                            {form.errors.message}
-                        </p>
-                    )}
-                </div>
+                    {statuses.map((value) => (
+                        <option key={value} value={value}>
+                            {incidentStatusLabel(value)}
+                        </option>
+                    ))}
+                </SelectField>
+                <TextareaField
+                    label="Message"
+                    error={form.errors.message}
+                    hint={
+                        <>
+                            Updates are private until you publish them.
+                            {incident.status === 'resolved'
+                                ? ' A resolved incident accepts notes only; a new confirmed failure reopens it.'
+                                : ''}
+                        </>
+                    }
+                    id="update-message"
+                    required
+                    rows={3}
+                    maxLength={maxLength}
+                    value={form.data.message}
+                    onChange={(event) => form.setData('message', event.target.value)}
+                />
                 <div>
                     <button
                         disabled={mutation.locked || form.processing || guard.busy || unavailable}
@@ -269,25 +247,20 @@ function SeverityForm({ path, incident, severities }: SeverityProps) {
                 className="ui-incident-editor-fields"
             >
                 <legend className="sr-only">Severity saved</legend>
-                <div>
-                    <label htmlFor="incident-severity" className="ui-label">
-                        Severity
-                    </label>
-                    <Select
-                        id="incident-severity"
-                        value={form.data.severity}
-                        onChange={(event) => form.setData('severity', event.target.value)}
-                        aria-invalid={form.errors.severity !== undefined}
-                        aria-describedby="incident-severity-error"
-                        className={INPUT}
-                    >
-                        {severities.map((value) => (
-                            <option key={value} value={value}>
-                                {severityLabel(value)}
-                            </option>
-                        ))}
-                    </Select>
-                </div>
+                <SelectField
+                    label="Severity"
+                    id="incident-severity"
+                    value={form.data.severity}
+                    onChange={(event) => form.setData('severity', event.target.value)}
+                    aria-invalid={form.errors.severity !== undefined}
+                    aria-describedby="incident-severity-error"
+                >
+                    {severities.map((value) => (
+                        <option key={value} value={value}>
+                            {severityLabel(value)}
+                        </option>
+                    ))}
+                </SelectField>
                 <button
                     disabled={form.processing || mutation.locked || guard.busy}
                     className={BUTTON}
@@ -339,30 +312,16 @@ function RootCauseForm({ path, incident, maxLength }: RootCauseProps) {
                 className="ui-incident-editor-fields"
             >
                 <legend className="sr-only">Declared cause saved</legend>
-                <div>
-                    <label htmlFor="root-cause" className="ui-label">
-                        Declared cause
-                    </label>
-                    <textarea
-                        id="root-cause"
-                        rows={3}
-                        maxLength={maxLength}
-                        value={form.data.root_cause_note}
-                        onChange={(event) => form.setData('root_cause_note', event.target.value)}
-                        aria-invalid={form.errors.root_cause_note !== undefined}
-                        aria-describedby="root-cause-hint root-cause-error"
-                        className={INPUT}
-                    />
-                    <p id="root-cause-hint" className="ui-help">
-                        Leave empty to clear it. The note stays internal; the timeline only records
-                        the change.
-                    </p>
-                    {form.errors.root_cause_note && (
-                        <p id="root-cause-error" role="alert" className="mt-1 text-red-300">
-                            {form.errors.root_cause_note}
-                        </p>
-                    )}
-                </div>
+                <TextareaField
+                    label="Declared cause"
+                    error={form.errors.root_cause_note}
+                    hint="Leave empty to clear it. The note stays internal; the timeline only records the change."
+                    id="root-cause"
+                    rows={3}
+                    maxLength={maxLength}
+                    value={form.data.root_cause_note}
+                    onChange={(event) => form.setData('root_cause_note', event.target.value)}
+                />
                 <div>
                     <button
                         disabled={form.processing || mutation.locked || guard.busy}

@@ -837,3 +837,13 @@ The CSP acceptance suite expects no development hot-server source in ordinary re
 ## Private TLS admission regression (SEC.07)
 
 `StatusDomainsTest` authenticates certificate requests using both the raw socket peer and a shared fake secret, refuses missing/malformed/duplicate/incorrect credentials before reading bindings, and drives the real Laravel kernel through front-controller and encoded paths. [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-admission-proxy-regression-sec07) documents the separate reproducible Caddy/PHP proxy probe with the pinned binary. It validates the production template and runs 18 loopback checks with temporary HTTP listeners, a public fake secret, the dedicated test database and no ACME issuance. It is an explicit infrastructure probe rather than a skipped test in the ordinary suite.
+
+## Database exception logging — SEC.13
+
+Run the focused regression with isolated PostgreSQL/Redis:
+
+```sh
+docker compose run --rm -e COMPOSER_ROOT_VERSION=dev-main php-test php vendor/bin/pest tests/Unit/SecretRedactorTest.php tests/Feature/DatabaseExceptionLoggingTest.php tests/Integration/DatabaseExceptionLoggingTest.php
+```
+
+The feature suite asserts formatted output from line and JSON formatters, nested exception chains/extra, direct Laravel throwable messages, real fallback creation errors, ordinary secret redaction, and framework reporting through stack/shared context. The PostgreSQL test provokes invalid integer input containing synthetic email/hash/ciphertext values inside a savepoint and checks the resulting `QueryException` log, preserving SQLSTATE `22P02` without SQL, bindings or driver detail. Tests never use customer data or external transports.

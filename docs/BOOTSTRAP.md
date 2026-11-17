@@ -1,5 +1,9 @@
 # Application bootstrap reference
 
+## Database exception redaction (SEC.13, 2026-11-17)
+
+`LoggingServiceProvider` now precedes other application providers and installs the fallback-safe logging manager. Deploy PHP/config normally and reload long-lived PHP processes; there is no dependency, migration, environment/key change or asset rebuild requirement. Database records retain safe exception class/code/origin and numeric context, while free text and full exception stacks are suppressed. See [OUTBOUND-SECURITY.md](OUTBOUND-SECURITY.md#database-exception-logging-sec13). Development services/data are not reconfigured by verification; current progress and checks are recorded at the top of TASKS, superseding the historical handoff below.
+
 ## Session close and restart — 2026-11-16
 
 The user has stopped this session after SEC.12. **12/15 security corrections are complete; none is in progress. Next: SEC.13**, database-exception redaction and the emergency logging tap, followed by SEC.14 npm dependency/audit work. SEC.06 remains explicitly deferred pending the user's product decisions; M9.01 is not started and M11's broader criteria remain open. Read the [current TASKS handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-16) before making changes. Suggested next branch: `fix/redact-database-exceptions-in-logs`; Git/gh and all branch/commit/remote operations remain exclusively user-managed and unverified.

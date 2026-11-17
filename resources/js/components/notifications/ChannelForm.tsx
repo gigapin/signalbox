@@ -90,10 +90,7 @@ export default function ChannelForm({
             <fieldset disabled={blocked} className="min-w-0 grid gap-4 md:grid-cols-2">
                 {!editing && (
                     <div>
-                        <label
-                            htmlFor={`${idPrefix}-type`}
-                            className="mb-2 block text-sm font-medium"
-                        >
+                        <label htmlFor={`${idPrefix}-type`} className="block text-sm font-medium">
                             Channel type
                         </label>
                         <select
@@ -113,7 +110,7 @@ export default function ChannelForm({
                     </div>
                 )}
                 <div>
-                    <label htmlFor={`${idPrefix}-name`} className="mb-2 block text-sm font-medium">
+                    <label htmlFor={`${idPrefix}-name`} className="block text-sm font-medium">
                         Name
                     </label>
                     <input
@@ -139,7 +136,7 @@ export default function ChannelForm({
 
                     return (
                         <div key={field.name}>
-                            <label htmlFor={id} className="mb-2 block text-sm font-medium">
+                            <label htmlFor={id} className="block text-sm font-medium">
                                 {field.label}
                             </label>
                             <input

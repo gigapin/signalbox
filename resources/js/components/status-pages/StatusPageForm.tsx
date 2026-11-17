@@ -186,7 +186,7 @@ export default function StatusPageForm({
         <form onSubmit={submit} noValidate>
             <fieldset disabled={blocked} className="grid min-w-0 gap-4">
                 <div>
-                    <label htmlFor={`${idPrefix}-title`} className="mb-2 block text-sm font-medium">
+                    <label htmlFor={`${idPrefix}-title`} className="block text-sm font-medium">
                         Title
                     </label>
                     <input
@@ -210,7 +210,7 @@ export default function StatusPageForm({
                     )}
                 </div>
                 <div>
-                    <label htmlFor={`${idPrefix}-slug`} className="mb-2 block text-sm font-medium">
+                    <label htmlFor={`${idPrefix}-slug`} className="block text-sm font-medium">
                         Public address
                     </label>
                     <div className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export default function StatusPageForm({
                 <div>
                     <label
                         htmlFor={`${idPrefix}-description`}
-                        className="mb-2 block text-sm font-medium"
+                        className="block text-sm font-medium"
                     >
                         Description (optional)
                     </label>
@@ -267,10 +267,7 @@ export default function StatusPageForm({
                 </div>
                 <div className="flex flex-wrap gap-4">
                     <div>
-                        <label
-                            htmlFor={`${idPrefix}-mode`}
-                            className="mb-2 block text-sm font-medium"
-                        >
+                        <label htmlFor={`${idPrefix}-mode`} className="block text-sm font-medium">
                             Color scheme
                         </label>
                         <select
@@ -287,10 +284,7 @@ export default function StatusPageForm({
                         </select>
                     </div>
                     <div>
-                        <label
-                            htmlFor={`${idPrefix}-accent`}
-                            className="mb-2 block text-sm font-medium"
-                        >
+                        <label htmlFor={`${idPrefix}-accent`} className="block text-sm font-medium">
                             Accent
                         </label>
                         <select
@@ -319,10 +313,7 @@ export default function StatusPageForm({
                     </label>
                 </div>
                 <div>
-                    <label
-                        htmlFor={`${idPrefix}-password`}
-                        className="mb-2 block text-sm font-medium"
-                    >
+                    <label htmlFor={`${idPrefix}-password`} className="block text-sm font-medium">
                         {page?.hasPassword === true ? 'New password' : 'Password (optional)'}
                     </label>
                     <input
@@ -390,7 +381,7 @@ export default function StatusPageForm({
                                     <legend className="font-medium">Component {index + 1}</legend>
                                     <label
                                         htmlFor={`${componentId}-name`}
-                                        className="mt-2 mb-1 block text-sm"
+                                        className="mt-2 block text-sm"
                                     >
                                         Public name
                                     </label>

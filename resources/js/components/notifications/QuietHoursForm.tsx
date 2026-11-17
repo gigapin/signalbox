@@ -82,7 +82,7 @@ export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursForm
 
                     return (
                         <div key={field.name}>
-                            <label htmlFor={id} className="mb-1 block text-sm font-medium">
+                            <label htmlFor={id} className="block text-sm font-medium">
                                 {field.label}
                             </label>
                             <input

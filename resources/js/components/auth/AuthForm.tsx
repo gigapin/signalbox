@@ -86,7 +86,7 @@ export default function AuthForm({
                     ))}
                 {fields.map((field, index) => (
                     <div key={field.name}>
-                        <label htmlFor={field.name} className="mb-2 block text-sm font-medium">
+                        <label htmlFor={field.name} className="block text-sm font-medium">
                             {field.label}
                         </label>
                         <input

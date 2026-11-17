@@ -110,7 +110,7 @@ function MaintenanceForm({
             className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2"
         >
             <div>
-                <label htmlFor={`${idPrefix}-starts_at`} className="mb-2 block text-sm font-medium">
+                <label htmlFor={`${idPrefix}-starts_at`} className="block text-sm font-medium">
                     Start (your local time)
                 </label>
                 <input
@@ -132,7 +132,7 @@ function MaintenanceForm({
                 )}
             </div>
             <div>
-                <label htmlFor={`${idPrefix}-ends_at`} className="mb-2 block text-sm font-medium">
+                <label htmlFor={`${idPrefix}-ends_at`} className="block text-sm font-medium">
                     End (your local time)
                 </label>
                 <input
@@ -152,7 +152,7 @@ function MaintenanceForm({
                 )}
             </div>
             <div className="md:col-span-2">
-                <label htmlFor={`${idPrefix}-reason`} className="mb-2 block text-sm font-medium">
+                <label htmlFor={`${idPrefix}-reason`} className="block text-sm font-medium">
                     Reason
                 </label>
                 <textarea

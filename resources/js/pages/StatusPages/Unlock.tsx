@@ -72,7 +72,7 @@ export default function Unlock() {
                         <div>
                             <label
                                 htmlFor="status-page-password"
-                                className="mb-2 block text-sm font-medium"
+                                className="block text-sm font-medium"
                             >
                                 Password
                             </label>

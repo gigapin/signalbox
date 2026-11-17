@@ -160,7 +160,7 @@ export default function PolicyForm({
         <form onSubmit={submit} noValidate>
             <fieldset disabled={blocked} className="min-w-0 grid gap-4">
                 <div>
-                    <label htmlFor={`${idPrefix}-name`} className="mb-2 block text-sm font-medium">
+                    <label htmlFor={`${idPrefix}-name`} className="block text-sm font-medium">
                         Policy name
                     </label>
                     <input
@@ -203,7 +203,7 @@ export default function PolicyForm({
                                     <legend className="font-medium">Step {index + 1}</legend>
                                     <label
                                         htmlFor={`${stepId}-delay`}
-                                        className="mt-2 mb-1 block text-sm"
+                                        className="mt-2 block text-sm"
                                     >
                                         Minutes after the incident is confirmed
                                     </label>

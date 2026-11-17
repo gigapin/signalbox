@@ -50,7 +50,7 @@ export default function MonthlyReportDownload({ teamId, timezone }: MonthlyRepor
 
     return (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <label htmlFor="report-month" className="ui-label">
+            <label htmlFor="report-month" className="ui-label mb-0">
                 Monthly report
             </label>
             <select

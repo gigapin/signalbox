@@ -102,7 +102,7 @@ function EscalationEditor({ action, escalation }: EditorProps) {
             )}
             <form onSubmit={submit} noValidate className="mt-3 flex flex-wrap items-end gap-3">
                 <div>
-                    <label htmlFor="monitor-escalation" className="mb-2 block text-sm font-medium">
+                    <label htmlFor="monitor-escalation" className="block text-sm font-medium">
                         Escalation policy
                     </label>
                     <select

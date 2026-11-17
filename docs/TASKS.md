@@ -1,5 +1,21 @@
 # Signalbox — Piano dei task
 
+## UI — Distanza label dal focus — 2026-11-17
+
+- [x] Applicata ulteriore richiesta utente di alzare le label sopra input/select di circa 2 px per evitare contatto con l’outline verde. Distanza condivisa da 8 a 10 px, mantenendo focus e freccia select. Stesso branch, nessun Git/gh.
+- File: app.css con token field-gap 10 px e grid coerente; rimossi override mb-2 dalle label associate in Monitors/Index, StatusPages/Unlock, Admin/Teams/Show, AuthForm, StatusPageForm, EscalationPanel, QuietHoursForm, PolicyForm, ChannelForm/Row e MaintenancePanel; UI-GUIDELINES aggiornate. Eccezione inline report mb-0 conservata, frecce select invariate.
+- Verifiche: npm check finale exit 0 (lint/Prettier/TypeScript e 6 qualità), **98 test / 5 suite** di primitive/campi/monitor/team/auth verdi; build **8.09 s**. Corretto wrapping Prettier in tre file. Fixture Firefox con CSS compilato: gap input/select/grid **10 px**. Il focus nativo non si attiva nel processo headless; nella sola fixture applicate le regole focus tramite attributo per verificare ingombro e rendering: outline **2 px**, offset **3 px**, restano **5 px** liberi prima della label, PASS e screenshot ispezionato. Questa simulazione non è un nuovo test di interazione browser nativa. Backend/CI non ripetuti: nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch: `git commit -m "style: increase label clearance above focused fields"`.
+
+
+## UI — Spaziatura campi e frecce select — 2026-11-17
+
+- [x] Applicata richiesta utente di distanziare label da input/select e spostare le frecce dei select dal bordo. Intervento condiviso su label associate e select singoli; mantenere select nativi/tastiera, checkbox e campi disabled. Stesso branch grafico, nessun Git/gh.
+- File: app.css, label preesistenti mb-1 in StatusPageForm/QuietHoursForm/PolicyForm/ChannelRow, eccezione mb-0 della label affiancata nel MonthlyReportDownload; aggiornati UI-GUIDELINES e piano. Distanza label/campo **8 px** senza raddoppio nel grid InputField; freccia CSS del select singolo con **14 px** dal bordo e **44 px** di padding destro, select nativo e forced-colors ripristinato a freccia OS. Nessuna nuova risorsa immagine/dipendenza o modifica CSP.
+- Verifiche: npm check finale exit 0 (lint/Prettier/TypeScript, **6 qualità**); regressioni form/team/auth/status/notifiche **61 test / 5 file**, più MonitorMutations/MonthlyReportDownload **23 / 2 file**, tutti verdi; prima selezione conteneva il nome inesistente MonitorForm.test.tsx, corretto eseguendo la suite effettiva MonitorMutations. Build finale **7.83 s**, exit 0. Firefox su fixture sintetica con CSS compilato: misurati 8 px per label/input, label/select e InputField grid; padding select 44 px e freccia inset verificati, controllo fixture PASS. Nessun dato reale o modifica a processi applicativi; backend/CI non ripetuti perché nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "style: improve form label and select spacing"`.
+
+
 ## UI — Allineamento verticale tabelle — 2026-11-17
 
 - [x] Corretto: prima colonna Monitor/Incidenti disallineata per padding py-2 locale rispetto alle altre celle, con allineamento top comune. Stesso override trovato nel DeliveryLog notifiche. Uniformare padding e centrare verticalmente tutte le celle DataTable. Unico branch grafico, nessun Git/gh.

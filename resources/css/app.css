@@ -62,6 +62,8 @@
     --spacing-ui-6: 1.5rem;
     --spacing-ui-8: 2rem;
     --spacing-ui-control: 2.75rem;
+    /* Label clearance includes the five-pixel outer focus-ring footprint. */
+    --spacing-ui-field-gap: 0.625rem;
     --radius-ui: 0.625rem;
 }
 
@@ -138,7 +140,7 @@
 
     .ui-field {
         display: grid;
-        gap: var(--spacing-ui-2);
+        gap: var(--spacing-ui-field-gap);
         min-width: 0;
     }
 
@@ -163,6 +165,41 @@
         font: inherit;
         line-height: 1.5;
         color-scheme: dark;
+    }
+
+    /* Associated labels have breathing room even outside the grid-based field primitive. */
+    label[for] {
+        display: block;
+        margin-bottom: var(--spacing-ui-field-gap);
+    }
+
+    /* The field grid already supplies the same ten-pixel separation. */
+    .ui-field > label[for] {
+        margin-bottom: 0;
+    }
+
+    /* Draw the single-select arrow inside reserved padding while retaining native selection behavior. */
+    select:not([multiple]):not([size]),
+    select:not([multiple])[size='1'] {
+        appearance: none;
+        padding-right: 2.75rem;
+        background-image:
+            linear-gradient(45deg, transparent 50%, var(--color-ui-muted) 50%),
+            linear-gradient(135deg, var(--color-ui-muted) 50%, transparent 50%);
+        background-position:
+            calc(100% - 19px) center,
+            calc(100% - 14px) center;
+        background-size: 5px 5px;
+        background-repeat: no-repeat;
+    }
+
+    /* OS high-contrast rendering owns its arrow and control colors. */
+    @media (forced-colors: active) {
+        select:not([multiple]):not([size]),
+        select:not([multiple])[size='1'] {
+            appearance: auto;
+            background-image: none;
+        }
     }
 
     .ui-input::placeholder {

@@ -334,7 +334,7 @@ function DetailContent() {
                             <div>
                                 <label
                                     htmlFor="valid-through"
-                                    className="mb-2 block text-sm font-medium"
+                                    className="block text-sm font-medium"
                                 >
                                     Valid through (UTC date, optional)
                                 </label>
@@ -368,10 +368,7 @@ function DetailContent() {
                         )}
 
                         <div>
-                            <label
-                                htmlFor="override-reason"
-                                className="mb-2 block text-sm font-medium"
-                            >
+                            <label htmlFor="override-reason" className="block text-sm font-medium">
                                 Reason (required, recorded in the audit log)
                             </label>
                             <textarea

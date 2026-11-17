@@ -181,7 +181,7 @@ export default function ChannelRow({
                     className="mt-3 flex flex-wrap items-end gap-3"
                 >
                     <div>
-                        <label htmlFor={codeId} className="mb-1 block text-sm font-medium">
+                        <label htmlFor={codeId} className="block text-sm font-medium">
                             Verification code
                         </label>
                         <input

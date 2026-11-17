@@ -89,7 +89,7 @@ const INPUT = 'ui-input';
 function FilterSelect({ name, label, value, values, format, onChange }: FilterSelectProps) {
     return (
         <div>
-            <label htmlFor={`filter-${name}`} className="ui-label mb-2 block">
+            <label htmlFor={`filter-${name}`} className="ui-label block">
                 {label}
             </label>
             <select
@@ -171,7 +171,7 @@ function PageContent() {
                 <fieldset disabled={loading} className="ui-monitor-filters">
                     <legend className="ui-section-title mb-4">Find monitors</legend>
                     <div className="ui-monitor-search">
-                        <label htmlFor="filter-q" className="ui-label mb-2 block">
+                        <label htmlFor="filter-q" className="ui-label block">
                             Search
                         </label>
                         <input

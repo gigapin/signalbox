@@ -268,3 +268,9 @@ The user now requires links throughout the application (including public/authent
 ### Table cell alignment — 2026-11-17
 
 Shared DataTable headers and data cells use equal padding and middle vertical alignment, including multi-line values and badges. Monitor/incident lists and notification delivery logs no longer override the first column's block padding. Other DataTable consumers (dashboard overview, maintenance, delivery history, team directory and monitor statistics/availability) inherit the same rule; the compact chart data disclosure is a separate native table without the conflicting override. Text remains left-aligned.
+
+### Form spacing and select arrows — 2026-11-17
+
+Associated field labels have eight pixels of bottom separation; the InputField grid supplies that separation itself without doubling margins. Older labels with four-pixel margins now use eight. Single selects retain native selection/keyboard behavior but use an inset CSS chevron with 14px end clearance and 44px reserved text padding. Multiple/listbox selects keep their native presentation. Forced-color mode restores the OS arrow; wrapping checkbox labels and the visually hidden team-selector label keep their semantics.
+
+The label gap is subsequently increased to **10px**, two pixels above the previous spacing, to provide five pixels of clearance beyond the 2px focus outline with 3px offset. Associated labels use the shared field-gap token instead of per-label mb-2 utilities; InputField uses the same grid gap without doubling margins. Inline report labels retain mb-0. Select arrows and keyboard focus indicators are unchanged.

@@ -10,8 +10,11 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Log\Logger;
 use Illuminate\Log\LogManager;
 
-/** Keep the framework's emergency transport while applying the ordinary redaction boundary. */
-final class RedactingLogManager extends LogManager
+/**
+ * Keep the framework's emergency transport while applying the ordinary redaction boundary.
+ * Remain extensible like Laravel's manager so facade spies and mocks can substitute this service.
+ */
+class RedactingLogManager extends LogManager
 {
     /**
      * @param string|null $name Channel name selected by the framework.

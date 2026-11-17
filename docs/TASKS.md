@@ -12,6 +12,14 @@ Le ore sono quelle delle singole righe della specifica: **178 ore complessive**,
 
 Preferenza permanente aggiornata il 2026-10-29: alla conclusione di ogni task suggerire il comando `git commit -m "..."` con messaggio inglese breve, specifico per il contenuto implementato e prefisso appropriato (es. `feat:` o `fix:`), senza riferimenti a milestone, task o documenti. Regola registrata in AGENTS.md; l’esecuzione resta esclusivamente all’utente. Aggiornamento solo Markdown, nessun test applicativo necessario e nessun comando Git/gh eseguito.
 
+## Correzione CI facade logging — 2026-11-17
+
+- [x] Correzione completata: regressione SEC.13 segnalata dall’utente nella CI backend: 10 errori, 3636 test passati, 24853 asserzioni, 307.97 s (esito remoto comunicato, non esecuzione locale). `RedactingLogManager` final impedisce `Log::spy()` e `Log::shouldReceive()` nelle integrazioni. Le verifiche locali precedenti non includevano queste suite.
+- Correzione: rimosso `final` da `app/Logging/RedactingLogManager.php`, mantenendo l’estensibilità del manager Laravel necessaria a Mockery; vincolo documentato nel PHPDoc e in OUTBOUND-SECURITY. Nessuna modifica ai vendor o aggiramento dei mock nei test. Git/gh non eseguiti.
+- Verifica locale su PHP 8.4, PostgreSQL/Redis test isolati: **157 test / 897 asserzioni, 37.49 s**, exit 0. Eseguite integralmente MonitorSchedulingTest, PublicRegistrationPrivacyTest, StatusPageCacheTest, StatusSubscriptionsTest e TeamBroadcastTest (incluse tutte le 10 casistiche fallite in CI), insieme a SecretRedactorTest e ai due DatabaseExceptionLoggingTest feature/integration. Test esistenti usati come regressione del contratto facade, senza indebolirli. **PHP-CS-Fixer dry-run 700 file, zero modifiche; Larastan livello 8 senza errori**, exit 0.
+- Suite backend completa, gate frontend e CI remota PHP 8.4/8.5 non rieseguiti in questa correzione; il risultato remoto resta da confermare dopo invio a cura dell’utente. Nessuna modifica di dipendenze, dati/configurazioni di sviluppo o riavvio applicativo. SEC.13 resta completato con questa correzione di compatibilità; prossimo SEC.14, branch suggerito `fix/audit-production-npm-dependencies`.
+- Commit suggerito: `git commit -m "fix: preserve logging facade mock compatibility"`.
+
 ## Ripresa — 2026-11-17
 
 **SEC.13 completato: 13/15 SEC conclusi**, nessun SEC in corso; leggere la sezione corrente sotto. Il riferimento del 2026-11-16 resta storico. Branch controllato dall’utente, Git/gh non eseguiti dall’agente. Prossimo dopo SEC.13: SEC.14; SEC.06 resta rinviato e M11.02 generale aperto.

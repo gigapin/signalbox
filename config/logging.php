@@ -146,6 +146,7 @@ return [
         ],
 
         'emergency' => [
+            'tap' => [RedactSecrets::class],
             'path' => storage_path('logs/laravel.log'),
         ],
 

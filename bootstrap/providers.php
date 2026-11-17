@@ -5,6 +5,7 @@
  */
 
 return [
+    App\Providers\LoggingServiceProvider::class,
     App\Providers\CryptographyServiceProvider::class,
     App\Providers\AppServiceProvider::class,
     App\Providers\HorizonServiceProvider::class,

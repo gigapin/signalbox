@@ -83,7 +83,7 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                         {error}
                     </p>
                 )}
-                <button type="submit" disabled={pending} className="w-fit underline">
+                <button type="submit" disabled={pending} className="w-fit cursor-pointer">
                     {claim.processing ? 'Saving domain…' : 'Save hostname'}
                 </button>
             </form>
@@ -127,7 +127,7 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                             type="button"
                             disabled={pending}
                             onClick={() => change('remove')}
-                            className="text-red-200 underline"
+                            className="text-red-200 cursor-pointer"
                         >
                             Remove hostname
                         </button>

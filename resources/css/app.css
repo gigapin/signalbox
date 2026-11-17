@@ -5,6 +5,24 @@
 @source '../js';
 @source '../views';
 
+/* Application-wide link presentation includes public pages and native disclosure controls. */
+@layer base {
+    a[href],
+    [role='link'],
+    summary {
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    a[href]:hover,
+    a[href]:focus-visible,
+    a[href]:active,
+    [role='link']:hover,
+    summary:hover {
+        text-decoration: none;
+    }
+}
+
 /* Semantic dark-theme tokens; prefixed names avoid changing existing Tailwind/public themes. */
 @theme {
     /* Canvas, raised surfaces, text, separators and keyboard focus colors. */
@@ -104,10 +122,6 @@
         background: var(--color-ui-danger-bg);
     }
 
-    .ui-button[data-variant='danger']:hover:not(:disabled) {
-        text-decoration: underline;
-    }
-
     .ui-button:disabled,
     .ui-input:disabled {
         cursor: not-allowed;
@@ -117,8 +131,8 @@
 
     .ui-link {
         color: var(--color-ui-accent);
-        text-decoration: underline;
-        text-underline-offset: 0.2em;
+        cursor: pointer;
+        text-decoration: none;
         overflow-wrap: anywhere;
     }
 

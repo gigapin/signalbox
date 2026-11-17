@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## UI — Link senza sottolineature — 2026-11-17
+
+- [x] Applicata richiesta utente su tutta l’applicazione, link senza underline anche hover e cursore pointer; focus da tastiera conservato. Preferenza utente: unico branch per le modifiche grafiche, più commit se opportuno; non suggerire un nuovo branch per ogni intervento grafico. Nessun Git/gh.
+- File: app.css (regola base anchor/role link/summary e primitive), componenti RequestFailureNotice, LiveUpdates, AuthLayout, MaintenancePanel, StatusPageRow/Form/DomainForm, EscalationPanel, ChannelRow, PolicyRow/Form, SigningSecret e pagina Incidents/Index. Eliminati anche gli underline degli hover danger e delle vecchie azioni testuali, mantenendo controlli disabled/focus e comportamento HTTP invariati. Aggiornati UI-GUIDELINES e piano.
+- Verifiche: `npm run check` exit 0 (lint, Prettier, TypeScript, **6 test qualità**); regressioni mirate layout/menu/team/auth/status/notifiche/errori/Home **89 test / 8 file, 18.83 s**, exit 0; build **7.78 s**, exit 0. Fixture Firefox con CSS compilato: anchor nativi e condivisi, summary e azioni testuali riportano cursor pointer e text-decoration none; controllo disabled conserva not-allowed. Screenshot/fixture in `/tmp`, nessuna sessione o dato cliente. Non eseguita una nuova accettazione completa dei flussi browser. Backend/CI non ripetuti perché nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "style: remove link underlines and use pointer cursors"`. Nessuna operazione Git eseguita.
+
+
 ## Correzione CI — Catalogo rotta dashboard — 2026-11-17
 
 - [x] Correzione completata: CI backend segnalata dall’utente con 1 errore / 3651 passati, 24649 asserzioni, 315.49 s. Aggiunta `/dashboard` senza aggiornare il catalogo indipendente TeamRouteMatrix; verifiche precedenti insufficienti perché non includevano la matrice. Aggiornare la classificazione account-level e verificarne i gate senza imporre un tenant alla scelta team; poi suite backend integrale. Nessun Git/gh.

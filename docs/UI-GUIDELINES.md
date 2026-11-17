@@ -260,3 +260,7 @@ The user's subsequent visual choice supersedes the slate surfaces above: canvas 
 The subsequent user refinement darkens the shared surface token (sidebar, panels and header) to `#191f18`; canvas, decorative borders, raised/hover surfaces and functional control boundaries retain their previous values.
 
 The latest user refinement sets the shared sidebar/panel/header surface to `#0f120e`, superseding `#191f18`. Other color tokens remain unchanged.
+
+### Application-wide links — 2026-11-17
+
+The user now requires links throughout the application (including public/authenticated pages) to have no underline in normal, hover, active or focused states, with a pointer cursor. This supersedes the previous content-link underline convention. Shared CSS covers native anchors, link roles and disclosure summaries; link-like action controls lose their former underline utility and gain an explicit pointer. Existing keyboard focus rings and disabled action behavior are preserved. Graphical work uses one user-managed branch with separate commits when appropriate.

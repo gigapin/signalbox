@@ -43,7 +43,7 @@ export default function EscalationPanel({
             )}
             {canManage && <EscalationEditor key={action} action={action} escalation={escalation} />}
             <p className="mt-2 text-sm">
-                <Link href={notificationsPath(teamId)} className="text-emerald-300 underline">
+                <Link href={notificationsPath(teamId)} className="text-emerald-300 cursor-pointer">
                     Manage channels and policies
                 </Link>
             </p>

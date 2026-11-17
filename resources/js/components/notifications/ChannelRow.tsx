@@ -167,7 +167,7 @@ export default function ChannelRow({
                         type="button"
                         disabled={blocked}
                         onClick={destroy}
-                        className="text-red-200 underline disabled:opacity-50"
+                        className="text-red-200 cursor-pointer disabled:opacity-50"
                     >
                         Delete channel
                     </button>

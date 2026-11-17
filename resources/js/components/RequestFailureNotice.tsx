@@ -45,7 +45,7 @@ export default function RequestFailureNotice() {
                 type="button"
                 aria-label="Dismiss connection error"
                 onClick={() => setFailed(false)}
-                className="shrink-0 underline focus:outline-2 focus:outline-amber-200"
+                className="shrink-0 cursor-pointer focus:outline-2 focus:outline-amber-200"
             >
                 Dismiss
             </button>

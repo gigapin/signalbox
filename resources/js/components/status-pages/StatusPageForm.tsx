@@ -485,7 +485,7 @@ export default function StatusPageForm({
                                         <button
                                             type="button"
                                             onClick={() => removeComponent(index)}
-                                            className="text-red-200 underline"
+                                            className="text-red-200 cursor-pointer"
                                         >
                                             Remove component {index + 1}
                                         </button>

@@ -183,7 +183,7 @@ function PageContent() {
                         <p>No incidents match these filters on this page.</p>
                         <Link
                             href={incidentListUrl(team.id, filters)}
-                            className="mt-2 inline-block underline"
+                            className="mt-2 inline-block cursor-pointer"
                         >
                             Back to the first page
                         </Link>

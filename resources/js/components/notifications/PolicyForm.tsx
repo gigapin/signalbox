@@ -277,7 +277,7 @@ export default function PolicyForm({
                                         <button
                                             type="button"
                                             onClick={() => removeStep(index)}
-                                            className="mt-3 text-sm text-red-200 underline"
+                                            className="mt-3 text-sm text-red-200 cursor-pointer"
                                         >
                                             Remove step {index + 1}
                                         </button>

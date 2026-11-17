@@ -218,7 +218,7 @@ function WindowRow({ path, window: item, canManage, reasonMaxLength }: WindowRow
                             type="button"
                             aria-expanded={editing}
                             onClick={() => setEditing(!editing)}
-                            className="underline"
+                            className="cursor-pointer"
                         >
                             {editing ? 'Close editor' : 'Edit window'}
                         </button>
@@ -227,7 +227,7 @@ function WindowRow({ path, window: item, canManage, reasonMaxLength }: WindowRow
                         type="button"
                         disabled={remove.processing}
                         onClick={cancel}
-                        className="text-red-200 underline disabled:opacity-50"
+                        className="text-red-200 cursor-pointer disabled:opacity-50"
                     >
                         {upcoming ? 'Delete window' : 'End now'}
                     </button>

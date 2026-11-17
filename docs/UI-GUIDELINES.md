@@ -284,3 +284,13 @@ The layout distinction is semantic rather than visual: AppLayout requires an aut
 ### Adjacent workspace cards — 2026-11-17
 
 Direct sibling Panel cards in page content receive 24px of block separation, fixing Account's Identity/Team access and the administrative team detail's adjacent cards without doubling gaps in existing nested grids or section stacks. Team access no longer repeats an Open dashboard link: shared sidebar/mobile navigation supplies that destination. Invitation review and team management links remain available.
+
+### Below-field select picker — 2026-11-17
+
+All current single-select fields now use `components/ui/Select`. The closed field remains a native select with its labels, validation, name/value and original change handler. Pointer/click activation suppresses the OS picker and shows a scrollable listbox 6px below the field, preserving its width. A choice immediately updates the field via one native change event, then closes and restores field focus; choosing the current value emits no duplicate. Team changes still require the separate Switch team action.
+
+Arrow/Home/End/Page keys explore enabled options without changing the value; typeahead finds matching text, Enter/Space/Tab commit and Escape cancels. Outside interaction, blur, anchor scroll/resize and unmount dismiss the portal. Options are revalidated against the current disabled control/option state before committing. The field scrolls into view when space below is constrained; menu height is bounded by the viewport. Multiple/listbox selects retain native presentation.
+
+The picker is a body portal to avoid clipping by tables/panels. Numeric viewport geometry is supplied through a style element using the original document's CSP nonce (read via the DOM nonce property), never inline style attributes or relaxed CSP. Keyboard active-option visibility is maintained inside the popup. Focus/disabled styles and escaped text labels remain shared with the private theme.
+
+References consulted: [MDN customizable selects](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select) for the browser-controlled native picker and incomplete customizable-select support, and [WAI select-only combobox interaction guidance](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/examples/combobox-select-only/) for keyboard exploration and commit/cancel separation. This implementation keeps the native control rather than copying the example's div-based control. Browser/assistive-technology acceptance is distinct from automated DOM tests.

@@ -1,4 +1,5 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
+import Select from '../ui/Select';
 import { useFormProtection } from '../app/NavigationGuard';
 import Button from '../ui/Button';
 import MutationFeedback from '../MutationFeedback';
@@ -177,7 +178,7 @@ function SelectField({ name, label, value, values, onChange, error, format }: Se
             <label htmlFor={name} className="ui-label">
                 {label}
             </label>
-            <select
+            <Select
                 id={name}
                 name={name}
                 value={value}
@@ -191,7 +192,7 @@ function SelectField({ name, label, value, values, onChange, error, format }: Se
                         {format ? format(option) : option}
                     </option>
                 ))}
-            </select>
+            </Select>
             {error && (
                 <p id={`${name}-error`} role="alert" className="ui-field-error">
                     {error}

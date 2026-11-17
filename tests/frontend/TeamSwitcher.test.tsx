@@ -203,9 +203,9 @@ test('handles no-team and absent preferences without offering a fictional team c
 test('provides the verified dashboard entry from account without granting team-management permissions', async () => {
     renderInertia('Signalbox', Account, { auth, currentTeam: { id: 12, name: 'Alpha' } });
     await waitFor(() =>
-        expect(screen.getByRole('link', { name: 'Open dashboard' })).toHaveAttribute(
+        expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
             'href',
-            '/teams/12/dashboard',
+            '/dashboard',
         ),
     );
 });

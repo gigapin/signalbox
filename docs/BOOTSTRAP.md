@@ -667,3 +667,7 @@ Deploy PHP and rebuilt browser assets together. The new verified `/dashboard` en
 ## Unified private dashboard frame (2026-11-17)
 
 Deploy rebuilt client assets normally. Account, teams and platform pages share the dashboard sidebar/header/mobile navigation while retaining their existing URLs and permissions. Platform navigation never selects the inspected tenant; account navigation uses only server-projected personal memberships. No PHP, schema, dependency, environment or key change is introduced. Existing backend route-catalogue contracts remain unchanged. TASKS records checks and browser-verification limits.
+
+## Below-field select menus (2026-11-17)
+
+Rebuild/deploy client assets normally to adopt the shared Select component across existing single-select forms. Fields retain native values and change handlers; choosing an option updates the closed field immediately while existing explicit domain submissions remain unchanged. Popup placement uses a nonce-bearing style element from the loaded document, preserving the existing strict CSP through Inertia navigation. No PHP, route, schema, dependency, environment variable or application key changes. See UI-GUIDELINES/TESTING and TASKS for interaction details and evidence.

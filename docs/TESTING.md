@@ -865,3 +865,9 @@ SecurityHeadersTest uses an asset-rendering partial mock with real hot-file dete
 ## Unified dashboard workspace navigation
 
 WorkspaceLayout.test.tsx checks the desktop frame, selected personal membership links, route-based active workspace entry, operator-only administration and denial without residual private content. MobileNavigation.test.tsx also mounts the real platform layout at the mobile breakpoint, verifying the common dialog, dashboard/administration links and restored trigger focus on native cancel. NavigationGuard and Authentication expectations retain their security assertions while adopting the dashboard brand destination and sidebar Security label. There is no new PHP route or API to add to the backend route catalogue.
+
+## Below-field select picker
+
+Select.test.tsx covers below-field geometry, displayed/submitted controlled values, exactly one change event, keyboard navigation/typeahead, disabled-option skipping, Enter/Tab commit, Escape/outside cancellation, native change compatibility, disabled fieldsets, portal disposal, CSP nonce reuse, resize and click-only activation. Existing form/selectOptions integrations remain in the complete frontend regression suite. TeamSwitcher’s old Account shortcut expectation now checks the shared Dashboard entry, matching the earlier removal of Open dashboard from Team access.
+
+A standalone browser fixture under `/tmp` bundles the actual Select component and React using the installed Vite API. Firefox runs it with a strict nonce-only script/style CSP: checks assert a 6px menu gap, no inline style attribute, the correct nonce, immediate Beta selection and one change event, then keyboard commit. Screenshots and fixture outputs are temporary evidence, not customer data or an authenticated full-application session. See TASKS for actual run results.

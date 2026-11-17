@@ -1,4 +1,5 @@
 /** Let a team member choose a recent month and download its PDF report. */
+import Select from '../ui/Select';
 import { useState } from 'react';
 
 /** Months offered: the current one and the eleven before it. */
@@ -53,7 +54,7 @@ export default function MonthlyReportDownload({ teamId, timezone }: MonthlyRepor
             <label htmlFor="report-month" className="ui-label mb-0">
                 Monthly report
             </label>
-            <select
+            <Select
                 id="report-month"
                 value={selected}
                 onChange={(event) => setSelected(event.target.value)}
@@ -64,7 +65,7 @@ export default function MonthlyReportDownload({ teamId, timezone }: MonthlyRepor
                         {option.label}
                     </option>
                 ))}
-            </select>
+            </Select>
             <a className="ui-link" href={`/teams/${teamId}/reports/${selected}`}>
                 Download PDF
             </a>

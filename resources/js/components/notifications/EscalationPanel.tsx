@@ -1,4 +1,5 @@
 /** Let a monitor manager choose the escalation policy of one monitor. */
+import Select from '../ui/Select';
 import { useFormProtection } from '../app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
@@ -105,7 +106,7 @@ function EscalationEditor({ action, escalation }: EditorProps) {
                     <label htmlFor="monitor-escalation" className="block text-sm font-medium">
                         Escalation policy
                     </label>
-                    <select
+                    <Select
                         id="monitor-escalation"
                         value={form.data.escalation_policy_id}
                         disabled={form.processing}
@@ -129,7 +130,7 @@ function EscalationEditor({ action, escalation }: EditorProps) {
                                 {option.name}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <button
                     disabled={form.processing || missingDraft}

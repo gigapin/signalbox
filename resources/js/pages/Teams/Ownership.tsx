@@ -1,4 +1,5 @@
 /** Transfer primary ownership explicitly to an existing owner after recent-password confirmation. */
+import Select from '../../components/ui/Select';
 import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
@@ -53,7 +54,7 @@ function PageContent() {
                     <fieldset disabled={blocked} className="grid min-w-0 gap-4">
                         <label>
                             New primary owner
-                            <select
+                            <Select
                                 required
                                 className="ui-input"
                                 value={form.data.user_id}
@@ -65,7 +66,7 @@ function PageContent() {
                                         {owner.name}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </label>
                         <button
                             className="ui-button"

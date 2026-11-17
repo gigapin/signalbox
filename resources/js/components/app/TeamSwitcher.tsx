@@ -1,4 +1,5 @@
 /** Switch an account preference once, then navigate only after a checked server acknowledgement. */
+import Select from '../ui/Select';
 import { Link, router } from '@inertiajs/react';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { csrfHeader } from '../csrf';
@@ -133,7 +134,7 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
             <label htmlFor={fieldId} className="ui-label">
                 Team
             </label>
-            <select
+            <Select
                 id={fieldId}
                 className="ui-input"
                 value={choice}
@@ -148,7 +149,7 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
                         {team.name} · {team.role}
                     </option>
                 ))}
-            </select>
+            </Select>
             <Button
                 type="submit"
                 variant="secondary"

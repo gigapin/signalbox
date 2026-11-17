@@ -1,4 +1,5 @@
 /** List one team's incidents, open first, with state and severity filters and explicit empty and error states. */
+import Select from '../../components/ui/Select';
 import { Link, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import Button from '../../components/ui/Button';
@@ -85,7 +86,7 @@ function PageContent() {
                     <label htmlFor="filter-state" className="ui-label">
                         State
                     </label>
-                    <select
+                    <Select
                         id="filter-state"
                         disabled={loading}
                         value={draft.state ?? ''}
@@ -103,13 +104,13 @@ function PageContent() {
                                 {incidentStateLabel(value)}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div>
                     <label htmlFor="filter-severity" className="ui-label">
                         Severity
                     </label>
-                    <select
+                    <Select
                         id="filter-severity"
                         disabled={loading}
                         value={draft.severity ?? ''}
@@ -127,7 +128,7 @@ function PageContent() {
                                 {severityLabel(value)}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="ui-actions">
                     <Button type="submit" busy={loading} busyLabel="Loading…">

@@ -1051,3 +1051,48 @@
     opacity: 1;
     transform: rotate(3deg) translate(0, -4px);
 }
+
+/* Custom popup placement preserves the native select's closed value and form participation. */
+@layer components {
+    .ui-select-picker {
+        position: fixed;
+        z-index: 1000;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 1px solid var(--color-ui-control-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-surface);
+        color: var(--color-ui-text);
+        font-family: var(--font-ui);
+        font-size: var(--text-ui-body);
+        line-height: 1.5;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+    }
+
+    .ui-select-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--spacing-ui-3);
+        min-height: var(--spacing-ui-control);
+        padding: var(--spacing-ui-2) var(--spacing-ui-3);
+        overflow-wrap: anywhere;
+        cursor: pointer;
+    }
+
+    .ui-select-option:hover:not([aria-disabled='true']),
+    .ui-select-option[data-active='true'] {
+        background: var(--color-ui-raised);
+        outline: 2px solid var(--color-ui-focus);
+        outline-offset: -2px;
+    }
+
+    .ui-select-option[aria-selected='true'] {
+        font-weight: 600;
+    }
+
+    .ui-select-option[aria-disabled='true'] {
+        color: var(--color-ui-muted);
+        cursor: not-allowed;
+    }
+}

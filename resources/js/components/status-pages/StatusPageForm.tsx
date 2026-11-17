@@ -1,4 +1,5 @@
 /** Create or change a status page: address, texts, appearance, visibility, password and ordered components. */
+import Select from '../ui/Select';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
@@ -270,7 +271,7 @@ export default function StatusPageForm({
                         <label htmlFor={`${idPrefix}-mode`} className="block text-sm font-medium">
                             Color scheme
                         </label>
-                        <select
+                        <Select
                             id={`${idPrefix}-mode`}
                             value={form.data.theme_mode}
                             onChange={(event) => form.setData('theme_mode', event.target.value)}
@@ -281,13 +282,13 @@ export default function StatusPageForm({
                                     {mode}
                                 </option>
                             ))}
-                        </select>
+                        </Select>
                     </div>
                     <div>
                         <label htmlFor={`${idPrefix}-accent`} className="block text-sm font-medium">
                             Accent
                         </label>
-                        <select
+                        <Select
                             id={`${idPrefix}-accent`}
                             value={form.data.theme_accent}
                             onChange={(event) => form.setData('theme_accent', event.target.value)}
@@ -298,7 +299,7 @@ export default function StatusPageForm({
                                     {accent}
                                 </option>
                             ))}
-                        </select>
+                        </Select>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">

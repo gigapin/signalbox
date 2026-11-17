@@ -1,4 +1,5 @@
 /** List, search and filter one team's monitors with pagination and explicit empty and error states. */
+import Select from '../../components/ui/Select';
 import DataTable from '../../components/ui/DataTable';
 import Alert from '../../components/ui/Alert';
 import Button from '../../components/ui/Button';
@@ -92,7 +93,7 @@ function FilterSelect({ name, label, value, values, format, onChange }: FilterSe
             <label htmlFor={`filter-${name}`} className="ui-label block">
                 {label}
             </label>
-            <select
+            <Select
                 id={`filter-${name}`}
                 name={name}
                 value={value}
@@ -105,7 +106,7 @@ function FilterSelect({ name, label, value, values, format, onChange }: FilterSe
                         {format(option)}
                     </option>
                 ))}
-            </select>
+            </Select>
         </div>
     );
 }

@@ -1,4 +1,5 @@
 /** Create a notification channel or change one, without ever receiving its stored secrets. */
+import Select from '../ui/Select';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
@@ -93,7 +94,7 @@ export default function ChannelForm({
                         <label htmlFor={`${idPrefix}-type`} className="block text-sm font-medium">
                             Channel type
                         </label>
-                        <select
+                        <Select
                             id={`${idPrefix}-type`}
                             value={form.data.type}
                             onChange={(event) =>
@@ -106,7 +107,7 @@ export default function ChannelForm({
                                     {option.label}
                                 </option>
                             ))}
-                        </select>
+                        </Select>
                     </div>
                 )}
                 <div>

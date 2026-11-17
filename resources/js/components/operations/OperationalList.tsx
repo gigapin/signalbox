@@ -1,4 +1,5 @@
 /** Share bounded GET filters and explicit refresh across maintenance and delivery read views. */
+import Select from '../ui/Select';
 import { Link, usePage } from '@inertiajs/react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useReadNavigation } from '../../hooks/useReadNavigation';
@@ -107,7 +108,7 @@ export default function OperationalList({
                     <label className="ui-label" htmlFor="operations-state">
                         State
                     </label>
-                    <select
+                    <Select
                         id="operations-state"
                         className="ui-input"
                         disabled={read.loading}
@@ -122,7 +123,7 @@ export default function OperationalList({
                                 {state.charAt(0).toUpperCase() + state.slice(1)}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="ui-actions">
                     <Button type="submit" busy={read.loading} busyLabel="Loading…">

@@ -1,4 +1,5 @@
 /** Manage one authorized team's membership and invitation lifecycles. */
+import Select from '../../components/ui/Select';
 import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
@@ -138,7 +139,7 @@ function MemberRow({ member, teamId, roles }: MemberRowProps) {
                     <fieldset disabled={blocked} className="ui-settings-fields">
                         <label className="ui-label">
                             Role for {member.name}
-                            <select
+                            <Select
                                 className="ui-input"
                                 value={form.data.role}
                                 onChange={(event) => form.setData('role', event.target.value)}
@@ -154,7 +155,7 @@ function MemberRow({ member, teamId, roles }: MemberRowProps) {
                                         {role}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </label>
                         <div className="ui-actions">
                             <Button type="submit" disabled={!offered}>
@@ -273,7 +274,7 @@ function InviteForm({ teamId, roles }: { teamId: number; roles: string[] }) {
                 </label>
                 <label className="ui-label">
                     Invitation role
-                    <select
+                    <Select
                         className="ui-input"
                         value={form.data.role}
                         onChange={(event) => form.setData('role', event.target.value)}
@@ -288,7 +289,7 @@ function InviteForm({ teamId, roles }: { teamId: number; roles: string[] }) {
                                 {role}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </label>
                 <Button
                     type="submit"

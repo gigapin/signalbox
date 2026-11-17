@@ -1,4 +1,5 @@
 /** Show one incident with its timeline and let managers take responsibility, post, classify and publish. */
+import Select from '../../components/ui/Select';
 import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
@@ -168,7 +169,7 @@ function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps
                     <label htmlFor="update-status" className="ui-label">
                         Status after this update
                     </label>
-                    <select
+                    <Select
                         id="update-status"
                         value={form.data.status}
                         onChange={(event) => form.setData('status', event.target.value)}
@@ -186,7 +187,7 @@ function PostUpdateForm({ path, incident, statuses, maxLength }: PostUpdateProps
                                 {incidentStatusLabel(value)}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                     {form.errors.status && (
                         <p id="update-status-error" role="alert" className="mt-1 text-red-300">
                             {form.errors.status}
@@ -272,7 +273,7 @@ function SeverityForm({ path, incident, severities }: SeverityProps) {
                     <label htmlFor="incident-severity" className="ui-label">
                         Severity
                     </label>
-                    <select
+                    <Select
                         id="incident-severity"
                         value={form.data.severity}
                         onChange={(event) => form.setData('severity', event.target.value)}
@@ -285,7 +286,7 @@ function SeverityForm({ path, incident, severities }: SeverityProps) {
                                 {severityLabel(value)}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <button
                     disabled={form.processing || mutation.locked || guard.busy}

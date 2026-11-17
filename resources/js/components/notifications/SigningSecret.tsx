@@ -119,7 +119,7 @@ export default function SigningSecret({ path }: SigningSecretProps) {
                     <button
                         type="button"
                         onClick={() => setSecret(null)}
-                        className="mt-2 text-sm underline"
+                        className="mt-2 text-sm cursor-pointer"
                     >
                         Hide secret
                     </button>

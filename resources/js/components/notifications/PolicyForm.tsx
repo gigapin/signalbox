@@ -1,4 +1,6 @@
 /** Create or change an escalation policy: ordered delays, each notifying a set of channels. */
+import InputField from '../ui/InputField';
+import ChoiceField from '../ui/ChoiceField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
@@ -43,9 +45,6 @@ interface PolicyFormProps {
     /** Called after a successful submission. */
     onSaved?: () => void;
 }
-
-/** Field styling shared by the inputs. */
-const INPUT = 'ui-input';
 
 /**
  * @param policy Policy being edited, or null.
@@ -159,37 +158,22 @@ export default function PolicyForm({
     return (
         <form onSubmit={submit} noValidate>
             <fieldset disabled={blocked} className="min-w-0 grid gap-4">
-                <div>
-                    <label htmlFor={`${idPrefix}-name`} className="mb-2 block text-sm font-medium">
-                        Policy name
-                    </label>
-                    <input
-                        id={`${idPrefix}-name`}
-                        required
-                        maxLength={limits.nameMaxLength}
-                        value={form.data.name}
-                        onChange={(event) => form.setData('name', event.target.value)}
-                        aria-invalid={errors.name !== undefined}
-                        aria-describedby={`${idPrefix}-name-error`}
-                        className={INPUT}
-                    />
-                    {errors.name && (
-                        <p id={`${idPrefix}-name-error`} role="alert" className="mt-1 text-red-300">
-                            {errors.name}
-                        </p>
-                    )}
-                </div>
-                <div className="flex items-center gap-2">
-                    <input
-                        id={`${idPrefix}-default`}
-                        type="checkbox"
-                        checked={form.data.is_default}
-                        onChange={(event) => form.setData('is_default', event.target.checked)}
-                    />
-                    <label htmlFor={`${idPrefix}-default`}>
-                        Team default: used by monitors that do not choose another policy
-                    </label>
-                </div>
+                <InputField
+                    label="Policy name"
+                    error={errors.name}
+                    id={`${idPrefix}-name`}
+                    required
+                    maxLength={limits.nameMaxLength}
+                    value={form.data.name}
+                    onChange={(event) => form.setData('name', event.target.value)}
+                />
+                <ChoiceField
+                    label="Team default: used by monitors that do not choose another policy"
+                    id={`${idPrefix}-default`}
+                    type="checkbox"
+                    checked={form.data.is_default}
+                    onChange={(event) => form.setData('is_default', event.target.checked)}
+                />
 
                 <ol className="grid gap-4" aria-label="Escalation steps">
                     {form.data.steps.map((step, index) => {
@@ -201,13 +185,9 @@ export default function PolicyForm({
                             <li key={stepId} className="ui-panel">
                                 <fieldset>
                                     <legend className="font-medium">Step {index + 1}</legend>
-                                    <label
-                                        htmlFor={`${stepId}-delay`}
-                                        className="mt-2 mb-1 block text-sm"
-                                    >
-                                        Minutes after the incident is confirmed
-                                    </label>
-                                    <input
+                                    <InputField
+                                        label="Minutes after the incident is confirmed"
+                                        error={delayError}
                                         id={`${stepId}-delay`}
                                         type="number"
                                         min={0}
@@ -216,19 +196,9 @@ export default function PolicyForm({
                                         onChange={(event) =>
                                             updateStep(index, { after_minutes: event.target.value })
                                         }
-                                        aria-invalid={delayError !== undefined}
-                                        aria-describedby={`${stepId}-delay-error`}
-                                        className="w-32 rounded border border-slate-600 bg-slate-900 px-3 py-2"
+                                        className="w-32"
+                                        wrapperClassName="mt-2"
                                     />
-                                    {delayError && (
-                                        <p
-                                            id={`${stepId}-delay-error`}
-                                            role="alert"
-                                            className="mt-1 text-red-300"
-                                        >
-                                            {delayError}
-                                        </p>
-                                    )}
                                     <fieldset
                                         className="mt-3"
                                         aria-describedby={`${stepId}-channels-error`}
@@ -240,27 +210,23 @@ export default function PolicyForm({
                                             </p>
                                         ) : (
                                             channels.map((channel) => (
-                                                <div
+                                                <ChoiceField
+                                                    label={
+                                                        <>
+                                                            {channel.name}{' '}
+                                                            {channel.isActive
+                                                                ? ''
+                                                                : ' (not active)'}
+                                                        </>
+                                                    }
                                                     key={channel.id}
-                                                    className="flex items-center gap-2"
-                                                >
-                                                    <input
-                                                        id={`${stepId}-channel-${channel.id}`}
-                                                        type="checkbox"
-                                                        checked={step.channel_ids.includes(
-                                                            channel.id,
-                                                        )}
-                                                        onChange={() =>
-                                                            toggleChannel(index, channel.id)
-                                                        }
-                                                    />
-                                                    <label
-                                                        htmlFor={`${stepId}-channel-${channel.id}`}
-                                                    >
-                                                        {channel.name}
-                                                        {channel.isActive ? '' : ' (not active)'}
-                                                    </label>
-                                                </div>
+                                                    id={`${stepId}-channel-${channel.id}`}
+                                                    type="checkbox"
+                                                    checked={step.channel_ids.includes(channel.id)}
+                                                    onChange={() =>
+                                                        toggleChannel(index, channel.id)
+                                                    }
+                                                />
                                             ))
                                         )}
                                         {channelError && (
@@ -277,7 +243,7 @@ export default function PolicyForm({
                                         <button
                                             type="button"
                                             onClick={() => removeStep(index)}
-                                            className="mt-3 text-sm text-red-200 underline"
+                                            className="mt-3 text-sm text-red-200 cursor-pointer"
                                         >
                                             Remove step {index + 1}
                                         </button>

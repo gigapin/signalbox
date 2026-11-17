@@ -103,7 +103,7 @@ Le primitive presentano contenuti forniti dal chiamante: non caricano dati, non 
 | Componente | Interfaccia e comportamento | Responsabilità del chiamante |
 |---|---|---|
 | [Button](../resources/js/components/ui/Button.tsx) | Attributi/ref nativi; `variant` primary/secondary/danger, `busy`, `busyLabel`. Default `type="button"`; busy imposta disabled e aria-busy, sostituendo il testo con Working… o label fornita | Submit esplicito con `type="submit"`; pending dalla richiesta; etichetta concreta (“Saving monitor…”), motivo di blocco leggibile vicino al comando; conferma distruttiva e autorizzazione esterne |
-| [InputField](../resources/js/components/ui/InputField.tsx) | Props/ref nativi input con `label` obbligatoria, `hint`, `error`; ID automatico o esplicito. Label required testuale, aiuti/errori uniti ad aria-describedby preesistente; errore imposta aria-invalid e regione polite stabile | Usare per input testuali/numerici/data/password. Checkbox/radio, hidden e upload richiedono composizione nativa appropriata, non questo campo. Nome/value/onChange/limiti e validazione appartengono al form; nessuna persistenza o sanificazione silenziosa |
+| [InputField](../resources/js/components/ui/InputField.tsx) | Props/ref nativi input con `label` obbligatoria, `hint`, `error`; ID automatico o esplicito. Required nativo senza modificare il testo della label, aiuti/errori uniti ad aria-describedby preesistente; errore imposta aria-invalid e regione polite stabile | Usare per input testuali/numerici/data/password. Per checkbox/radio usare ChoiceField; i controlli hidden non richiedono un gruppo visibile. Nome/value/onChange/limiti e validazione appartengono al form; nessuna persistenza o sanificazione silenziosa |
 | [Panel](../resources/js/components/ui/Panel.tsx) | Section nominata dal titolo con ID univoco, headingLevel 2 predefinito o 3 se annidato; description facoltativa | Scegliere gerarchia heading corretta; fornire caricamento, vuoto, errore o contenuto; nessun finto dato per riempire il pannello |
 | PageHeading, nello stesso file | Un h1, description e actions che vanno a capo | Un solo PageHeading per pagina; il layout imposta separatamente document title; azioni già filtrate dai permessi |
 | [Badge](../resources/js/components/ui/Badge.tsx) | Testo con tone neutral/success/warning/danger/info; nessun live region | Etichetta esplicita e significato di dominio. Stato osservato e operativo restano distinti; colore non sufficiente |
@@ -111,7 +111,7 @@ Le primitive presentano contenuti forniti dal chiamante: non caricano dati, non 
 | [DataTable](../resources/js/components/ui/DataTable.tsx) | caption visibile, indicazione di scorrimento, TableScrollArea focusabile/nominata, tabella nativa con children thead/tbody/tfoot | th con scope col/row, link nominativi, nessuna colonna indispensabile nascosta; filtri/paginazione e vuoto fuori dalla tabella. L’overflow resta locale |
 | [TableScrollArea](../resources/js/components/TableScrollArea.tsx) | Conserva `label`/`children`; aggiunge `describedBy` opzionale per istruzioni esterne, focus semantico condiviso | Riutilizzabile dalle tabelle legacy senza ricostruire markup o nomi accessibili |
 
-Le classi `ui-input` e `ui-label` possono accompagnare select/textarea nativi con label, aiuti ed errori correttamente associati; non esiste un wrapper che inventi opzioni o risposte server. `ui-link` mantiene underline e focus per link nativi o Inertia: la navigazione resta un link, l’azione resta un button. Non aggiungere un finto link disabilitato per una rotta assente. Comporre una famiglia nuova soltanto quando un flusso reale ne richiede il comportamento.
+I campi visibili usano InputField, SelectField, TextareaField o ChoiceField; le composizioni con prefissi usano FormField. Le opzioni e le risposte server appartengono al chiamante. `ui-link` mantiene il focus senza sottolineature per link nativi o Inertia: la navigazione resta un link, l’azione resta un button. Non aggiungere un finto link disabilitato per una rotta assente. Comporre una famiglia nuova soltanto quando un flusso reale ne richiede il comportamento.
 
 Adozione iniziale: [MonitorBadges](../resources/js/components/monitors/MonitorBadges.tsx) e [IncidentBadges](../resources/js/components/incidents/IncidentBadges.tsx) mappano stati noti ai toni condivisi conservando i label helper; valori sconosciuti restano testo con tono neutral. Up/Down/Unknown non sono sinonimi di active/paused/suspended, e un incidente resolved non indica uptime 100%. Non vengono cambiate policy o proiezioni.
 
@@ -260,3 +260,48 @@ The user's subsequent visual choice supersedes the slate surfaces above: canvas 
 The subsequent user refinement darkens the shared surface token (sidebar, panels and header) to `#191f18`; canvas, decorative borders, raised/hover surfaces and functional control boundaries retain their previous values.
 
 The latest user refinement sets the shared sidebar/panel/header surface to `#0f120e`, superseding `#191f18`. Other color tokens remain unchanged.
+
+### Application-wide links — 2026-11-17
+
+The user now requires links throughout the application (including public/authenticated pages) to have no underline in normal, hover, active or focused states, with a pointer cursor. This supersedes the previous content-link underline convention. Shared CSS covers native anchors, link roles and disclosure summaries; link-like action controls lose their former underline utility and gain an explicit pointer. Existing keyboard focus rings and disabled action behavior are preserved. Graphical work uses one user-managed branch with separate commits when appropriate.
+
+### Table cell alignment — 2026-11-17
+
+Shared DataTable headers and data cells use equal padding and middle vertical alignment, including multi-line values and badges. Monitor/incident lists and notification delivery logs no longer override the first column's block padding. Other DataTable consumers (dashboard overview, maintenance, delivery history, team directory and monitor statistics/availability) inherit the same rule; the compact chart data disclosure is a separate native table without the conflicting override. Text remains left-aligned.
+
+### Form spacing and select arrows — 2026-11-17
+
+Associated field labels have eight pixels of bottom separation; the InputField grid supplies that separation itself without doubling margins. Older labels with four-pixel margins now use eight. Single selects retain native selection/keyboard behavior but use an inset CSS chevron with 14px end clearance and 44px reserved text padding. Multiple/listbox selects keep their native presentation. Forced-color mode restores the OS arrow; wrapping checkbox labels and the visually hidden team-selector label keep their semantics.
+
+The label gap is subsequently increased to **10px**, two pixels above the previous spacing, to provide five pixels of clearance beyond the 2px focus outline with 3px offset. Associated labels use the shared field-gap token instead of per-label mb-2 utilities; InputField uses the same grid gap without doubling margins. Inline report labels retain mb-0. Select arrows and keyboard focus indicators are unchanged.
+
+### Unified dashboard workspace — 2026-11-17
+
+Account, account security, the team directory, platform administration and the dashboard chooser now use the dashboard frame: shared header, full-height sidebar and a single responsive mobile dialog. Workspace links (Dashboard where no team dashboard is already shown, Teams, Account, Security, operator-only Administration) are shared with team pages; the current destination is identified by aria-current. The brand on non-team pages returns to `/dashboard`. Existing URLs, forms and authorization middleware remain unchanged.
+
+The layout distinction is semantic rather than visual: AppLayout requires an authorized route team; PrivateContextLayout can render without any membership. Account contexts may show links for the actor's own explicitly selected accessible membership. Platform contexts never infer a tenant from the team under inspection and never display its team selector. Denial removes protected content and sidebar/dialog; existing identity remount, dirty-form navigation and modal focus behavior remain in force. The complete sidebar navigation scrolls as one group on short desktop screens.
+
+### Adjacent workspace cards — 2026-11-17
+
+Direct sibling Panel cards in page content receive 24px of block separation, fixing Account's Identity/Team access and the administrative team detail's adjacent cards without doubling gaps in existing nested grids or section stacks. Team access no longer repeats an Open dashboard link: shared sidebar/mobile navigation supplies that destination. Invitation review and team management links remain available.
+
+### Below-field select picker — 2026-11-17
+
+All current single-select fields now use `components/ui/Select`. The closed field remains a native select with its labels, validation, name/value and original change handler. Pointer/click activation suppresses the OS picker and shows a scrollable listbox 6px below the field, preserving its width. A choice immediately updates the field via one native change event, then closes and restores field focus; choosing the current value emits no duplicate. Team changes still require the separate Switch team action.
+
+Arrow/Home/End/Page keys explore enabled options without changing the value; typeahead finds matching text, Enter/Space/Tab commit and Escape cancels. Outside interaction, blur, anchor scroll/resize and unmount dismiss the portal. Options are revalidated against the current disabled control/option state before committing. The field scrolls into view when space below is constrained; menu height is bounded by the viewport. Multiple/listbox selects retain native presentation.
+
+The picker is a body portal to avoid clipping by tables/panels. Numeric viewport geometry is supplied through a style element using the original document's CSP nonce (read via the DOM nonce property), never inline style attributes or relaxed CSP. Keyboard active-option visibility is maintained inside the popup. Focus/disabled styles and escaped text labels remain shared with the private theme.
+
+References consulted: [MDN customizable selects](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Customizable_select) for the browser-controlled native picker and incomplete customizable-select support, and [WAI select-only combobox interaction guidance](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/examples/combobox-select-only/) for keyboard exploration and commit/cancel separation. This implementation keeps the native control rather than copying the example's div-based control. Browser/assistive-technology acceptance is distinct from automated DOM tests.
+
+The user subsequently removes the green outline from active and hovered picker options. Their lighter raised background, selected checkmark/weight and keyboard active-descendant behavior remain. The native field's focus indicator is unchanged.
+
+
+## Shared form fields — 2026-11-17
+
+FormField owns labels, stable IDs, help/error associations and the persistent polite validation region. InputField, TextareaField and SelectField forward native values, events, attributes and refs; ChoiceField preserves native checkbox/radio groups and keyboard behavior. Use `labelHidden` for compact editors, `layout="inline"` for report controls, `wrapperClassName` for field layout and `className` only for control-specific constraints. Required semantics stay native; domain wording belongs to the caller.
+
+All existing visible field groups now use these components, including authentication, team/account/admin, operational filters, monitors, incidents, notifications and status pages. The public slug prefix uses FormField's render boundary; MonitorForm's adapters map domain values and options without rebuilding labels or errors. Group-level validation summaries remain with their domain forms. No domain action, permission, draft persistence or secret replacement rule is owned by the primitives.
+
+The field grid supplies the shared 10px label gap; there is no global label margin fallback or duplicated per-form input style. Choice labels align beside native controls, with help and errors below the label. The team switcher explicitly requests a hidden label rather than relying on a shell CSS selector. Keep new field groups on this shared path rather than duplicating label/control/help/error markup.

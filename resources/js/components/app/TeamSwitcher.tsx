@@ -1,4 +1,5 @@
 /** Switch an account preference once, then navigate only after a checked server acknowledgement. */
+import SelectField from '../ui/SelectField';
 import { Link, router } from '@inertiajs/react';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { csrfHeader } from '../csrf';
@@ -130,12 +131,10 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
             }}
             aria-busy={phase === 'pending'}
         >
-            <label htmlFor={fieldId} className="ui-label">
-                Team
-            </label>
-            <select
+            <SelectField
+                labelHidden
+                label="Team"
                 id={fieldId}
-                className="ui-input"
                 value={choice}
                 disabled={phase === 'pending'}
                 onChange={(event) => setChoice(event.target.value)}
@@ -148,7 +147,7 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
                         {team.name} · {team.role}
                     </option>
                 ))}
-            </select>
+            </SelectField>
             <Button
                 type="submit"
                 variant="secondary"

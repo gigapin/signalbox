@@ -1,4 +1,6 @@
 /** Configure daily channel silencing separately from provider credentials and verification. */
+import ChoiceField from '../ui/ChoiceField';
+import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
@@ -27,9 +29,6 @@ interface QuietHoursFormProps {
     /** Current interval, or null to start disabled. */
     hours: QuietHoursView | null;
 }
-
-/** Shared accessible field styling. */
-const INPUT = 'ui-input';
 
 /** Daily silence postpones due deliveries; the editor never changes the verified recipient. */
 export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursFormProps) {
@@ -62,14 +61,13 @@ export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursForm
     return (
         <form onSubmit={submit} noValidate>
             <fieldset disabled={blocked} className="min-w-0 mt-3 grid gap-3 md:grid-cols-3">
-                <label className="flex items-center gap-2 md:col-span-3">
-                    <input
-                        type="checkbox"
-                        checked={form.data.enabled}
-                        onChange={(event) => form.setData('enabled', event.target.checked)}
-                    />
-                    Enable daily quiet hours
-                </label>
+                <ChoiceField
+                    label="Enable daily quiet hours"
+                    wrapperClassName="md:col-span-3"
+                    type="checkbox"
+                    checked={form.data.enabled}
+                    onChange={(event) => form.setData('enabled', event.target.checked)}
+                />
                 {(
                     [
                         { name: 'start', label: 'Quiet hours start', type: 'time' },
@@ -81,26 +79,16 @@ export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursForm
                     const error = errors[`quiet_hours.${field.name}`];
 
                     return (
-                        <div key={field.name}>
-                            <label htmlFor={id} className="mb-1 block text-sm font-medium">
-                                {field.label}
-                            </label>
-                            <input
-                                id={id}
-                                type={field.type}
-                                value={form.data[field.name]}
-                                disabled={!form.data.enabled}
-                                onChange={(event) => form.setData(field.name, event.target.value)}
-                                aria-invalid={error !== undefined}
-                                aria-describedby={`${idPrefix}-quiet-hint ${id}-error`}
-                                className={INPUT}
-                            />
-                            {error && (
-                                <p id={`${id}-error`} role="alert" className="mt-1 text-red-300">
-                                    {error}
-                                </p>
-                            )}
-                        </div>
+                        <InputField
+                            label={field.label}
+                            error={error}
+                            key={field.name}
+                            id={id}
+                            type={field.type}
+                            value={form.data[field.name]}
+                            disabled={!form.data.enabled}
+                            onChange={(event) => form.setData(field.name, event.target.value)}
+                        />
                     );
                 })}
                 <p

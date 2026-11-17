@@ -1,4 +1,5 @@
 /** Request double opt-in email updates without exposing whether a mailbox already subscribed. */
+import InputField from '../ui/InputField';
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 
@@ -37,8 +38,9 @@ export default function SubscribeForm({ path, status }: SubscribeFormProps) {
                 </p>
             )}
             <form onSubmit={submit} className="mt-4 grid gap-2">
-                <label htmlFor="subscriber-email">Email address</label>
-                <input
+                <InputField
+                    label="Email address"
+                    error={form.errors.email}
                     id="subscriber-email"
                     type="email"
                     autoComplete="email"
@@ -46,15 +48,8 @@ export default function SubscribeForm({ path, status }: SubscribeFormProps) {
                     maxLength={254}
                     value={form.data.email}
                     onChange={(event) => form.setData('email', event.target.value)}
-                    aria-invalid={Boolean(form.errors.email)}
-                    aria-describedby={form.errors.email ? 'subscriber-email-error' : undefined}
                     className="rounded border border-slate-400 bg-transparent p-2"
                 />
-                {form.errors.email && (
-                    <p id="subscriber-email-error" role="alert">
-                        {form.errors.email}
-                    </p>
-                )}
                 <button
                     type="submit"
                     disabled={form.processing}

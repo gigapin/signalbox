@@ -2,14 +2,17 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import Button from '../ui/Button';
 import TeamLinks from './TeamLinks';
+import WorkspaceLinks from './WorkspaceLinks';
 import type { TeamSection } from './navigation';
 
 /** Explicit route identity plus the content landmark used when the trigger disappears. */
 interface MobileNavigationProps {
     /** Authorized route team identifier. */
-    teamId: number;
+    teamId?: number | undefined;
     /** Current page family. */
-    section: TeamSection;
+    section?: TeamSection | undefined;
+    /** Include shared account and platform links in the dashboard shell. */
+    workspaceNavigation?: boolean;
     /** Existing main landmark; fallback focus for navigation, suspension and desktop transitions. */
     mainId: string;
 }
@@ -18,7 +21,12 @@ interface MobileNavigationProps {
  * @param props Current route scope and main landmark.
  * @returns A trigger and one native dialog; the browser owns modal focus containment and inert background.
  */
-export default function MobileNavigation({ teamId, section, mainId }: MobileNavigationProps) {
+export default function MobileNavigation({
+    teamId,
+    section,
+    mainId,
+    workspaceNavigation = false,
+}: MobileNavigationProps) {
     const dialogId = useId();
     const titleId = useId();
     const dialog = useRef<HTMLDialogElement>(null);
@@ -102,7 +110,19 @@ export default function MobileNavigation({ teamId, section, mainId }: MobileNavi
                         Close navigation
                     </Button>
                 </div>
-                <TeamLinks teamId={teamId} section={section} onNavigate={() => dismiss(false)} />
+                {teamId !== undefined && (
+                    <TeamLinks
+                        teamId={teamId}
+                        section={section}
+                        onNavigate={() => dismiss(false)}
+                    />
+                )}
+                {workspaceNavigation && (
+                    <WorkspaceLinks
+                        includeDashboard={teamId === undefined}
+                        onNavigate={() => dismiss(false)}
+                    />
+                )}
             </dialog>
         </>
     );

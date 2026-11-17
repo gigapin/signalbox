@@ -65,7 +65,7 @@ export default function StatusPageRow({
                 )}
             </p>
             {page.isPublic ? (
-                <a href={page.path} className="text-sm text-emerald-300 underline">
+                <a href={page.path} className="text-sm text-emerald-300 cursor-pointer">
                     Open public page · {page.path}
                 </a>
             ) : (
@@ -102,7 +102,7 @@ export default function StatusPageRow({
                         type="button"
                         disabled={blocked}
                         onClick={destroy}
-                        className="text-red-200 underline"
+                        className="text-red-200 cursor-pointer"
                     >
                         Delete {page.title}
                     </button>

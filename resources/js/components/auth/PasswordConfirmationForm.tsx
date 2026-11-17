@@ -1,4 +1,5 @@
 /** Confirm a password inline without navigating away from a pending, explicitly requested operation. */
+import InputField from '../ui/InputField';
 import { useLeaveProtection } from '../app/NavigationGuard';
 import { useContext, useEffect, useRef, useState, type FormEvent } from 'react';
 import { TeamAccessContext } from '../app/TeamAccessContext';
@@ -112,10 +113,9 @@ export default function PasswordConfirmationForm({
                 Your change is ready. Confirm your password to apply it without leaving this page.
             </p>
             <form onSubmit={(event) => void confirm(event)} className="mt-4 space-y-3">
-                <label htmlFor="override-password" className="block">
-                    Current password
-                </label>
-                <input
+                <InputField
+                    label="Current password"
+                    error={error}
                     ref={input}
                     id="override-password"
                     name="password"
@@ -127,19 +127,7 @@ export default function PasswordConfirmationForm({
                         setError('');
                     }}
                     disabled={busy}
-                    aria-invalid={error !== ''}
-                    aria-describedby={
-                        error
-                            ? 'override-confirm-hint override-password-error'
-                            : 'override-confirm-hint'
-                    }
-                    className="ui-input"
                 />
-                {error && (
-                    <p id="override-password-error" role="alert" className="text-red-300">
-                        {error}
-                    </p>
-                )}
                 <div className="flex gap-4">
                     <button disabled={busy} className="ui-button">
                         {busy ? 'Confirming…' : 'Confirm password and save override'}

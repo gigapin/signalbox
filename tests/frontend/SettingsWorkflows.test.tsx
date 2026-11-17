@@ -1,6 +1,6 @@
 /** Verify private settings through actual Inertia forms, identity changes and owned transport outcomes. */
 import { router } from '@inertiajs/react';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import StatusPages from '../../resources/js/pages/StatusPages/Index';
@@ -215,7 +215,8 @@ test('domain removal refusal remains visible and duplicate hostname writes remai
 test('dirty member role survives another accepted role change and submits its actual draft', async () => {
     const user = userEvent.setup();
     renderInertia('Signalbox', Team, teamProps, { component: 'Teams/Show', url: '/teams/7' });
-    await user.selectOptions(screen.getByLabelText('Role for Operator'), 'viewer');
+    await user.click(screen.getByRole('combobox', { name: 'Role for Operator' }));
+    await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'viewer' }));
     await replace({ ...teamProps, members: [{ ...member, role: 'admin' }] }, '/teams/7');
     expect(screen.getByLabelText('Role for Operator')).toHaveValue('viewer');
     const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
@@ -239,13 +240,15 @@ test('pristine member role follows the saved value without creating a draft', as
 test('a role removed from current choices must be replaced explicitly before saving', async () => {
     const user = userEvent.setup();
     renderInertia('Signalbox', Team, teamProps, { component: 'Teams/Show', url: '/teams/7' });
-    await user.selectOptions(screen.getByLabelText('Role for Operator'), 'owner');
+    await user.click(screen.getByRole('combobox', { name: 'Role for Operator' }));
+    await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'owner' }));
     await replace({ ...teamProps, roles: ['member', 'viewer'] }, '/teams/7');
     expect(screen.getByRole('button', { name: 'Save role for Operator' })).toBeDisabled();
     expect(
         screen.getByRole('option', { name: /owner \(choose a permitted role\)/ }),
     ).toBeDisabled();
-    await user.selectOptions(screen.getByLabelText('Role for Operator'), 'viewer');
+    await user.click(screen.getByRole('combobox', { name: 'Role for Operator' }));
+    await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'viewer' }));
     expect(screen.getByRole('button', { name: 'Save role for Operator' })).toBeEnabled();
 });
 
@@ -276,7 +279,8 @@ test('invitation draft survives refusal, freezes during pending and clears only 
 test('management revocation removes role and invitation drafts and their departure guards', async () => {
     const user = userEvent.setup();
     renderInertia('Signalbox', Team, teamProps, { component: 'Teams/Show', url: '/teams/7' });
-    await user.selectOptions(screen.getByLabelText('Role for Operator'), 'viewer');
+    await user.click(screen.getByRole('combobox', { name: 'Role for Operator' }));
+    await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'viewer' }));
     await user.type(screen.getByLabelText('Invitation email'), 'draft@example.test');
     await replace(
         { ...teamProps, roles: [], members: [{ ...member, manageable: false }] },

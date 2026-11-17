@@ -5,6 +5,24 @@
 @source '../js';
 @source '../views';
 
+/* Application-wide link presentation includes public pages and native disclosure controls. */
+@layer base {
+    a[href],
+    [role='link'],
+    summary {
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    a[href]:hover,
+    a[href]:focus-visible,
+    a[href]:active,
+    [role='link']:hover,
+    summary:hover {
+        text-decoration: none;
+    }
+}
+
 /* Semantic dark-theme tokens; prefixed names avoid changing existing Tailwind/public themes. */
 @theme {
     /* Canvas, raised surfaces, text, separators and keyboard focus colors. */
@@ -44,6 +62,8 @@
     --spacing-ui-6: 1.5rem;
     --spacing-ui-8: 2rem;
     --spacing-ui-control: 2.75rem;
+    /* Label clearance includes the five-pixel outer focus-ring footprint. */
+    --spacing-ui-field-gap: 0.625rem;
     --radius-ui: 0.625rem;
 }
 
@@ -104,10 +124,6 @@
         background: var(--color-ui-danger-bg);
     }
 
-    .ui-button[data-variant='danger']:hover:not(:disabled) {
-        text-decoration: underline;
-    }
-
     .ui-button:disabled,
     .ui-input:disabled {
         cursor: not-allowed;
@@ -117,14 +133,14 @@
 
     .ui-link {
         color: var(--color-ui-accent);
-        text-decoration: underline;
-        text-underline-offset: 0.2em;
+        cursor: pointer;
+        text-decoration: none;
         overflow-wrap: anywhere;
     }
 
     .ui-field {
         display: grid;
-        gap: var(--spacing-ui-2);
+        gap: var(--spacing-ui-field-gap);
         min-width: 0;
     }
 
@@ -149,6 +165,75 @@
         font: inherit;
         line-height: 1.5;
         color-scheme: dark;
+    }
+
+    /* Field components own spacing; compact editors and choices retain native labels. */
+    .ui-field > .ui-label,
+    .ui-choice-field > .ui-label {
+        margin: 0;
+    }
+
+    .ui-field-inline {
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+    }
+
+    .ui-choice-field {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 0.5rem;
+        row-gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .ui-choice-field > .ui-label {
+        grid-column: 2;
+        grid-row: 1;
+        font-weight: 400;
+    }
+
+    .ui-choice {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: start;
+        margin-top: 0.25rem;
+        accent-color: var(--color-ui-accent);
+    }
+
+    .ui-choice:focus-visible {
+        outline: 2px solid var(--color-ui-accent);
+        outline-offset: 3px;
+    }
+
+    .ui-choice-field > .ui-help,
+    .ui-choice-field > .ui-field-error,
+    .ui-field-inline > .ui-help,
+    .ui-field-inline > .ui-field-error {
+        grid-column: 2;
+    }
+
+    /* Draw the single-select arrow inside reserved padding while retaining native selection behavior. */
+    select:not([multiple]):not([size]),
+    select:not([multiple])[size='1'] {
+        appearance: none;
+        padding-right: 2.75rem;
+        background-image:
+            linear-gradient(45deg, transparent 50%, var(--color-ui-muted) 50%),
+            linear-gradient(135deg, var(--color-ui-muted) 50%, transparent 50%);
+        background-position:
+            calc(100% - 19px) center,
+            calc(100% - 14px) center;
+        background-size: 5px 5px;
+        background-repeat: no-repeat;
+    }
+
+    /* OS high-contrast rendering owns its arrow and control colors. */
+    @media (forced-colors: active) {
+        select:not([multiple]):not([size]),
+        select:not([multiple])[size='1'] {
+            appearance: auto;
+            background-image: none;
+        }
     }
 
     .ui-input::placeholder {
@@ -303,11 +388,12 @@
         text-align: left;
     }
 
+    /* Row labels, badges and wrapped values share padding and vertical centering. */
     .ui-table th,
     .ui-table td {
         padding: var(--spacing-ui-3) var(--spacing-ui-4);
         border-bottom: 1px solid var(--color-ui-border);
-        vertical-align: top;
+        vertical-align: middle;
     }
 }
 
@@ -426,6 +512,11 @@
         min-width: 0;
     }
 
+    /* Direct sibling cards need their own separation outside page-owned grids and section stacks. */
+    .ui-page-content > .ui-panel + .ui-panel {
+        margin-block-start: var(--spacing-ui-6);
+    }
+
     .ui-account {
         position: relative;
         min-width: 0;
@@ -474,11 +565,17 @@
         border-right: 1px solid var(--color-ui-border);
     }
 
-    .ui-sidebar .ui-team-links {
+    .ui-sidebar-navigation {
         position: sticky;
         top: var(--spacing-ui-4);
         max-height: calc(100dvh - 2 * var(--spacing-ui-4));
         overflow-y: auto;
+    }
+
+    .ui-sidebar-navigation > nav + nav {
+        margin-top: var(--spacing-ui-4);
+        padding-top: var(--spacing-ui-4);
+        border-top: 1px solid var(--color-ui-border);
     }
 
     .ui-team-links {
@@ -507,17 +604,8 @@
         max-width: 100%;
     }
 
-    .ui-team-switcher label,
     .ui-team-switcher [role='status'] {
         grid-column: 1 / -1;
-    }
-
-    .ui-team-switcher label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
     }
 
     .ui-brand,
@@ -987,4 +1075,47 @@
         0 0 5px #29d;
     opacity: 1;
     transform: rotate(3deg) translate(0, -4px);
+}
+
+/* Custom popup placement preserves the native select's closed value and form participation. */
+@layer components {
+    .ui-select-picker {
+        position: fixed;
+        z-index: 1000;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 1px solid var(--color-ui-control-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-surface);
+        color: var(--color-ui-text);
+        font-family: var(--font-ui);
+        font-size: var(--text-ui-body);
+        line-height: 1.5;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+    }
+
+    .ui-select-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--spacing-ui-3);
+        min-height: var(--spacing-ui-control);
+        padding: var(--spacing-ui-2) var(--spacing-ui-3);
+        overflow-wrap: anywhere;
+        cursor: pointer;
+    }
+
+    .ui-select-option:hover:not([aria-disabled='true']),
+    .ui-select-option[data-active='true'] {
+        background: var(--color-ui-raised);
+    }
+
+    .ui-select-option[aria-selected='true'] {
+        font-weight: 600;
+    }
+
+    .ui-select-option[aria-disabled='true'] {
+        color: var(--color-ui-muted);
+        cursor: not-allowed;
+    }
 }

@@ -1,4 +1,6 @@
 /** Share bounded GET filters and explicit refresh across maintenance and delivery read views. */
+import InputField from '../ui/InputField';
+import SelectField from '../ui/SelectField';
 import { Link, usePage } from '@inertiajs/react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useReadNavigation } from '../../hooks/useReadNavigation';
@@ -90,40 +92,28 @@ export default function OperationalList({
                 onSubmit={submit}
                 className="ui-panel ui-incident-filters"
             >
-                <div>
-                    <label className="ui-label" htmlFor="operations-q">
-                        Monitor name
-                    </label>
-                    <input
-                        id="operations-q"
-                        className="ui-input"
-                        maxLength={100}
-                        disabled={read.loading}
-                        value={draft.q}
-                        onChange={(event) => setDraft({ ...draft, q: event.target.value })}
-                    />
-                </div>
-                <div>
-                    <label className="ui-label" htmlFor="operations-state">
-                        State
-                    </label>
-                    <select
-                        id="operations-state"
-                        className="ui-input"
-                        disabled={read.loading}
-                        value={draft.state ?? ''}
-                        onChange={(event) =>
-                            setDraft({ ...draft, state: event.target.value || null })
-                        }
-                    >
-                        <option value="">Any</option>
-                        {states.map((state) => (
-                            <option key={state} value={state}>
-                                {state.charAt(0).toUpperCase() + state.slice(1)}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                <InputField
+                    label="Monitor name"
+                    id="operations-q"
+                    maxLength={100}
+                    disabled={read.loading}
+                    value={draft.q}
+                    onChange={(event) => setDraft({ ...draft, q: event.target.value })}
+                />
+                <SelectField
+                    label="State"
+                    id="operations-state"
+                    disabled={read.loading}
+                    value={draft.state ?? ''}
+                    onChange={(event) => setDraft({ ...draft, state: event.target.value || null })}
+                >
+                    <option value="">Any</option>
+                    {states.map((state) => (
+                        <option key={state} value={state}>
+                            {state.charAt(0).toUpperCase() + state.slice(1)}
+                        </option>
+                    ))}
+                </SelectField>
                 <div className="ui-actions">
                     <Button type="submit" busy={read.loading} busyLabel="Loading…">
                         Apply filters

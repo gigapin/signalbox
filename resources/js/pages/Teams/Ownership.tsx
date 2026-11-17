@@ -1,4 +1,5 @@
 /** Transfer primary ownership explicitly to an existing owner after recent-password confirmation. */
+import SelectField from '../../components/ui/SelectField';
 import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
@@ -51,22 +52,19 @@ function PageContent() {
             ) : (
                 <form onSubmit={submit}>
                     <fieldset disabled={blocked} className="grid min-w-0 gap-4">
-                        <label>
-                            New primary owner
-                            <select
-                                required
-                                className="ui-input"
-                                value={form.data.user_id}
-                                onChange={(event) => form.setData('user_id', event.target.value)}
-                            >
-                                <option value="">Choose an owner</option>
-                                {owners.map((owner) => (
-                                    <option key={owner.id} value={owner.id}>
-                                        {owner.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        <SelectField
+                            label="New primary owner"
+                            required
+                            value={form.data.user_id}
+                            onChange={(event) => form.setData('user_id', event.target.value)}
+                        >
+                            <option value="">Choose an owner</option>
+                            {owners.map((owner) => (
+                                <option key={owner.id} value={owner.id}>
+                                    {owner.name}
+                                </option>
+                            ))}
+                        </SelectField>
                         <button
                             className="ui-button"
                             disabled={

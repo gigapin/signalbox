@@ -207,7 +207,7 @@ function showsMissingTeam(): void {
         currentTeam: null,
     });
     expect(screen.getByText('No accessible team is currently selected.')).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Account security' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Security' })).toHaveAttribute(
         'href',
         '/account/security',
     );
@@ -237,3 +237,18 @@ test(
     'marks QR and secret reads as AJAX without retaining them in navigation',
     marksSetupReadsAsAjax,
 );
+
+test('uses dashboard navigation instead of a redundant Team access dashboard link', () => {
+    renderInertia('Signalbox', Overview, {
+        auth: { user: { name: 'Owner', email: 'owner@example.test' } },
+        currentTeam: { id: 12, name: 'Own team' },
+        hasPendingInvitation: true,
+    });
+    expect(screen.queryByRole('link', { name: 'Open dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('link', { name: 'Review invitation' })).toHaveAttribute(
+        'href',
+        '/invitations/accept',
+    );
+    expect(screen.getByRole('link', { name: 'View your teams' })).toHaveAttribute('href', '/teams');
+});

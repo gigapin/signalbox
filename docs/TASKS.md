@@ -1,5 +1,89 @@
 # Signalbox — Piano dei task
 
+## UI — Refactoring componenti dei form — 2026-11-17
+
+- [x] Refactoring richiesto completato: FormField centralizza label, ID, hint, errori e associazioni accessibili; InputField, SelectField, TextareaField e ChoiceField adottati nei 26 componenti/pagine dei form esistenti. MonitorForm conserva soltanto adapter dei valori/opzioni di dominio; il prefisso slug compone FormField. Rimossi markup ripetuto, costanti INPUT e stili locali duplicati. Stesso branch grafico, nessun Git/gh, dipendenza, PHP o rotta modificati.
+- File: components/ui/FormField/InputField/SelectField/TextareaField/ChoiceField/Select, moduli auth/monitor/incidenti/notifiche/status page, filtri operativi, switch team/report, pagine account/admin/team; app.css, UiPrimitives/FormFields/SettingsWorkflows e UI-GUIDELINES. Il picker inoltra anche ref nativi React 19. Label/controllo separati da 10px nel componente, nessun margine globale sui label; checkbox/radio hanno layout e focus comuni. Required resta nativo senza alterare i testi esistenti. Errori di gruppo e regole dei segreti restano ai form di dominio.
+- Prima suite completa: 485 passati, 8 falliti su 493. Corrette nel sorgente la conservazione di aria-invalid=false del monitor e l’inoltro ref del select; nuovi test limitano la ricerca delle opzioni al listbox. I test dei ruoli usano ora click reali sul picker condiviso, evitando che la selezione sintetica nativa lasci il popup riaperto e renda ambigue le query per label. Asserzioni su draft, revoche e ruoli conservate. Corretto anche import within e annotazione generica nel nuovo test prima della verifica finale.
+- Verifiche finali: **493 test / 42 file, 122.99 s, exit 0**; npm check finale exit 0 (ESLint, Prettier, TypeScript e **6 qualità**); audit produzione **0 vulnerabilità**; build TypeScript/Vite **9.89 s**, exit 0. Quattro nuovi test coprono ref/draft multilinea, selezione/eventi/FormData, checkbox/radio/fieldset disabled e composizione/errori escapati. Fixture Firefox sintetica desktop e 390px con CSS compilato/CSP nonce: PASS, gap label 10px, checkbox allineata e layout inline/label nascosta verificati; screenshot ispezionati. Fixture solo in /tmp, nessun dato reale o modifica a Vite/public/hot.
+- Limiti: backend e CI remota non eseguiti perché questa modifica riguarda soltanto il frontend; fixture browser non equivale a una nuova accettazione autenticata completa o certificazione assistive technology. Prossimo passo: continuare la revisione grafica sullo stesso branch; task SEC/billing ancora sospesi.
+- Commit suggerito sullo stesso branch: `git commit -m "refactor: centralize frontend form fields"`.
+
+## UI — Opzioni select senza bordo verde — 2026-11-17
+
+- [x] Rimosso outline verde dalle opzioni attive/hover, conservando il solo sfondo più chiaro, selezione e tastiera. Focus del campo invariato. Stesso branch grafico, nessun Git/gh.
+- File: app.css, UI-GUIDELINES e piano. Rimossi solo outline/offset della regola hover e data-active delle opzioni; sfondo raised e segno di selezione conservati, focus del campo non alterato. Prettier CSS, **9 test Select** e TypeScript/build **7.89 s** tutti exit 0. Suite completa, backend, CI e browser non ripetuti per la sola rimozione di due dichiarazioni CSS; nessuna modifica a comportamento, PHP/rotte/dipendenze.
+- Commit suggerito sullo stesso branch: `git commit -m "style: simplify select option highlights"`.
+
+
+## UI — Menu select sotto il campo — 2026-11-17
+
+- [x] Implementato: menu singolo sotto il campo, senza sovrapporre il valore, aggiornamento immediato al click. Posizione del popup OS non uniforme; componente condiviso mantiene select/eventi/form nativi e rende un listbox posizionato sotto il campo. Tastiera, disabled e CSP da verificare; nessun Git/gh, stesso branch grafico. Nessuna modifica alle azioni di dominio o conferme esplicite del cambio team.
+- Nuovo `components/ui/Select.tsx`, adottato nei **20 punti select** delle pagine/componenti Monitor, Incidenti, Teams/Ownership, TeamSwitcher, OperationalList, StatusPageForm, MonthlyReportDownload, EscalationPanel e ChannelForm; stili app.css. Il campo resta select nativo (etichette, validazione, nome/valore, handler change); apertura pointer/click e tastiera usa listbox portal **6 px sotto il campo**, larghezza coerente, altezza limitata e scrolling. Scelta immediata con un solo change, chiusura e focus al campo; scelta invariata non duplica eventi. Conferma Switch team resta esplicita. Invii, rotte e regole di dominio invariati.
+- Interazioni: frecce/Home/End/Page/typeahead esplorano opzioni abilitate; Enter/Space/Tab confermano, Escape annulla. Click esterno, blur, scroll dell’ancora/resize e unmount chiudono il menu. Prima del commit vengono ricontrollati stato disabled del controllo/opzione e valori correnti. Multiple/listbox restano nativi. CSS di posizione numerico in style con nonce originale del documento, mai style attribute né allentamento CSP.
+- Test: nuovi **9 casi Select.test.tsx**; adeguata anche l’aspettativa preesistente TeamSwitcher del vecchio Open dashboard di Account (emersa con la regressione estesa; ora usa Dashboard `/dashboard`). Prova mirata iniziale **59 passati / 1 fallito** per tale aspettativa, corretta; risolti un generic nel test segnalato dal lint e il relativo wrapping Prettier. **Gate frontend finale tutto exit 0**: ESLint/Prettier/TypeScript, **6 qualità**, **489 DOM / 41 file in 116.24 s**, audit npm produzione **zero vulnerabilità**, build **8.70 s**. Nessuna soppressione o disabilitazione di controlli.
+- Browser: bundle temporaneo del vero componente React con Vite installato, fuori dal repository; fixture Firefox con CSP nonce-only. Desktop apertura, scelta via click e scelta da tastiera: tutti PASS, gap **6 px**, cambio Alpha→Beta e **un solo evento**, niente style attribute, nonce corretto. Viewport **390 px** PASS, menu largo **342 px** e sempre sotto il campo. Screenshot ispezionati in `/tmp`; eventi inviati dalla fixture, non una sessione autenticata o certificazione screen-reader/touch reale. Safari/Chromium/VoiceOver e CI remota non eseguiti in questa correzione.
+- Documenti: UI-GUIDELINES (decisione e fonti ufficiali MDN/WAI), TESTING, BOOTSTRAP e piano. Nessun PHP, API, migration, dipendenza/lockfile, chiave, configurazione o dato di sviluppo modificato; nessun processo applicativo fermato/riavviato. Backend non ripetuto perché il perimetro è solo frontend; precedente suite completa resta storica.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "feat: open select menus below their fields"`.
+
+
+## UI — Distanza selettore/lista Teams — 2026-11-17
+
+- [x] Applicato chiarimento utente sulla pagina `/teams`: la prima card è attaccata al selettore e al pulsante, non alle altre card. Aggiungere 24 px sopra la lista, conservando il gap interno esistente. Stesso branch, nessun Git/gh.
+- File: Teams/Index.tsx, aggiunto mt-6 alla lista; **24 px** tra form selezione e prima card, gap tra card invariato. Prettier mirato, ESLint senza warning, **10 test Teams** e TypeScript/build **8.03 s** tutti exit 0. Backend/CI e browser non ripetuti per la singola utility di spaziatura; nessuna modifica PHP/rotta/dipendenza.
+- Commit suggerito sullo stesso branch: `git commit -m "style: space team cards below the selector"`.
+
+
+## UI — Spazio card account/team — 2026-11-17
+
+- [x] Corretto: distanziare card adiacenti Account/Teams e rimuovere il collegamento Open dashboard da Team access. Identificati pannelli consecutivi senza spaziatura nel contenuto (Account e dettaglio team amministrativo); lista team ha già gap e sezioni team hanno margini propri. Stesso branch grafico, nessun Git/gh.
+- File: app.css, Account/Overview.tsx, test Authentication.test.tsx e UI-GUIDELINES. Regola limitata ai Panel consecutivi direttamente nel contenuto pagina: **24 px** di distacco, preservando griglie e margini delle sezioni già distanziate. Rimosso soltanto il link Open dashboard della card Team access; sidebar Dashboard, inviti e gestione team conservati. Nessun PHP/rotta/API/dipendenza modificato.
+- Verifiche exit 0: npm check (lint/Prettier/TypeScript e **6 qualità**), **41 test / 4 suite** Account/Team/Admin/layout, inclusa nuova regressione del link rimosso; build **7.55 s**. Fixture Firefox con CSS compilato: card adiacenti **24 px**, griglia annidata **16 px** senza raddoppi, PASS e screenshot verificato. Backend/CI e flussi browser autenticati completi non ripetuti per questa correzione solo frontend.
+- Commit suggerito sullo stesso branch: `git commit -m "style: separate workspace cards and simplify team access"`.
+
+
+## UI — Account, team e admin nella dashboard — 2026-11-17
+
+- [x] Implementato su richiesta utente: unificare cornice sidebar/header/menu mobile delle pagine account/team/admin con dashboard. Conservare confini di autorizzazione e nessun team dedotto da risorse amministrative ispezionate; nessuna modifica URL o API necessaria. Stesso branch grafico, nessun Git/gh.
+- Motivazione: AppLayout richiede identità di un team autorizzato; account/admin possono esistere senza membership e non devono dedurre un team dalle risorse ispezionate. Mantenuto questo confine semantico, unificata la cornice visiva tramite classi condivise e navigazione WorkspaceLinks. Sidebar desktop a tutta altezza e gruppo sticky unico, menu mobile nativo condiviso, brand verso `/dashboard`, voci attive Teams/Account/Security/Administration; quest’ultima solo per operatori. Il contesto account può mostrare i link del team personale selezionato e presente nella proiezione membership; quello platform li ignora sempre. Nessun selettore duplicato, URL/API/middleware invariati.
+- File: AppLayout, PrivateContextLayout, nuovo WorkspaceLinks, MobileNavigation, TeamLinks e app.css; nuova WorkspaceLayout.test.tsx, MobileNavigation.test.tsx esteso, aspettative NavigationGuard/Authentication aggiornate. Documenti UI-GUIDELINES, TESTING, BOOTSTRAP e piano. Nessun PHP, migration, dipendenza, dato di sviluppo o processo applicativo modificato; nessun Git/gh.
+- Verifiche finali tutte exit 0: **479 DOM / 40 file in 123.25 s**, **6 test qualità**, ESLint/Prettier/TypeScript, audit npm produzione **0 vulnerabilità**, build **8.95 s**. Quattro nuove casistiche: cornice/account con membership personale, amministrazione indipendente dal tenant ispezionato, diniego operatore senza residui e menu mobile piattaforma con cancel/ripristino focus. Risolti durante il lavoro callback render-prop segnalato da react-hooks/refs (sostituito da componenti dichiarativi), tipi exactOptionalPropertyTypes espliciti e quattro aspettative di test (marchio/sidebar e cancel nativo jsdom); nessuna soppressione o riduzione dei controlli.
+- Browser: fixture sintetica Firefox desktop con CSS compilato, header/sidebar/main amministrativi ispezionati; non una nuova sessione autenticata end-to-end. Mobile verificato automaticamente con i componenti reali; test browser nativo/zoom generale e CI remota non rieseguiti. Backend non ripetuto perché nessuna modifica PHP/rotte/autorizzazioni; il gate backend completo precedente resta storico.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "feat: unify private pages under dashboard navigation"`.
+
+
+## UI — Distanza label dal focus — 2026-11-17
+
+- [x] Applicata ulteriore richiesta utente di alzare le label sopra input/select di circa 2 px per evitare contatto con l’outline verde. Distanza condivisa da 8 a 10 px, mantenendo focus e freccia select. Stesso branch, nessun Git/gh.
+- File: app.css con token field-gap 10 px e grid coerente; rimossi override mb-2 dalle label associate in Monitors/Index, StatusPages/Unlock, Admin/Teams/Show, AuthForm, StatusPageForm, EscalationPanel, QuietHoursForm, PolicyForm, ChannelForm/Row e MaintenancePanel; UI-GUIDELINES aggiornate. Eccezione inline report mb-0 conservata, frecce select invariate.
+- Verifiche: npm check finale exit 0 (lint/Prettier/TypeScript e 6 qualità), **98 test / 5 suite** di primitive/campi/monitor/team/auth verdi; build **8.09 s**. Corretto wrapping Prettier in tre file. Fixture Firefox con CSS compilato: gap input/select/grid **10 px**. Il focus nativo non si attiva nel processo headless; nella sola fixture applicate le regole focus tramite attributo per verificare ingombro e rendering: outline **2 px**, offset **3 px**, restano **5 px** liberi prima della label, PASS e screenshot ispezionato. Questa simulazione non è un nuovo test di interazione browser nativa. Backend/CI non ripetuti: nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch: `git commit -m "style: increase label clearance above focused fields"`.
+
+
+## UI — Spaziatura campi e frecce select — 2026-11-17
+
+- [x] Applicata richiesta utente di distanziare label da input/select e spostare le frecce dei select dal bordo. Intervento condiviso su label associate e select singoli; mantenere select nativi/tastiera, checkbox e campi disabled. Stesso branch grafico, nessun Git/gh.
+- File: app.css, label preesistenti mb-1 in StatusPageForm/QuietHoursForm/PolicyForm/ChannelRow, eccezione mb-0 della label affiancata nel MonthlyReportDownload; aggiornati UI-GUIDELINES e piano. Distanza label/campo **8 px** senza raddoppio nel grid InputField; freccia CSS del select singolo con **14 px** dal bordo e **44 px** di padding destro, select nativo e forced-colors ripristinato a freccia OS. Nessuna nuova risorsa immagine/dipendenza o modifica CSP.
+- Verifiche: npm check finale exit 0 (lint/Prettier/TypeScript, **6 qualità**); regressioni form/team/auth/status/notifiche **61 test / 5 file**, più MonitorMutations/MonthlyReportDownload **23 / 2 file**, tutti verdi; prima selezione conteneva il nome inesistente MonitorForm.test.tsx, corretto eseguendo la suite effettiva MonitorMutations. Build finale **7.83 s**, exit 0. Firefox su fixture sintetica con CSS compilato: misurati 8 px per label/input, label/select e InputField grid; padding select 44 px e freccia inset verificati, controllo fixture PASS. Nessun dato reale o modifica a processi applicativi; backend/CI non ripetuti perché nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "style: improve form label and select spacing"`.
+
+
+## UI — Allineamento verticale tabelle — 2026-11-17
+
+- [x] Corretto: prima colonna Monitor/Incidenti disallineata per padding py-2 locale rispetto alle altre celle, con allineamento top comune. Stesso override trovato nel DeliveryLog notifiche. Uniformare padding e centrare verticalmente tutte le celle DataTable. Unico branch grafico, nessun Git/gh.
+- File: app.css, Monitors/Index, IncidentTable, DeliveryLog e UI-GUIDELINES. Rimossi i padding locali py-2 di prima colonna/intestazione; tutte le celle DataTable condividono padding 12 px verticale e allineamento middle. Ispezionate anche dashboard overview, manutenzioni, consegne, directory team, statistiche/disponibilità monitor: usano DataTable e ricevono la correzione. L’unica altra tabella è la disclosure compatta TimeSeriesChart, con allineamento nativo middle e senza override top, non richiede modifica.
+- Verifiche: npm check exit 0 (ESLint/Prettier/TypeScript, **6 qualità**), regressioni pertinenti **100 test / 6 file, 21.71 s**, build **7.83 s** exit 0. Fixture Firefox con CSS compilato: tutte le celle th/td middle e padding 12 px uniforme, con link, badge e valore multilinea; screenshot verificato e controllo automatico della fixture PASS. Nessun dato reale, nessuna nuova accettazione dei flussi browser completi. Backend/CI non ripetuti: nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "style: align table row headers with other cells"`.
+
+
+## UI — Link senza sottolineature — 2026-11-17
+
+- [x] Applicata richiesta utente su tutta l’applicazione, link senza underline anche hover e cursore pointer; focus da tastiera conservato. Preferenza utente: unico branch per le modifiche grafiche, più commit se opportuno; non suggerire un nuovo branch per ogni intervento grafico. Nessun Git/gh.
+- File: app.css (regola base anchor/role link/summary e primitive), componenti RequestFailureNotice, LiveUpdates, AuthLayout, MaintenancePanel, StatusPageRow/Form/DomainForm, EscalationPanel, ChannelRow, PolicyRow/Form, SigningSecret e pagina Incidents/Index. Eliminati anche gli underline degli hover danger e delle vecchie azioni testuali, mantenendo controlli disabled/focus e comportamento HTTP invariati. Aggiornati UI-GUIDELINES e piano.
+- Verifiche: `npm run check` exit 0 (lint, Prettier, TypeScript, **6 test qualità**); regressioni mirate layout/menu/team/auth/status/notifiche/errori/Home **89 test / 8 file, 18.83 s**, exit 0; build **7.78 s**, exit 0. Fixture Firefox con CSS compilato: anchor nativi e condivisi, summary e azioni testuali riportano cursor pointer e text-decoration none; controllo disabled conserva not-allowed. Screenshot/fixture in `/tmp`, nessuna sessione o dato cliente. Non eseguita una nuova accettazione completa dei flussi browser. Backend/CI non ripetuti perché nessun PHP/rotta/dipendenza modificato.
+- Commit suggerito sullo stesso branch grafico: `git commit -m "style: remove link underlines and use pointer cursors"`. Nessuna operazione Git eseguita.
+
+
 ## Correzione CI — Catalogo rotta dashboard — 2026-11-17
 
 - [x] Correzione completata: CI backend segnalata dall’utente con 1 errore / 3651 passati, 24649 asserzioni, 315.49 s. Aggiunta `/dashboard` senza aggiornare il catalogo indipendente TeamRouteMatrix; verifiche precedenti insufficienti perché non includevano la matrice. Aggiornare la classificazione account-level e verificarne i gate senza imporre un tenant alla scelta team; poi suite backend integrale. Nessun Git/gh.

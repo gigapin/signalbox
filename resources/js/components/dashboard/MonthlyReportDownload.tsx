@@ -1,4 +1,5 @@
 /** Let a team member choose a recent month and download its PDF report. */
+import SelectField from '../ui/SelectField';
 import { useState } from 'react';
 
 /** Months offered: the current one and the eleven before it. */
@@ -50,21 +51,20 @@ export default function MonthlyReportDownload({ teamId, timezone }: MonthlyRepor
 
     return (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <label htmlFor="report-month" className="ui-label">
-                Monthly report
-            </label>
-            <select
+            <SelectField
+                layout="inline"
+                label="Monthly report"
                 id="report-month"
                 value={selected}
                 onChange={(event) => setSelected(event.target.value)}
-                className="ui-input max-w-full sm:w-auto"
+                className="max-w-full sm:w-auto"
             >
                 {options.map((option) => (
                     <option key={option.value} value={option.value}>
                         {option.label}
                     </option>
                 ))}
-            </select>
+            </SelectField>
             <a className="ui-link" href={`/teams/${teamId}/reports/${selected}`}>
                 Download PDF
             </a>

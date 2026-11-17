@@ -28,7 +28,7 @@ export default function LiveUpdates({ phase, retry }: LiveUpdatesProps) {
                 {LABELS[phase]}
             </p>
             {(phase === 'error' || phase === 'disconnected') && (
-                <button type="button" onClick={retry} className="text-emerald-300 underline">
+                <button type="button" onClick={retry} className="text-emerald-300 cursor-pointer">
                     Retry live updates
                 </button>
             )}
@@ -36,7 +36,7 @@ export default function LiveUpdates({ phase, retry }: LiveUpdatesProps) {
                 <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="text-emerald-300 underline"
+                    className="text-emerald-300 cursor-pointer"
                 >
                     Reload page
                 </button>

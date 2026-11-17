@@ -1,4 +1,5 @@
 /** Show one notification channel with its verification state and the changes its state admits. */
+import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
@@ -167,7 +168,7 @@ export default function ChannelRow({
                         type="button"
                         disabled={blocked}
                         onClick={destroy}
-                        className="text-red-200 underline disabled:opacity-50"
+                        className="text-red-200 cursor-pointer disabled:opacity-50"
                     >
                         Delete channel
                     </button>
@@ -180,41 +181,27 @@ export default function ChannelRow({
                     noValidate
                     className="mt-3 flex flex-wrap items-end gap-3"
                 >
-                    <div>
-                        <label htmlFor={codeId} className="mb-1 block text-sm font-medium">
-                            Verification code
-                        </label>
-                        <input
-                            id={codeId}
-                            disabled={blocked}
-                            inputMode="numeric"
-                            autoComplete="one-time-code"
-                            pattern="[0-9]*"
-                            maxLength={codeLength}
-                            value={confirm.data.code}
-                            onChange={(event) => confirm.setData('code', event.target.value)}
-                            aria-invalid={confirm.errors.code !== undefined}
-                            aria-describedby={`${codeId}-hint ${codeId}-error`}
-                            className="w-32 rounded border border-slate-600 bg-slate-900 px-3 py-2"
-                        />
-                        <p
-                            id={`${codeId}-hint`}
-                            className="mt-1 text-xs text-[var(--color-ui-muted)]"
-                        >
-                            Expires {formatInstant(channel.verificationExpiresAt, 'soon')}.
-                        </p>
-                    </div>
+                    <InputField
+                        error={confirm.errors.code}
+                        label="Verification code"
+                        hint={<>Expires {formatInstant(channel.verificationExpiresAt, 'soon')} .</>}
+                        id={codeId}
+                        disabled={blocked}
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        pattern="[0-9]*"
+                        maxLength={codeLength}
+                        value={confirm.data.code}
+                        onChange={(event) => confirm.setData('code', event.target.value)}
+                        aria-invalid={confirm.errors.code !== undefined}
+                        wrapperClassName="w-32"
+                    />
                     <button
                         disabled={blocked}
                         className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
                     >
                         {confirm.processing ? 'Checking…' : 'Verify'}
                     </button>
-                    {confirm.errors.code && (
-                        <p id={`${codeId}-error`} role="alert" className="w-full text-red-300">
-                            {confirm.errors.code}
-                        </p>
-                    )}
                 </form>
             )}
 

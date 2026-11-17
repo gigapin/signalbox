@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { useEffect, useState } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import AppLayout from '../../resources/js/components/app/AppLayout';
+import PrivateContextLayout from '../../resources/js/components/app/PrivateContextLayout';
 import { DESKTOP_NAVIGATION_QUERY } from '../../resources/js/components/app/useDesktopNavigation';
 import { renderInertia } from './renderInertia';
 
@@ -238,4 +239,40 @@ test('moving focus from Account to mobile navigation closes the account disclosu
     ).not.toBeInTheDocument();
     fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     expect(screen.getByRole('button', { name: 'Open navigation' })).toHaveFocus();
+});
+
+/** Render a platform workspace using the same responsive dashboard frame. */
+function PlatformWorkspaceFixture() {
+    return (
+        <PrivateContextLayout title="Team directory" context="platform">
+            <p>Operator workspace</p>
+        </PrivateContextLayout>
+    );
+}
+
+test('uses the dashboard mobile menu for platform pages without selecting an inspected team', async () => {
+    const user = userEvent.setup();
+    const { container } = renderInertia(
+        'Signalbox',
+        PlatformWorkspaceFixture,
+        {
+            auth: {
+                user: { name: 'Operator', email: 'operator@example.test', isPlatformAdmin: true },
+            },
+            team: { id: 99, name: 'Inspected team' },
+        },
+        { url: '/admin/teams' },
+    );
+    expect(container.querySelector('.ui-sidebar')).toBeNull();
+    const trigger = screen.getByRole('button', { name: 'Open navigation' });
+    await user.click(trigger);
+    const dialog = within(screen.getByRole('dialog', { name: 'Navigation' }));
+    expect(dialog.getByRole('link', { name: 'Administration' })).toHaveAttribute(
+        'aria-current',
+        'page',
+    );
+    expect(dialog.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/dashboard');
+    expect(dialog.queryByRole('navigation', { name: 'Team navigation' })).not.toBeInTheDocument();
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    expect(trigger).toHaveFocus();
 });

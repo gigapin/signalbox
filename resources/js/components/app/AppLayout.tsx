@@ -6,6 +6,7 @@ import LiveUpdates from '../LiveUpdates';
 import Alert from '../ui/Alert';
 import { PageHeading } from '../ui/Panel';
 import AccountMenu from './AccountMenu';
+import WorkspaceLinks from './WorkspaceLinks';
 import { TeamAccessContext } from './TeamAccessContext';
 import TeamSwitcher from './TeamSwitcher';
 import TeamLinks from './TeamLinks';
@@ -84,6 +85,7 @@ function TeamShell({
                             teamId={team.id}
                             section={section}
                             mainId={mainId}
+                            workspaceNavigation
                         />
                     )}
                     {membership && !hidden && <p className="ui-help">Role: {membership.role}</p>}
@@ -106,7 +108,10 @@ function TeamShell({
                 <div className="ui-app-frame">
                     {!hidden && desktop && (
                         <aside className="ui-sidebar">
-                            <TeamLinks teamId={team.id} section={section} />
+                            <div className="ui-sidebar-navigation">
+                                <TeamLinks teamId={team.id} section={section} />
+                                <WorkspaceLinks includeDashboard={false} />
+                            </div>
                         </aside>
                     )}
                     <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">

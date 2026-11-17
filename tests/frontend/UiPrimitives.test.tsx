@@ -78,7 +78,7 @@ test('exposes required input label, units, external help and live validation wit
             />
         </>,
     );
-    const input = screen.getByRole('textbox', { name: 'Interval (required)' });
+    const input = screen.getByRole('textbox', { name: 'Interval' });
     expect(input).toBeRequired();
     expect(input).toHaveAccessibleDescription('Plan minimum applies. Seconds, from 60 to 86400.');
     expect(inputRef.current).toBe(input);

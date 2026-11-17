@@ -1,4 +1,6 @@
 /** Manage one authorized team's membership and invitation lifecycles. */
+import SelectField from '../../components/ui/SelectField';
+import InputField from '../../components/ui/InputField';
 import { useFormProtection, useNavigationGuard } from '../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
@@ -136,26 +138,23 @@ function MemberRow({ member, teamId, roles }: MemberRowProps) {
             {member.manageable && (
                 <form onSubmit={submit} className="mt-3">
                     <fieldset disabled={blocked} className="ui-settings-fields">
-                        <label className="ui-label">
-                            Role for {member.name}
-                            <select
-                                className="ui-input"
-                                value={form.data.role}
-                                onChange={(event) => form.setData('role', event.target.value)}
-                                aria-invalid={Boolean(form.errors.role)}
-                            >
-                                {!offered && (
-                                    <option value={form.data.role} disabled>
-                                        {form.data.role} (choose a permitted role)
-                                    </option>
-                                )}
-                                {roles.map((role) => (
-                                    <option key={role} value={role}>
-                                        {role}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
+                        <SelectField
+                            label={<>Role for {member.name}</>}
+                            value={form.data.role}
+                            onChange={(event) => form.setData('role', event.target.value)}
+                            aria-invalid={Boolean(form.errors.role)}
+                        >
+                            {!offered && (
+                                <option value={form.data.role} disabled>
+                                    {form.data.role} (choose a permitted role)
+                                </option>
+                            )}
+                            {roles.map((role) => (
+                                <option key={role} value={role}>
+                                    {role}
+                                </option>
+                            ))}
+                        </SelectField>
                         <div className="ui-actions">
                             <Button type="submit" disabled={!offered}>
                                 Save role for {member.name}
@@ -259,37 +258,31 @@ function InviteForm({ teamId, roles }: { teamId: number; roles: string[] }) {
     return (
         <form onSubmit={submit} noValidate>
             <fieldset disabled={blocked} className="ui-settings-fields">
-                <label className="ui-label">
-                    Invitation email
-                    <input
-                        required
-                        type="email"
-                        maxLength={255}
-                        className="ui-input"
-                        value={form.data.email}
-                        onChange={(event) => form.setData('email', event.target.value)}
-                        aria-invalid={Boolean(form.errors.email)}
-                    />
-                </label>
-                <label className="ui-label">
-                    Invitation role
-                    <select
-                        className="ui-input"
-                        value={form.data.role}
-                        onChange={(event) => form.setData('role', event.target.value)}
-                    >
-                        {!offered && (
-                            <option value={form.data.role} disabled>
-                                Choose a permitted role
-                            </option>
-                        )}
-                        {roles.map((role) => (
-                            <option key={role} value={role}>
-                                {role}
-                            </option>
-                        ))}
-                    </select>
-                </label>
+                <InputField
+                    label="Invitation email"
+                    required
+                    type="email"
+                    maxLength={255}
+                    value={form.data.email}
+                    onChange={(event) => form.setData('email', event.target.value)}
+                    aria-invalid={Boolean(form.errors.email)}
+                />
+                <SelectField
+                    label="Invitation role"
+                    value={form.data.role}
+                    onChange={(event) => form.setData('role', event.target.value)}
+                >
+                    {!offered && (
+                        <option value={form.data.role} disabled>
+                            Choose a permitted role
+                        </option>
+                    )}
+                    {roles.map((role) => (
+                        <option key={role} value={role}>
+                            {role}
+                        </option>
+                    ))}
+                </SelectField>
                 <Button
                     type="submit"
                     disabled={!offered}

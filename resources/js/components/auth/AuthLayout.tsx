@@ -45,7 +45,7 @@ export default function AuthLayout({ title, description, children, wide = false 
                         {auth?.user?.isPlatformAdmin === true && (
                             <Link
                                 href="/admin/teams"
-                                className="text-sm text-emerald-300 underline"
+                                className="text-sm text-emerald-300 cursor-pointer"
                             >
                                 Admin
                             </Link>

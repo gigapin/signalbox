@@ -271,7 +271,7 @@ test.each(['account', 'platform'] as const)(
                 </PrivateContextLayout>
             );
         }
-        renderInertia('Configured name', ContextFixture, {
+        const { container } = renderInertia('Configured name', ContextFixture, {
             ...identity,
             auth: { user: { ...identity.auth.user, isPlatformAdmin: context === 'platform' } },
         });
@@ -280,11 +280,11 @@ test.each(['account', 'platform'] as const)(
         expect(screen.queryByText('Current team')).not.toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Configured name' })).toHaveAttribute(
             'href',
-            '/account',
+            '/dashboard',
         );
-        expect(
-            screen.getByText(context === 'platform' ? 'Platform administration' : 'Account'),
-        ).toBeVisible();
+        expect(container.querySelector('.ui-team-identity')).toHaveTextContent(
+            context === 'platform' ? 'Platform administration' : 'Account',
+        );
     },
 );
 

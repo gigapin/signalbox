@@ -1,4 +1,5 @@
 /** Manage a page's custom hostname, public DNS proof and expiring ownership verification. */
+import InputField from '../ui/InputField';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
@@ -65,8 +66,9 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
         <section aria-label="Custom domain" className="mt-4 ui-panel">
             <h3 className="font-medium">Custom domain</h3>
             <form onSubmit={save} className="mt-2 grid gap-2">
-                <label htmlFor={`domain-${pageId}`}>Hostname</label>
-                <input
+                <InputField
+                    label="Hostname"
+                    error={error}
                     disabled={pending}
                     id={`domain-${pageId}`}
                     value={claim.data.domain}
@@ -74,16 +76,8 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                     placeholder="status.your-company.com"
                     autoComplete="off"
                     maxLength={1024}
-                    aria-invalid={Boolean(error)}
-                    aria-describedby={error ? `domain-error-${pageId}` : undefined}
-                    className="ui-input"
                 />
-                {error && (
-                    <p id={`domain-error-${pageId}`} role="alert">
-                        {error}
-                    </p>
-                )}
-                <button type="submit" disabled={pending} className="w-fit underline">
+                <button type="submit" disabled={pending} className="w-fit cursor-pointer">
                     {claim.processing ? 'Saving domain…' : 'Save hostname'}
                 </button>
             </form>
@@ -127,7 +121,7 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                             type="button"
                             disabled={pending}
                             onClick={() => change('remove')}
-                            className="text-red-200 underline"
+                            className="text-red-200 cursor-pointer"
                         >
                             Remove hostname
                         </button>

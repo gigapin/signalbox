@@ -1,4 +1,7 @@
 /** Platform operator view of one team: effective plan, override form and audit history. */
+import ChoiceField from '../../../components/ui/ChoiceField';
+import InputField from '../../../components/ui/InputField';
+import TextareaField from '../../../components/ui/TextareaField';
 import { useLeaveProtection, useNavigationGuard } from '../../../components/app/NavigationGuard';
 import { useFormProtection } from '../../../components/app/NavigationGuard';
 import { Link, useForm, usePage } from '@inertiajs/react';
@@ -31,9 +34,6 @@ interface ShowProps extends AuthProps {
     /** Server-normalized directory context; absent in older history entries. */
     directoryUrl?: string;
 }
-
-/** Field styling shared with the other forms. */
-const INPUT = 'ui-input';
 
 /** Labels of the radio choices. */
 const CHOICES: { value: Choice; label: string }[] = [
@@ -317,85 +317,42 @@ function DetailContent() {
                         <fieldset>
                             <legend className="mb-2 text-sm font-medium">Override</legend>
                             {CHOICES.map((choice) => (
-                                <label key={choice.value} className="flex items-center gap-2 py-1">
-                                    <input
-                                        type="radio"
-                                        name="choice"
-                                        value={choice.value}
-                                        checked={form.data.choice === choice.value}
-                                        onChange={() => form.setData('choice', choice.value)}
-                                    />
-                                    {choice.label}
-                                </label>
+                                <ChoiceField
+                                    label={choice.label}
+                                    key={choice.value}
+                                    wrapperClassName="py-1"
+                                    type="radio"
+                                    name="choice"
+                                    value={choice.value}
+                                    checked={form.data.choice === choice.value}
+                                    onChange={() => form.setData('choice', choice.value)}
+                                />
                             ))}
                         </fieldset>
 
                         {form.data.choice !== 'none' && (
-                            <div>
-                                <label
-                                    htmlFor="valid-through"
-                                    className="mb-2 block text-sm font-medium"
-                                >
-                                    Valid through (UTC date, optional)
-                                </label>
-                                <input
-                                    id="valid-through"
-                                    type="date"
-                                    value={form.data.valid_through}
-                                    onChange={(event) =>
-                                        form.setData('valid_through', event.target.value)
-                                    }
-                                    aria-invalid={form.errors.valid_through !== undefined}
-                                    aria-describedby="valid-through-hint valid-through-error"
-                                    className={INPUT}
-                                />
-                                <p
-                                    id="valid-through-hint"
-                                    className="mt-1 text-xs text-[var(--color-ui-muted)]"
-                                >
-                                    Leave empty to keep the override until it is removed.
-                                </p>
-                                {form.errors.valid_through && (
-                                    <p
-                                        id="valid-through-error"
-                                        role="alert"
-                                        className="mt-1 text-red-300"
-                                    >
-                                        {form.errors.valid_through}
-                                    </p>
-                                )}
-                            </div>
+                            <InputField
+                                label="Valid through (UTC date, optional)"
+                                error={form.errors.valid_through}
+                                hint="Leave empty to keep the override until it is removed."
+                                id="valid-through"
+                                type="date"
+                                value={form.data.valid_through}
+                                onChange={(event) =>
+                                    form.setData('valid_through', event.target.value)
+                                }
+                            />
                         )}
 
-                        <div>
-                            <label
-                                htmlFor="override-reason"
-                                className="mb-2 block text-sm font-medium"
-                            >
-                                Reason (required, recorded in the audit log)
-                            </label>
-                            <textarea
-                                id="override-reason"
-                                required
-                                maxLength={reasonMaxLength}
-                                value={form.data.reason}
-                                onChange={(event) => form.setData('reason', event.target.value)}
-                                aria-invalid={form.errors.reason !== undefined}
-                                aria-describedby={
-                                    form.errors.reason ? 'override-reason-error' : undefined
-                                }
-                                className={INPUT}
-                            />
-                            {form.errors.reason && (
-                                <p
-                                    id="override-reason-error"
-                                    role="alert"
-                                    className="mt-1 text-red-300"
-                                >
-                                    {form.errors.reason}
-                                </p>
-                            )}
-                        </div>
+                        <TextareaField
+                            label="Reason (required, recorded in the audit log)"
+                            error={form.errors.reason}
+                            id="override-reason"
+                            required
+                            maxLength={reasonMaxLength}
+                            value={form.data.reason}
+                            onChange={(event) => form.setData('reason', event.target.value)}
+                        />
 
                         <div>
                             <button ref={saveButton} disabled={locked} className="ui-button">

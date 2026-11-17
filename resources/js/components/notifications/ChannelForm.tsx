@@ -1,4 +1,6 @@
 /** Create a notification channel or change one, without ever receiving its stored secrets. */
+import SelectField from '../ui/SelectField';
+import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
@@ -38,9 +40,6 @@ interface ChannelFormProps {
     /** Called after a successful submission, such as closing an inline editor. */
     onSaved?: () => void;
 }
-
-/** Field styling shared by the inputs. */
-const INPUT = 'ui-input';
 
 /**
  * Secret inputs start blank and say so; configuration errors arrive per field as `config.<name>`, so each
@@ -89,87 +88,59 @@ export default function ChannelForm({
         <form onSubmit={submit} noValidate>
             <fieldset disabled={blocked} className="min-w-0 grid gap-4 md:grid-cols-2">
                 {!editing && (
-                    <div>
-                        <label
-                            htmlFor={`${idPrefix}-type`}
-                            className="mb-2 block text-sm font-medium"
-                        >
-                            Channel type
-                        </label>
-                        <select
-                            id={`${idPrefix}-type`}
-                            value={form.data.type}
-                            onChange={(event) =>
-                                form.setData({ ...form.data, type: event.target.value, config: {} })
-                            }
-                            className={INPUT}
-                        >
-                            {types.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    <SelectField
+                        label="Channel type"
+                        id={`${idPrefix}-type`}
+                        value={form.data.type}
+                        onChange={(event) =>
+                            form.setData({ ...form.data, type: event.target.value, config: {} })
+                        }
+                    >
+                        {types.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </SelectField>
                 )}
-                <div>
-                    <label htmlFor={`${idPrefix}-name`} className="mb-2 block text-sm font-medium">
-                        Name
-                    </label>
-                    <input
-                        id={`${idPrefix}-name`}
-                        required
-                        maxLength={nameMaxLength}
-                        value={form.data.name}
-                        onChange={(event) => form.setData('name', event.target.value)}
-                        aria-invalid={errors.name !== undefined}
-                        aria-describedby={`${idPrefix}-name-error`}
-                        className={INPUT}
-                    />
-                    {errors.name && (
-                        <p id={`${idPrefix}-name-error`} role="alert" className="mt-1 text-red-300">
-                            {errors.name}
-                        </p>
-                    )}
-                </div>
+                <InputField
+                    label="Name"
+                    error={errors.name}
+                    id={`${idPrefix}-name`}
+                    required
+                    maxLength={nameMaxLength}
+                    value={form.data.name}
+                    onChange={(event) => form.setData('name', event.target.value)}
+                />
                 {channelFields(form.data.type).map((field) => {
                     const id = `${idPrefix}-${field.name}`;
                     const error = errors[`config.${field.name}`];
                     const secret = selected?.secretFields.includes(field.name) ?? false;
 
                     return (
-                        <div key={field.name}>
-                            <label htmlFor={id} className="mb-2 block text-sm font-medium">
-                                {field.label}
-                            </label>
-                            <input
-                                id={id}
-                                type={field.input}
-                                autoComplete="off"
-                                value={form.data.config[field.name] ?? ''}
-                                onChange={(event) =>
-                                    form.setData('config', {
-                                        ...form.data.config,
-                                        [field.name]: event.target.value,
-                                    })
-                                }
-                                aria-invalid={error !== undefined}
-                                aria-describedby={`${id}-hint ${id}-error`}
-                                className={INPUT}
-                            />
-                            <p
-                                id={`${id}-hint`}
-                                className="mt-1 text-xs text-[var(--color-ui-muted)]"
-                            >
-                                {editing && secret ? 'Leave empty to keep the stored value. ' : ''}
-                                {field.hint}
-                            </p>
-                            {error && (
-                                <p id={`${id}-error`} role="alert" className="mt-1 text-red-300">
-                                    {error}
-                                </p>
-                            )}
-                        </div>
+                        <InputField
+                            label={field.label}
+                            error={error}
+                            hint={
+                                <>
+                                    {editing && secret
+                                        ? 'Leave empty to keep the stored value. '
+                                        : ''}{' '}
+                                    {field.hint}
+                                </>
+                            }
+                            key={field.name}
+                            id={id}
+                            type={field.input}
+                            autoComplete="off"
+                            value={form.data.config[field.name] ?? ''}
+                            onChange={(event) =>
+                                form.setData('config', {
+                                    ...form.data.config,
+                                    [field.name]: event.target.value,
+                                })
+                            }
+                        />
                     );
                 })}
                 <div className="md:col-span-2">

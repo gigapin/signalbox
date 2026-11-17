@@ -1,5 +1,14 @@
 # Signalbox — Piano dei task
 
+## Correzione CI — Catalogo rotta dashboard — 2026-11-17
+
+- [x] Correzione completata: CI backend segnalata dall’utente con 1 errore / 3651 passati, 24649 asserzioni, 315.49 s. Aggiunta `/dashboard` senza aggiornare il catalogo indipendente TeamRouteMatrix; verifiche precedenti insufficienti perché non includevano la matrice. Aggiornare la classificazione account-level e verificarne i gate senza imporre un tenant alla scelta team; poi suite backend integrale. Nessun Git/gh.
+- Correzione catalogo: `dashboard` esplicitamente in OTHER_ROUTES (ingresso account-level), senza esclusioni dal rilevamento delle rotte. Il test controlla anche GET/HEAD, auth, verified, NoStoreAuthentication e assenza di EstablishTeamContext. Prova mirata matrice/ingresso: **674 test / 8390 asserzioni, 126.89 s**, exit 0. PHP-CS-Fixer **703 file**, nessuna modifica; Larastan livello 8 senza errori.
+- Prima suite backend completa: **3646 passati / 6 falliti, 24851 asserzioni, 560.84 s**. Tutti i sei fallimenti sono in SecurityHeadersTest: `public/hot` di sviluppo presente, letto dal fake standard withoutVite che eredita isRunningHot/hotFile e ignora useHotFile. Nessun errore del catalogo dopo la correzione. Isolato il percorso hot nei soli test CSP tramite partial mock che disabilita rendering ma mantiene il vero rilevamento; il caso hot conserva Vite reale e file temporaneo. Nessuna modifica ai controlli CSP di produzione, nessuna cancellazione/mascheramento di public/hot o stop di Vite. Test CSP+dashboard ripetuti: **14 / 171 asserzioni, 4.27 s**, exit 0.
+- **Suite backend completa finale verde: 3652 test / 24942 asserzioni, 555.75 s, exit 0**, con `--fail-on-skipped`, PostgreSQL/Redis dedicati e `COMPOSER_ROOT_VERSION=dev-main`. Nessun test saltato. Formatter finale **703 file, zero modifiche**, exit 0; Larastan livello 8 senza errori. Non ripetuti frontend/build perché nessun asset/sorgente frontend modificato. CI remota PHP 8.4/8.5 resta da riconfermare a cura dell’utente; l’esito locale non attesta una nuova esecuzione GitHub.
+- File: tests/Support/TeamRouteMatrix.php, tests/Integration/TeamAuthorizationMatrixTest.php, tests/Integration/SecurityHeadersTest.php, docs/TESTING.md e questo piano. Nessun cambiamento applicativo, dipendenza o dato di sviluppo; nessun Git/gh e nessun riavvio di servizi applicativi. Sequenza SEC/billing ancora sospesa; revisione visiva applicativa resta il prossimo passo.
+- Commit suggerito `git commit -m "test: cover dashboard route and isolate Vite state"`; branch suggerito per la successiva revisione `test/dashboard-browser-acceptance`.
+
 ## UI — Superfici oliva quasi nere — 2026-11-17
 
 - [x] Applicata richiesta utente di portare il token superfici/sidebar/pannelli a `#0F120E`. Canvas, bordi e accenti conservati; nessun Git/gh.

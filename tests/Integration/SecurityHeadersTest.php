@@ -25,10 +25,24 @@ beforeEach(function (): void {
         $this->markTestSkipped('Requires isolated php-test PostgreSQL.');
     }
 
-    $this->withoutVite();
+    isolateSecurityHeadersVite();
     Cache::flush();
     config(['app.debug' => false]);
 });
+
+/**
+ * Disable asset rendering while keeping real hot-file detection on an isolated absent path.
+ * Laravel's withoutVite fake still reads public/hot and ignores useHotFile, so it cannot isolate CSP tests.
+ */
+function isolateSecurityHeadersVite(): void
+{
+    $vite = Mockery::mock(Vite::class)->makePartial();
+    $vite->shouldReceive('__invoke')->andReturn(new \Illuminate\Support\HtmlString(''));
+    $vite->shouldReceive('reactRefresh')->andReturn('');
+    $vite->useHotFile(sys_get_temp_dir().'/signalbox-csp-no-hot-'.bin2hex(random_bytes(12)));
+    app()->instance(Vite::class, $vite);
+    \Illuminate\Support\Facades\Vite::clearResolvedInstance();
+}
 
 /**
  * Assert the headers every response must carry and return the nonce of its enforced policy.
@@ -155,8 +169,9 @@ it('allows the Vite development server only while its hot file exists', function
     $hot = tempnam(sys_get_temp_dir(), 'vite-hot-');
     file_put_contents($hot, 'http://127.0.0.1:5173');
 
-    // The fake installed by withoutVite() ignores hot files; in hot mode the real one needs no build manifest.
-    $this->withVite();
+    // Use the real renderer for hot mode; it needs no build manifest and reads only this temporary file.
+    app()->instance(Vite::class, new Vite());
+    \Illuminate\Support\Facades\Vite::clearResolvedInstance();
     app(Vite::class)->useHotFile($hot);
 
     try {
@@ -168,7 +183,7 @@ it('allows the Vite development server only while its hot file exists', function
             ->toContain('ws://127.0.0.1:5173');
     } finally {
         unlink($hot);
-        $this->withoutVite();
+        isolateSecurityHeadersVite();
     }
 
     expect((string) $this->get('/')->headers->get('Content-Security-Policy'))->not->toContain('5173');

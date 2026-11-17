@@ -8,6 +8,10 @@ use App\Http\Middleware\EstablishTeamContext;
 use App\Http\Middleware\NoStoreAuthentication;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/dashboard', \App\Http\Controllers\Dashboard\DashboardEntryController::class)
+    ->middleware(['auth', 'verified', NoStoreAuthentication::class])
+    ->name('dashboard');
+
 Route::get('/teams/{team}/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified', EstablishTeamContext::class, NoStoreAuthentication::class])
     ->whereNumber('team')

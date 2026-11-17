@@ -84,7 +84,7 @@ it('rolls back registration and suppresses notifications if team membership crea
 it('logs in with normalized email and revokes the session on logout', /** Check explicit login, password hash tracking and logout invalidation. */ function (): void {
     /** @var User $user Verified account with a known fixture password. */
     $user = User::factory()->create();
-    $this->post('/login', ['email' => strtoupper($user->email), 'password' => 'password', 'remember' => true])->assertRedirect('/account');
+    $this->post('/login', ['email' => strtoupper($user->email), 'password' => 'password', 'remember' => true])->assertRedirect('/dashboard');
     $this->assertAuthenticatedAs($user);
     expect(session()->get('password_hash_web'))->toBe($user->password);
     $this->post('/logout')->assertRedirect('/');
@@ -121,7 +121,7 @@ it('verifies only the authenticated identity with an unexpired signed link', /**
     $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), ['id' => $user->id, 'hash' => sha1($user->email)]);
     $this->actingAs(User::factory()->unverified()->create())->get($url)->assertForbidden();
     $this->actingAs($user)->get($url.'&tampered=1')->assertForbidden();
-    $this->actingAs($user)->get($url)->assertRedirect('/account?verified=1');
+    $this->actingAs($user)->get($url)->assertRedirect('/dashboard?verified=1');
     expect($user->fresh()?->hasVerifiedEmail())->toBeTrue();
     $this->get('/account')->assertOk();
 });
@@ -179,7 +179,7 @@ it('rejects expired reset tokens and invalid new passwords', /** The broker life
 it('revokes a password-authenticated session even before its first account visit', /** Login immediately records the password hash used by AuthenticateSession. */ function (): void {
     /** @var User $user Session owner before an independent password reset. */
     $user = User::factory()->create();
-    $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/account');
+    $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/dashboard');
     $user->forceFill(['password' => 'changed-outside-session'])->save();
     Auth::forgetGuards();
     $this->get('/account')->assertRedirect('/login');

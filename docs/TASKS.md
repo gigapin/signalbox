@@ -1,5 +1,14 @@
 # Signalbox — Piano dei task
 
+## UI — Correzione grafica e accesso Dashboard — 2026-11-17
+
+- [/] Implementazione conclusa, verifica visiva applicativa ancora da confermare su richiesta utente: sospesa sequenza SEC/billing. Sidebar a tutta altezza, menu senza sottolineature, header allineato, assi grafici intermedi, accesso dashboard e palette welcome in tutta area privata. Destinazioni richieste/inviti preservati; senza selezione e con più team scelta dentro Dashboard. Git riservato all’utente.
+
+- File: CSS condiviso, TimeSeriesChart, Home, nuova Dashboard/Index e relativi test DOM; DashboardDestination e DashboardEntryController, route dashboard, AuthenticatedResponse, configurazione Fortify, AuthPageController, middleware props Inertia. Aggiornati test auth/2FA/registrazione, nuovo DashboardEntryTest e documenti UI/BOOTSTRAP. Nessuna dipendenza/migration o dato di sviluppo modificato; nessun Git/gh.
+- Verifiche: Larastan livello 8 senza errori; formatter PHP applicato. **63 test integrazione / 521 asserzioni** auth/2FA/team/ingresso dashboard; **18 / 159** registrazione/verifica. Gate frontend completo verde: audit produzione, lint/formato/TypeScript, 6 qualità, **473 DOM / 38 file**, build **8.09 s**; build finale dopo allineamento mobile **7.98 s**, exit 0. Nuova suite DashboardEntry separata **2/2**; controllo frontend ripetuto per il nuovo file. Corrette aspettative dei redirect predefiniti, conservando il caso intended `/account`.
+- Visuale: Brave headless non ha completato il rendering (processo temporaneo chiuso); prima fixture Firefox senza CSS scartata, poi screenshot desktop sintetico con CSS compilato incorporato verificato: sidebar a tutta altezza, menu senza sottolineature, header allineato, palette slate/emerald. Fixture e screenshot in `/tmp`, nessun dato reale o prova di sessione applicativa. Firefox su fixture a 1440 px e 390 px: nessun overflow orizzontale; desktop allineamento verticale select/pulsante 0 px; documento lungo sidebar/main entrambi 2200 px. Mobile controlli impilati; uniformata anche la loro larghezza. Controllo frontend finale per nuovo test e PHP-CS-Fixer dry-run conclusi con exit 0. Zoom nativo 200%, pagine autenticate complete e CI remota non attestati; non considerare questi controlli come nuova accettazione generale della fase UI.
+- Sequenza SEC/billing sospesa per istruzione utente. Prossimo passo: revisione visiva applicativa dei sei punti prima di riprendere i task. Commit suggerito: `git commit -m "fix: unify dashboard styling and authenticated landing"`; branch per successive correzioni visive `fix/dashboard-visual-polish`.
+
 ## Riferimenti e stato iniziale
 
 Specifica: [03-Progetto-B-Signalbox-Laravel.md](03-Progetto-B-Signalbox-Laravel.md). Regole di lavoro: [AGENTS.md](../AGENTS.md). Dipendenze verificate e riferimento manifest: [DEPENDENCIES.md](DEPENDENCIES.md). Bootstrap e configurazioni iniziali: [BOOTSTRAP.md](BOOTSTRAP.md).

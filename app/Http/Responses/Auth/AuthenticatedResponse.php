@@ -14,13 +14,20 @@ final class AuthenticatedResponse implements LoginResponse, TwoFactorLoginRespon
 {
     /**
      * @param \Illuminate\Http\Request $request Successfully authenticated session request.
-     * @return Response Account destination or a minimal JSON acknowledgement.
+     * @throws \LogicException When authentication has not established an application user.
+     * @return Response Dashboard destination or a minimal JSON acknowledgement.
      */
     public function toResponse($request): Response
     {
         $request->session()->forget('login');
         $request->session()->put('password_hash_web', Auth::user()?->getAuthPassword());
 
-        return $request->wantsJson() ? response()->json(['two_factor' => false]) : redirect()->intended('/account');
+        $actor = $request->user();
+
+        if (!$actor instanceof \App\Models\User) {
+            throw new \LogicException('Authenticated response requires an application user.');
+        }
+
+        return $request->wantsJson() ? response()->json(['two_factor' => false]) : redirect()->intended(app(\App\Services\Identity\DashboardDestination::class)->forUser($actor));
     }
 }

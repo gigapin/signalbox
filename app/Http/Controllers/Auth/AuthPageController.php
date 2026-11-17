@@ -33,7 +33,7 @@ final class AuthPageController
         };
 
         if ($request->routeIs('verification.notice') && $request->user() instanceof User && $request->user()->hasVerifiedEmail()) {
-            return redirect()->route($invitations->resolve($request) === null ? 'account' : 'invitations.review');
+            return redirect()->route($invitations->resolve($request) === null ? 'dashboard' : 'invitations.review');
         }
 
         if ($request->routeIs('login')) {

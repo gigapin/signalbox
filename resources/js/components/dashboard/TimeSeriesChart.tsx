@@ -73,11 +73,17 @@ export default function TimeSeriesChart({
     const selected = series.find((entry) => entry.id === choice) ?? series[0];
     const values = timestamps.map((_, index) => selected?.values[index] ?? null);
     const observations = values.filter((value) => measured(value, unit));
-    const maximum = unit === '%' ? 100 : Math.max(1, ...observations);
+    const observedMaximum = Math.max(1, ...observations);
+    const rawStep = observedMaximum / 4;
+    const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+    const step =
+        ([1, 2, 2.5, 5, 10].find((factor) => factor * magnitude >= rawStep) ?? 10) * magnitude;
+    const maximum = unit === '%' ? 100 : step * 4;
+    const ticks = Array.from({ length: 5 }, (_, index) => (maximum * index) / 4);
     const coordinates = values.map((value, index) =>
         measured(value, unit)
             ? {
-                  x: 45 + (index * 570) / Math.max(1, timestamps.length - 1),
+                  x: 85 + (index * 530) / Math.max(1, timestamps.length - 1),
                   y: 165 - (value * 150) / maximum,
               }
             : null,
@@ -120,23 +126,29 @@ export default function TimeSeriesChart({
                     className="mt-4 w-full"
                 >
                     <title>{`${title}: ${selected?.label ?? ''}, UTC`}</title>
-                    <line
-                        x1="45"
-                        y1="165"
-                        x2="615"
-                        y2="165"
-                        stroke="currentColor"
-                        className="text-slate-600"
-                    />
-                    <text
-                        x="2"
-                        y="20"
-                        fill="currentColor"
-                        fontSize="11"
-                    >{`${Number(maximum.toFixed(2))} ${unit}`}</text>
-                    <text x="12" y="165" fill="currentColor" fontSize="11">
-                        0
-                    </text>
+                    {ticks.map((tick) => {
+                        const y = 165 - (tick * 150) / maximum;
+                        return (
+                            <g key={tick}>
+                                <line
+                                    x1="85"
+                                    y1={y}
+                                    x2="615"
+                                    y2={y}
+                                    stroke="currentColor"
+                                    className="text-ui-border"
+                                    strokeOpacity="0.35"
+                                />
+                                <text
+                                    x="75"
+                                    y={y + 4}
+                                    textAnchor="end"
+                                    fill="currentColor"
+                                    fontSize="11"
+                                >{`${Number(tick.toPrecision(6))} ${unit}`}</text>
+                            </g>
+                        );
+                    })}
                     <path
                         d={path}
                         fill="none"
@@ -158,7 +170,7 @@ export default function TimeSeriesChart({
                             ),
                     )}
                     {timestamps[0] && (
-                        <text x="45" y="190" fill="currentColor" fontSize="11">
+                        <text x="85" y="190" fill="currentColor" fontSize="11">
                             {label(timestamps[0])}
                         </text>
                     )}

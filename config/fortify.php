@@ -12,7 +12,7 @@ return [
     'email' => 'email',
     'lowercase_usernames' => true,
     'views' => true,
-    'home' => '/account',
+    'home' => '/dashboard',
     // Routes are application-owned; these names also govern Fortify's login pipeline.
     'limiters' => ['login' => 'login', 'two-factor' => 'two-factor'],
     'redirects' => ['logout' => '/', 'password-confirmation' => '/account/security'],

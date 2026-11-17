@@ -38,7 +38,7 @@ final class HandleInertiaRequests extends Middleware
             'realtime' => $this->realtime($request),
             'teamNavigation' => $actor instanceof User
                 && $actor->hasVerifiedEmail()
-                && $request->routeIs('teams.*', 'account', 'account.security')
+                && $request->routeIs('teams.*', 'dashboard', 'account', 'account.security')
                 ? fn (): array => $this->navigation->forUser($actor)
                 : null,
             // Serialize a deliberate identity projection rather than the Eloquent user or its relationships.

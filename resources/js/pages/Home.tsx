@@ -44,7 +44,7 @@ export default function Home() {
                         className="mt-6 flex gap-6 text-emerald-300"
                     >
                         {auth?.user ? (
-                            <Link href="/account">Open account</Link>
+                            <Link href="/dashboard">Open dashboard</Link>
                         ) : (
                             <>
                                 <Link href="/login">Sign in</Link>

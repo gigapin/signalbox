@@ -8,17 +8,17 @@
 /* Semantic dark-theme tokens; prefixed names avoid changing existing Tailwind/public themes. */
 @theme {
     /* Canvas, raised surfaces, text, separators and keyboard focus colors. */
-    --color-ui-canvas: #0b1220;
-    --color-ui-surface: #152033;
-    --color-ui-raised: #202e44;
-    --color-ui-text: #f1f5fb;
-    --color-ui-muted: #b5c3d8;
+    --color-ui-canvas: #020617;
+    --color-ui-surface: #0f172a;
+    --color-ui-raised: #1e293b;
+    --color-ui-text: #f1f5f9;
+    --color-ui-muted: #cbd5e1;
     --color-ui-border: #72849e;
-    --color-ui-focus: #b9a4ff;
+    --color-ui-focus: #6ee7b7;
     /* Primary actions use dark text over a pale indigo background, including hover. */
-    --color-ui-accent: #b9a4ff;
-    --color-ui-accent-hover: #cbbcff;
-    --color-ui-on-accent: #15102a;
+    --color-ui-accent: #6ee7b7;
+    --color-ui-accent-hover: #a7f3d0;
+    --color-ui-on-accent: #022c22;
     /* Semantic foregrounds are paired with opaque backgrounds, never translucent overlays. */
     --color-ui-success: #9be2ba;
     --color-ui-success-bg: #12352b;
@@ -322,7 +322,9 @@
 /* Private team shell: a single responsive navigation surface shares route identity and link styles. */
 @layer components {
     .ui-app-shell {
-        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
     }
 
     .ui-app-header {
@@ -351,6 +353,7 @@
     }
 
     .ui-app-frame {
+        flex: 1;
         display: grid;
         grid-template-columns: minmax(0, 1fr);
     }
@@ -377,8 +380,7 @@
         border-radius: var(--radius-ui);
         color: var(--color-ui-text);
         overflow-wrap: anywhere;
-        text-decoration: underline;
-        text-underline-offset: 0.2em;
+        text-decoration: none;
     }
 
     .ui-shell-link:hover,
@@ -465,13 +467,16 @@
     }
 
     .ui-sidebar {
-        position: sticky;
-        top: 0;
-        align-self: start;
-        max-height: 100vh;
-        overflow-y: auto;
+        align-self: stretch;
         border-bottom: 0;
         border-right: 1px solid var(--color-ui-border);
+    }
+
+    .ui-sidebar .ui-team-links {
+        position: sticky;
+        top: var(--spacing-ui-4);
+        max-height: calc(100dvh - 2 * var(--spacing-ui-4));
+        overflow-y: auto;
     }
 
     .ui-team-links {
@@ -492,16 +497,42 @@
 /* Keep team selection explicit and usable within a wrapping private header. */
 @layer components {
     .ui-team-switcher {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: minmax(0, 18rem) auto;
         align-items: center;
         gap: var(--spacing-ui-2);
         min-width: 0;
         max-width: 100%;
     }
 
+    .ui-team-switcher label,
+    .ui-team-switcher [role='status'] {
+        grid-column: 1 / -1;
+    }
+
+    .ui-team-switcher label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .ui-brand,
+    .ui-account-panel .ui-link,
+    .ui-app-main > nav[aria-label='Workspace navigation'] .ui-link {
+        text-decoration: none;
+    }
+
+    @media (max-width: 479px) {
+        .ui-team-switcher {
+            width: 100%;
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
     .ui-team-switcher select {
-        width: min(18rem, 100%);
+        width: 100%;
     }
 }
 

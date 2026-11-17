@@ -851,3 +851,7 @@ The feature suite asserts formatted output from line and JSON formatters, nested
 ## Production npm audit — SEC.14
 
 `npm run verify` fails before lint/tests/build when `npm run audit:production` fails. The quality suite includes an offline subprocess regression: run the real npm aggregate with a temporary command shim that rejects the audit with exit 23 and rejects any later invocation with exit 99, then assert that verification returns 23. This uses no advisory service or network. Actual registry results are separately checked with `npm audit --omit=dev` and `npm audit`; the latter includes development tools. The frontend CI job uses the same production audit command after `npm ci --ignore-scripts --strict-peer-deps`.
+
+## Dashboard landing and visual corrections — 2026-11-17
+
+`DashboardEntryTest` covers sole membership, multiple memberships without preference, foreign preference, empty memberships, intended destinations and auth/verification protection. Existing authentication, 2FA and public-registration tests preserve signed/invitation continuations while expecting the new default landing. Frontend `DashboardEntry.test.tsx` verifies chooser/empty states, `MonitorCharts.test.tsx` asserts five labeled grid ticks, and existing contrast/navigation/switch tests cover the shared changes. Local Firefox screenshots use synthetic shell markup with actual compiled CSS; these are layout probes, not authenticated browser-flow acceptance or native 200% zoom evidence. See TASKS for exact results and remaining manual checks.

@@ -851,3 +851,13 @@ The feature suite asserts formatted output from line and JSON formatters, nested
 ## Production npm audit — SEC.14
 
 `npm run verify` fails before lint/tests/build when `npm run audit:production` fails. The quality suite includes an offline subprocess regression: run the real npm aggregate with a temporary command shim that rejects the audit with exit 23 and rejects any later invocation with exit 99, then assert that verification returns 23. This uses no advisory service or network. Actual registry results are separately checked with `npm audit --omit=dev` and `npm audit`; the latter includes development tools. The frontend CI job uses the same production audit command after `npm ci --ignore-scripts --strict-peer-deps`.
+
+## Dashboard landing and visual corrections — 2026-11-17
+
+`DashboardEntryTest` covers sole membership, multiple memberships without preference, foreign preference, empty memberships, intended destinations and auth/verification protection. Existing authentication, 2FA and public-registration tests preserve signed/invitation continuations while expecting the new default landing. Frontend `DashboardEntry.test.tsx` verifies chooser/empty states, `MonitorCharts.test.tsx` asserts five labeled grid ticks, and existing contrast/navigation/switch tests cover the shared changes. Local Firefox screenshots use synthetic shell markup with actual compiled CSS; these are layout probes, not authenticated browser-flow acceptance or native 200% zoom evidence. See TASKS for exact results and remaining manual checks.
+
+## Account-level dashboard route catalogue
+
+The `/dashboard` landing route is listed explicitly in `TeamRouteMatrix::OTHER_ROUTES`: it is authenticated and verified, but chooses a tenant rather than receiving one in the URL. The route catalogue regression separately asserts GET/HEAD, auth, verified and no-store middleware and the absence of `EstablishTeamContext`. `DashboardEntryTest` exercises membership-safe destinations and the chooser/empty states. When adding a route, check the independent route catalogue together with behavior tests; login-only regression runs do not establish catalogue completeness.
+
+SecurityHeadersTest uses an asset-rendering partial mock with real hot-file detection pointed at an isolated absent temporary path. Laravel's ordinary `withoutVite()` fake inherits `isRunningHot()`/`hotFile()` but ignores `useHotFile()`, so it still sees a developer's `public/hot`; disabling asset rendering alone does not isolate CSP. The hot-mode case swaps in the real Vite instance with its own temporary file, then restores isolated detection. No developer hot file is removed or hidden and no application process is stopped.

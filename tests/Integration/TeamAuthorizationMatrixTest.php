@@ -76,6 +76,13 @@ it('keeps the route catalogue complete and each private verb behind its declared
             ->and($route->gatherMiddleware())->toContain('auth', 'verified', EstablishTeamContext::class);
     }
 
+    // The landing page chooses a team; it must authenticate without establishing a route tenant.
+    $dashboard = Route::getRoutes()->getByName('dashboard');
+    expect($dashboard)->not->toBeNull()
+        ->and(array_values(array_diff($dashboard->methods(), ['HEAD'])))->toBe(['GET'])
+        ->and($dashboard->gatherMiddleware())->toContain('auth', 'verified', \App\Http\Middleware\NoStoreAuthentication::class)
+        ->not->toContain(EstablishTeamContext::class);
+
     foreach (TeamRouteMatrix::OTHER_ROUTES as $name => $method) {
         expect(Route::getRoutes()->getByName($name)->methods())->toContain($method);
     }

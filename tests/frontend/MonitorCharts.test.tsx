@@ -15,6 +15,8 @@ test('shows regional means and percentile controls with measured zeros gaps and 
     renderInertia('Signalbox', Show, chartsProps);
     const eu = within(screen.getByRole('region', { name: 'Response time EU' }));
     expect(eu.getByRole('img').querySelectorAll('circle')).toHaveLength(3);
+    expect(eu.getByRole('img').querySelectorAll('g text')).toHaveLength(5);
+    expect(eu.getByRole('img').querySelectorAll('g line')).toHaveLength(5);
     expect(eu.getByRole('img').querySelector('path')?.getAttribute('d')?.match(/M/g)).toHaveLength(
         3,
     );

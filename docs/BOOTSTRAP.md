@@ -659,3 +659,7 @@ Outside `local` and `testing` the application refuses to start with debug enable
 ## Private certificate admission authentication (SEC.07)
 
 The optional Caddy TLS admission endpoint now requires both an allowed raw peer and a shared `STATUS_DOMAIN_TLS_SECRET` (64 lowercase hex characters from 32 random bytes). Empty/malformed configuration refuses admission with 403; ordinary application/status-page routing keeps working. The Caddy template uses a separate loopback-only ask listener on port 9123 to add the secret header, strips it on public proxies, and blocks `/index.php*` alongside internal paths. Configure Laravel and Caddy together and reload their configuration at deployment; no migration, package, `.env` edit or process restart is performed by verification. See [STATUS-DOMAINS.md](STATUS-DOMAINS.md#tls-deployment-contract) for generation, rotation, private-network boundaries and reproducible proxy tests.
+
+## Dashboard visual corrections (2026-11-17)
+
+Deploy PHP and rebuilt browser assets together. The new verified `/dashboard` entry resolves a fresh accessible preference, a sole membership, or renders team selection within Dashboard. Login/2FA preserve intended URLs and verification/invitation security. Private tokens now follow the welcome slate/emerald palette; sidebar/menu/header and shared chart axes are corrected. No migration, dependency, environment variable or key is added. Development data and processes are not modified by verification. TASKS records checks and visual acceptance limits.

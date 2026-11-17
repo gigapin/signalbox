@@ -129,7 +129,7 @@ it('keeps two-factor mutations on security independently of stale session histor
 it('allows password-only access while enrollment is still pending', /** A generated but unconfirmed secret must not lock the user out. */ function (): void {
     /** @var User $user Identity that has not completed enrollment. */
     $user = AuthFixture::enroll(User::factory()->create(), false);
-    $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/account');
+    $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/dashboard');
     $this->assertAuthenticatedAs($user);
 });
 
@@ -174,7 +174,7 @@ it('consumes a recovery code exactly once across separate pending login sessions
     /** @var string $recovery Single-use recovery credential stored only in test memory. */
     $recovery = $user->recoveryCodes()[0];
     $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/two-factor-challenge');
-    $this->post('/two-factor-challenge', ['recovery_code' => $recovery])->assertRedirect('/account');
+    $this->post('/two-factor-challenge', ['recovery_code' => $recovery])->assertRedirect('/dashboard');
     expect($user->fresh()?->recoveryCodes())->not->toContain($recovery);
     $this->post('/logout')->assertRedirect('/');
     $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/two-factor-challenge');
@@ -188,12 +188,12 @@ it('rejects replayed authenticator steps and accepts a new controlled time step'
     /** @var string $code Token for the current time step. */
     $code = AuthFixture::code($user);
     $this->post('/login', ['email' => $user->email, 'password' => 'password']);
-    $this->post('/two-factor-challenge', ['code' => $code])->assertRedirect('/account');
+    $this->post('/two-factor-challenge', ['code' => $code])->assertRedirect('/dashboard');
     $this->post('/logout');
     $this->post('/login', ['email' => $user->email, 'password' => 'password']);
     $this->post('/two-factor-challenge', ['code' => $code])->assertRedirect('/two-factor-challenge')->assertSessionHasErrors('code');
     $this->travel(30)->seconds();
-    $this->post('/two-factor-challenge', ['code' => AuthFixture::code($user)])->assertRedirect('/account');
+    $this->post('/two-factor-challenge', ['code' => AuthFixture::code($user)])->assertRedirect('/dashboard');
 });
 
 it('regenerates recovery credentials and clears all second-factor data on disable', /** Management changes apply only to the authenticated actor, ignoring injected user IDs. */ function (): void {
@@ -253,7 +253,7 @@ it('holds the user row lock while consuming recovery credentials across two sess
     $code = $user->recoveryCodes()[0];
     \Illuminate\Support\Facades\DB::beginTransaction();
     try {
-        $this->post('/two-factor-challenge', ['recovery_code' => $code])->assertRedirect('/account');
+        $this->post('/two-factor-challenge', ['recovery_code' => $code])->assertRedirect('/dashboard');
         /** @var \Illuminate\Session\Store $session Independent server-managed pending session for the contender. */
         $session = new \Illuminate\Session\Store('security-contender', new \Illuminate\Session\ArraySessionHandler(120));
         $session->start();

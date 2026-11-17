@@ -67,6 +67,7 @@ final class TeamRouteMatrix
 
     /** @var array<string, string> Cross-team listing and capability/account entrypoints intentionally outside route-team context. */
     public const array OTHER_ROUTES = [
+        'dashboard' => 'GET',
         'teams.index' => 'GET',
         'invitations.open' => 'GET',
         'invitations.review' => 'GET',

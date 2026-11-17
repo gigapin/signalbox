@@ -189,7 +189,7 @@ it('requires normal login before verifying a newly registered email and preserve
     $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), ['id' => $user->id, 'hash' => sha1($user->email)]);
     $this->get($url)->assertRedirect('/login');
     $this->post('/login', ['email' => $user->email, 'password' => 'secure-password-123'])->assertRedirect($url);
-    $this->get($url)->assertRedirect('/account?verified=1');
+    $this->get($url)->assertRedirect('/dashboard?verified=1');
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
 });
 

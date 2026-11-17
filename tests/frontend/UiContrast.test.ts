@@ -71,6 +71,9 @@ test('control boundaries and offset focus indicators remain distinguishable on t
         expect(contrast('focus', surface), `focus on ${surface}`).toBeGreaterThanOrEqual(3);
     }
     for (const surface of ['canvas', 'surface', 'raised']) {
-        expect(contrast('border', surface), `border on ${surface}`).toBeGreaterThanOrEqual(3);
+        expect(
+            contrast('control-border', surface),
+            `control border on ${surface}`,
+        ).toBeGreaterThanOrEqual(3);
     }
 });

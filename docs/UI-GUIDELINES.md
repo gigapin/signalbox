@@ -252,3 +252,11 @@ Periodo/regione sono link GET con vocabolario server validato e ritorno lista no
 The user supersedes the earlier blue/lilac private theme with the welcome page's slate/emerald palette across private workspaces. Public status-page themes remain independent. The desktop sidebar background stretches through the full document below the header, with only the inner navigation sticky/scrollable. Shell navigation has no underline; content links retain it. Team selection controls align on one row and stack below 480px; their associated label remains available to assistive technology.
 
 Time-series charts show five labeled horizontal ticks, fixed 0/25/50/75/100 for percentages and rounded readable latency steps. Null gaps, measured zero and equivalent tables are preserved. `/dashboard` is the verified neutral landing/chooser: fresh accessible preference first, sole membership second, otherwise dashboard-contained team selection or an honest empty state. Password/2FA login preserves intended destinations; signed verification/invitation continuations remain protected. No automatic membership or preference mutation occurs when resolving the default landing.
+
+### Black/olive palette revision — 2026-11-17
+
+The user's subsequent visual choice supersedes the slate surfaces above: canvas `#0a0a0a`, sidebar/panels/header `#252e22`, decorative borders `#364531`, raised/hover surfaces `#303b2b`. Emerald actions are retained. A separate `control-border` token (`#8b9b80`) keeps input and secondary-button boundaries distinguishable; the contrast test checks these functional boundaries rather than decorative separators. Public status-page themes are unaffected.
+
+The subsequent user refinement darkens the shared surface token (sidebar, panels and header) to `#191f18`; canvas, decorative borders, raised/hover surfaces and functional control boundaries retain their previous values.
+
+The latest user refinement sets the shared sidebar/panel/header surface to `#0f120e`, superseding `#191f18`. Other color tokens remain unchanged.

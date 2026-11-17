@@ -8,14 +8,16 @@
 /* Semantic dark-theme tokens; prefixed names avoid changing existing Tailwind/public themes. */
 @theme {
     /* Canvas, raised surfaces, text, separators and keyboard focus colors. */
-    --color-ui-canvas: #020617;
-    --color-ui-surface: #0f172a;
-    --color-ui-raised: #1e293b;
+    --color-ui-canvas: #0a0a0a;
+    --color-ui-surface: #0f120e;
+    --color-ui-raised: #303b2b;
     --color-ui-text: #f1f5f9;
     --color-ui-muted: #cbd5e1;
-    --color-ui-border: #72849e;
+    --color-ui-border: #364531;
+    /* Control boundaries remain distinguishable independently of decorative separators. */
+    --color-ui-control-border: #8b9b80;
     --color-ui-focus: #6ee7b7;
-    /* Primary actions use dark text over a pale indigo background, including hover. */
+    /* Primary actions use dark text over a pale emerald background, including hover. */
     --color-ui-accent: #6ee7b7;
     --color-ui-accent-hover: #a7f3d0;
     --color-ui-on-accent: #022c22;
@@ -87,7 +89,7 @@
     }
 
     .ui-button[data-variant='secondary'] {
-        border-color: var(--color-ui-border);
+        border-color: var(--color-ui-control-border);
         color: var(--color-ui-text);
         background: var(--color-ui-surface);
     }
@@ -140,7 +142,7 @@
         min-width: 0;
         min-height: var(--spacing-ui-control);
         padding: var(--spacing-ui-2) var(--spacing-ui-3);
-        border: 1px solid var(--color-ui-border);
+        border: 1px solid var(--color-ui-control-border);
         border-radius: var(--radius-ui);
         background: var(--color-ui-canvas);
         color: var(--color-ui-text);
@@ -756,7 +758,7 @@
     .ui-availability-card {
         min-width: 0;
         padding: var(--spacing-ui-4);
-        border: 1px solid var(--color-ui-border);
+        border: 1px solid var(--color-ui-control-border);
         border-radius: var(--radius-ui);
         background: var(--color-ui-canvas);
     }

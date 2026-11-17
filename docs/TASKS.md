@@ -1,5 +1,24 @@
 # Signalbox — Piano dei task
 
+## UI — Superfici oliva quasi nere — 2026-11-17
+
+- [x] Applicata richiesta utente di portare il token superfici/sidebar/pannelli a `#0F120E`. Canvas, bordi e accenti conservati; nessun Git/gh.
+- File: app.css, UI-GUIDELINES e piano. Test contrasti **2/2**, TypeScript/build **7.84s**, exit 0. Nessun PHP/dipendenza/dato modificato; suite completa e browser non ripetuti per il singolo token. Commit suggerito `git commit -m "style: deepen olive workspace surfaces"`; prossimo branch `fix/dashboard-visual-polish`.
+
+
+## UI — Superfici oliva più scure — 2026-11-17
+
+- [x] Applicata richiesta utente di scurire sidebar/pannelli da `#252e22` a `#191f18`, conservando canvas e bordi. Nessun Git/gh.
+- File: app.css, UI-GUIDELINES e piano. Test contrasto **2/2** e TypeScript/build **8.08 s**, exit 0. Nessun PHP, dipendenza o dato modificato; suite completa e browser non ripetuti per la modifica del singolo token. Commit suggerito `git commit -m "style: darken olive workspace surfaces"`; prossimo branch `fix/dashboard-visual-polish`.
+
+
+## UI — Variante nero/oliva — 2026-11-17
+
+- [x] Variante applicata su richiesta utente: canvas `#0a0a0a`, superfici/sidebar `#252e22`, separatori `#364531`. Questa preferenza sostituisce la precedente palette slate. Contorni dei controlli distinguibili separati dai separatori decorativi; nessun Git/gh.
+- File: app.css, test UiContrast e UI-GUIDELINES. Superficie rialzata/hover oliva `#303b2b`; accenti smeraldo conservati. Input e pulsanti secondari usano contorni funzionali `#8b9b80`, distinti dai bordi decorativi richiesti. Test contrasti **2/2**, TypeScript/build **8.23 s** exit 0. Prettier rileva e corregge il wrapping del test. Nessun PHP/dipendenza cambiato; suite completa/CI/browser non ripetuti per questa variante cromatica. La revisione visiva applicativa generale sottostante resta aperta.
+- Commit suggerito `git commit -m "style: apply black and olive workspace palette"`; prossimo branch suggerito `fix/dashboard-visual-polish`.
+
+
 ## UI — Correzione grafica e accesso Dashboard — 2026-11-17
 
 - [/] Implementazione conclusa, verifica visiva applicativa ancora da confermare su richiesta utente: sospesa sequenza SEC/billing. Sidebar a tutta altezza, menu senza sottolineature, header allineato, assi grafici intermedi, accesso dashboard e palette welcome in tutta area privata. Destinazioni richieste/inviti preservati; senza selezione e con più team scelta dentro Dashboard. Git riservato all’utente.

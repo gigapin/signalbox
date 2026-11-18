@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## UI — Tooltip sui punti dei grafici — 2026-11-18
+
+- [x] Completato su richiesta dell'utente: tooltip HTML in hover/focus per ogni nodo misurato, con serie, valore/unità, timestamp UTC in time/dateTime e campioni se disponibili. Hit area ampliata senza cambiare dimensioni visive; uscita dal grafico, blur, Esc sul nodo e cambio serie chiudono il tooltip. Dati mancanti senza nodi, zero preservato. Componente condiviso con dashboard; nessuna modifica alle metriche o al trasporto dati.
+- File: TimeSeriesChart.tsx, app.css, MonitorCharts.test.tsx, UI-GUIDELINES.md e questo piano. Test: tutti i nodi di latenza della fixture, data esatta, unità/campioni, zero, percentuali, focus/blur/Esc, cambio p95 e serie senza dati.
+- Verifiche: `npm run check` exit 0 (lint/formato/TypeScript, 6 test qualità); dopo la piccola modifica time/dateTime ripetuti formatter e controllo Prettier sui file modificati, verdi. Build finale exit 0 dopo il CSS che impedisce al tooltip di intercettare il mouse. Mirati MonitorCharts **10/10, 4,96 s**.
+- Primo completo **496 passati/1 fallito su 497**: avviato durante l'ultima modifica time/dateTime, ha caricato il vecchio componente con span e il nuovo test che richiedeva time; errore null su querySelector('time'), assente nel mirato ripetuto sui file definitivi. Completo definitivo `npm test -- --pool=threads` **497/497 in 42 file, 100,00 s, exit 0**.
+- Non eseguiti browser reale, backend, audit e CI remota per questo intervento frontend. Nessun Git/gh, migrazione, dipendenza, dato o servizio applicativo modificato. Prossimo passo: verifica visiva autenticata dei tooltip e ulteriori richieste grafiche sul branch corrente gestito dall'utente.
+
 ## UI — Tipografia assi dei grafici — 2026-11-18
 
 - [x] Completato su richiesta dell'utente: valori degli assi a 12px visivi, compensando l'ingrandimento del viewBox SVG con la larghezza interna del pannello rilevata tramite ResizeObserver. Allineamento verticale dei tick adeguato al font; osservazioni di larghezza zero ignorate e observer scollegato allo smontaggio. TimeSeriesChart è condiviso con la dashboard, che riceve la stessa correzione. Nessuna modifica a metriche o dati.

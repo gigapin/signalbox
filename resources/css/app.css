@@ -808,6 +808,30 @@
     }
 }
 
+/* Keep point details inside the chart panel with typography independent of SVG scaling. */
+@layer components {
+    .ui-chart-plot {
+        position: relative;
+    }
+
+    .ui-chart-tooltip {
+        position: absolute;
+        pointer-events: none;
+        top: 0;
+        right: 0;
+        display: grid;
+        gap: 0.25rem;
+        max-width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-surface);
+        color: var(--color-ui-text);
+        font-size: 0.75rem;
+        overflow-wrap: anywhere;
+    }
+}
+
 /* Monitor filters reflow independently of the locally scrollable result table. */
 @layer components {
     .ui-monitor-filters {

@@ -1,5 +1,16 @@
 # UI guidelines — Signalbox
 
+## Chart point details — 2026-11-18
+
+Measured points in TimeSeriesChart reveal an HTML tooltip on hover and keyboard focus, with the
+selected series, exact value/unit, UTC bucket start and sample count when supplied. Transparent SVG
+strokes enlarge the hit area while preserving visible node size. Points have programmatic labels and
+reference the visible tooltip; focus loss, Escape on the focused point, chart mouse exit and series
+selection dismiss it. Missing/invalid measurements have no node or tooltip; zero remains measurable.
+The tooltip stays inside the plot at its upper right; it does not intercept pointer events, so points
+beneath it remain reachable and moving over its content stays within the chart hover boundary. Its
+HTML typography does not scale with the SVG. Dashboard and monitor details share this behavior and retain the data table.
+
 ## Chart axis typography — 2026-11-18
 
 TimeSeriesChart compensates for its 640-unit SVG viewBox using the observed content width of its

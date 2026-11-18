@@ -1,6 +1,6 @@
 /** Render bounded, accessible time series with real gaps, selectable series and an equivalent data table. */
 import TableScrollArea from '../TableScrollArea';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 /** One comparable series in the same unit and UTC bucket axis. */
 export interface ChartSeries {
@@ -89,8 +89,14 @@ export default function TimeSeriesChart({
 
     const Heading = headingLevel === 3 ? 'h3' : 'h2';
     const [choice, setChoice] = useState(series[0]?.id);
+    const tooltipId = useId();
+    const [activePoint, setActivePoint] = useState<{ series: string; index: number } | null>(null);
     const selected = series.find((entry) => entry.id === choice) ?? series[0];
     const values = timestamps.map((_, index) => selected?.values[index] ?? null);
+    const activeIndex = activePoint?.series === selected?.id ? activePoint?.index : undefined;
+    const activeValue = activeIndex === undefined ? null : values[activeIndex];
+    const activeTimestamp = activeIndex === undefined ? undefined : timestamps[activeIndex];
+    const tooltipVisible = measured(activeValue, unit) && activeTimestamp !== undefined;
     const observations = values.filter((value) => measured(value, unit));
     const observedMaximum = Math.max(1, ...observations);
     const rawStep = observedMaximum / 4;
@@ -126,7 +132,10 @@ export default function TimeSeriesChart({
                             type="button"
                             key={entry.id}
                             aria-pressed={selected?.id === entry.id}
-                            onClick={() => setChoice(entry.id)}
+                            onClick={() => {
+                                setChoice(entry.id);
+                                setActivePoint(null);
+                            }}
                             className="ui-button min-w-0 max-w-full wrap-anywhere"
                             data-variant={selected?.id === entry.id ? 'primary' : 'secondary'}
                         >
@@ -138,73 +147,106 @@ export default function TimeSeriesChart({
             {observations.length === 0 ? (
                 <p className="my-8 text-sm text-slate-300">{empty}</p>
             ) : (
-                <svg
-                    role="img"
-                    aria-label={`${title}: ${selected?.label ?? ''}`}
-                    viewBox="0 0 640 200"
-                    className="mt-4 w-full"
-                >
-                    <title>{`${title}: ${selected?.label ?? ''}, UTC`}</title>
-                    {ticks.map((tick) => {
-                        const y = 165 - (tick * 150) / maximum;
-                        return (
-                            <g key={tick}>
-                                <line
-                                    x1="85"
-                                    y1={y}
-                                    x2="615"
-                                    y2={y}
-                                    stroke="currentColor"
-                                    className="text-ui-border"
-                                    strokeOpacity="0.35"
-                                />
-                                <text
-                                    x="75"
-                                    y={y + axisFontSize / 3}
-                                    textAnchor="end"
-                                    fill="currentColor"
-                                    fontSize={axisFontSize}
-                                >{`${Number(tick.toPrecision(6))} ${unit}`}</text>
-                            </g>
-                        );
-                    })}
-                    <path
-                        d={path}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="text-emerald-400"
-                    />
-                    {coordinates.map(
-                        (point, index) =>
-                            point !== null && (
-                                <circle
-                                    key={index}
-                                    cx={point.x}
-                                    cy={point.y}
-                                    r="2.5"
-                                    fill="currentColor"
-                                    className="text-emerald-300"
-                                />
-                            ),
+                <div className="ui-chart-plot" onMouseLeave={() => setActivePoint(null)}>
+                    <svg
+                        role="img"
+                        aria-label={`${title}: ${selected?.label ?? ''}`}
+                        viewBox="0 0 640 200"
+                        className="mt-4 w-full"
+                    >
+                        <title>{`${title}: ${selected?.label ?? ''}, UTC`}</title>
+                        {ticks.map((tick) => {
+                            const y = 165 - (tick * 150) / maximum;
+                            return (
+                                <g key={tick}>
+                                    <line
+                                        x1="85"
+                                        y1={y}
+                                        x2="615"
+                                        y2={y}
+                                        stroke="currentColor"
+                                        className="text-ui-border"
+                                        strokeOpacity="0.35"
+                                    />
+                                    <text
+                                        x="75"
+                                        y={y + axisFontSize / 3}
+                                        textAnchor="end"
+                                        fill="currentColor"
+                                        fontSize={axisFontSize}
+                                    >{`${Number(tick.toPrecision(6))} ${unit}`}</text>
+                                </g>
+                            );
+                        })}
+                        <path
+                            d={path}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="text-emerald-400"
+                        />
+                        {coordinates.map(
+                            (point, index) =>
+                                point !== null && (
+                                    <circle
+                                        key={index}
+                                        cx={point.x}
+                                        cy={point.y}
+                                        r="2.5"
+                                        fill="currentColor"
+                                        className="text-emerald-300"
+                                        tabIndex={0}
+                                        aria-label={`${selected?.label}: ${values[index]} ${unit}, ${label(timestamps[index] ?? '')} UTC`}
+                                        aria-describedby={
+                                            tooltipVisible && activeIndex === index
+                                                ? tooltipId
+                                                : undefined
+                                        }
+                                        stroke="transparent"
+                                        strokeWidth="10"
+                                        onMouseEnter={() =>
+                                            setActivePoint({ series: selected?.id ?? '', index })
+                                        }
+                                        onFocus={() =>
+                                            setActivePoint({ series: selected?.id ?? '', index })
+                                        }
+                                        onBlur={() => setActivePoint(null)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Escape') setActivePoint(null);
+                                        }}
+                                    />
+                                ),
+                        )}
+                        {timestamps[0] && (
+                            <text x="85" y="190" fill="currentColor" fontSize={axisFontSize}>
+                                {label(timestamps[0])}
+                            </text>
+                        )}
+                        {timestamps.at(-1) && (
+                            <text
+                                x="615"
+                                y="190"
+                                textAnchor="end"
+                                fill="currentColor"
+                                fontSize={axisFontSize}
+                            >
+                                {label(timestamps.at(-1) ?? '')}
+                            </text>
+                        )}
+                    </svg>
+                    {tooltipVisible && (
+                        <div id={tooltipId} role="tooltip" className="ui-chart-tooltip">
+                            <strong>{selected?.label}</strong>
+                            <span>{`${activeValue} ${unit}`}</span>
+                            <time
+                                dateTime={activeTimestamp}
+                            >{`${label(activeTimestamp)} UTC`}</time>
+                            {activeIndex !== undefined && samples?.[activeIndex] !== undefined && (
+                                <span>{`${samples[activeIndex]} measured samples`}</span>
+                            )}
+                        </div>
                     )}
-                    {timestamps[0] && (
-                        <text x="85" y="190" fill="currentColor" fontSize={axisFontSize}>
-                            {label(timestamps[0])}
-                        </text>
-                    )}
-                    {timestamps.at(-1) && (
-                        <text
-                            x="615"
-                            y="190"
-                            textAnchor="end"
-                            fill="currentColor"
-                            fontSize={axisFontSize}
-                        >
-                            {label(timestamps.at(-1) ?? '')}
-                        </text>
-                    )}
-                </svg>
+                </div>
             )}
             <details className="mt-4 text-sm">
                 <summary className="ui-link">View {title.toLowerCase()} data</summary>

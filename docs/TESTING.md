@@ -1,5 +1,15 @@
 # Test infrastructure
 
+## UI branch verification handoff — 2026-11-18
+
+This supersedes the older pending frontend rerun below. After monitor filters, axis typography and
+point tooltips, the complete frontend suite passed **497/497 in 42 files, 100.00 s**, using
+`npm test -- --pool=threads`. For the final welcome canvas change, the Home suite passed **2/2** and
+the asset build passed; final static checks are recorded in TASKS. The complete suite was not repeated
+for the one-token welcome background change. No new browser acceptance, backend suite, production
+audit or remote CI result is asserted. The user suspended chart work until choosing a library;
+see the [current handoff](BOOTSTRAP.md#ui-branch-handoff--2026-11-18).
+
 ## Last verified state at session close — 2026-11-17
 
 This is the current verification handoff; earlier closing summaries below are historical. The user is stopping during UI review, with functional security/billing work suspended. See [TASKS](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) for scope and restart instructions. No test, formatter, build or audit is rerun for this Markdown-only close.

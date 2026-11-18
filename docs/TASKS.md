@@ -1,5 +1,11 @@
 # Signalbox — Piano dei task
 
+## UI — Welcome e sospensione revisione grafici — 2026-11-18
+
+- [x] Completato: welcome/Home usa `bg-ui-canvas` (`#0a0a0a`), lo stesso token della dashboard, al posto di `bg-slate-950`. Regressione nel test Home sul token condiviso. File: Home.tsx, Home.test.tsx, questo piano e handoff BOOTSTRAP/TESTING.
+- **Decisione dell'utente:** sospendere ulteriori interventi sui grafici fino alla scelta della libreria da installare; nessuna libreria scelta o installata. Gli SVG attuali restano presenti, senza accettazione grafica per la produzione. L'utente chiuderà il branch grafico; Git/gh restano esclusivamente suoi. Alla ripresa attendere la scelta della libreria; non riprendere automaticamente grafici, SEC o billing.
+- Verifiche: `npm run check` exit 0 (ESLint, Prettier, TypeScript, 6 test qualità); Home **2/2, 1,70 s**; build exit 0. Integrale frontend precedente **497/497**, non ripetuto per il solo token colore. Non eseguiti browser, backend, audit e CI remota. Nessuna modifica a dati, `.env`, servizi, dipendenze o `public/hot`; `public/build` ricostruito. Nessun comando Git/gh eseguito.
+
 ## UI — Tooltip sui punti dei grafici — 2026-11-18
 
 - [x] Completato su richiesta dell'utente: tooltip HTML in hover/focus per ogni nodo misurato, con serie, valore/unità, timestamp UTC in time/dateTime e campioni se disponibili. Hit area ampliata senza cambiare dimensioni visive; uscita dal grafico, blur, Esc sul nodo e cambio serie chiudono il tooltip. Dati mancanti senza nodi, zero preservato. Componente condiviso con dashboard; nessuna modifica alle metriche o al trasporto dati.

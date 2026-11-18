@@ -1,5 +1,16 @@
 # Application bootstrap reference
 
+## UI branch handoff — 2026-11-18
+
+The user is closing the graphics branch after the welcome background change. Chart work is explicitly
+suspended until the user names the library to install; do not choose or install one automatically.
+Existing SVG charts remain in place pending that decision, without new visual acceptance. The welcome
+uses the same `ui-canvas` token (`#0a0a0a`) as the dashboard. Monitor filter alignment, compact axis
+labels and point tooltips are recorded in TASKS. Functional security/billing work remains paused under
+the previous user instruction. Branch closure and every Git/gh operation remain user-managed.
+Preserve application services, `.env`, data and `public/hot`; rebuilt assets imply no deployment.
+See [TASKS](TASKS.md#ui--welcome-e-sospensione-revisione-grafici--2026-11-18) for current checks.
+
 ## Session close and restart — 2026-11-17
 
 The session is closed at the user's request. Read the [current handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) before resuming; it supersedes earlier restart instructions. Security is **14/15 complete**, SEC.06 remains deferred, and billing/M9.01 has not started. The user paused functional tasks to continue visual corrections. Resume the UI review on the same user-managed graphics branch; do not start billing or another security task automatically. No Git/gh operation or branch/commit state is verified by the agent.

@@ -1,5 +1,13 @@
 # UI guidelines — Signalbox
 
+## Monitor search layout — 2026-11-18
+
+The Find monitors fieldset aligns field wrappers at the top so Search help never stretches adjacent
+selects. Below 40rem fields stack; from 40rem Search occupies its own full-width row above three
+selects capped at 10rem; from 64rem Search uses the flexible column beside those compact selects.
+Actions remain on a separate row. Keep the search hint associated through aria-describedby and retain
+native labels, keyboard behavior and the explicit GET submission lifecycle.
+
 ## Automated phase-A audit — UI.06.1
 
 [UI-ACCEPTANCE.md](UI-ACCEPTANCE.md) links the implemented criteria to actual DOM/PHP regressions

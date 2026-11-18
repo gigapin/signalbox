@@ -814,7 +814,8 @@
         display: grid;
         min-width: 0;
         gap: var(--spacing-ui-4);
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
     }
 
     .ui-monitor-filters > div {
@@ -823,6 +824,31 @@
 
     .ui-monitor-filter-actions {
         grid-column: 1 / -1;
+    }
+
+    /* Keep help text below Search without stretching the adjacent select controls. */
+    @media (min-width: 40rem) {
+        .ui-monitor-filters {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ui-monitor-filters > .ui-field:not(.ui-monitor-search) {
+            max-width: 10rem;
+        }
+
+        .ui-monitor-search {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (min-width: 64rem) {
+        .ui-monitor-filters {
+            grid-template-columns: minmax(0, 1fr) repeat(3, minmax(0, 10rem));
+        }
+
+        .ui-monitor-search {
+            grid-column: auto;
+        }
     }
 
     .ui-monitor-destination {

@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## UI — Filtri monitor compatti e allineati — 2026-11-18
+
+- [x] Completato su richiesta dell'utente: correggere i tre select sovradimensionati e l'allineamento di Search nel blocco Find monitors. Dipendenze: componenti campo condivisi già disponibili; nessuna modifica allo scope funzionale. Stesso branch grafico gestito dall'utente; Git/gh non eseguiti.
+- Implementato: griglia con allineamento superiore per impedire che la nota sotto Search dilati i select; campi impilati sotto 40rem, Search su riga propria e tre select larghi al massimo 10rem da 40rem, ricerca flessibile affiancata ai select da 64rem. Azioni su riga separata; nota e invio GET preservati.
+- File: `resources/css/app.css`, `tests/frontend/Monitors.test.tsx` (nota associata al searchbox e tre select con label/default), `docs/UI-GUIDELINES.md`, questo piano.
+- Verifiche già concluse: `npm run check` exit 0 (ESLint, Prettier, TypeScript, 6 test qualità), `npm run build` exit 0; test monitor con `--pool=threads` **41/41**. Suite completa con runner predefinito interrotta (exit 130) senza risultati oltre l'avvio; ripetizione integrale `npm test -- --pool=threads` **494/494 in 42 file, 94,66 s, exit 0**, nessuna configurazione cambiata. Chiusa anche la verifica frontend rimasta pendente dalla sessione precedente.
+- Browser: tentativo Firefox headless terminato exit 134 nel sandbox; fixture locale non generata per errore nella lettura della chiave CSS del manifest, nessuna verifica visuale attestata. Nessun PHP, Git/gh, migration, dipendenza, processo applicativo o dato di sviluppo modificato; backend/CI remota/audit non ripetuti per questo intervento CSS. Prossimo passo: verifica visiva autenticata di `/monitors` e ulteriori correzioni grafiche sullo stesso branch dell'utente.
+
 ## Chiusura sessione e ripartenza — 2026-11-17
 
 **Sessione chiusa su richiesta dell’utente. Questo è il riferimento corrente per la prossima sessione e prevale sugli handoff precedenti. Non riprendere automaticamente SEC o billing: la revisione grafica resta la priorità.**

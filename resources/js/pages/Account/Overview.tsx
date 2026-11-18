@@ -195,7 +195,7 @@ function ProfileForm() {
                         label="Logo / avatar"
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
-                        hint="Optional JPEG, PNG or WebP. Maximum 2 MiB and 4096 × 4096 pixels."
+                        hint="Optional JPEG, PNG or WebP. Maximum 2 MiB and 512 × 512 pixels."
                         error={form.errors.avatar}
                         onChange={(e) => {
                             form.setData('avatar', e.target.files?.[0] ?? null);

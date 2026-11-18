@@ -1,5 +1,11 @@
 # Signalbox — Piano dei task
 
+## UI — Limite avatar 512px — 2026-11-18
+
+- [x] Completato: validazione backend dimensions:max_width=512,max_height=512 nella Form Request; descrizione upload e ACCOUNT-PROFILE aggiornati. Limite peso 2MiB invariato. Nessun Git/gh.
+- Test con PNG RGB reali generati senza GD: accettati 512×512/512×1/1×512; rifiutati 513×512/512×513/513×513/4096×1/1×4096 prima di salvare avatar o altri dati. Nuova asserzione frontend sulla descrizione accessibile del limite.
+- File: UpdateProfileRequest.php, Account/Overview.tsx, AccountProfileTest.php, AccountProfile.test.tsx, ACCOUNT-PROFILE e questo piano. Verifiche: PHP-CS-Fixer, Larastan livello 8 e **14 test/80 asserzioni, 4,35 s**; frontend AccountProfile **2/2, 2,54 s**; check exit 0 (lint/formato/TypeScript e 6 qualità), build exit 0. Non ripetuti suite integrali, browser e CI remota per la modifica del limite. Nessuna migration/dipendenza/configurazione/dato sviluppo modificato. Prossimo passo: eventuali altre rifiniture richieste dall'utente.
+
 ## UI — Altezza campo VAT number — 2026-11-18
 
 - [x] Corretto: items-start sul fieldset della griglia Account impedisce che l'hint dell'upload dilati il campo VAT number adiacente. File: Account/Overview.tsx, ACCOUNT-PROFILE e questo piano. Nessun cambio alla logica del form.

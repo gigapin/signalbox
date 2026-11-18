@@ -24,7 +24,7 @@ empty forms rather than resubmitting profile fields, passwords or selected files
 
 The header avatar replaces initials only for the current owner; an image load error falls back to
 initials. Data URL previews work under the current CSP without enabling blob sources. Avatar upload
-supports JPEG/PNG/WebP up to 2 MiB and 4096×4096 pixels; SVG/GIF are rejected. Files retain their raster
+supports JPEG/PNG/WebP up to 2 MiB and 512×512 pixels; SVG/GIF are rejected. Files retain their raster
 contents and metadata, are stored on the private local disk under generated names, and are served only
 by authenticated owner GET /account/avatar with no-store and nosniff. There are no public avatar URLs.
 Only a versioned relative avatar URL enters shared identity props; other profile data stays on Account.

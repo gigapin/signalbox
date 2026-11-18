@@ -78,3 +78,45 @@ it('rejects guest and unverified profile mutations', function (): void {
     $this->post('/account/profile', ['email' => 'guest@example.test'])->assertRedirect('/login');
     $this->actingAs(User::factory()->unverified()->create())->post('/account/profile', ['email' => 'guest@example.test'])->assertRedirect('/email/verify');
 });
+
+/**
+ * Build a real compressed RGB PNG without requiring GD in the test container.
+ *
+ * @param int $width Image width in pixels.
+ * @param int $height Image height in pixels.
+ * @return UploadedFile Raster whose actual dimensions exercise the server validator.
+ */
+function profileDimensionImage(int $width, int $height): UploadedFile
+{
+    $chunk = static fn (string $type, string $data): string => pack('N', strlen($data)).$type.$data.pack('N', crc32($type.$data));
+    $rows = str_repeat("\0".str_repeat("\0", $width * 3), $height);
+    $png = "\x89PNG\r\n\x1a\n"
+        .$chunk('IHDR', pack('NNCCCCC', $width, $height, 8, 2, 0, 0, 0))
+        .$chunk('IDAT', gzcompress($rows))
+        .$chunk('IEND', '');
+
+    return UploadedFile::fake()->createWithContent('dimensions.png', $png);
+}
+
+it('accepts avatar dimensions at the 512 pixel boundary', function (int $width, int $height): void {
+    $user = User::factory()->create();
+    $this->actingAs($user)->post('/account/profile', [
+        'email' => $user->email,
+        'avatar' => profileDimensionImage($width, $height),
+    ])->assertSessionHasNoErrors()->assertRedirect('/account');
+
+    expect($user->fresh()->avatar_path)->not->toBeNull();
+})->with([[512, 512], [512, 1], [1, 512]]);
+
+it('rejects oversized avatar dimensions before saving fields or files', function (int $width, int $height): void {
+    $user = User::factory()->create();
+    $this->actingAs($user)->post('/account/profile', [
+        'email' => $user->email,
+        'first_name' => 'Unsaved change',
+        'avatar' => profileDimensionImage($width, $height),
+    ])->assertSessionHasErrors('avatar');
+
+    expect($user->fresh()->avatar_path)->toBeNull()
+        ->and($user->fresh()->first_name)->toBeNull()
+        ->and(Storage::disk('local')->allFiles('account-avatars'))->toBe([]);
+})->with([[513, 512], [512, 513], [513, 513], [4096, 1], [1, 4096]]);

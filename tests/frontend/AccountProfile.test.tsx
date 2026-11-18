@@ -16,6 +16,9 @@ test('replaces the old cards with optional profile fields and registration email
     expect(screen.getByLabelText('Email')).toHaveValue('giga@example.test');
     expect(screen.getByLabelText('First name')).toHaveValue('Giga Prog');
     expect(screen.getByLabelText('Last name')).not.toBeRequired();
+    expect(screen.getByLabelText('Logo / avatar')).toHaveAccessibleDescription(
+        'Optional JPEG, PNG or WebP. Maximum 2 MiB and 512 × 512 pixels.',
+    );
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
     expect(screen.queryByRole('heading', { name: 'Team access' })).not.toBeInTheDocument();
 });

@@ -1,5 +1,13 @@
 # UI guidelines — Signalbox
 
+## Chart axis typography — 2026-11-18
+
+TimeSeriesChart compensates for its 640-unit SVG viewBox using the observed content width of its
+panel. Both axis labels render at 12 CSS pixels rather than growing with a wide chart. ResizeObserver
+tracks responsive layout changes and disconnects on unmount; zero-width observations are ignored.
+Environments without ResizeObserver retain the initial 12-unit fallback. This presentation is shared
+by monitor details and dashboard; data, UTC labels and the equivalent table retain their semantics.
+
 ## Monitor search layout — 2026-11-18
 
 The Find monitors fieldset aligns field wrappers at the top so Search help never stretches adjacent

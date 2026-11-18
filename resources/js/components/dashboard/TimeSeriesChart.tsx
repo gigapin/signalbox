@@ -1,6 +1,6 @@
 /** Render bounded, accessible time series with real gaps, selectable series and an equivalent data table. */
 import TableScrollArea from '../TableScrollArea';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /** One comparable series in the same unit and UTC bucket axis. */
 export interface ChartSeries {
@@ -68,6 +68,25 @@ export default function TimeSeriesChart({
     endsAt,
     headingLevel = 2,
 }: ChartProps) {
+    const container = useRef<HTMLElement>(null);
+    const [chartWidth, setChartWidth] = useState(640);
+    // Compensate for viewBox scaling so both axes retain a compact 12 CSS pixel font.
+    const axisFontSize = (12 * 640) / chartWidth;
+
+    useEffect(() => {
+        if (!container.current || typeof ResizeObserver === 'undefined') return;
+
+        const observer = new ResizeObserver(([entry]) => {
+            const width = entry?.contentRect.width;
+            if (width !== undefined && Number.isFinite(width) && width > 0) {
+                setChartWidth(width);
+            }
+        });
+        observer.observe(container.current);
+
+        return () => observer.disconnect();
+    }, []);
+
     const Heading = headingLevel === 3 ? 'h3' : 'h2';
     const [choice, setChoice] = useState(series[0]?.id);
     const selected = series.find((entry) => entry.id === choice) ?? series[0];
@@ -97,7 +116,7 @@ export default function TimeSeriesChart({
         .join(' ');
 
     return (
-        <section className="ui-panel" aria-label={title}>
+        <section ref={container} className="ui-panel" aria-label={title}>
             <Heading className="ui-section-title">{title}</Heading>
             <p className="ui-description">{description}</p>
             {series.length > 1 && (
@@ -141,10 +160,10 @@ export default function TimeSeriesChart({
                                 />
                                 <text
                                     x="75"
-                                    y={y + 4}
+                                    y={y + axisFontSize / 3}
                                     textAnchor="end"
                                     fill="currentColor"
-                                    fontSize="11"
+                                    fontSize={axisFontSize}
                                 >{`${Number(tick.toPrecision(6))} ${unit}`}</text>
                             </g>
                         );
@@ -170,12 +189,18 @@ export default function TimeSeriesChart({
                             ),
                     )}
                     {timestamps[0] && (
-                        <text x="85" y="190" fill="currentColor" fontSize="11">
+                        <text x="85" y="190" fill="currentColor" fontSize={axisFontSize}>
                             {label(timestamps[0])}
                         </text>
                     )}
                     {timestamps.at(-1) && (
-                        <text x="615" y="190" textAnchor="end" fill="currentColor" fontSize="11">
+                        <text
+                            x="615"
+                            y="190"
+                            textAnchor="end"
+                            fill="currentColor"
+                            fontSize={axisFontSize}
+                        >
                             {label(timestamps.at(-1) ?? '')}
                         </text>
                     )}

@@ -1,5 +1,11 @@
 # Signalbox — Piano dei task
 
+## UI — Tipografia assi dei grafici — 2026-11-18
+
+- [x] Completato su richiesta dell'utente: valori degli assi a 12px visivi, compensando l'ingrandimento del viewBox SVG con la larghezza interna del pannello rilevata tramite ResizeObserver. Allineamento verticale dei tick adeguato al font; osservazioni di larghezza zero ignorate e observer scollegato allo smontaggio. TimeSeriesChart è condiviso con la dashboard, che riceve la stessa correzione. Nessuna modifica a metriche o dati.
+- File: `resources/js/components/dashboard/TimeSeriesChart.tsx`, `tests/frontend/Dashboard.test.tsx`, `docs/UI-GUIDELINES.md`, questo piano. Nuova regressione su entrambi gli assi a 1280/640/320px, larghezza zero e cleanup.
+- Verifiche: `npm run check` exit 0 (ESLint/Prettier/TypeScript e 6 test qualità), test Dashboard e MonitorCharts con `--pool=threads` **26/26, 7,36 s**, `npm run build` exit 0. Non ripetuti suite integrale (494/494 prima di questa modifica), browser, backend, audit e CI remota: modifica di presentazione coperta dai test mirati dei due utilizzatori. Nessun Git/gh, servizio, dato o configurazione ambiente modificato. Prossimo passo: verifica visiva del dettaglio monitor e ulteriori rifiniture sullo stesso branch grafico dell'utente.
+
 ## UI — Filtri monitor compatti e allineati — 2026-11-18
 
 - [x] Completato su richiesta dell'utente: correggere i tre select sovradimensionati e l'allineamento di Search nel blocco Find monitors. Dipendenze: componenti campo condivisi già disponibili; nessuna modifica allo scope funzionale. Stesso branch grafico gestito dall'utente; Git/gh non eseguiti.

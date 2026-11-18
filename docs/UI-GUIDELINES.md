@@ -1,5 +1,20 @@
 # UI guidelines — Signalbox
 
+## Compact workspace header — 2026-11-18
+
+Workspace headers use a 56px minimum height, 8px vertical/16px horizontal padding, 12px gaps,
+16px brand, 13px control text and 11px secondary labels. Desktop header controls are 32px,
+with 36px theme/profile hit areas and a 32px circular initials avatar. Header form/field margins
+are reset locally. Below 1024px, interactive targets are at least 44px; team context and selection
+flow below the first row, and the navigation trigger is an icon with its existing accessible name.
+Theme and profile form one non-wrapping group, with profile last. Menus and page controls retain
+their ordinary sizes; content can expand at zoom or for long names.
+
+AccountAvatar uses Unicode grapheme initials from first/last whitespace-separated words, one for
+a single word and ? for blank names. Giga Prog becomes GP. The trigger retains Account menu as its
+accessible name and exposes the full name as title and inside the menu. Uploading a logo remains
+future account work: no storage, endpoint or speculative image property is introduced.
+
 ## Application appearance — 2026-11-18
 
 [APPEARANCE.md](APPEARANCE.md) defines the dark default, header-only switch, account/cookie persistence,

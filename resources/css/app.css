@@ -1259,3 +1259,99 @@
         opacity: 0.65;
     }
 }
+
+/* Compact workspace chrome does not shrink page controls or dropdown menu hit targets. */
+@layer components {
+    .ui-app-header {
+        min-height: 56px;
+        gap: 12px;
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    .ui-app-header .ui-brand {
+        font-size: 16px;
+    }
+    .ui-app-header .ui-help {
+        font-size: 11px;
+    }
+    .ui-app-header > .ui-button,
+    .ui-app-header .ui-team-switcher .ui-button,
+    .ui-app-header .ui-team-switcher .ui-input {
+        min-height: 32px;
+        padding: 4px 8px;
+        font-size: 13px;
+    }
+    .ui-app-header .ui-team-switcher,
+    .ui-app-header .ui-team-switcher .ui-field {
+        margin-block: 0;
+    }
+    .ui-app-header .ui-team-switcher {
+        grid-template-columns: minmax(0, 15rem) auto;
+    }
+    .ui-header-actions {
+        display: flex;
+        align-items: center;
+        flex: 0 0 auto;
+        gap: 4px;
+        margin-inline-start: auto;
+    }
+    .ui-app-header .ui-theme-toggle,
+    .ui-account-trigger.ui-button {
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        min-height: 36px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+    .ui-account-trigger.ui-button {
+        border-radius: 50%;
+    }
+    .ui-account-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--color-ui-raised);
+        color: var(--color-ui-text);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+    }
+    .ui-account-name {
+        margin-bottom: 8px;
+        padding: 4px 8px;
+        font-size: 14px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+    @media (max-width: 1023px) {
+        .ui-app-header > .ui-team-identity,
+        .ui-app-header > .ui-help,
+        .ui-app-header > .ui-team-switcher {
+            order: 1;
+        }
+        .ui-app-header > .ui-team-identity {
+            flex-basis: calc(100% - 5rem);
+        }
+        .ui-app-header > .ui-team-switcher {
+            width: 100%;
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+        .ui-app-header > .ui-button,
+        .ui-app-header .ui-team-switcher .ui-button,
+        .ui-app-header .ui-team-switcher .ui-input {
+            min-height: 44px;
+        }
+        .ui-app-header .ui-theme-toggle,
+        .ui-account-trigger.ui-button {
+            width: 44px;
+            min-width: 44px;
+            height: 44px;
+            min-height: 44px;
+        }
+    }
+}

@@ -98,14 +98,16 @@ function TeamShell({
                             onSuspend={() => setSuspended(true)}
                         />
                     )}
-                    {!hidden && <ThemeToggle />}
-                    {user && !hidden && (
-                        <AccountMenu
-                            key={`account:${team.id}`}
-                            name={user.name}
-                            isPlatformAdmin={user.isPlatformAdmin === true}
-                        />
-                    )}
+                    <div className="ui-header-actions">
+                        {!hidden && <ThemeToggle />}
+                        {user && !hidden && (
+                            <AccountMenu
+                                key={`account:${team.id}`}
+                                name={user.name}
+                                isPlatformAdmin={user.isPlatformAdmin === true}
+                            />
+                        )}
+                    </div>
                 </header>
                 <div className="ui-app-frame">
                     {!hidden && desktop && (

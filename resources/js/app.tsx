@@ -1,5 +1,6 @@
 /** Mount the Inertia 2 application with typed React page modules. */
 import '../css/app.css';
+import { ThemeProvider } from './components/appearance/Theme';
 import { createInertiaApp } from '@inertiajs/react';
 import { createElement, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -15,6 +16,9 @@ interface PageModule {
 
 /** Map build-time page paths to lazy module loaders, excluding arbitrary paths. */
 const pages = import.meta.glob<PageModule>('./pages/**/*.tsx');
+
+/** Stable page identities preserve Inertia form state across partial and same-page visits. */
+const themedPages = new Map<string, ComponentType>();
 
 void createInertiaApp({
     /**
@@ -36,7 +40,14 @@ void createInertiaApp({
             throw new Error(`Unknown Inertia page: ${name}`);
         }
 
-        return loadPage();
+        const cached = themedPages.get(name);
+        if (cached) return cached;
+        const module = await loadPage();
+        /** Keep the appearance provider inside Inertia context without changing page identity. */
+        const ThemedPage = (props: Record<string, unknown>) =>
+            createElement(ThemeProvider, null, createElement(module.default, props));
+        themedPages.set(name, ThemedPage);
+        return ThemedPage;
     },
     /**
      * Attach shared connection feedback and the initial Inertia component to the HTML mount element.

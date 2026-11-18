@@ -23,12 +23,12 @@ interface LiveUpdatesProps {
 /** Show an announced status and keyboard-accessible retry/reload when recovery needs user intervention. */
 export default function LiveUpdates({ phase, retry }: LiveUpdatesProps) {
     return (
-        <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-slate-400">
+        <div className="mb-5 flex flex-wrap items-center gap-3 text-sm text-ui-muted">
             <p role="status" aria-live="polite">
                 {LABELS[phase]}
             </p>
             {(phase === 'error' || phase === 'disconnected') && (
-                <button type="button" onClick={retry} className="text-emerald-300 cursor-pointer">
+                <button type="button" onClick={retry} className="text-ui-accent cursor-pointer">
                     Retry live updates
                 </button>
             )}
@@ -36,7 +36,7 @@ export default function LiveUpdates({ phase, retry }: LiveUpdatesProps) {
                 <button
                     type="button"
                     onClick={() => window.location.reload()}
-                    className="text-emerald-300 cursor-pointer"
+                    className="text-ui-accent cursor-pointer"
                 >
                     Reload page
                 </button>

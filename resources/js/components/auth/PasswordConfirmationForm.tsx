@@ -109,7 +109,7 @@ export default function PasswordConfirmationForm({
             <h3 id="override-confirm-heading" className="font-semibold">
                 Confirm your password
             </h3>
-            <p id="override-confirm-hint" className="mt-2 text-sm text-slate-300">
+            <p id="override-confirm-hint" className="mt-2 text-sm text-ui-muted">
                 Your change is ready. Confirm your password to apply it without leaving this page.
             </p>
             <form onSubmit={(event) => void confirm(event)} className="mt-4 space-y-3">

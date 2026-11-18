@@ -23,7 +23,7 @@ export default function Overview() {
                 description="Your account is separate from the permissions of each team."
             >
                 <p className="text-xl">Welcome, {auth?.user?.name}.</p>
-                <p className="mt-2 text-slate-300">{auth?.user?.email}</p>
+                <p className="mt-2 text-ui-muted">{auth?.user?.email}</p>
             </Panel>
             <Panel title="Team access">
                 <p className="mt-6">

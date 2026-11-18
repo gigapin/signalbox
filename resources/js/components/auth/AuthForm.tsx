@@ -82,7 +82,7 @@ export default function AuthForm({
                 {Object.entries(form.errors)
                     .filter(([name]) => !fields.some((field) => field.name === name))
                     .map(([name, message]) => (
-                        <p key={name} role="alert" className="text-red-300">
+                        <p key={name} role="alert" className="text-ui-danger">
                             {message}
                         </p>
                     ))}
@@ -122,7 +122,7 @@ export default function AuthForm({
             </form>
             <nav
                 aria-label="Account navigation"
-                className="mt-6 flex flex-wrap gap-4 text-sm text-emerald-300"
+                className="mt-6 flex flex-wrap gap-4 text-sm text-ui-accent"
             >
                 {links.map((link) => (
                     <Link key={link.href} href={link.href}>

@@ -161,9 +161,9 @@ function WindowRow({ path, window: item, canManage, reasonMaxLength }: WindowRow
     }
 
     return (
-        <li className="border-b border-slate-800 py-3">
+        <li className="border-b border-ui-border py-3">
             <p className="font-medium">{item.reason}</p>
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-ui-muted">
                 {formatInstant(item.startsAt, '')} – {formatInstant(item.endsAt, '')} ·{' '}
                 {phaseLabel(item.phase)}
             </p>
@@ -183,14 +183,14 @@ function WindowRow({ path, window: item, canManage, reasonMaxLength }: WindowRow
                         type="button"
                         disabled={remove.processing}
                         onClick={cancel}
-                        className="text-red-200 cursor-pointer disabled:opacity-50"
+                        className="text-ui-danger cursor-pointer disabled:opacity-50"
                     >
                         {upcoming ? 'Delete window' : 'End now'}
                     </button>
                 </div>
             )}
             {editing && canManage && upcoming && (
-                <div className="mt-3 rounded border border-slate-700 p-3">
+                <div className="mt-3 rounded border border-ui-control-border p-3">
                     <MaintenanceForm
                         idPrefix={`maintenance-${item.id}`}
                         initial={{
@@ -222,19 +222,19 @@ export default function MaintenancePanel({ path, maintenance, canManage }: Maint
             <h2 id="maintenance-heading" className="mb-2 text-lg font-semibold">
                 Maintenance
             </h2>
-            <p className="mb-4 text-sm text-slate-400">
+            <p className="mb-4 text-sm text-ui-muted">
                 While a window is in progress, confirmed failures open no incident. Times are shown
                 in your browser&apos;s timezone.
             </p>
 
             {errors.maintenance && (
-                <p role="alert" className="mb-4 text-red-300">
+                <p role="alert" className="mb-4 text-ui-danger">
                     {errors.maintenance}
                 </p>
             )}
 
             {maintenance.current.length === 0 ? (
-                <p className="text-slate-300">No maintenance in progress or scheduled.</p>
+                <p className="text-ui-muted">No maintenance in progress or scheduled.</p>
             ) : (
                 <ul aria-label="Current and upcoming maintenance">
                     {maintenance.current.map((item) => (
@@ -250,7 +250,7 @@ export default function MaintenancePanel({ path, maintenance, canManage }: Maint
             )}
 
             {canManage && (
-                <div className="mt-4 rounded border border-slate-700 p-4">
+                <div className="mt-4 rounded border border-ui-control-border p-4">
                     <h3 className="mb-3 font-medium">Schedule maintenance</h3>
                     <MaintenanceForm
                         idPrefix="maintenance-new"

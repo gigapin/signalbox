@@ -145,7 +145,7 @@ export default function TimeSeriesChart({
                 </div>
             )}
             {observations.length === 0 ? (
-                <p className="my-8 text-sm text-slate-300">{empty}</p>
+                <p className="my-8 text-sm text-ui-muted">{empty}</p>
             ) : (
                 <div className="ui-chart-plot" onMouseLeave={() => setActivePoint(null)}>
                     <svg
@@ -183,7 +183,7 @@ export default function TimeSeriesChart({
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2"
-                            className="text-emerald-400"
+                            className="text-ui-accent"
                         />
                         {coordinates.map(
                             (point, index) =>
@@ -194,7 +194,7 @@ export default function TimeSeriesChart({
                                         cy={point.y}
                                         r="2.5"
                                         fill="currentColor"
-                                        className="text-emerald-300"
+                                        className="text-ui-accent"
                                         tabIndex={0}
                                         aria-label={`${selected?.label}: ${values[index]} ${unit}, ${label(timestamps[index] ?? '')} UTC`}
                                         aria-describedby={

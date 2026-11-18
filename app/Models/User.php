@@ -29,6 +29,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property bool $is_platform_admin Platform operator flag, changed only by the signalbox:platform-admin command.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Team> $teams Teams reached through explicit membership.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Team> $ownedTeams Teams for which this user is the primary owner.
+ * @property string|null $theme_preference Explicit appearance choice; null resolves to dark.
  * @property int $id Unique user identifier.
  * @property string $name Display name.
  * @property string $email Unique authentication email address.

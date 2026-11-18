@@ -197,7 +197,7 @@
         color: var(--color-ui-text);
         font: inherit;
         line-height: 1.5;
-        color-scheme: dark;
+        color-scheme: var(--ui-color-scheme, dark);
     }
 
     /* Field components own spacing; compact editors and choices retain native labels. */
@@ -1200,5 +1200,36 @@
     .ui-select-option[aria-disabled='true'] {
         color: var(--color-ui-muted);
         cursor: not-allowed;
+    }
+}
+
+/* Explicit application appearance leaves public status-page palettes independent. */
+@layer base {
+    html[data-ui-theme] {
+        background: var(--color-ui-canvas);
+        color: var(--color-ui-text);
+        color-scheme: var(--ui-color-scheme, dark);
+    }
+    html[data-ui-theme='light'] {
+        --ui-color-scheme: light;
+        --color-ui-canvas: #f8fafc;
+        --color-ui-surface: #ffffff;
+        --color-ui-raised: #e2e8f0;
+        --color-ui-text: #0f172a;
+        --color-ui-muted: #475569;
+        --color-ui-border: #cbd5e1;
+        --color-ui-control-border: #64748b;
+        --color-ui-focus: #047857;
+        --color-ui-accent: #04704f;
+        --color-ui-accent-hover: #065f46;
+        --color-ui-on-accent: #ffffff;
+        --color-ui-success: #166534;
+        --color-ui-success-bg: #dcfce7;
+        --color-ui-warning: #92400e;
+        --color-ui-warning-bg: #fef3c7;
+        --color-ui-danger: #991b1b;
+        --color-ui-danger-bg: #fee2e2;
+        --color-ui-info: #1e40af;
+        --color-ui-info-bg: #dbeafe;
     }
 }

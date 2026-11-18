@@ -1,6 +1,6 @@
 {{-- Render the initial HTML document and mount the Inertia React application. --}}
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html @if(request()->attributes->get('ui_theme')) data-ui-theme="{{ request()->attributes->get('ui_theme') }}" @endif lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

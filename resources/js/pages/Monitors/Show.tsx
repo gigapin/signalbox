@@ -59,8 +59,8 @@ interface DetailProps {
 /** Render one row of the description list. */
 function Detail({ term, children }: DetailProps) {
     return (
-        <div className="grid gap-1 border-b border-slate-800 py-2 md:grid-cols-3">
-            <dt className="text-sm text-slate-400">{term}</dt>
+        <div className="grid gap-1 border-b border-ui-border py-2 md:grid-cols-3">
+            <dt className="text-sm text-ui-muted">{term}</dt>
             <dd className="md:col-span-2">{children}</dd>
         </div>
     );

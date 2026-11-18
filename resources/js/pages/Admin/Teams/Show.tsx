@@ -295,7 +295,7 @@ function DetailContent() {
                 </p>
 
                 {confirmationError && (
-                    <p role="alert" className="mt-4 text-red-300">
+                    <p role="alert" className="mt-4 text-ui-danger">
                         {confirmationError}
                     </p>
                 )}
@@ -306,7 +306,7 @@ function DetailContent() {
                             <div
                                 role="alert"
                                 tabIndex={-1}
-                                className="rounded border border-red-800 p-3 text-red-300"
+                                className="rounded border border-red-800 p-3 text-ui-danger"
                             >
                                 {general.map((message) => (
                                     <p key={message}>{message}</p>

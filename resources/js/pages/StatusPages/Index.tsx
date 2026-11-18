@@ -42,7 +42,7 @@ function PageContent() {
                 names of the components, never the names of the monitors inside them.
             </p>
             {errors.page && (
-                <p role="alert" className="mb-4 text-red-300">
+                <p role="alert" className="mb-4 text-ui-danger">
                     {errors.page}
                 </p>
             )}

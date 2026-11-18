@@ -60,12 +60,12 @@ export default function Unlock() {
     return (
         <>
             <StatusPageHead metadata={metadata} fallbackTitle="Protected status page" />
-            <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
+            <main className="min-h-screen bg-ui-canvas px-6 py-12 text-ui-text">
                 <div className="mx-auto max-w-lg">
                     <h1 className="text-2xl font-semibold">This status page is protected</h1>
-                    <p className="mt-2 text-slate-300">Enter the password to read it.</p>
+                    <p className="mt-2 text-ui-muted">Enter the password to read it.</p>
                     {refusal && (
-                        <p role="alert" className="mt-4 text-amber-200">
+                        <p role="alert" className="mt-4 text-ui-warning">
                             {refusal}
                         </p>
                     )}

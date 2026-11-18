@@ -24,13 +24,13 @@ export default function DeliveryLog({ deliveries }: DeliveryLogProps) {
                 Times use your local time.
             </p>
             {deliveries.length === 0 ? (
-                <p className="text-slate-300">
+                <p className="text-ui-muted">
                     No notification has been recorded for this incident.
                 </p>
             ) : (
                 <DataTable caption="Notification deliveries, oldest first">
                     <thead>
-                        <tr className="border-b border-slate-700">
+                        <tr className="border-b border-ui-control-border">
                             <th scope="col">Channel</th>
                             <th scope="col">Reason</th>
                             <th scope="col">Status</th>
@@ -41,7 +41,7 @@ export default function DeliveryLog({ deliveries }: DeliveryLogProps) {
                     </thead>
                     <tbody>
                         {deliveries.map((delivery) => (
-                            <tr key={delivery.id} className="border-b border-slate-800">
+                            <tr key={delivery.id} className="border-b border-ui-border">
                                 <th scope="row" className="font-medium">
                                     {delivery.channelName ??
                                         `Deleted ${delivery.channelType} channel`}

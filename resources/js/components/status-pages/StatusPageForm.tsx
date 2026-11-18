@@ -355,7 +355,7 @@ export default function StatusPageForm({
                                             <p
                                                 id={`${componentId}-monitors-error`}
                                                 role="alert"
-                                                className="mt-1 text-red-300"
+                                                className="mt-1 text-ui-danger"
                                             >
                                                 {monitorError}
                                             </p>
@@ -383,7 +383,7 @@ export default function StatusPageForm({
                                         <button
                                             type="button"
                                             onClick={() => removeComponent(index)}
-                                            className="text-red-200 cursor-pointer"
+                                            className="text-ui-danger cursor-pointer"
                                         >
                                             Remove component {index + 1}
                                         </button>
@@ -410,7 +410,7 @@ export default function StatusPageForm({
                     </button>
                 </div>
                 {errors.components && (
-                    <p role="alert" className="text-red-300">
+                    <p role="alert" className="text-ui-danger">
                         {errors.components}
                     </p>
                 )}

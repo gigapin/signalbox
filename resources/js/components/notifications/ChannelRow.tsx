@@ -126,7 +126,7 @@ export default function ChannelRow({
                 </p>
             )}
             {channel.isStub && (
-                <p className="text-xs text-amber-200">
+                <p className="text-xs text-ui-warning">
                     Stub channel: deliveries are recorded but never sent.
                 </p>
             )}

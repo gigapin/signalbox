@@ -1,5 +1,11 @@
 # Application bootstrap reference
 
+## Light/dark appearance adoption — 2026-11-18
+
+Apply the additive user theme migration before serving the updated assets/code. No development
+migration has been applied by this work. See [APPEARANCE.md](APPEARANCE.md) for precedence, cookies,
+rollback and browser acceptance limits; TASKS records actual verification. Chart work remains paused.
+
 ## UI branch handoff — 2026-11-18
 
 The user is closing the graphics branch after the welcome background change. Chart work is explicitly

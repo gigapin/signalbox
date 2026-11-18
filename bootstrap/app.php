@@ -40,7 +40,7 @@ $preserveExactInput = static fn (Request $request): bool => MonitorInputTranspor
 $configureMiddleware = function (Middleware $middleware) use ($preserveExactInput): void {
     $middleware->trimStrings(except: [$preserveExactInput]);
     $middleware->convertEmptyStringsToNull(except: [$preserveExactInput]);
-    $middleware->web(append: [HandleInertiaRequests::class]);
+    $middleware->web(append: [\App\Http\Middleware\ResolveUiTheme::class, HandleInertiaRequests::class]);
     // Host routing precedes sessions; only explicit proxy peers may supply scheme/client metadata, never Host.
     $middleware->trustProxies(at: [], headers:
         Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT);

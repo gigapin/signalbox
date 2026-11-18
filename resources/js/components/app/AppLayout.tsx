@@ -1,4 +1,5 @@
 /** Render the private team shell with explicit route identity, section navigation and account controls. */
+import { ThemeToggle } from '../appearance/Theme';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useCallback, useId, useState, type ReactNode } from 'react';
 import type { AuthProps } from '../auth/AuthLayout';
@@ -104,6 +105,7 @@ function TeamShell({
                             isPlatformAdmin={user.isPlatformAdmin === true}
                         />
                     )}
+                    {!hidden && <ThemeToggle />}
                 </header>
                 <div className="ui-app-frame">
                     {!hidden && desktop && (

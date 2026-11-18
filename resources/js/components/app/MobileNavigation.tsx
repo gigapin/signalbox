@@ -84,7 +84,19 @@ export default function MobileNavigation({
                 aria-expanded={open}
                 onClick={show}
             >
-                Open navigation
+                <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                >
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span className="sr-only">Open navigation</span>
             </Button>
             <dialog
                 ref={dialog}

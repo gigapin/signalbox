@@ -2,7 +2,8 @@
 
 Signalbox defaults to dark regardless of OS preferences. The dashboard workspace header, including
 account/platform contexts, contains the only theme switch: an icon-only sun/moon control immediately before the profile menu,
-which remains the final header control. The icon retains an accessible action label and native title. Welcome and authentication screens follow
+which remains the final header control. Theme/profile are grouped together; the profile uses a
+circular initials avatar. Desktop header targets are compact, while mobile targets retain 44px. The icon retains an accessible action label and native title. Welcome and authentication screens follow
 the saved appearance without offering a switch. Public status pages retain their owner-defined theme.
 
 ## Preference lifecycle

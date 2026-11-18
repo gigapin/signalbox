@@ -1,5 +1,18 @@
 # Signalbox — Piano dei task
 
+## UI — Regressione CI asserzione avatar account — 2026-11-18
+
+- [x] Corretto SettingsWorkflows: il test del cambio account verifica ora DA nel trigger, Different account nel title e il nome completo nel sottomenu aperto. Restano le asserzioni su abort della richiesta e mancata esposizione delle credenziali precedenti. La CI segnalata dall'utente aveva 514 passati/1 fallito su 515 per l'aspettativa obsoleta del nome nel trigger.
+- File: tests/frontend/SettingsWorkflows.test.tsx e questo piano. Verifiche: suite frontend integrale **515/515 in 44 file, 104,98 s, exit 0**; check exit 0 (ESLint/Prettier/TypeScript e 6 test qualità). CI remota non rieseguita dall’agente; prossimo passo: rilancio CI da parte dell’utente. Nessuna modifica al prodotto, backend, dipendenze, dati o configurazione; nessun Git/gh. Build non ripetuta perché cambia soltanto un test.
+
+## UI — Header compatto e avatar iniziali — 2026-11-18
+
+- [x] Implementato e verificato: header desktop min-height 56px, padding 8×16px, gap 12px; brand 16px, testo 13px e metadati 11px. Select/azioni header desktop 32px, tema/profilo 36px con avatar 32px; margini form/campi azzerati solo nell'header. Mobile sotto 1024px: target 44px, menu a icona con nome accessibile conservato, team su righe successive. Gruppo tema/profilo non separabile, profilo sempre ultimo a destra.
+- Avatar dedicato con iniziali Unicode/grapheme, prima e ultima parola, una per nome singolo e ? per nome vuoto; Giga Prog → GP. Nome completo nel title e nel sottomenu; comportamento account/Escape/focus/logout preservato. Nessun upload, endpoint, migration o proprietà immagine anticipata.
+- File: AccountAvatar nuovo, AccountMenu/AppLayout/PrivateContextLayout/MobileNavigation, app.css, AccountAvatar.test nuovo e Theme.test; UI-GUIDELINES/APPEARANCE e questo piano. Classi di densità limitate all'header; controlli pagine e voci dropdown restano alle dimensioni ordinarie.
+- Verifiche: **49 test/5 file, 12,05 s** (avatar, tema, shell, workspace e navigazione mobile); check exit 0 (ESLint, Prettier, TypeScript e 6 qualità); build exit 0. Fixture Firefox con CSS compilato ispezionate: light desktop 1280×500 e dark mobile 390×600, nome team lungo. Fixture sintetiche, nessuna sessione/dato reale.
+- Non eseguiti browser autenticato, zoom nativo 200%, Safari/Chromium, suite frontend integrale, backend/audit/CI remota per la modifica locale frontend. Nessuna modifica dati, configurazione, dipendenza o servizio applicativo. Branch header-polish indicato dall'utente; nessun Git/gh. Prossimo passo: eventuali rifiniture dell'utente; upload logo account resta lavoro futuro separato.
+
 ## UI — Icona tema e ordine header — 2026-11-18
 
 - [x] Completato: icona SVG sole/luna senza testo visibile né bordo, target 44px e nome accessibile/title Light mode/Dark mode; stati focus/hover/pending/error preservati. Ordine DOM in entrambe le shell: tema immediatamente prima del profilo, che è l'ultimo elemento dell'header.

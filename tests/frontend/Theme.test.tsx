@@ -101,6 +101,7 @@ test.each([false, true])(
         expect(theme.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
         const header = theme.closest('header')!;
         expect(theme.parentElement?.nextElementSibling).toBe(profile.parentElement);
-        expect(header.lastElementChild).toBe(profile.parentElement);
+        expect(header.lastElementChild).toBe(profile.parentElement?.parentElement);
+        expect(header.lastElementChild?.lastElementChild).toBe(profile.parentElement);
     },
 );

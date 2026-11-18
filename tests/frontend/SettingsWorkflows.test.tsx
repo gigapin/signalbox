@@ -347,9 +347,11 @@ test('account replacement disposes a pending read and never renders the previous
         await Promise.resolve();
     });
     expect(screen.queryByText('old-account-code')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Account menu' })).toHaveTextContent(
-        'Different account',
-    );
+    const accountMenu = screen.getByRole('button', { name: 'Account menu' });
+    expect(accountMenu).toHaveTextContent('DA');
+    expect(accountMenu).toHaveAttribute('title', 'Different account');
+    await user.click(accountMenu);
+    expect(screen.getByText('Different account')).toBeVisible();
 });
 
 test('sensitive reads are single-flight and setup refresh preserves the typed authenticator code', async () => {

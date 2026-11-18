@@ -2,6 +2,7 @@
 import { Link, useForm } from '@inertiajs/react';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import Button from '../ui/Button';
+import AccountAvatar from './AccountAvatar';
 
 /** Minimal identity for the account disclosure; no tenant or credential state is read here. */
 interface AccountMenuProps {
@@ -63,15 +64,18 @@ export default function AccountMenu({ name, isPlatformAdmin }: AccountMenuProps)
             <Button
                 ref={trigger}
                 variant="secondary"
+                className="ui-account-trigger"
+                title={name}
                 aria-label="Account menu"
                 aria-expanded={open}
                 aria-controls={menuId}
                 onClick={() => setOpen(!open)}
             >
-                {name}
+                <AccountAvatar name={name} />
             </Button>
             {open && (
                 <div id={menuId} className="ui-account-panel">
+                    <p className="ui-account-name">{name}</p>
                     <nav aria-label="Account navigation">
                         <Link
                             className="ui-shell-link"

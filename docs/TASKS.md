@@ -1,5 +1,10 @@
 # Signalbox — Piano dei task
 
+## UI — Regressione CI proiezione avatar account — 2026-11-18
+
+- [x] Corretto il confronto esatto auth.user in AuthenticationTest includendo avatarUrl=null per l'utente senza avatar. Mantenute le verifiche su currentTeam=null e assenza password/2FA; il confronto resta completo, senza indebolire il contratto a un sottoinsieme di campi. Espansa l'asserzione per leggibilità e rimossa la PHPDoc dentro gli argomenti.
+- File: tests/Integration/AuthenticationTest.php e questo piano. Verifiche: PHP-CS-Fixer e Larastan verdi; AuthenticationTest + AccountProfileTest **38 test/237 asserzioni, 12,80 s, exit 0**. Dry-run finale sul test exit 0, nessuna differenza. CI segnalata dall'utente: 3669 passati/1 fallito; suite backend integrale e CI remota non ripetute dall'agente perché la correzione riguarda una sola aspettativa, coperta dalle suite pertinenti. Frontend/build non ripetuti: solo test PHP e Markdown modificati. Nessun codice applicativo, dato, dipendenza, configurazione o Git/gh modificato. Prossimo passo: rilancio CI da parte dell'utente.
+
 ## UI — Limite avatar 512px — 2026-11-18
 
 - [x] Completato: validazione backend dimensions:max_width=512,max_height=512 nella Form Request; descrizione upload e ACCOUNT-PROFILE aggiornati. Limite peso 2MiB invariato. Nessun Git/gh.

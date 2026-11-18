@@ -88,7 +88,7 @@ function PageContent() {
                 success="Ownership transfer accepted"
                 onReviewed={mutation.acknowledge}
             />
-            <Link className="mt-6 block text-emerald-300" href={`/teams/${team.id}`}>
+            <Link className="mt-6 block text-ui-accent" href={`/teams/${team.id}`}>
                 Back to team
             </Link>
         </Panel>

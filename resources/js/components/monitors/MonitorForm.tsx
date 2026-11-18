@@ -369,7 +369,7 @@ export default function MonitorForm({
                         role="alert"
                         tabIndex={-1}
                         data-form-alert
-                        className="rounded border border-red-800 p-3 text-red-300"
+                        className="rounded border border-red-800 p-3 text-ui-danger"
                     >
                         {general.map(([key, message]) => (
                             <p key={key}>{message}</p>
@@ -396,7 +396,7 @@ export default function MonitorForm({
                         error={errors.type}
                     />
                     {originalType !== null && data.type !== originalType && (
-                        <p className="text-sm text-amber-200">
+                        <p className="text-sm text-ui-warning">
                             Changing the type discards the previous type&apos;s settings; enter the
                             complete new configuration.
                         </p>
@@ -465,7 +465,7 @@ export default function MonitorForm({
                 {isHttp && (
                     <Section legend={data.type === 'keyword' ? 'Keyword request' : 'HTTP request'}>
                         {storedHttp && (
-                            <p className="text-sm text-slate-300">
+                            <p className="text-sm text-ui-muted">
                                 Stored URL: <code>{stored.url}</code> (query values hidden).
                             </p>
                         )}
@@ -518,7 +518,7 @@ export default function MonitorForm({
                         />
 
                         {storedHttp && (
-                            <p className="text-sm text-slate-300">
+                            <p className="text-sm text-ui-muted">
                                 Stored headers:{' '}
                                 {stored.header_names && stored.header_names.length > 0
                                     ? `${stored.header_names.join(', ')} (values hidden)`
@@ -540,7 +540,7 @@ export default function MonitorForm({
                             <fieldset>
                                 <legend className="mb-2 text-sm font-medium">Headers</legend>
                                 {data.headers.length === 0 && (
-                                    <p className="text-sm text-slate-400">No headers.</p>
+                                    <p className="text-sm text-ui-muted">No headers.</p>
                                 )}
                                 {data.headers.map((row, index) => (
                                     <div
@@ -606,7 +606,7 @@ export default function MonitorForm({
                         )}
 
                         {storedHttp && (
-                            <p className="text-sm text-slate-300">
+                            <p className="text-sm text-ui-muted">
                                 Stored body:{' '}
                                 {stored.body?.present
                                     ? `${stored.body.bytes} bytes (content hidden)`

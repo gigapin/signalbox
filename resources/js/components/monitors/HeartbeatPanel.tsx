@@ -150,7 +150,7 @@ function HeartbeatControls({ path, heartbeat, canManage }: HeartbeatPanelProps) 
     return (
         <section
             aria-labelledby="heartbeat-heading"
-            className="mt-8 rounded border border-slate-700 p-4"
+            className="mt-8 rounded border border-ui-control-border p-4"
         >
             <h2 id="heartbeat-heading" className="text-lg font-semibold">
                 Heartbeat
@@ -170,7 +170,7 @@ function HeartbeatControls({ path, heartbeat, canManage }: HeartbeatPanelProps) 
                 Deadline:{' '}
                 <time dateTime={heartbeat.dueAt}>{new Date(heartbeat.dueAt).toLocaleString()}</time>
             </p>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-ui-muted">
                 Each heartbeat renews the deadline. Calls while paused or outside plan limits are
                 acknowledged without recording. Resume starts a new window.
             </p>
@@ -222,7 +222,7 @@ function HeartbeatControls({ path, heartbeat, canManage }: HeartbeatPanelProps) 
             {busy && <p role="status">Updating credential…</p>}
             {notice && <p role="status">{notice}</p>}
             {error && (
-                <p role="alert" className="mt-3 text-red-300">
+                <p role="alert" className="mt-3 text-ui-danger">
                     {error}
                 </p>
             )}

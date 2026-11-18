@@ -234,7 +234,7 @@ export default function PolicyForm({
                                             <p
                                                 id={`${stepId}-channels-error`}
                                                 role="alert"
-                                                className="mt-1 text-red-300"
+                                                className="mt-1 text-ui-danger"
                                             >
                                                 {channelError}
                                             </p>
@@ -267,7 +267,7 @@ export default function PolicyForm({
                     </Button>
                 </div>
                 {errors.steps && (
-                    <p role="alert" className="text-red-300">
+                    <p role="alert" className="text-ui-danger">
                         {errors.steps}
                     </p>
                 )}

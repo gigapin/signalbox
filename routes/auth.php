@@ -58,3 +58,6 @@ Route::middleware(NoStoreAuthentication::class)->group(/** Register only authent
         });
     });
 });
+
+// Appearance belongs to the authenticated browser account, independently of tenant selection.
+Route::post('/preferences/theme', \App\Http\Controllers\Auth\ThemeController::class)->middleware(['auth', 'verified', NoStoreAuthentication::class, 'throttle:60,1'])->name('preferences.theme');

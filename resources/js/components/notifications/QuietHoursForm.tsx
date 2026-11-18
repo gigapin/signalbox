@@ -104,7 +104,7 @@ export default function QuietHoursForm({ path, idPrefix, hours }: QuietHoursForm
                     summaries and retries also wait. Verification codes remain available.
                 </p>
                 {errors.quiet_hours && (
-                    <p role="alert" className="text-red-300 md:col-span-3">
+                    <p role="alert" className="text-ui-danger md:col-span-3">
                         {errors.quiet_hours}
                     </p>
                 )}

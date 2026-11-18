@@ -61,7 +61,7 @@ export default function PolicyRow({
             <p className="font-medium">
                 {policy.name}
                 {policy.isDefault && (
-                    <span className="ml-2 text-sm text-emerald-200">Team default</span>
+                    <span className="ml-2 text-sm text-ui-success">Team default</span>
                 )}
             </p>
             <p className="text-xs text-[var(--color-ui-muted)]">

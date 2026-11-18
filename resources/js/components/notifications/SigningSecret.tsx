@@ -113,7 +113,7 @@ export default function SigningSecret({ path }: SigningSecretProps) {
             </Button>
             {secret !== null && (
                 <div className="mt-2 rounded border border-amber-700 p-3" role="status">
-                    <p className="text-sm text-amber-200">
+                    <p className="text-sm text-ui-warning">
                         Copy this secret now. It is shown only once; use it to verify the signature
                         of each request.
                     </p>
@@ -129,7 +129,7 @@ export default function SigningSecret({ path }: SigningSecretProps) {
                 </div>
             )}
             {error && (
-                <p role="alert" className="mt-1 text-red-300">
+                <p role="alert" className="mt-1 text-ui-danger">
                     {error}
                 </p>
             )}

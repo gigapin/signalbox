@@ -61,11 +61,11 @@ export default function StatusPageRow({
                     {page.isPublic ? 'Published' : 'Draft'}
                 </span>
                 {page.hasPassword && (
-                    <span className="ml-2 text-sm text-amber-200">Password protected</span>
+                    <span className="ml-2 text-sm text-ui-warning">Password protected</span>
                 )}
             </p>
             {page.isPublic ? (
-                <a href={page.path} className="text-sm text-emerald-300 cursor-pointer">
+                <a href={page.path} className="text-sm text-ui-accent cursor-pointer">
                     Open public page · {page.path}
                 </a>
             ) : (
@@ -102,7 +102,7 @@ export default function StatusPageRow({
                         type="button"
                         disabled={blocked}
                         onClick={destroy}
-                        className="text-red-200 cursor-pointer"
+                        className="text-ui-danger cursor-pointer"
                     >
                         Delete {page.title}
                     </button>

@@ -1,4 +1,5 @@
 /** Render account and platform pages inside the dashboard frame without inferring an inspected tenant. */
+import { ThemeToggle } from '../appearance/Theme';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useCallback, useId, useState, type ReactNode } from 'react';
 import type { AuthProps } from '../auth/AuthLayout';
@@ -70,6 +71,7 @@ function ContextShell({ title, context = 'account', description, children }: Con
                             workspaceNavigation
                         />
                     )}
+                    {!hidden && <ThemeToggle />}
                     {!hidden && auth?.user && (
                         <AccountMenu
                             name={auth.user.name}

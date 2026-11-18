@@ -31,7 +31,7 @@ export default function TwoFactorChallenge() {
             <div className="fixed inset-x-0 bottom-6 text-center">
                 <button
                     onClick={() => setRecovery(!recovery)}
-                    className="rounded bg-slate-900 px-4 py-2 text-emerald-300"
+                    className="rounded bg-ui-surface px-4 py-2 text-ui-accent"
                 >
                     {recovery ? 'Use an authentication code' : 'Use a recovery code'}
                 </button>

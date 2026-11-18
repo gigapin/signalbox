@@ -35,6 +35,7 @@ final class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'appName' => config('app.name'),
+            'uiTheme' => \Inertia\Inertia::always($request->attributes->get('ui_theme')),
             'realtime' => $this->realtime($request),
             'teamNavigation' => $actor instanceof User
                 && $actor->hasVerifiedEmail()

@@ -35,7 +35,7 @@ export default function RequestFailureNotice() {
     return (
         <div
             role="alert"
-            className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-2xl items-start gap-4 rounded border border-amber-600 bg-slate-950 p-4 text-amber-100 shadow-lg"
+            className="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-2xl items-start gap-4 rounded border border-amber-600 bg-ui-canvas p-4 text-ui-warning shadow-lg"
         >
             <p className="min-w-0">
                 We couldn&apos;t confirm the request. Check your connection, then reload to check

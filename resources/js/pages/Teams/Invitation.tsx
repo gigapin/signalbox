@@ -51,7 +51,7 @@ function Acceptance({ invitation, user, verified }: AcceptanceProps) {
 
     if (!verified) {
         return (
-            <Link className="mt-6 block text-emerald-300" href="/email/verify">
+            <Link className="mt-6 block text-ui-accent" href="/email/verify">
                 Verify your email before accepting
             </Link>
         );
@@ -110,7 +110,7 @@ export default function Invitation() {
                     link.
                 </p>
             )}
-            <Link className="mt-6 block text-emerald-300" href="/account">
+            <Link className="mt-6 block text-ui-accent" href="/account">
                 Your account
             </Link>
         </AuthLayout>

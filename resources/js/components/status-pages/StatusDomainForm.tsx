@@ -121,7 +121,7 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                             type="button"
                             disabled={pending}
                             onClick={() => change('remove')}
-                            className="text-red-200 cursor-pointer"
+                            className="text-ui-danger cursor-pointer"
                         >
                             Remove hostname
                         </button>

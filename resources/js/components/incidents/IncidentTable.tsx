@@ -33,7 +33,7 @@ export default function IncidentTable({
     return (
         <DataTable caption={caption}>
             <thead>
-                <tr className="border-b border-slate-700">
+                <tr className="border-b border-ui-control-border">
                     <th scope="col">Incident</th>
                     {showMonitor && <th scope="col">Monitor</th>}
                     <th scope="col">Status</th>
@@ -46,7 +46,7 @@ export default function IncidentTable({
             </thead>
             <tbody>
                 {incidents.map((incident) => (
-                    <tr key={incident.id} className="border-b border-slate-800">
+                    <tr key={incident.id} className="border-b border-ui-border">
                         <th scope="row" className="font-medium">
                             <Link
                                 href={incidentDetailUrl(teamId, incident.id, returnTo)}

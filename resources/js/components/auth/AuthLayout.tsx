@@ -36,29 +36,27 @@ export default function AuthLayout({ title, description, children, wide = false 
     return (
         <>
             <Head title={title} />
-            <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
+            <main className="min-h-screen bg-ui-canvas px-6 py-12 text-ui-text">
                 <div className={wide ? 'mx-auto max-w-5xl' : 'mx-auto max-w-lg'}>
                     <div className="flex items-center justify-between gap-4">
-                        <Link href="/" className="font-semibold tracking-widest text-emerald-400">
+                        <Link href="/" className="font-semibold tracking-widest text-ui-accent">
                             SIGNALBOX
                         </Link>
                         {auth?.user?.isPlatformAdmin === true && (
                             <Link
                                 href="/admin/teams"
-                                className="text-sm text-emerald-300 cursor-pointer"
+                                className="text-sm text-ui-accent cursor-pointer"
                             >
                                 Admin
                             </Link>
                         )}
                     </div>
                     <h1 className="mt-10 text-3xl font-semibold break-words">{title}</h1>
-                    {description && (
-                        <p className="mt-3 break-words text-slate-300">{description}</p>
-                    )}
+                    {description && <p className="mt-3 break-words text-ui-muted">{description}</p>}
                     {status && (
                         <p
                             role="status"
-                            className="mt-5 rounded border border-emerald-800 p-3 text-emerald-200"
+                            className="mt-5 rounded border border-emerald-800 p-3 text-ui-success"
                         >
                             {status}
                         </p>

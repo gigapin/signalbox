@@ -35,7 +35,7 @@ function PageContent() {
                 </Link>
             </nav>
             {usage.full && (
-                <p className="mb-6 rounded border border-amber-700 p-3 text-amber-200">
+                <p className="mb-6 rounded border border-amber-700 p-3 text-ui-warning">
                     Your plan allows {usage.limit} monitors and all are in use. Saving will be
                     refused until you delete a monitor or upgrade.
                 </p>

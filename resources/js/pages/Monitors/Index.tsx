@@ -278,7 +278,7 @@ function PageContent() {
                 {monitors.data.length > 0 && (
                     <DataTable caption={`Monitors of ${team.name}`}>
                         <thead>
-                            <tr className="border-b border-slate-700">
+                            <tr className="border-b border-ui-control-border">
                                 <th scope="col">Name</th>
                                 <th scope="col">Type</th>
                                 <th scope="col">Destination</th>
@@ -291,7 +291,7 @@ function PageContent() {
                         </thead>
                         <tbody>
                             {monitors.data.map((monitor) => (
-                                <tr key={monitor.id} className="border-b border-slate-800">
+                                <tr key={monitor.id} className="border-b border-ui-border">
                                     <th scope="row" className="font-medium">
                                         <Link
                                             href={withMonitorListReturn(

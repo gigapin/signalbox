@@ -103,8 +103,8 @@ const BUTTON = 'ui-button';
 /** Render one row of the description list. */
 function Detail({ term, children }: DetailProps) {
     return (
-        <div className="grid gap-1 border-b border-slate-800 py-2 md:grid-cols-3">
-            <dt className="text-sm text-slate-400">{term}</dt>
+        <div className="grid gap-1 border-b border-ui-border py-2 md:grid-cols-3">
+            <dt className="text-sm text-ui-muted">{term}</dt>
             <dd className="md:col-span-2">{children}</dd>
         </div>
     );
@@ -268,7 +268,7 @@ function SeverityForm({ path, incident, severities }: SeverityProps) {
                     {form.processing ? 'Saving…' : 'Save severity'}
                 </button>
                 {form.errors.severity && (
-                    <p id="incident-severity-error" role="alert" className="w-full text-red-300">
+                    <p id="incident-severity-error" role="alert" className="w-full text-ui-danger">
                         {form.errors.severity}
                     </p>
                 )}
@@ -369,18 +369,18 @@ function Entry({ path, entry, canPublish }: EntryProps) {
 
     return (
         <li className="ui-incident-entry">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-ui-muted">
                 {formatInstant(entry.createdAt, 'Unknown time')} ·{' '}
                 {entry.author ?? 'System or deleted account'} · {incidentStatusLabel(entry.status)}
             </p>
             <p className="mt-1 whitespace-pre-line">{entry.message}</p>
             <p className="mt-1 text-sm">
                 {entry.isPublic ? (
-                    <span className="text-emerald-200">
+                    <span className="text-ui-success">
                         Published {formatInstant(entry.publishedAt, '')}
                     </span>
                 ) : (
-                    <span className="text-slate-300">Private</span>
+                    <span className="text-ui-muted">Private</span>
                 )}
             </p>
             {canPublish && !entry.isPublic && (
@@ -493,7 +493,7 @@ function PageContent() {
             </nav>
 
             {errors.incident && (
-                <p role="alert" className="mb-4 text-red-300">
+                <p role="alert" className="mb-4 text-ui-danger">
                     {errors.incident}
                 </p>
             )}
@@ -562,7 +562,7 @@ function PageContent() {
                     Timeline
                 </h2>
                 {incident.timeline.length === 0 ? (
-                    <p className="text-slate-300">No timeline entries.</p>
+                    <p className="text-ui-muted">No timeline entries.</p>
                 ) : (
                     <ol aria-label="Timeline entries, oldest first">
                         {incident.timeline.map((entry) => (
@@ -594,7 +594,7 @@ function PageContent() {
                     <RootCauseForm path={path} incident={incident} maxLength={textMaxLength} />
                 </section>
             ) : (
-                <p className="mt-8 text-sm text-slate-400">
+                <p className="mt-8 text-sm text-ui-muted">
                     Your role has read-only access to incidents.
                 </p>
             )}

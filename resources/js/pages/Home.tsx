@@ -22,9 +22,9 @@ export default function Home() {
     return (
         <>
             <Head title={appName} />
-            <main className="flex min-h-screen items-center bg-ui-canvas px-6 py-16 text-slate-100">
+            <main className="flex min-h-screen items-center bg-ui-canvas px-6 py-16 text-ui-text">
                 <section aria-labelledby="page-title" className="mx-auto w-full max-w-3xl">
-                    <p className="mb-5 text-sm font-semibold uppercase tracking-widest text-emerald-400">
+                    <p className="mb-5 text-sm font-semibold uppercase tracking-widest text-ui-accent">
                         Application monitoring
                     </p>
                     <h1
@@ -33,16 +33,13 @@ export default function Home() {
                     >
                         {appName}
                     </h1>
-                    <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">
+                    <p className="mt-6 max-w-xl text-lg leading-8 text-ui-muted">
                         A clear view of your services, incidents, and public status.
                     </p>
-                    <p className="mt-10 border-t border-slate-800 pt-6 text-sm text-slate-400">
+                    <p className="mt-10 border-t border-ui-border pt-6 text-sm text-ui-muted">
                         The application is being built. Monitoring features will follow.
                     </p>
-                    <nav
-                        aria-label="Account navigation"
-                        className="mt-6 flex gap-6 text-emerald-300"
-                    >
+                    <nav aria-label="Account navigation" className="mt-6 flex gap-6 text-ui-accent">
                         {auth?.user ? (
                             <Link href="/dashboard">Open dashboard</Link>
                         ) : (

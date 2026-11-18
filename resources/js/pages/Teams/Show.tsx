@@ -86,7 +86,7 @@ function Errors({ errors }: ErrorsProps) {
     return (
         <>
             {Object.entries(errors).map(([field, message]) => (
-                <p key={field} role="alert" className="text-red-300">
+                <p key={field} role="alert" className="text-ui-danger">
                     {message}
                 </p>
             ))}

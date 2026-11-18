@@ -136,7 +136,7 @@ function PageContent() {
             </form>
 
             {rejectedFilters.length > 0 && (
-                <p role="alert" className="mt-4 text-red-300">
+                <p role="alert" className="mt-4 text-ui-danger">
                     Some filters were invalid and have been ignored: {rejectedFilters.join(', ')}.
                 </p>
             )}
@@ -151,7 +151,7 @@ function PageContent() {
                 </Alert>
             )}
             <section aria-label="Incident results" aria-busy={loading} className="mt-6">
-                <p aria-live="polite" className="mb-3 text-sm text-slate-400">
+                <p aria-live="polite" className="mb-3 text-sm text-ui-muted">
                     {incidents.total === 1 ? '1 incident' : `${incidents.total} incidents`}
                     {incidents.from !== null && incidents.to !== null
                         ? `, showing ${incidents.from}–${incidents.to}`
@@ -160,14 +160,14 @@ function PageContent() {
                 </p>
 
                 {incidents.data.length === 0 && !filtered && incidents.currentPage === 1 && (
-                    <p className="rounded border border-slate-700 p-6 text-slate-300">
+                    <p className="rounded border border-ui-control-border p-6 text-ui-muted">
                         No incidents yet. An incident opens when a monitor&apos;s failure is
                         confirmed.
                     </p>
                 )}
 
                 {incidents.data.length === 0 && (filtered || incidents.currentPage > 1) && (
-                    <div className="rounded border border-slate-700 p-6 text-slate-300">
+                    <div className="rounded border border-ui-control-border p-6 text-ui-muted">
                         <p>No incidents match these filters on this page.</p>
                         <Link
                             href={incidentListUrl(team.id, filters)}

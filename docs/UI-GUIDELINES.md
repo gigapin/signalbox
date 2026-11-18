@@ -1,5 +1,11 @@
 # UI guidelines — Signalbox
 
+## Application appearance — 2026-11-18
+
+[APPEARANCE.md](APPEARANCE.md) defines the dark default, header-only switch, account/cookie persistence,
+light semantic palette, public status-page exclusion and adoption requirements. Older single-theme
+notes below describe the original dark palette.
+
 ## Chart point details — 2026-11-18
 
 Measured points in TimeSeriesChart reveal an HTML tooltip on hover and keyboard focus, with the

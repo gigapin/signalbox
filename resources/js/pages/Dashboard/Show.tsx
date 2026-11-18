@@ -80,7 +80,7 @@ function DashboardContent({ onAccessDenied }: DashboardContentProps) {
         <>
             <LiveUpdates phase={live.phase} retry={live.retry} />
             {rejectedFilters.length > 0 && (
-                <p role="alert" className="mb-5 text-amber-200">
+                <p role="alert" className="mb-5 text-ui-warning">
                     Some filters were invalid and ignored: {rejectedFilters.join(', ')}.
                 </p>
             )}
@@ -167,15 +167,15 @@ function DashboardContent({ onAccessDenied }: DashboardContentProps) {
                             className="mt-5 grid gap-3 sm:grid-cols-3"
                         >
                             <div>
-                                <dt className="text-sm text-slate-400">Observed uptime</dt>
+                                <dt className="text-sm text-ui-muted">Observed uptime</dt>
                                 <dd>{percentage(uptime.observedPercent)}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm text-slate-400">Data coverage</dt>
+                                <dt className="text-sm text-ui-muted">Data coverage</dt>
                                 <dd>{percentage(uptime.coveragePercent)}</dd>
                             </div>
                             <div>
-                                <dt className="text-sm text-slate-400">SLA</dt>
+                                <dt className="text-sm text-ui-muted">SLA</dt>
                                 <dd>{percentage(uptime.slaPercent)}</dd>
                             </div>
                         </dl>
@@ -185,19 +185,19 @@ function DashboardContent({ onAccessDenied }: DashboardContentProps) {
                                 className="mt-3 grid gap-3 sm:grid-cols-4"
                             >
                                 <div>
-                                    <dt className="text-sm text-slate-400">Time up</dt>
+                                    <dt className="text-sm text-ui-muted">Time up</dt>
                                     <dd>{duration(uptime.durations.upSeconds)}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm text-slate-400">Time down</dt>
+                                    <dt className="text-sm text-ui-muted">Time down</dt>
                                     <dd>{duration(uptime.durations.downSeconds)}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm text-slate-400">Time unknown</dt>
+                                    <dt className="text-sm text-ui-muted">Time unknown</dt>
                                     <dd>{duration(uptime.durations.unknownSeconds)}</dd>
                                 </div>
                                 <div>
-                                    <dt className="text-sm text-slate-400">Time excluded</dt>
+                                    <dt className="text-sm text-ui-muted">Time excluded</dt>
                                     <dd>{duration(uptime.durations.excludedSeconds)}</dd>
                                 </div>
                             </dl>

@@ -33,19 +33,19 @@ export default function EscalationPanel({
             <h2 id="escalation-heading" className="mb-2 text-lg font-semibold">
                 Notifications
             </h2>
-            <p className="text-slate-300">
+            <p className="text-ui-muted">
                 {escalation.effective === null
                     ? 'Nobody is notified when this monitor opens an incident.'
                     : `Incidents follow the policy ${escalation.effective.name}${escalation.effective.source === 'default' ? ' (team default)' : ''}.`}
             </p>
             {errors.policy && (
-                <p role="alert" className="mt-2 text-red-300">
+                <p role="alert" className="mt-2 text-ui-danger">
                     {errors.policy}
                 </p>
             )}
             {canManage && <EscalationEditor key={action} action={action} escalation={escalation} />}
             <p className="mt-2 text-sm">
-                <Link href={notificationsPath(teamId)} className="text-emerald-300 cursor-pointer">
+                <Link href={notificationsPath(teamId)} className="text-ui-accent cursor-pointer">
                     Manage channels and policies
                 </Link>
             </p>

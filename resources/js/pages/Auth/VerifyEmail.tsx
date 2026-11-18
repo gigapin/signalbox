@@ -24,7 +24,7 @@ export default function VerifyEmail() {
                 <button
                     disabled={logout.processing}
                     onClick={() => logout.post('/logout')}
-                    className="text-emerald-300"
+                    className="text-ui-accent"
                 >
                     Sign out
                 </button>

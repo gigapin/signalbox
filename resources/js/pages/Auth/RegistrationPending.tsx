@@ -11,7 +11,7 @@ export default function RegistrationPending() {
         >
             <nav
                 aria-label="Registration next steps"
-                className="flex flex-wrap gap-4 text-emerald-300"
+                className="flex flex-wrap gap-4 text-ui-accent"
             >
                 <Link href="/login">Sign in</Link>
                 <Link href="/forgot-password">Reset your password</Link>

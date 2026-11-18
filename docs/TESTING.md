@@ -1,5 +1,14 @@
 # Test infrastructure
 
+## Appearance verification — 2026-11-18
+
+Theme implementation checks: 920 PostgreSQL tests/9749 assertions for appearance and team authorization;
+final appearance/logout/login and CSP 12 tests/163 assertions. Larastan and PHP formatter passed.
+Frontend complete 502/502, then an additional pending/public-theme test was added: final targeted 8/8;
+no complete 503/503 claimed. Final lint/format/TypeScript, 6 quality tests and build passed.
+Synthetic Firefox light fixture inspected; actual authenticated desktop/mobile acceptance remains
+pending after migration adoption. See [APPEARANCE](APPEARANCE.md) and TASKS for limits and prior failures.
+
 ## UI branch verification handoff — 2026-11-18
 
 This supersedes the older pending frontend rerun below. After monitor filters, axis typography and

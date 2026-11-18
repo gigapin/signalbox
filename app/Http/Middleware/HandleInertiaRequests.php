@@ -45,6 +45,7 @@ final class HandleInertiaRequests extends Middleware
             // Serialize a deliberate identity projection rather than the Eloquent user or its relationships.
             'auth' => ['user' => $actor === null ? null : [
                 'name' => $actor->name,
+                'avatarUrl' => $actor->avatar_path ? '/account/avatar?v='.hash('sha256', $actor->avatar_path) : null,
                 'email' => $actor->email,
                 // Only the viewer's own flag, to show the admin link; the panel re-checks on every request.
                 'isPlatformAdmin' => $actor->is_platform_admin === true,

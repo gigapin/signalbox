@@ -1,5 +1,11 @@
 # UI guidelines — Signalbox
 
+## Account profile form — 2026-11-18
+
+The Account overview is now one private optional-data form, with required prefilled active email.
+[ACCOUNT-PROFILE.md](ACCOUNT-PROFILE.md) documents native confirmation, conditional password entry,
+private avatar, pending email lifecycle and the retained invitation link.
+
 ## Compact workspace header — 2026-11-18
 
 Workspace headers use a 56px minimum height, 8px vertical/16px horizontal padding, 12px gaps,

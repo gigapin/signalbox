@@ -104,6 +104,7 @@ function TeamShell({
                             <AccountMenu
                                 key={`account:${team.id}`}
                                 name={user.name}
+                                avatarUrl={user.avatarUrl}
                                 isPlatformAdmin={user.isPlatformAdmin === true}
                             />
                         )}

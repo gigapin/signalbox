@@ -904,3 +904,15 @@ WorkspaceLayout.test.tsx checks the desktop frame, selected personal membership 
 Select.test.tsx covers below-field geometry, displayed/submitted controlled values, exactly one change event, keyboard navigation/typeahead, disabled-option skipping, Enter/Tab commit, Escape/outside cancellation, native change compatibility, disabled fieldsets, portal disposal, CSP nonce reuse, resize and click-only activation. Existing form/selectOptions integrations remain in the complete frontend regression suite. TeamSwitcher’s old Account shortcut expectation now checks the shared Dashboard entry, matching the earlier removal of Open dashboard from Team access.
 
 A standalone browser fixture under `/tmp` bundles the actual Select component and React using the installed Vite API. Firefox runs it with a strict nonce-only script/style CSP: checks assert a 6px menu gap, no inline style attribute, the correct nonce, immediate Beta selection and one change event, then keyboard commit. Screenshots and fixture outputs are temporary evidence, not customer data or an authenticated full-application session. See TASKS for actual run results.
+
+## Account profile — 2026-11-18
+
+The new account profile, private avatar and pending-email protocol have dedicated PostgreSQL tests.
+The profile plus team route matrix passed 920 tests/9768 assertions; final profile/CSP selection
+passed 14 tests/182 assertions, including cancellation cooldown and expiry. Larastan level 8 and PHP
+formatter passed. Frontend complete run passed 517 tests/45 files; after that run an avatar-error
+fallback regression was added and targeted avatar/profile tests passed 13/13. No complete 518/518
+result is asserted. Initial frontend failures were two obsolete expectations for removed Account cards.
+The first isolated PHP retry contended with a still-running matrix container after client interruption;
+the owned container was explicitly stopped and subsequent database runs were sequential. See TASKS
+for final check/build results and ACCOUNT-PROFILE for deployment requirements and remaining acceptance.

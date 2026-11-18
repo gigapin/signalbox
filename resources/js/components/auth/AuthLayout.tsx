@@ -8,7 +8,14 @@ export interface AuthProps {
     /** Public product name. */
     appName: string;
     /** Current identity only; never a serialized model or secret. */
-    auth?: { user: { name: string; email: string; isPlatformAdmin?: boolean } | null };
+    auth?: {
+        user: {
+            name: string;
+            email: string;
+            avatarUrl?: string | null;
+            isPlatformAdmin?: boolean;
+        } | null;
+    };
     /** Safe server acknowledgement after an authentication transition. */
     status?: string | null;
     /** Current private membership choices; absent/null on public and platform contexts. */

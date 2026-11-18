@@ -1,5 +1,5 @@
 /** Verify Unicode initials and the decorative circular avatar independent of account transport. */
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import AccountAvatar, { accountInitials } from '../../resources/js/components/app/AccountAvatar';
 
@@ -22,4 +22,15 @@ test('renders decorative initials without replacing the control accessible name'
     expect(container.firstChild).toHaveTextContent('GP');
     expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
     expect(container.firstChild).toHaveClass('ui-account-avatar');
+});
+
+test('replaces initials with the private avatar and falls back after an image error', () => {
+    const { container } = render(
+        <AccountAvatar name="Giga Prog" avatarUrl="/account/avatar?v=synthetic" />,
+    );
+    const image = container.querySelector('img')!;
+    expect(image).toHaveAttribute('src', '/account/avatar?v=synthetic');
+    fireEvent.error(image);
+    expect(container).toHaveTextContent('GP');
+    expect(container.querySelector('img')).toBeNull();
 });

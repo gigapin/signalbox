@@ -23,7 +23,7 @@ final readonly class RotateProtectedData
 {
     /** @var array<string, list<string>> Complete application-owned native encrypted storage registry. */
     private const array ENCRYPTED = [
-        'users' => ['two_factor_secret', 'two_factor_recovery_codes'],
+        'users' => ['two_factor_secret', 'two_factor_recovery_codes', 'pending_email'],
         'monitors' => ['url', 'headers_json', 'body'],
         'notification_channels' => ['config_json'],
         'notification_logs' => ['message_payload'],

@@ -76,6 +76,7 @@ function ContextShell({ title, context = 'account', description, children }: Con
                         {!hidden && auth?.user && (
                             <AccountMenu
                                 name={auth.user.name}
+                                avatarUrl={auth.user.avatarUrl}
                                 isPlatformAdmin={auth.user.isPlatformAdmin === true}
                             />
                         )}

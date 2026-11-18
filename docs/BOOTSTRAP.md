@@ -1,5 +1,12 @@
 # Application bootstrap reference
 
+## Account profile adoption — 2026-11-18
+
+Apply migration 000029 before serving the profile code/assets. Private local avatar storage must be
+persistent/shared across PHP replicas; configure the existing mail transport for email confirmations.
+No development migration, key, dependency or environment modification is performed by verification.
+See [ACCOUNT-PROFILE.md](ACCOUNT-PROFILE.md) for identity, file lifecycle and rollback details.
+
 ## Light/dark appearance adoption — 2026-11-18
 
 Apply the additive user theme migration before serving the updated assets/code. No development

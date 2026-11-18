@@ -24,6 +24,8 @@ final class AccountController extends Controller
         $team = $user->resolveCurrentTeam();
 
         return Inertia::render('Account/Overview', [
+            'profile' => collect(['first_name','last_name','phone','country','company_name','vat_number','email','pending_email'])->mapWithKeys(fn (string $key): array => [$key => $user->getAttribute($key)])->all(),
+            'countries' => \App\Services\Account\Countries::codes(),
             'hasPendingInvitation' => $invitations->resolve($request)?->isPending() ?? false,
             'currentTeam' => $team === null ? null : ['id' => $team->id, 'name' => $team->name]
         ]);

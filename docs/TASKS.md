@@ -1,5 +1,11 @@
 # Signalbox — Piano dei task
 
+## UI — Icona tema e ordine header — 2026-11-18
+
+- [x] Completato: icona SVG sole/luna senza testo visibile né bordo, target 44px e nome accessibile/title Light mode/Dark mode; stati focus/hover/pending/error preservati. Ordine DOM in entrambe le shell: tema immediatamente prima del profilo, che è l'ultimo elemento dell'header.
+- File: appearance/Theme.tsx, AppLayout.tsx, PrivateContextLayout.tsx, app.css, Theme.test.tsx, APPEARANCE e questo piano. Aggiunte regressioni sui due header reali per assenza testo, icona accessibile e ordine dei controlli. L'utente riferisce che il tema precedente va bene; nessuna nuova adozione migration o accettazione browser dedotta.
+- Verifiche: Theme/AppLayout **25/25, 4,90 s**; check finale exit 0 (lint/formato/TypeScript e 6 test qualità); build exit 0. Non ripetuti backend, suite frontend completa, browser e CI remota per la modifica locale ai controlli header. Nessuna modifica PHP, dipendenza, dato, configurazione o comando Git/gh. Prossimo passo: eventuali ulteriori rifiniture richieste dall’utente.
+
 ## UI — Tema light/dark — 2026-11-18
 
 - [/] Implementazione completata; adozione migration e accettazione browser autenticata ancora da completare. Switch esclusivamente header workspace dashboard/account/admin, nessuno su welcome/login. Default dark indipendente dal sistema; preferenza account prevalente dopo login, cookie per welcome anonima, status page pubbliche indipendenti. Grafici sospesi salvo token colore.

@@ -3,6 +3,8 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import { ThemeProvider, ThemeToggle } from '../../resources/js/components/appearance/Theme';
+import AppLayout from '../../resources/js/components/app/AppLayout';
+import PrivateContextLayout from '../../resources/js/components/app/PrivateContextLayout';
 import Home from '../../resources/js/pages/Home';
 import { renderInertia } from './renderInertia';
 
@@ -68,3 +70,37 @@ test('disables the switch during saving and ignores the account theme on public 
     renderInertia('Signalbox', Header, { uiTheme: null });
     expect(document.documentElement).not.toHaveAttribute('data-ui-theme');
 });
+
+/** Render the actual workspace headers inside the shared appearance provider. */
+function WorkspaceHeader({ account = false }: { account?: boolean }) {
+    return (
+        <ThemeProvider>
+            {account ? (
+                <PrivateContextLayout title="Account">
+                    <p>Content</p>
+                </PrivateContextLayout>
+            ) : (
+                <AppLayout title="Dashboard" team={{ id: 7, name: 'Example' }} section="dashboard">
+                    <p>Content</p>
+                </AppLayout>
+            )}
+        </ThemeProvider>
+    );
+}
+
+test.each([false, true])(
+    'places the icon-only theme switch directly before the final profile control (account=%s)',
+    (account) => {
+        renderInertia('Signalbox', () => <WorkspaceHeader account={account} />, {
+            uiTheme: 'dark',
+            auth: { user: { name: 'Example user', email: 'example@test.invalid' } },
+        });
+        const theme = screen.getByRole('button', { name: 'Light mode' });
+        const profile = screen.getByRole('button', { name: 'Account menu' });
+        expect(theme.textContent).toBe('');
+        expect(theme.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+        const header = theme.closest('header')!;
+        expect(theme.parentElement?.nextElementSibling).toBe(profile.parentElement);
+        expect(header.lastElementChild).toBe(profile.parentElement);
+    },
+);

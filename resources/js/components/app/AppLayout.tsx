@@ -98,6 +98,7 @@ function TeamShell({
                             onSuspend={() => setSuspended(true)}
                         />
                     )}
+                    {!hidden && <ThemeToggle />}
                     {user && !hidden && (
                         <AccountMenu
                             key={`account:${team.id}`}
@@ -105,7 +106,6 @@ function TeamShell({
                             isPlatformAdmin={user.isPlatformAdmin === true}
                         />
                     )}
-                    {!hidden && <ThemeToggle />}
                 </header>
                 <div className="ui-app-frame">
                     {!hidden && desktop && (

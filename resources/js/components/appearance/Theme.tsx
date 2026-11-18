@@ -85,15 +85,34 @@ export function ThemeToggle() {
         <div>
             <button
                 type="button"
-                className="ui-button"
-                data-variant="secondary"
+                className="ui-theme-toggle"
+                aria-label={appearance.theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                title={appearance.theme === 'dark' ? 'Light mode' : 'Dark mode'}
                 disabled={appearance.pending}
                 onClick={() => {
                     void appearance.toggle();
                 }}
             >
-                <span aria-hidden="true">{appearance.theme === 'dark' ? '☀' : '☾'}</span>{' '}
-                {appearance.theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                >
+                    {appearance.theme === 'dark' ? (
+                        <>
+                            <circle cx="12" cy="12" r="4" />
+                            <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5" />
+                        </>
+                    ) : (
+                        <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+                    )}
+                </svg>
             </button>
             {appearance.error && (
                 <p role="alert" className="ui-help">

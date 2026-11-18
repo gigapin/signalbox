@@ -1233,3 +1233,29 @@
         --color-ui-info-bg: #dbeafe;
     }
 }
+
+/* Icon-only appearance control keeps a full keyboard and touch target in the header. */
+@layer components {
+    .ui-theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--spacing-ui-control);
+        height: var(--spacing-ui-control);
+        border: 0;
+        border-radius: var(--radius-ui);
+        background: transparent;
+        color: var(--color-ui-muted);
+    }
+    .ui-theme-toggle:hover:not(:disabled) {
+        background: var(--color-ui-raised);
+        color: var(--color-ui-text);
+    }
+    .ui-theme-toggle:focus-visible {
+        outline: 2px solid var(--color-ui-focus);
+        outline-offset: 3px;
+    }
+    .ui-theme-toggle:disabled {
+        opacity: 0.65;
+    }
+}

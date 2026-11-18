@@ -71,13 +71,13 @@ function ContextShell({ title, context = 'account', description, children }: Con
                             workspaceNavigation
                         />
                     )}
+                    {!hidden && <ThemeToggle />}
                     {!hidden && auth?.user && (
                         <AccountMenu
                             name={auth.user.name}
                             isPlatformAdmin={auth.user.isPlatformAdmin === true}
                         />
                     )}
-                    {!hidden && <ThemeToggle />}
                 </header>
                 <div className="ui-app-frame">
                     {!hidden && desktop && (

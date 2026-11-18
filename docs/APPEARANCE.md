@@ -1,7 +1,8 @@
 # Application appearance
 
 Signalbox defaults to dark regardless of OS preferences. The dashboard workspace header, including
-account/platform contexts, contains the only theme switch. Welcome and authentication screens follow
+account/platform contexts, contains the only theme switch: an icon-only sun/moon control immediately before the profile menu,
+which remains the final header control. The icon retains an accessible action label and native title. Welcome and authentication screens follow
 the saved appearance without offering a switch. Public status pages retain their owner-defined theme.
 
 ## Preference lifecycle

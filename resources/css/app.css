@@ -7,11 +7,27 @@
 
 /* Application-wide link presentation includes public pages and native disclosure controls. */
 @layer base {
+    button,
+    input[type='button'],
+    input[type='submit'],
+    input[type='reset'],
+    [role='button'],
+    select,
+    input[type='checkbox'],
+    input[type='radio'],
     a[href],
     [role='link'],
     summary {
         cursor: pointer;
         text-decoration: none;
+    }
+
+    /* Unavailable actions retain a distinct cursor rather than suggesting activation. */
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    [role='button'][aria-disabled='true'] {
+        cursor: not-allowed;
     }
 
     a[href]:hover,
@@ -67,8 +83,25 @@
     --radius-ui: 0.625rem;
 }
 
-/* Opt-in primitives: no global element selectors or overrides of public status-page themes. */
+/* Shared layout primitives retain the palette of their containing private or public theme. */
 @layer components {
+    /* Field groups own breathing room without separating labels from their controls. */
+    :where(.ui-field, .ui-choice-field, .ui-actions) {
+        margin-block: var(--spacing-ui-2);
+    }
+
+    /* Both sides remain spaced even when feedback appears between previously adjacent blocks. */
+    :where(
+        form,
+        .ui-panel,
+        .ui-alert,
+        .ui-operation-row,
+        [role='alert']:not(:empty):not(.ui-field-error),
+        [role='status']:not(:empty)
+    ) {
+        margin-block: var(--spacing-ui-3);
+    }
+
     .ui-theme {
         color: var(--color-ui-text);
         background: var(--color-ui-canvas);
@@ -775,13 +808,38 @@
     }
 }
 
+/* Keep point details inside the chart panel with typography independent of SVG scaling. */
+@layer components {
+    .ui-chart-plot {
+        position: relative;
+    }
+
+    .ui-chart-tooltip {
+        position: absolute;
+        pointer-events: none;
+        top: 0;
+        right: 0;
+        display: grid;
+        gap: 0.25rem;
+        max-width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--color-ui-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-surface);
+        color: var(--color-ui-text);
+        font-size: 0.75rem;
+        overflow-wrap: anywhere;
+    }
+}
+
 /* Monitor filters reflow independently of the locally scrollable result table. */
 @layer components {
     .ui-monitor-filters {
         display: grid;
         min-width: 0;
         gap: var(--spacing-ui-4);
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
     }
 
     .ui-monitor-filters > div {
@@ -790,6 +848,31 @@
 
     .ui-monitor-filter-actions {
         grid-column: 1 / -1;
+    }
+
+    /* Keep help text below Search without stretching the adjacent select controls. */
+    @media (min-width: 40rem) {
+        .ui-monitor-filters {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ui-monitor-filters > .ui-field:not(.ui-monitor-search) {
+            max-width: 10rem;
+        }
+
+        .ui-monitor-search {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (min-width: 64rem) {
+        .ui-monitor-filters {
+            grid-template-columns: minmax(0, 1fr) repeat(3, minmax(0, 10rem));
+        }
+
+        .ui-monitor-search {
+            grid-column: auto;
+        }
     }
 
     .ui-monitor-destination {

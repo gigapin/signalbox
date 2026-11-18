@@ -218,6 +218,57 @@ test('renders no invented line when all samples are absent or percentages are in
     ).toHaveLength(3);
 });
 
+test('keeps both chart axes at twelve screen pixels across resizes and disconnects on unmount', () => {
+    let resized: ResizeObserverCallback | undefined;
+    const observer = { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+    vi.stubGlobal(
+        'ResizeObserver',
+        vi.fn(function (callback: ResizeObserverCallback) {
+            resized = callback;
+            return observer;
+        }),
+    );
+    const view = renderInertia('Signalbox', () => (
+        <TimeSeriesChart
+            title="Latency"
+            description="Measured window"
+            unit="ms"
+            timestamps={timestamps}
+            series={[{ id: 'latency', label: 'Latency', values: [10, 20, 30] }]}
+            empty="No latency data."
+        />
+    ));
+    const region = screen.getByRole('region', { name: 'Latency' });
+    expect(observer.observe).toHaveBeenCalledWith(region);
+
+    for (const width of [1280, 640, 320, 0]) {
+        act(() => {
+            resized?.(
+                [
+                    {
+                        target: region,
+                        contentRect: DOMRectReadOnly.fromRect({ width }),
+                        borderBoxSize: [],
+                        contentBoxSize: [],
+                        devicePixelContentBoxSize: [],
+                    },
+                ],
+                observer,
+            );
+        });
+        const validWidth = width || 320;
+        const labels = screen.getByRole('img').querySelectorAll('text');
+        expect(labels).toHaveLength(7);
+        for (const label of labels) {
+            const svgSize = Number(label.getAttribute('font-size'));
+            expect((svgSize * validWidth) / 640).toBe(12);
+        }
+    }
+
+    view.unmount();
+    expect(observer.disconnect).toHaveBeenCalledOnce();
+});
+
 test('links disjoint team counters to matching active or operational filters', () => {
     renderDashboard({
         ...dashboard,

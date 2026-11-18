@@ -1,4 +1,5 @@
 /** Rotate and reveal a webhook signing secret once, keeping it in ephemeral component state only. */
+import Button from '../ui/Button';
 import { useLeaveProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { TeamAccessContext } from '../app/TeamAccessContext';
@@ -101,14 +102,15 @@ export default function SigningSecret({ path }: SigningSecretProps) {
 
     return (
         <div className="mt-2">
-            <button
+            <Button
                 type="button"
                 disabled={busy || guard.busy || error !== ''}
                 onClick={() => void rotate()}
-                className="rounded border border-slate-600 px-3 py-1 text-sm disabled:opacity-50"
+                className="text-sm"
+                variant="secondary"
             >
                 {busy ? 'Rotating…' : 'Create new signing secret'}
-            </button>
+            </Button>
             {secret !== null && (
                 <div className="mt-2 rounded border border-amber-700 p-3" role="status">
                     <p className="text-sm text-amber-200">
@@ -116,13 +118,14 @@ export default function SigningSecret({ path }: SigningSecretProps) {
                         of each request.
                     </p>
                     <code className="mt-1 block break-all">{secret}</code>
-                    <button
+                    <Button
                         type="button"
                         onClick={() => setSecret(null)}
-                        className="mt-2 text-sm cursor-pointer"
+                        className="mt-2 text-sm"
+                        variant="secondary"
                     >
                         Hide secret
-                    </button>
+                    </Button>
                 </div>
             )}
             {error && (

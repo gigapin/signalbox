@@ -1,5 +1,32 @@
 # UI guidelines — Signalbox
 
+## Chart point details — 2026-11-18
+
+Measured points in TimeSeriesChart reveal an HTML tooltip on hover and keyboard focus, with the
+selected series, exact value/unit, UTC bucket start and sample count when supplied. Transparent SVG
+strokes enlarge the hit area while preserving visible node size. Points have programmatic labels and
+reference the visible tooltip; focus loss, Escape on the focused point, chart mouse exit and series
+selection dismiss it. Missing/invalid measurements have no node or tooltip; zero remains measurable.
+The tooltip stays inside the plot at its upper right; it does not intercept pointer events, so points
+beneath it remain reachable and moving over its content stays within the chart hover boundary. Its
+HTML typography does not scale with the SVG. Dashboard and monitor details share this behavior and retain the data table.
+
+## Chart axis typography — 2026-11-18
+
+TimeSeriesChart compensates for its 640-unit SVG viewBox using the observed content width of its
+panel. Both axis labels render at 12 CSS pixels rather than growing with a wide chart. ResizeObserver
+tracks responsive layout changes and disconnects on unmount; zero-width observations are ignored.
+Environments without ResizeObserver retain the initial 12-unit fallback. This presentation is shared
+by monitor details and dashboard; data, UTC labels and the equivalent table retain their semantics.
+
+## Monitor search layout — 2026-11-18
+
+The Find monitors fieldset aligns field wrappers at the top so Search help never stretches adjacent
+selects. Below 40rem fields stack; from 40rem Search occupies its own full-width row above three
+selects capped at 10rem; from 64rem Search uses the flexible column beside those compact selects.
+Actions remain on a separate row. Keep the search hint associated through aria-describedby and retain
+native labels, keyboard behavior and the explicit GET submission lifecycle.
+
 ## Automated phase-A audit — UI.06.1
 
 [UI-ACCEPTANCE.md](UI-ACCEPTANCE.md) links the implemented criteria to actual DOM/PHP regressions
@@ -305,3 +332,10 @@ FormField owns labels, stable IDs, help/error associations and the persistent po
 All existing visible field groups now use these components, including authentication, team/account/admin, operational filters, monitors, incidents, notifications and status pages. The public slug prefix uses FormField's render boundary; MonitorForm's adapters map domain values and options without rebuilding labels or errors. Group-level validation summaries remain with their domain forms. No domain action, permission, draft persistence or secret replacement rule is owned by the primitives.
 
 The field grid supplies the shared 10px label gap; there is no global label margin fallback or duplicated per-form input style. Choice labels align beside native controls, with help and errors below the label. The team switcher explicitly requests a hidden label rather than relying on a shell CSS selector. Keep new field groups on this shared path rather than duplicating label/control/help/error markup.
+
+
+## Action cursors and vertical spacing — 2026-11-17
+
+Enabled links, buttons (including native submit/reset inputs and role buttons), selects and native choices use the pointer cursor application-wide. Disabled native actions retain not-allowed. Notification actions use the shared Button with explicit secondary/danger/primary variants; submits remain explicit, while verification, editor toggles and secret actions remain non-submitting.
+
+Shared cards, alerts, forms, operational rows and nonempty feedback blocks have 12px top and bottom margins. Field groups and action groups have 8px top and bottom margins. Existing contextual spacing utilities remain available; labels and native controls stay together with their existing 10px internal gap, and empty persistent error regions stay hidden without extra margins. Spacing applies inside grid/flex layouts as well as normal flow; adjacent normal-flow margins may collapse naturally. Notification warnings and section refusals compose Alert rather than rebuilding notice styles locally.

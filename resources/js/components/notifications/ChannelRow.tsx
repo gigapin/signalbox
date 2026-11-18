@@ -1,4 +1,5 @@
 /** Show one notification channel with its verification state and the changes its state admits. */
+import Button from '../ui/Button';
 import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
@@ -137,41 +138,31 @@ export default function ChannelRow({
 
             {canManage && (
                 <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                    <button
-                        type="button"
-                        disabled={blocked}
-                        onClick={sendCode}
-                        className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
-                    >
+                    <Button type="button" disabled={blocked} onClick={sendCode} variant="secondary">
                         {channel.verificationPending ? 'Send a new code' : 'Send verification code'}
-                    </button>
+                    </Button>
                     {channel.verifiedAt !== null && (
-                        <button
+                        <Button
                             type="button"
                             disabled={blocked}
                             onClick={toggle}
-                            className="rounded border border-slate-600 px-3 py-1 disabled:opacity-50"
+                            variant="secondary"
                         >
                             {channel.isActive ? 'Pause channel' : 'Activate channel'}
-                        </button>
+                        </Button>
                     )}
-                    <button
+                    <Button
                         type="button"
                         disabled={blocked}
                         aria-expanded={editing}
                         onClick={() => setEditing(!editing)}
-                        className="ui-link"
+                        variant="secondary"
                     >
                         {editing ? 'Close editor' : 'Edit channel'}
-                    </button>
-                    <button
-                        type="button"
-                        disabled={blocked}
-                        onClick={destroy}
-                        className="text-red-200 cursor-pointer disabled:opacity-50"
-                    >
+                    </Button>
+                    <Button type="button" disabled={blocked} onClick={destroy} variant="danger">
                         Delete channel
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -196,12 +187,9 @@ export default function ChannelRow({
                         aria-invalid={confirm.errors.code !== undefined}
                         wrapperClassName="w-32"
                     />
-                    <button
-                        disabled={blocked}
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
+                    <Button disabled={blocked} variant="primary" type="submit">
                         {confirm.processing ? 'Checking…' : 'Verify'}
-                    </button>
+                    </Button>
                 </form>
             )}
 

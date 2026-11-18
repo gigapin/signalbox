@@ -304,6 +304,12 @@ function showsEmptyTeam(): void {
     );
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Search' })).toHaveAccessibleDescription(
+        'Matches name, TLS host or DNS name. HTTP URLs are stored encrypted and are not searchable.',
+    );
+    for (const name of ['Type', 'Status', 'State']) {
+        expect(screen.getByRole('combobox', { name })).toHaveValue('');
+    }
 }
 
 /** Filtered empty results differ from an empty team, and rejected filters are announced. */

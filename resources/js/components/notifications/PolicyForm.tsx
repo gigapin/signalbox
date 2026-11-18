@@ -1,4 +1,5 @@
 /** Create or change an escalation policy: ordered delays, each notifying a set of channels. */
+import Button from '../ui/Button';
 import InputField from '../ui/InputField';
 import ChoiceField from '../ui/ChoiceField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
@@ -240,13 +241,14 @@ export default function PolicyForm({
                                         )}
                                     </fieldset>
                                     {form.data.steps.length > 1 && (
-                                        <button
+                                        <Button
                                             type="button"
                                             onClick={() => removeStep(index)}
-                                            className="mt-3 text-sm text-red-200 cursor-pointer"
+                                            className="mt-3 text-sm"
+                                            variant="danger"
                                         >
                                             Remove step {index + 1}
-                                        </button>
+                                        </Button>
                                     )}
                                 </fieldset>
                             </li>
@@ -256,20 +258,13 @@ export default function PolicyForm({
 
                 <div className="flex flex-wrap gap-3">
                     {form.data.steps.length < limits.stepsPerPolicy && (
-                        <button
-                            type="button"
-                            onClick={addStep}
-                            className="rounded border border-slate-600 px-3 py-2"
-                        >
+                        <Button type="button" onClick={addStep} variant="secondary">
                             Add step
-                        </button>
+                        </Button>
                     )}
-                    <button
-                        disabled={form.processing}
-                        className="rounded bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50"
-                    >
+                    <Button disabled={form.processing} variant="primary" type="submit">
                         {form.processing ? 'Saving…' : submitLabel}
-                    </button>
+                    </Button>
                 </div>
                 {errors.steps && (
                     <p role="alert" className="text-red-300">

@@ -1,4 +1,5 @@
 /** Show one escalation policy with its steps and offer editing and deletion to managers. */
+import Button from '../ui/Button';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
 import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
@@ -88,23 +89,18 @@ export default function PolicyRow({
             </ol>
             {canManage && (
                 <div className="mt-2 flex flex-wrap gap-3 text-sm">
-                    <button
+                    <Button
                         type="button"
                         disabled={blocked}
                         aria-expanded={editing}
                         onClick={() => setEditing(!editing)}
-                        className="ui-link"
+                        variant="secondary"
                     >
                         {editing ? 'Close editor' : 'Edit policy'}
-                    </button>
-                    <button
-                        type="button"
-                        disabled={blocked}
-                        onClick={destroy}
-                        className="text-red-200 cursor-pointer disabled:opacity-50"
-                    >
+                    </Button>
+                    <Button type="button" disabled={blocked} onClick={destroy} variant="danger">
                         Delete policy
-                    </button>
+                    </Button>
                 </div>
             )}
             {editing && canManage && (

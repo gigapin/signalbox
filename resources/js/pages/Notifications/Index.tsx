@@ -1,4 +1,5 @@
 /** Manage the team's notification channels and escalation policies. */
+import Alert from '../../components/ui/Alert';
 import InputField from '../../components/ui/InputField';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -63,10 +64,10 @@ function PageContent() {
             )}
 
             {unnotifiedMonitors > 0 && (
-                <p className="mb-6 rounded border border-amber-700 p-3 text-amber-200">
+                <Alert title="Monitors without notifications" tone="warning">
                     {unnotifiedMonitors} monitor{unnotifiedMonitors === 1 ? '' : 's'} notify nobody:
                     mark a policy as the team default or choose one on each monitor.
-                </p>
+                </Alert>
             )}
 
             <section aria-labelledby="channels-heading">
@@ -79,9 +80,9 @@ function PageContent() {
                     encrypted and never shown again. Verification sends a code, not a test incident.
                 </p>
                 {errors.channel && (
-                    <p role="alert" className="mb-4 text-red-300">
+                    <Alert title="Channel change refused" tone="danger" announce="assertive">
                         {errors.channel}
-                    </p>
+                    </Alert>
                 )}
                 {channels.length === 0 ? (
                     <p className="text-[var(--color-ui-text)]">No channels yet.</p>
@@ -133,9 +134,9 @@ function PageContent() {
                     verification, activation, quiet hours and recorded outcomes.
                 </p>
                 {errors.policy && (
-                    <p role="alert" className="mb-4 text-red-300">
+                    <Alert title="Policy change refused" tone="danger" announce="assertive">
                         {errors.policy}
-                    </p>
+                    </Alert>
                 )}
                 {policies.length === 0 ? (
                     <p className="text-[var(--color-ui-text)]">No escalation policies yet.</p>

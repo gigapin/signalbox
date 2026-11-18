@@ -22,7 +22,7 @@ export default function Home() {
     return (
         <>
             <Head title={appName} />
-            <main className="flex min-h-screen items-center bg-slate-950 px-6 py-16 text-slate-100">
+            <main className="flex min-h-screen items-center bg-ui-canvas px-6 py-16 text-slate-100">
                 <section aria-labelledby="page-title" className="mx-auto w-full max-w-3xl">
                     <p className="mb-5 text-sm font-semibold uppercase tracking-widest text-emerald-400">
                         Application monitoring

@@ -1,6 +1,6 @@
 /** Verify chart semantics, bounded controls, GET lifecycle and preservation of domain drafts and return context. */
 import { router } from '@inertiajs/react';
-import { act, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import Show from '../../resources/js/pages/Monitors/Show';
@@ -9,6 +9,60 @@ import { renderInertia } from './renderInertia';
 
 /** Lifecycle callbacks retained by intercepted GET visits. */
 type ReadOptions = NonNullable<Parameters<typeof router.get>[2]>;
+
+test('shows each measured point on hover and keyboard focus with units UTC and sample counts', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Show, chartsProps);
+    const chart = within(screen.getByRole('region', { name: 'Response time EU' }));
+    const points = chart.getByRole('img').querySelectorAll('circle');
+    expect(points).toHaveLength(3);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    for (const [index, value] of [0, 100, 200].entries()) {
+        const point = points[index]!;
+        await user.hover(point);
+        const tooltip = screen.getByRole('tooltip');
+        expect(tooltip).toHaveTextContent(`${value} ms`);
+        expect(tooltip).toHaveTextContent('UTC');
+        expect(tooltip.querySelector('time')).toHaveAttribute(
+            'datetime',
+            chartsProps.metrics.latency.series[[0, 2, 23][index]!]!.startsAt,
+        );
+        expect(tooltip).toHaveTextContent(`${index === 2 ? 3 : 1} measured samples`);
+        expect(point).toHaveAttribute('aria-describedby', tooltip.id);
+        expect(point).toHaveAttribute('tabindex', '0');
+        await user.unhover(point);
+        expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    }
+
+    const last = points[2]!;
+    fireEvent.focus(last);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('200 ms');
+    fireEvent.keyDown(last, { key: 'Escape' });
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    fireEvent.focus(last);
+    fireEvent.blur(last);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    await user.hover(last);
+    await user.click(chart.getByRole('button', { name: 'p95' }));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.hover(chart.getByRole('img').querySelectorAll('circle')[2]!);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('p95');
+    expect(screen.getByRole('tooltip')).toHaveTextContent('500 ms');
+});
+
+test('shows percentage point values without manufacturing points for missing availability', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Show, chartsProps);
+    const chart = within(screen.getByRole('region', { name: 'Availability over time' }));
+    const point = chart.getByRole('img').querySelector('circle')!;
+    await user.hover(point);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('100 %');
+    expect(screen.getByRole('tooltip')).toHaveTextContent('UTC');
+    await user.click(chart.getByRole('button', { name: 'SLA' }));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+});
 
 test('shows regional means and percentile controls with measured zeros gaps and sample counts', async () => {
     const user = userEvent.setup();

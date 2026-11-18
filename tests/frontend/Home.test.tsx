@@ -7,6 +7,7 @@ import { renderInertia } from './renderInertia';
 function rendersPublicHome(): void {
     renderInertia('Signalbox Test');
     expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveClass('bg-ui-canvas');
     expect(screen.getByRole('heading', { level: 1, name: 'Signalbox Test' })).toBeVisible();
     expect(screen.getByRole('region', { name: 'Signalbox Test' })).toBeInTheDocument();
     expect(screen.getByText(/Monitoring features will follow/)).toBeVisible();

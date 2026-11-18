@@ -61,3 +61,13 @@ Route::middleware(NoStoreAuthentication::class)->group(/** Register only authent
 
 // Appearance belongs to the authenticated browser account, independently of tenant selection.
 Route::post('/preferences/theme', \App\Http\Controllers\Auth\ThemeController::class)->middleware(['auth', 'verified', NoStoreAuthentication::class, 'throttle:60,1'])->name('preferences.theme');
+
+// Profile state belongs only to the verified session owner.
+Route::middleware(['auth','verified',NoStoreAuthentication::class,'throttle:60,1'])->group(function (): void {
+    Route::post('/account/profile', [\App\Http\Controllers\AccountProfileController::class,'update'])->name('account.profile.update');
+    Route::get('/account/avatar', [\App\Http\Controllers\AccountProfileController::class,'avatar'])->name('account.avatar');
+    Route::post('/account/email-change/resend', [\App\Http\Controllers\AccountProfileController::class,'resend'])->name('account.email.resend');
+    Route::delete('/account/email-change', [\App\Http\Controllers\AccountProfileController::class,'cancel'])->name('account.email.cancel');
+    Route::get('/account/email-change/{token}', [\App\Http\Controllers\AccountProfileController::class,'review'])->middleware('signed')->name('account.email.review');
+    Route::post('/account/email-change/{token}', [\App\Http\Controllers\AccountProfileController::class,'confirm'])->middleware('signed')->name('account.email.confirm');
+});

@@ -45,7 +45,7 @@ final class RegisterInvitedUser
                 ]);
             }
 
-            $user = User::query()->create(['name' => $name, 'email' => $email, 'password' => $password]);
+            $user = User::query()->create(['first_name' => $name, 'name' => $name, 'email' => $email, 'password' => $password]);
             DB::afterCommit(static function () use ($user): void {
                 event(new Registered($user));
             });

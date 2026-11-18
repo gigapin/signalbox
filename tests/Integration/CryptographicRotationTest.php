@@ -191,6 +191,7 @@ it('rewraps legacy model casts and Fortify serialization before retiring the old
         'body' => $this->legacy->encryptString('synthetic body'),
     ]);
     DB::table('users')->where('id', $this->team->owner_id)->update([
+        'pending_email' => $this->legacy->encryptString('pending@example.test'),
         'two_factor_secret' => $this->legacy->encrypt('synthetic-authenticator'),
         'two_factor_recovery_codes' => $this->legacy->encrypt('["synthetic-recovery"]'),
     ]);
@@ -214,7 +215,8 @@ it('rewraps legacy model casts and Fortify serialization before retiring the old
     expect($fresh->url)->toBe('https://example.test/private')
         ->and($fresh->headers_json)->toBe(['Authorization' => 'synthetic-secret'])->and($fresh->body)->toBe('synthetic body')
         ->and(Fortify::currentEncrypter()->decrypt($this->team->owner->fresh()->two_factor_secret))->toBe('synthetic-authenticator')
-        ->and($this->team->owner->fresh()->recoveryCodes())->toBe(['synthetic-recovery']);
+        ->and($this->team->owner->fresh()->recoveryCodes())->toBe(['synthetic-recovery'])
+        ->and($this->team->owner->fresh()->pending_email)->toBe('pending@example.test');
     app(TenantContext::class)->run($this->team->id, function () use ($channel, $log): void {
         expect($channel->fresh()->config_json)->toBe(['address' => 'oncall@example.test'])
             ->and($log->fresh()->message_payload)->toBe(['subject' => 'synthetic alert']);

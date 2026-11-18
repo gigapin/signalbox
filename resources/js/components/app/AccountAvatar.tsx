@@ -1,4 +1,6 @@
-/** Render the account's initials in the shared circular avatar; image uploads belong to future account settings. */
+/** Render the private account image with Unicode initials as a fallback. */
+
+import { useState } from 'react';
 
 /**
  * @param name Account display name, possibly empty or containing repeated whitespace.
@@ -17,10 +19,26 @@ export function accountInitials(name: string): string {
 }
 
 /** @param props Safe account display name. @returns Decorative initials; the containing control owns its accessible name. */
-export default function AccountAvatar({ name }: { name: string }) {
+export default function AccountAvatar({
+    name,
+    avatarUrl,
+}: {
+    name: string;
+    avatarUrl?: string | null | undefined;
+}) {
+    const [failed, setFailed] = useState(false);
     return (
         <span className="ui-account-avatar" aria-hidden="true">
-            {accountInitials(name)}
+            {avatarUrl && !failed ? (
+                <img
+                    src={avatarUrl}
+                    alt=""
+                    className="h-full w-full rounded-full object-contain"
+                    onError={() => setFailed(true)}
+                />
+            ) : (
+                accountInitials(name)
+            )}
         </span>
     );
 }

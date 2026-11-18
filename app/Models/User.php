@@ -30,6 +30,17 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Team> $teams Teams reached through explicit membership.
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Team> $ownedTeams Teams for which this user is the primary owner.
  * @property string|null $theme_preference Explicit appearance choice; null resolves to dark.
+ * @property string|null $first_name Optional private profile state.
+ * @property string|null $last_name Optional private profile state.
+ * @property string|null $phone Optional private profile state.
+ * @property string|null $country Optional private profile state.
+ * @property string|null $company_name Optional private profile state.
+ * @property string|null $vat_number Optional private profile state.
+ * @property string|null $avatar_path Optional private profile state.
+ * @property string|null $pending_email Optional private profile state.
+ * @property string|null $email_change_token_hash Optional private profile state.
+ * @property \Illuminate\Support\Carbon|null $email_change_expires_at Pending verification expiry.
+ * @property \Illuminate\Support\Carbon|null $email_change_sent_at Shared send cooldown.
  * @property int $id Unique user identifier.
  * @property string $name Display name.
  * @property string $email Unique authentication email address.
@@ -39,8 +50,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property \Illuminate\Support\Carbon|null $created_at Creation timestamp in UTC.
  * @property \Illuminate\Support\Carbon|null $updated_at Last modification timestamp in UTC.
  */
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'is_platform_admin'])]
+#[Fillable(['first_name', 'name', 'email', 'password'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'is_platform_admin', 'pending_email', 'email_change_token_hash', 'avatar_path'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> Generate synthetic users through the dedicated factory. */
@@ -94,6 +105,9 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
+            'pending_email' => 'encrypted',
+            'email_change_expires_at' => 'datetime',
+            'email_change_sent_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'current_team_id' => 'integer',

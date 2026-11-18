@@ -8,6 +8,8 @@ import AccountAvatar from './AccountAvatar';
 interface AccountMenuProps {
     /** Current account's safe display name. */
     name: string;
+    /** Private owner image URL, absent when initials are used. */
+    avatarUrl?: string | null | undefined;
     /** Server-projected flag controlling only visibility; the admin panel reauthorizes every request. */
     isPlatformAdmin: boolean;
 }
@@ -16,7 +18,7 @@ interface AccountMenuProps {
  * @param props Current identity and operator link visibility.
  * @returns A keyboard disclosure with native links and one caller-triggered logout POST.
  */
-export default function AccountMenu({ name, isPlatformAdmin }: AccountMenuProps) {
+export default function AccountMenu({ name, isPlatformAdmin, avatarUrl }: AccountMenuProps) {
     const [open, setOpen] = useState(false);
     const menuId = useId();
     const root = useRef<HTMLDivElement>(null);
@@ -71,7 +73,7 @@ export default function AccountMenu({ name, isPlatformAdmin }: AccountMenuProps)
                 aria-controls={menuId}
                 onClick={() => setOpen(!open)}
             >
-                <AccountAvatar name={name} />
+                <AccountAvatar key={avatarUrl ?? name} name={name} avatarUrl={avatarUrl} />
             </Button>
             {open && (
                 <div id={menuId} className="ui-account-panel">

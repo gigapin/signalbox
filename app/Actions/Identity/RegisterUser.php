@@ -36,7 +36,7 @@ final class RegisterUser
         $hash = Hash::make($password);
 
         return DB::transaction(function () use ($name, $email, $hash, $teamName): User {
-            $user = User::query()->create(['name' => $name, 'email' => $email, 'password' => $hash]);
+            $user = User::query()->create(['first_name' => $name, 'name' => $name, 'email' => $email, 'password' => $hash]);
 
             $prefix = substr(Str::slug($teamName) ?: 'team', 0, 210);
             ($this->createTeam)($user, $teamName, rtrim($prefix, '-').'-'.Str::uuid()->toString());

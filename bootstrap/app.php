@@ -87,7 +87,7 @@ $configureExceptions = function (Exceptions $exceptions): void {
         ),
     );
     $exceptions->dontFlash([
-        'code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes', 'credential', 'token', 'token_hash',
+        'current_password', 'code', 'recovery_code', 'two_factor_secret', 'two_factor_recovery_codes', 'credential', 'token', 'token_hash',
         ...MonitorConfigurationMapper::COLUMNS, 'headers', 'config',
     ]);
 };

@@ -206,7 +206,7 @@ function showsMissingTeam(): void {
         auth: { user: { name: 'Example', email: 'owner@example.test' } },
         currentTeam: null,
     });
-    expect(screen.getByText('No accessible team is currently selected.')).toBeVisible();
+    expect(screen.getByLabelText('Email')).toHaveValue('owner@example.test');
     expect(screen.getByRole('link', { name: 'Security' })).toHaveAttribute(
         'href',
         '/account/security',
@@ -250,5 +250,5 @@ test('uses dashboard navigation instead of a redundant Team access dashboard lin
         'href',
         '/invitations/accept',
     );
-    expect(screen.getByRole('link', { name: 'View your teams' })).toHaveAttribute('href', '/teams');
+    expect(screen.getByRole('link', { name: 'Teams' })).toHaveAttribute('href', '/teams');
 });

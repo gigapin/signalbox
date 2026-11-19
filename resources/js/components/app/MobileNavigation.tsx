@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import Button from '../ui/Button';
 import TeamLinks from './TeamLinks';
 import WorkspaceLinks from './WorkspaceLinks';
-import type { TeamSection } from './navigation';
+import type { NotificationSection, TeamSection } from './navigation';
 
 /** Explicit route identity plus the content landmark used when the trigger disappears. */
 interface MobileNavigationProps {
@@ -11,6 +11,8 @@ interface MobileNavigationProps {
     teamId?: number | undefined;
     /** Current page family. */
     section?: TeamSection | undefined;
+    /** Current child workflow when the Notifications group is active. */
+    notificationSection?: NotificationSection | undefined;
     /** Include shared account and platform links in the dashboard shell. */
     workspaceNavigation?: boolean;
     /** Existing main landmark; fallback focus for navigation, suspension and desktop transitions. */
@@ -24,6 +26,7 @@ interface MobileNavigationProps {
 export default function MobileNavigation({
     teamId,
     section,
+    notificationSection,
     mainId,
     workspaceNavigation = false,
 }: MobileNavigationProps) {
@@ -126,6 +129,7 @@ export default function MobileNavigation({
                     <TeamLinks
                         teamId={teamId}
                         section={section}
+                        notificationSection={notificationSection}
                         onNavigate={() => dismiss(false)}
                     />
                 )}

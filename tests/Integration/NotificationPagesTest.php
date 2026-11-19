@@ -62,7 +62,7 @@ it('projects masked channels to members and editable non-secret values to manage
         ->assertDontSee($token, false)
         ->assertDontSee($webhook, false)
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('Notifications/Index')
+            ->component('Notifications/Channels')
             ->where('channels.0.name', 'Ops chat')
             ->where('channels.0.hint', 'Chat …7890')
             ->where('channels.0.isActive', true)
@@ -213,3 +213,43 @@ it('lists an incident deliveries without dedupe keys and keeps rows of deleted c
             ->where('deliveries.0.channelName', null)
             ->where('deliveries.0.channelType', 'email'));
 });
+
+
+it('serves the two dedicated configuration pages with only current-team projections', function (string $section, string $component): void {
+    $other = Team::factory()->create();
+    $local = app(TenantContext::class)->run($this->team->id, fn () => NotificationChannel::factory()->create(['name' => 'Local channel']));
+    app(TenantContext::class)->run($other->id, fn () => NotificationChannel::factory()->create(['name' => 'Foreign channel']));
+    $this->actingAs($this->owner)->get("/teams/{$this->team->id}/notifications/{$section}")
+        ->assertOk()->assertHeader('Cache-Control', 'no-store, private')
+        ->assertInertia(fn (AssertableInertia $page) => $page->component($component)->has('channels', 1)->where('channels.0.id', $local->id))
+        ->assertDontSee('Foreign channel');
+    $this->get("/teams/{$other->id}/notifications/{$section}")->assertNotFound();
+})->with([['channels', 'Notifications/Channels'], ['policies', 'Notifications/Policies']]);
+
+it('projects an exact monitor assignment with the existing role-specific permission', function (string $role): void {
+    [$monitor, $policy] = app(TenantContext::class)->run($this->team->id, fn () => [Monitor::factory()->create(['name' => 'Local monitor']), EscalationPolicy::factory()->create(['name' => 'Local policy'])]);
+    $other = Team::factory()->create();
+    $foreign = app(TenantContext::class)->run($other->id, fn () => Monitor::factory()->create(['name' => 'Foreign monitor']));
+    $actor = $role === 'owner' ? $this->owner : npMember($this->team, $role);
+    $this->actingAs($actor)->get("/teams/{$this->team->id}/notifications/assignments?monitor_id={$monitor->id}")
+        ->assertOk()->assertHeader('Cache-Control', 'no-store, private')
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Notifications/Assignments')
+            ->has('monitors', 1)->where('monitors.0', ['id' => $monitor->id, 'name' => 'Local monitor'])
+            ->where('selectedMonitor.id', $monitor->id)->where('selectedMonitor.canAssign', $role !== 'viewer')
+            ->where('selectedMonitor.escalation.policyId', null)->where('selectedMonitor.escalation.options.0.id', $policy->id))
+        ->assertDontSee('Foreign monitor')->assertDontSee('config_json');
+    $this->get("/teams/{$this->team->id}/notifications/assignments?monitor_id={$foreign->id}")->assertNotFound();
+    $this->get("/teams/{$other->id}/notifications/assignments")->assertNotFound();
+    $this->get("/teams/{$this->team->id}/notifications/assignments")->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->where('selectedMonitor', null));
+    if ($role !== 'viewer') {
+        $this->from("/teams/{$this->team->id}/notifications/assignments?monitor_id={$monitor->id}")
+            ->patch("/teams/{$this->team->id}/monitors/{$monitor->id}/escalation-policy", ['escalation_policy_id' => $policy->id])
+            ->assertRedirect("/teams/{$this->team->id}/notifications/assignments?monitor_id={$monitor->id}")
+            ->assertSessionHas('status', 'monitor-escalation-saved');
+        expect(app(TenantContext::class)->run($this->team->id, fn () => Monitor::query()->findOrFail($monitor->id)->escalation_policy_id))->toBe($policy->id);
+    }
+})->with(['owner', 'admin', 'member', 'viewer']);
+
+it('rejects malformed monitor selection on the assignment page', function (string $query): void {
+    $this->actingAs($this->owner)->get("/teams/{$this->team->id}/notifications/assignments?{$query}")->assertNotFound();
+})->with(['monitor_id[]=1', 'monitor_id=-1', 'monitor_id=0', 'monitor_id=1.5', 'monitor_id=9999999999999999999']);

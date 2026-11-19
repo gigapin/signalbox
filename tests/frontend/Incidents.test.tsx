@@ -325,7 +325,7 @@ test('shows a read-only timeline to viewers without management controls', () => 
     expect(entries[0]).toHaveTextContent('Private');
     expect(entries[1]).toHaveTextContent('Ada Example');
     expect(entries[1]).toHaveTextContent('Published');
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('main')).queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Message')).not.toBeInTheDocument();
     expect(screen.getByText('Your role has read-only access to incidents.')).toBeInTheDocument();
 });
@@ -446,7 +446,7 @@ test('lists recent incidents and maintenance phases on the monitor page', () => 
     expect(within(current).getAllByRole('listitem')[1]).toHaveTextContent('Upcoming');
     const finished = screen.getByRole('list', { name: 'Finished maintenance' });
     expect(finished).toHaveTextContent('Kernel upgrade');
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('main')).queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Reason')).not.toBeInTheDocument();
 });
 

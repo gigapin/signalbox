@@ -18,11 +18,6 @@ function PageContent() {
     const { team, listing } = props;
     return (
         <>
-            <div className="ui-actions mb-4">
-                <Link className="ui-link" href={`/teams/${team.id}/notifications`}>
-                    Channels and escalation policies
-                </Link>
-            </div>
             <p className="ui-description mb-4">
                 Sent records provider acceptance, not recipient reading. Pending, failed or
                 suppressed rows do not confirm delivery. Times use your local time; deleted channels
@@ -91,6 +86,7 @@ export default function Page() {
         <AppLayout
             team={team}
             section="notifications"
+            notificationSection="deliveries"
             title="Notification deliveries"
             description="Recorded attempts and redacted outcomes."
             ancestors={[{ label: 'Notifications', href: `/teams/${team.id}/notifications` }]}

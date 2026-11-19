@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import Maintenance from '../../resources/js/pages/Maintenance/Index';
 import Deliveries from '../../resources/js/pages/Notifications/Deliveries';
+import Policies from '../../resources/js/pages/Notifications/Policies';
 import Notifications from '../../resources/js/pages/Notifications/Index';
 import { renderInertia } from './renderInertia';
 
@@ -313,10 +314,10 @@ test('configuration links to deliveries and retains hidden editor drafts while f
         screen.getByRole('list', { name: 'Notification channels' }),
     ).getByLabelText('Incoming webhook URL');
     await user.type(secret, 'https://hooks.slack.com/services/synthetic');
-    await user.type(screen.getByLabelText('Find channels or policies'), 'missing');
+    await user.type(screen.getByLabelText('Find channels'), 'missing');
     expect(screen.getByText('No channels match this search.')).toBeVisible();
     expect(secret).not.toBeVisible();
-    await user.clear(screen.getByLabelText('Find channels or policies'));
+    await user.clear(screen.getByLabelText('Find channels'));
     expect(secret).toHaveValue('https://hooks.slack.com/services/synthetic');
 });
 
@@ -349,7 +350,7 @@ test('uncertain policy outcome preserves its name and requires review before man
     const visit = vi.spyOn(router, 'visit').mockImplementation((_url, options) => {
         callbacks = options;
     });
-    renderInertia('Signalbox', Notifications, configuration);
+    renderInertia('Signalbox', Policies, configuration);
     await user.click(screen.getByRole('button', { name: 'Edit policy' }));
     const name = screen.getByDisplayValue('Primary');
     await user.type(name, ' draft');

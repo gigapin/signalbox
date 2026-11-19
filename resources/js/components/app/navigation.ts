@@ -10,6 +10,37 @@ export type TeamSection =
     | 'status-pages'
     | 'team';
 
+/** Notification workflows that have independent authorized pages. */
+export type NotificationSection = 'channels' | 'policies' | 'deliveries' | 'assignments';
+
+/** One child destination of the Notifications navigation group. */
+interface NotificationDestination {
+    /** Stable workflow identity used for the current-page indicator. */
+    section: NotificationSection;
+    /** Existing workflow label. */
+    label: string;
+    /** Authorized team-relative read destination. */
+    href: string;
+}
+
+/**
+ * @param teamId Authorized route team.
+ * @returns The four independent notification workflow destinations.
+ */
+export function notificationDestinations(teamId: number): NotificationDestination[] {
+    const base = `/teams/${teamId}/notifications`;
+    return [
+        { section: 'channels', label: 'Channels', href: `${base}/channels` },
+        { section: 'policies', label: 'Escalation policies', href: `${base}/policies` },
+        { section: 'deliveries', label: 'Notification deliveries', href: `${base}/deliveries` },
+        {
+            section: 'assignments',
+            label: 'Assign a policy to a monitor',
+            href: `${base}/assignments`,
+        },
+    ];
+}
+
 /** One authorized team identity already projected by the route controller. */
 export interface AppTeam {
     /** Explicit route team identifier; never inferred from the saved account preference. */

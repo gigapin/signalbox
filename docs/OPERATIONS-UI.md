@@ -3,6 +3,36 @@
 UI.04.2 adds private operational read views and integrates notification configuration with the shared
 request lifecycle. [TASKS.md](TASKS.md) records actual verification and remaining browser acceptance.
 
+## Notifications submenu and dedicated pages — 2026-11-19
+
+The shared desktop/mobile TeamLinks group now contains Channels, Escalation policies, Notification
+deliveries and Assign a policy to a monitor. The parent Notifications link opens the compatible
+Channels entry; its separate native button expands/collapses the submenu by keyboard. Active child
+identity is explicitly supplied by each page, with exactly one aria-current link. Hidden children
+leave the tab sequence; ordinary mobile child visits close the dialog and retain the heading-focus
+behavior. Submenu toggling itself does not navigate or discard drafts.
+
+| Workflow | GET path suffix under `/teams/{team}/notifications` | Page |
+|---|---|---|
+| Channels | `/channels` | Notifications/Channels |
+| Escalation policies | `/policies` | Notifications/Policies |
+| Notification deliveries | `/deliveries` | Existing Notifications/Deliveries |
+| Assign a policy to a monitor | `/assignments` | Notifications/Assignments |
+
+The original `/notifications` remains a 200 Channels alias, and the old frontend Index export remains
+available for existing history entries. ConfigurationPage composes the established ChannelForm,
+ChannelRow, PolicyForm and PolicyRow, mounting only the requested section. Each has its own local
+search and page lifecycle; filtering still hides rows without unmounting editors, while navigation
+between pages uses the existing unsaved-draft guard. The four old in-content workflow links are
+removed. The bounded safe channel/policy projection is reused for compatibility and policy editing.
+
+Assignments exposes safe local monitor choices and loads one selected monitor's existing
+monitorEscalation projection. It reuses EscalationPanel and the existing monitor PATCH action rather
+than introducing a bulk mutation or new permission. Read navigation uses the shared PageLoader/error
+lifecycle; the default/override semantics, refusal handling and form protection are unchanged.
+Monitor configuration, channel credentials and foreign identities are never projected by this page.
+No migration, package, provider call or development data change is required.
+
 ## Routes, permissions and navigation
 
 | Entry | Purpose | Current roles |

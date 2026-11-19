@@ -8,6 +8,7 @@ namespace App\Http\Controllers\Notifications;
 
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\Notifications\NotificationPresenter;
+use App\Http\Requests\Notifications\ListNotificationAssignmentsRequest;
 use App\Models\EscalationPolicy;
 use App\Models\Monitor;
 use App\Models\NotificationChannel;
@@ -33,6 +34,63 @@ final class NotificationPageController extends Controller
      * @return Response Channels, policies, monitors without any policy, offered types, limits and permissions.
      */
     public function index(int $team): Response
+    {
+        return $this->configuration($team, 'Notifications/Channels');
+    }
+
+    /**
+     * @param int $team Authorized route team.
+     * @return Response Dedicated channel management page; the original entry remains a compatible alias.
+     */
+    public function channels(int $team): Response
+    {
+        return $this->configuration($team, 'Notifications/Channels');
+    }
+
+    /**
+     * @param int $team Authorized route team.
+     * @return Response Dedicated policy management page using the existing safe configuration projection.
+     */
+    public function policies(int $team): Response
+    {
+        return $this->configuration($team, 'Notifications/Policies');
+    }
+
+    /**
+     * @param ListNotificationAssignmentsRequest $request Optional exact monitor identity; malformed or foreign identities return 404.
+     * @param int $team Authorized route team, independent of saved preferences.
+     * @return Response Safe monitor choices and the selected monitor's existing policy editor projection.
+     */
+    public function assignments(ListNotificationAssignmentsRequest $request, int $team): Response
+    {
+        Gate::authorize('viewAny', Monitor::class);
+        $identity = Team::query()->findOrFail($team);
+        $selection = $request->monitorId();
+        $selected = null;
+        if ($selection !== null) {
+            $monitor = Monitor::query()->where('team_id', $team)->findOrFail($selection);
+            $selected = [
+                'id' => $monitor->id,
+                'name' => $monitor->name,
+                'escalation' => $this->presenter->monitorEscalation($monitor, array_values(EscalationPolicy::query()->where('team_id', $team)->orderBy('name')->get()->all())),
+                'canAssign' => Gate::allows('update', $monitor),
+            ];
+        }
+
+        return Inertia::render('Notifications/Assignments', [
+            'team' => ['id' => $identity->id, 'name' => $identity->name],
+            'monitors' => Monitor::query()->where('team_id', $team)->orderBy('name')->orderBy('id')->get(['id', 'name'])
+                ->map(static fn (Monitor $monitor): array => ['id' => $monitor->id, 'name' => $monitor->name])->all(),
+            'selectedMonitor' => $selected,
+        ]);
+    }
+
+    /**
+     * @param int $team Authorized route team.
+     * @param string $component Application-selected configuration page, never user input.
+     * @return Response Existing bounded channel/policy projections with current management permission.
+     */
+    private function configuration(int $team, string $component): Response
     {
         Gate::authorize('viewAny', NotificationChannel::class);
         $identity = Team::query()->findOrFail($team);
@@ -71,7 +129,7 @@ final class NotificationPageController extends Controller
         $hasDefault = $policies->contains(static fn (EscalationPolicy $policy): bool => $policy->is_default);
         $unnotified = $hasDefault ? 0 : Monitor::query()->whereNull('escalation_policy_id')->count();
 
-        return Inertia::render('Notifications/Index', [
+        return Inertia::render($component, [
             'team' => ['id' => $identity->id, 'name' => $identity->name],
             'channels' => $channelRows,
             'policies' => $policyRows,

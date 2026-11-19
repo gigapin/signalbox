@@ -20,6 +20,18 @@ Route::middleware(['auth', 'verified', EstablishTeamContext::class])
                     ->whereNumber('team')
                     ->name('teams.notifications.index');
 
+                Route::get('/teams/{team}/notifications/channels', [NotificationPageController::class, 'channels'])
+                    ->whereNumber('team')
+                    ->name('teams.notifications.channels');
+
+                Route::get('/teams/{team}/notifications/policies', [NotificationPageController::class, 'policies'])
+                    ->whereNumber('team')
+                    ->name('teams.notifications.policies');
+
+                Route::get('/teams/{team}/notifications/assignments', [NotificationPageController::class, 'assignments'])
+                    ->whereNumber('team')
+                    ->name('teams.notifications.assignments');
+
                 Route::get('/teams/{team}/notifications/deliveries', [DeliveryPageController::class, 'index'])
                     ->whereNumber('team')
                     ->name('teams.notifications.deliveries');

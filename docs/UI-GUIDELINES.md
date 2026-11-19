@@ -268,6 +268,8 @@ Gate frontend e prova Brave superati: viewport/document 390/390 e 195/195 CSS px
 
 ## Lista monitor e ritorni — UI.03.3
 
+Monitors/Index colloca New monitor nelle azioni accanto al titolo, con permessi e quota aggiornati dalla sessione live interna alla shell. La lista omette descrizione team e riepilogo numerico dei risultati; DataTable usa `compact` per rendere caption e istruzioni di scorrimento disponibili ai lettori di schermo senza testo visibile aggiuntivo. Le altre tabelle mantengono la presentazione esistente.
+
 Monitors/Index usa i controlli semantici per ricerca, select, pulsanti e paginazione condivisa, con DataTable e scrolling locale. Nome del monitor come ingresso al dettaglio, destinazione già redatta dal server (testo, mai link al target), tipo, stato osservato/operativo, intervallo, regioni e ultimo check nel fuso locale. Heartbeat distingue l’ingresso dei segnali da una destinazione assente; history precedenti senza destination mostrano dato indisponibile. Nessuna decrittazione o aggregazione nel client.
 
 I filtri si applicano esplicitamente da pagina uno e le visite GET conservano voci della cronologia, senza replace. Ogni nuova selezione URL rimonta il solo contenuto della lista per riallineare gli input ai filtri accettati, anche su Indietro/Avanti; il refresh realtime degli stessi filtri conserva il testo in digitazione. Search/clear sono single-flight: campi e invio disabilitati durante la richiesta, guardia busy per il cambio team/abbandono, cancellazione della sola lettura posseduta al cleanup. Callback di tentativi precedenti non liberano un tentativo successivo.

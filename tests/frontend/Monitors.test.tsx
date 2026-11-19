@@ -210,16 +210,37 @@ const noFilters = { q: '', type: null, status: null, state: null };
 test('lets keyboard users reach the monitor table viewport before its monitor links', async () => {
     const user = userEvent.setup();
     renderInertia('Signalbox', Index, indexProps([row(11, 'Checkout API')]));
-    const viewport = screen.getByRole('region', { name: 'Monitors of Synthetic team' });
+    const viewport = screen.getByRole('region', { name: 'Monitors' });
 
     for (let step = 0; step < 20 && document.activeElement !== viewport; step++) {
         await user.tab();
     }
 
     expect(viewport).toHaveFocus();
-    expect(within(viewport).getByRole('table')).toHaveAccessibleName('Monitors of Synthetic team');
+    expect(within(viewport).getByRole('table')).toHaveAccessibleName('Monitors');
     await user.tab();
     expect(screen.getByRole('link', { name: 'Checkout API' })).toHaveFocus();
+});
+
+test('places creation beside the title and removes redundant visible list descriptions', () => {
+    renderInertia('Signalbox', Index, indexProps([row(11, 'Checkout API')]));
+    const heading = screen.getByRole('heading', { level: 1, name: 'Monitors' });
+    const header = heading.closest('header');
+
+    expect(header).not.toBeNull();
+    expect(within(header!).getByRole('link', { name: 'New monitor' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('/teams/7/monitors/create'),
+    );
+    expect(screen.queryByText(/Monitors of Synthetic team/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/showing 1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^1 monitor[,.]/)).not.toBeInTheDocument();
+    expect(screen.getByText('Scroll horizontally to view all columns when needed.')).toHaveClass(
+        'sr-only',
+    );
+    const table = screen.getByRole('table', { name: 'Monitors' });
+    expect(table.querySelector('caption')).toHaveClass('sr-only');
+    expect(screen.getByRole('region', { name: 'Monitors' })).toHaveAttribute('tabindex', '0');
 });
 
 /**

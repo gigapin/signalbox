@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## UI — Pulizia lista Monitors — 2026-11-19
+
+- [x] Completato su richiesta dell’utente: New monitor accanto al titolo; eliminazione descrizione team, riepilogo risultati, indicazione di scorrimento e caption visibile nella sola lista Monitors. Dipendenze: shell e tabella condivise già disponibili. Permessi, quota, filtri, ritorno lista e aggiornamenti live preservati.
+- Implementazione: azione nello slot heading della shell con proiezione della sessione live interna al confine autorizzato; identità della risposta Inertia impedisce di riutilizzare controlli obsoleti durante navigazione/cambio account. DataTable introduce compact facoltativo: caption Monitors e istruzioni restano solo per screen reader, con viewport nominata/focusabile. Default delle altre tabelle invariato. Nessuna deviazione funzionale dalla specifica.
+- File: resources/js/pages/Monitors/Index.tsx, resources/js/components/ui/DataTable.tsx, tests/frontend/Monitors.test.tsx, tests/frontend/RealtimePages.test.tsx, docs/UI-GUIDELINES.md e questo piano.
+- Verifiche: npm run check **exit 0** (ESLint/Prettier/TypeScript e 6 test qualità); quattro suite mirate Monitors/UiPrimitives/RealtimePages/MonitorRealtimeLifecycle **73/73, 22,45 s**; aggiunti poi due casi sulle variazioni live di permessi/quota, RealtimePages finale **7/7, 2,09 s**, ESLint finale sui quattro file e Prettier verdi. npm run build **exit 0**. Accessibilità tabella e collocazione DOM del pulsante coperte dai test.
+- Non eseguiti: browser autenticato/verifica visiva desktop-mobile, suite frontend integrale, backend/PHP-CS-Fixer/Larastan, audit e CI remota per questa modifica solo frontend. Nessuna dipendenza, migration, dato, .env o servizio applicativo modificato; public/hot preservato, asset ricostruiti. Git/gh non eseguiti. Prossimo passo: verifica visiva della pagina Monitors e ulteriori rifiniture indicate dall’utente.
+
 ## UI — Regressione CI proiezione avatar account — 2026-11-18
 
 - [x] Corretto il confronto esatto auth.user in AuthenticationTest includendo avatarUrl=null per l'utente senza avatar. Mantenute le verifiche su currentTeam=null e assenza password/2FA; il confronto resta completo, senza indebolire il contratto a un sottoinsieme di campi. Espansa l'asserzione per leggibilità e rimossa la PHPDoc dentro gli argomenti.

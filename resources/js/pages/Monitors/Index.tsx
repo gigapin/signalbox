@@ -8,7 +8,7 @@ import { useMonitorSearch } from '../../components/monitors/useMonitorSearch';
 import { Link, usePage } from '@inertiajs/react';
 import LiveUpdates from '../../components/LiveUpdates';
 import { useLivePage } from '../../hooks/useLivePage';
-import type { FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import AppLayout from '../../components/app/AppLayout';
 import { StateBadge, StatusBadge } from '../../components/monitors/MonitorBadges';
 import Pagination from '../../components/monitors/Pagination';
@@ -128,9 +128,24 @@ function CreateControl({ teamId, usage, canCreate, returnTo }: CreateControlProp
     );
 }
 
+/** Creation projection owned by a specific Inertia page and refreshed by its live session. */
+interface CreationProjection {
+    /** Initial response identity prevents stale actions during navigation or account changes. */
+    source: IndexProps;
+    /** Latest authorized creation inputs, including the canonical list return URL. */
+    control: CreateControlProps;
+}
+
+/** Inputs for publishing live creation permissions into the page heading. */
+interface PageContentProps {
+    /** Publish only creation metadata; the live session remains inside the removable team boundary. */
+    onCreationChange: (projection: CreationProjection) => void;
+}
+
 /** Search and filter through GET navigation so results stay bookmarkable and keyboard-operable. */
-function PageContent() {
-    const { team } = usePage<IndexProps>().props;
+function PageContent({ onCreationChange }: PageContentProps) {
+    const source = usePage<IndexProps>().props;
+    const { team } = source;
     const live = useLivePage<IndexProps>(team.id, 'Monitors/Index');
     const { monitors, filters, filtered, rejectedFilters, options, usage, can } = live.props;
     const { draft, setDraft, loading, failed, navigate, clear } = useMonitorSearch(
@@ -138,6 +153,13 @@ function PageContent() {
         filters,
     );
     const returnTo = listUrl(team.id, filters, monitors.currentPage);
+
+    useEffect(() => {
+        onCreationChange({
+            source,
+            control: { teamId: team.id, usage, canCreate: can.create, returnTo },
+        });
+    }, [source, team.id, usage, can.create, returnTo, onCreationChange]);
 
     /** Submit only the current filter draft, beginning at the first page. */
     function submit(event: FormEvent<HTMLFormElement>) {
@@ -153,12 +175,6 @@ function PageContent() {
                     {usage.used} of {usage.limit} monitors used. Minimum interval{' '}
                     {intervalLabel(usage.minimumIntervalSeconds)}.
                 </p>
-                <CreateControl
-                    teamId={team.id}
-                    usage={usage}
-                    canCreate={can.create}
-                    returnTo={returnTo}
-                />
             </div>
 
             <form role="search" aria-label="Search monitors" onSubmit={submit} className="ui-panel">
@@ -233,14 +249,6 @@ function PageContent() {
             )}
 
             <section aria-label="Monitor results" aria-busy={loading} className="mt-6">
-                <p aria-live="polite" className="mb-3 ui-help">
-                    {monitors.total === 1 ? '1 monitor' : `${monitors.total} monitors`}
-                    {monitors.from !== null && monitors.to !== null
-                        ? `, showing ${monitors.from}–${monitors.to}`
-                        : ''}
-                    .
-                </p>
-
                 {monitors.data.length === 0 &&
                     !filtered &&
                     monitors.currentPage === 1 &&
@@ -276,7 +284,7 @@ function PageContent() {
                     )}
 
                 {monitors.data.length > 0 && (
-                    <DataTable caption={`Monitors of ${team.name}`}>
+                    <DataTable caption="Monitors" compact>
                         <thead>
                             <tr className="border-b border-ui-control-border">
                                 <th scope="col">Name</th>
@@ -347,15 +355,28 @@ function PageContent() {
 /** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
 export default function Page() {
     const page = usePage<IndexProps>();
-    const { team, filters } = page.props;
+    const { team, filters, usage, can, monitors } = page.props;
+    const [creation, setCreation] = useState<CreationProjection | null>(null);
+    const control =
+        creation?.source === page.props
+            ? creation.control
+            : {
+                  teamId: team.id,
+                  usage,
+                  canCreate: can.create,
+                  returnTo: listUrl(team.id, filters, monitors.currentPage),
+              };
     return (
         <AppLayout
             team={team}
             section="monitors"
             title="Monitors"
-            description={`Monitors of ${team.name}.`}
+            actions={<CreateControl {...control} />}
         >
-            <PageContent key={`${page.url}:${JSON.stringify(filters)}`} />
+            <PageContent
+                key={`${page.url}:${JSON.stringify(filters)}`}
+                onCreationChange={setCreation}
+            />
         </AppLayout>
     );
 }

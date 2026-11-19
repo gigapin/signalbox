@@ -58,7 +58,7 @@ function PageContent({ actionsTarget }: PageContentProps) {
                 options={options}
                 usage={usage}
                 maximumIntervalSeconds={maximumIntervalSeconds}
-                submitLabel="Create monitor"
+                submitLabel="Save"
             />
         </>
     );
@@ -76,7 +76,6 @@ export default function Page() {
             title="New monitor"
             actions={
                 <>
-                    <div ref={setActionsTarget} className="contents" />
                     <Link
                         className="ui-button"
                         data-variant="secondary"
@@ -84,6 +83,7 @@ export default function Page() {
                     >
                         Back
                     </Link>
+                    <div ref={setActionsTarget} className="contents" />
                 </>
             }
         >

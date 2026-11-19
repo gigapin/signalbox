@@ -1,4 +1,5 @@
 /** Own the shared label, help, validation announcement and accessible identity of a form control. */
+import { RequiredIndicator } from './FieldRequirements';
 import { useId, type AriaAttributes, type ReactNode } from 'react';
 
 /** Presentation shared by typed field wrappers; domain state stays with the caller. */
@@ -29,6 +30,8 @@ export interface FieldBinding {
 
 /** Shared metadata plus the native-control render boundary. */
 interface FormFieldProps extends FieldPresentation {
+    /** Native requirement forwarded by the field wrapper; marker policy comes from the form context. */
+    required?: boolean | undefined;
     /** Prefer a caller identity where labels and external links already reference it. */
     id?: string | undefined;
     /** Existing caller descriptions must not be discarded. */
@@ -47,6 +50,7 @@ interface FormFieldProps extends FieldPresentation {
  */
 export default function FormField({
     id,
+    required = false,
     label,
     hint,
     error,
@@ -74,6 +78,7 @@ export default function FormField({
         <div className={`${fieldClass}${layoutClass} ${wrapperClassName}`.trim()}>
             <label htmlFor={controlId} className={`ui-label${labelHidden ? ' sr-only' : ''}`}>
                 {label}
+                <RequiredIndicator required={required} />
             </label>
             {children({
                 id: controlId,

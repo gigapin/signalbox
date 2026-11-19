@@ -6,6 +6,7 @@ import { expect, test, vi } from 'vitest';
 import ChoiceField from '../../resources/js/components/ui/ChoiceField';
 import SelectField from '../../resources/js/components/ui/SelectField';
 import TextareaField from '../../resources/js/components/ui/TextareaField';
+import FieldRequirements from '../../resources/js/components/ui/FieldRequirements';
 import InputField from '../../resources/js/components/ui/InputField';
 import RepeaterRow from '../../resources/js/components/ui/RepeaterRow';
 import FormField from '../../resources/js/components/ui/FormField';
@@ -169,3 +170,35 @@ test('shares full-width repeated fields and icon actions while respecting a disa
     await user.click(screen.getByRole('button', { name: 'Add entry' }));
     expect(add).toHaveBeenCalledOnce();
 });
+
+test.each([true, false])(
+    'shares required markers across field wrappers only for mixed forms: %s',
+    (hasOptionalFields) => {
+        render(
+            <FieldRequirements hasOptionalFields={hasOptionalFields}>
+                <InputField label="Required text" required />
+                <InputField label="Optional text" />
+                <TextareaField label="Required notes" required />
+                <SelectField label="Required choice" required>
+                    <option value="one">One</option>
+                </SelectField>
+                <ChoiceField label="Required consent" required />
+            </FieldRequirements>,
+        );
+        for (const label of [
+            'Required text',
+            'Required notes',
+            'Required choice',
+            'Required consent',
+        ]) {
+            const input = screen.getByLabelText<HTMLInputElement>(label);
+            expect(input).toBeRequired();
+            const marker = input.labels?.[0]?.querySelector('.ui-required-indicator');
+            if (hasOptionalFields) expect(marker).toHaveAttribute('aria-hidden', 'true');
+            else expect(marker).toBeNull();
+        }
+        const optional = screen.getByLabelText<HTMLInputElement>('Optional text');
+        expect(optional).not.toBeRequired();
+        expect(optional.labels?.[0]?.querySelector('.ui-required-indicator')).toBeNull();
+    },
+);

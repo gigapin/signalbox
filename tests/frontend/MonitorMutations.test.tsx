@@ -132,7 +132,7 @@ test.each(['create', 'edit'] as const)(
         expect(name).toHaveAttribute('aria-invalid', 'true');
         await user.click(
             screen.getByRole('button', {
-                name: mode === 'create' ? 'Create monitor' : 'Save changes',
+                name: mode === 'create' ? 'Save' : 'Save changes',
             }),
         );
         expect(dispatch).toHaveBeenCalledTimes(2);
@@ -149,22 +149,22 @@ test('a lost actual XHR response retains a create draft and blocks replay until 
     renderInertia('Signalbox', Create, editorProps);
     await user.type(screen.getByLabelText('Name'), 'Keep private draft');
     await user.type(screen.getByLabelText('URL'), 'https://example.test/private');
-    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Outcome not confirmed')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Name')).toBeEnabled());
     expect(screen.getByLabelText('Name')).toHaveValue('Keep private draft');
     expect(screen.getByLabelText('URL')).toHaveValue('https://example.test/private');
-    expect(screen.getByRole('button', { name: 'Create monitor' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(screen.getByRole('link', { name: 'Review saved data (new tab)' })).toHaveAttribute(
         'href',
         detailProps.monitorListUrl,
     );
     fireEvent.online(window);
-    expect(screen.getByRole('button', { name: 'Create monitor' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(send).toHaveBeenCalledOnce();
     await user.click(screen.getByRole('button', { name: 'I checked the saved data' }));
     expect(send).toHaveBeenCalledOnce();
-    expect(screen.getByRole('button', { name: 'Create monitor' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
 });
 
 test.each([200, 408, 409, 419, 422, 429, 499, 500, 503])(
@@ -280,13 +280,13 @@ test('cancellation after dispatch keeps an uncertain outcome and no finish callb
     });
     renderInertia('Signalbox', Create, editorProps);
     await user.type(screen.getByLabelText('Name'), 'Retained after cancel');
-    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     act(() => {
         options?.onCancel?.();
         options?.onFinish?.({} as never);
     });
     expect(screen.getByText('Outcome not confirmed')).toBeInTheDocument();
     expect(screen.getByLabelText('Name')).toHaveValue('Retained after cancel');
-    expect(screen.getByRole('button', { name: 'Create monitor' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(post).toHaveBeenCalledOnce();
 });

@@ -185,6 +185,11 @@
         font-weight: 600;
     }
 
+    /* Decorative markers keep accessible labels stable; native required conveys the requirement. */
+    .ui-required-indicator::after {
+        content: ' *';
+    }
+
     .ui-label {
         color: var(--color-ui-text);
     }

@@ -26,6 +26,7 @@ export default function TextareaField({
         <FormField
             id={id}
             label={label}
+            required={props.required}
             hint={hint}
             error={error}
             wrapperClassName={wrapperClassName}

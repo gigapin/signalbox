@@ -82,7 +82,7 @@ test.each([
         await user.keyboard('{Enter}');
         await user.click(
             screen.getByRole('button', {
-                name: mode === 'create' ? 'Create monitor' : 'Save changes',
+                name: mode === 'create' ? 'Save' : 'Save changes',
             }),
         );
 
@@ -440,12 +440,18 @@ test('keeps creation actions and Back in the heading while submitting the associ
     renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
     const header = screen.getByRole('heading', { level: 1, name: 'New monitor' }).closest('header');
     expect(header).not.toBeNull();
-    const submit = within(header!).getByRole('button', { name: 'Create monitor' });
+    const submit = within(header!).getByRole('button', { name: 'Save' });
     expect(within(header!).getByRole('link', { name: 'Cancel' })).toHaveAttribute(
         'href',
         '/teams/7/monitors',
     );
     expect(within(header!).getByRole('link', { name: 'Back' })).toHaveClass('ui-button');
+    const back = within(header!).getByRole('link', { name: 'Back' });
+    back.focus();
+    await user.tab();
+    expect(within(header!).getByRole('link', { name: 'Cancel' })).toHaveFocus();
+    await user.tab();
+    expect(submit).toHaveFocus();
     expect(screen.queryByText('Add a monitor to Synthetic team.')).not.toBeInTheDocument();
     expect((submit as HTMLButtonElement).form).toBe(screen.getByLabelText('Name').closest('form'));
     const cadenceRow = screen.getByLabelText('Interval (seconds)').closest('.grid');
@@ -504,7 +510,7 @@ test.each(['http', 'keyword'])(
         });
         const add = screen.getByRole('button', { name: 'Add header' });
         expect(add).toHaveTextContent('');
-        await user.click(add);
+        expect(screen.getByLabelText('Header 1 name')).toHaveValue('');
         await user.type(screen.getByLabelText('Header 1 name'), 'X-First');
         await user.type(screen.getByLabelText('Header 1 value'), 'first');
         const headerRow = screen.getByLabelText('Header 1 name').closest('.ui-repeater-row');
@@ -517,7 +523,7 @@ test.each(['http', 'keyword'])(
         expect(remove).toHaveTextContent('');
         await user.click(remove);
         expect(screen.getByLabelText('Header 1 name')).toHaveValue('X-Keep');
-        await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+        await user.click(screen.getByRole('button', { name: 'Save' }));
         expect(post).toHaveBeenCalledWith(
             '/teams/7/monitors',
             expect.objectContaining({
@@ -528,6 +534,61 @@ test.each(['http', 'keyword'])(
         );
     },
 );
+
+test.each(['http', 'keyword'])(
+    'keeps one visible header editor after removing the last %s header',
+    async (type) => {
+        const user = userEvent.setup();
+        const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
+        renderInertia('Signalbox', Create, {
+            team,
+            defaults: { ...defaults, type },
+            options,
+            usage,
+            maximumIntervalSeconds,
+        });
+        expect(screen.getByLabelText('Header 1 name')).toHaveValue('');
+        expect(screen.getByLabelText('Header 1 value')).toHaveValue('');
+        await user.type(screen.getByLabelText('Header 1 name'), 'X-Remove');
+        await user.click(screen.getByRole('button', { name: 'Remove header 1' }));
+        expect(screen.getByLabelText('Header 1 name')).toHaveValue('');
+        expect(screen.getByLabelText('Header 1 value')).toHaveValue('');
+        await user.click(screen.getByRole('button', { name: 'Save' }));
+        expect(post).toHaveBeenCalledWith(
+            '/teams/7/monitors',
+            expect.objectContaining({ headers: {} }),
+            expect.any(Object),
+        );
+    },
+);
+
+test('updates required markers with the active monitor type and omits them for an all-required form', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
+    const name = screen.getByLabelText<HTMLInputElement>('Name');
+    expect(name).toBeRequired();
+    expect(name.labels?.[0]?.querySelector('.ui-required-indicator')).not.toBeNull();
+    expect(
+        screen
+            .getByLabelText<HTMLTextAreaElement>('Body')
+            .labels?.[0]?.querySelector('.ui-required-indicator'),
+    ).toBeNull();
+    expect(screen.getByRole('combobox', { name: 'Type' })).toBeRequired();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'keyword');
+    expect(screen.getByLabelText('Keyword')).toBeRequired();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'tls');
+    expect(screen.getByLabelText('Host')).toBeRequired();
+    expect(screen.getByLabelText('Expiry warning (days)')).not.toBeRequired();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'dns');
+    expect(screen.getByLabelText('Expected value 1')).toBeRequired();
+    expect(screen.getByLabelText('Resolver')).not.toBeRequired();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'heartbeat');
+    const form = name.closest('form');
+    expect(form?.querySelector('.ui-required-indicator')).toBeNull();
+    expect(screen.getByLabelText('Grace period (seconds)')).toBeRequired();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Type' }), 'http');
+    expect(name.labels?.[0]?.querySelector('.ui-required-indicator')).not.toBeNull();
+});
 
 /** Switching type shows only that type's section and submits only its fields. */
 async function createsDnsMonitorWithRelevantFields(): Promise<void> {
@@ -545,7 +606,7 @@ async function createsDnsMonitorWithRelevantFields(): Promise<void> {
     await user.click(screen.getByRole('button', { name: 'Add value' }));
     await user.type(screen.getByLabelText('Expected value 2'), '192.0.2.2');
     await user.click(screen.getByLabelText('United States (simulated)'));
-    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
 
     expect(post).toHaveBeenCalledWith(
         '/teams/7/monitors',
@@ -654,7 +715,7 @@ async function showsValidationErrors(): Promise<void> {
     });
 
     renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
-    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     act(() => {
         visit?.onError?.({
             monitor: 'Your plan allows 5 monitors. Delete a monitor or upgrade to add another.',
@@ -761,7 +822,7 @@ async function keepsInputAfterQuotaRefusal(): Promise<void> {
     renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
     await user.type(screen.getByLabelText('Name'), 'Checkout');
     await user.type(screen.getByLabelText('URL'), 'https://shop.example.test/health');
-    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     act(() => {
         visit?.onError?.({
             monitor: 'Your plan allows 5 monitors. Delete a monitor or upgrade to add another.',
@@ -776,9 +837,9 @@ async function keepsInputAfterQuotaRefusal(): Promise<void> {
     ).toBe(true);
     expect(screen.getByLabelText('Name')).toHaveValue('Checkout');
     expect(screen.getByLabelText('URL')).toHaveValue('https://shop.example.test/health');
-    expect(screen.getByRole('button', { name: 'Create monitor' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
 
-    await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(post).toHaveBeenCalledTimes(2);
 }
 

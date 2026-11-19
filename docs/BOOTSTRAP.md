@@ -1,5 +1,13 @@
 # Application bootstrap reference
 
+## Session close and restart — 2026-11-19
+
+Read the [current handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-19) before resuming; it supersedes the November 17–18 restart notes below. The session closes after the Monitors, Incidents, Maintenance and four Notifications destinations were refined. Notifications now shares collection search/create modals, readable cards, badges and guarded editors; deliveries use ten-row server pages. See [UI-GUIDELINES](UI-GUIDELINES.md), [OPERATIONS-UI](OPERATIONS-UI.md) and [NOTIFICATIONS](NOTIFICATIONS.md) for the component contracts.
+
+Resume with authenticated visual review of the four Notifications pages and the user’s next UI request. Overall UI acceptance remains open. Functional security/billing work and chart replacement remain suspended; do not install a chart library before the user chooses one. Reuse shared components. Branch suggestions are requested only while following a task list; every Git/gh operation remains exclusively user-managed. No branch or commit state has been verified.
+
+[TESTING](TESTING.md#last-verified-state-at-session-close--2026-11-19) records the latest green frontend suite and targeted PostgreSQL checks. Assets were rebuilt; preserve public/hot, .env, development data and application services. Isolated test PostgreSQL/Redis and the temporary fixture server were stopped after use. No migration or new dependency is required by the latest Notifications changes. Earlier theme/profile adoption requirements below remain historical deployment instructions, not proof of adoption. This Markdown-only close runs no checks or environment operations.
+
 ## Account profile adoption — 2026-11-18
 
 Apply migration 000029 before serving the profile code/assets. Private local avatar storage must be
@@ -26,7 +34,7 @@ See [TASKS](TASKS.md#ui--welcome-e-sospensione-revisione-grafici--2026-11-18) fo
 
 ## Session close and restart — 2026-11-17
 
-The session is closed at the user's request. Read the [current handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) before resuming; it supersedes earlier restart instructions. Security is **14/15 complete**, SEC.06 remains deferred, and billing/M9.01 has not started. The user paused functional tasks to continue visual corrections. Resume the UI review on the same user-managed graphics branch; do not start billing or another security task automatically. No Git/gh operation or branch/commit state is verified by the agent.
+The session is closed at the user's request. Historical handoff: read the [November 17 record](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) before resuming; it supersedes earlier restart instructions. Security is **14/15 complete**, SEC.06 remains deferred, and billing/M9.01 has not started. The user paused functional tasks to continue visual corrections. Resume the UI review on the same user-managed graphics branch; do not start billing or another security task automatically. No Git/gh operation or branch/commit state is verified by the agent.
 
 Today's UI work covers the dashboard shell and landing, account/team/admin integration, dark olive palette, table alignment, link cursors, label/select spacing, below-field select picker, shared form components and notification Button/Alert adoption. Latest shared spacing is 12px above/below cards, alerts and forms, and 8px for field/action groups; labels retain 10px internal clearance. Continue from `/notifications`, checking real dynamic notices, verification, editors, quiet hours, secret controls and mobile wrapping, then other pages affected by shared styles. See [UI-GUIDELINES](UI-GUIDELINES.md) for the component contracts and current palette.
 

@@ -1,5 +1,19 @@
 # Test infrastructure
 
+## Last verified state at session close — 2026-11-19
+
+Current verification handoff for the UI review; earlier dated summaries below are historical.
+No tests, formatter, build or audit were rerun for this documentation-only session close.
+
+- Complete frontend suite: **570/570 in 47 files, 122.73 s**, using `npm test -- --pool=threads`.
+- After the final OperationalList toolbar refinement: **17/17 OperationalWorkflows tests, 3.67 s**. Final ESLint, Prettier, TypeScript, **6 quality tests** and production asset build passed.
+- Delivery pagination change: PostgreSQL OperationalListsTest **30/30, 169 assertions, 5.49 s**; PHP-CS-Fixer fix/dry-run on the two changed PHP files and Larastan level 8 passed. Maintenance retains twenty-row pages; deliveries now use ten, including coverage of the third page and safe projections.
+- Earlier Notifications routes and authorization matrix: **976/976, 10797 assertions, 195.42 s**. This was not rerun after the final presentation changes and is not a new full-backend result.
+- Synthetic Firefox probes used real React/Inertia pages and compiled CSS: all three adapted destinations at 1280×1000, Deliveries and Policies/Assignments modals at 390×1000. Screenshots inspected; final Deliveries controls align with the title on desktop and Apply filters/Refresh share a row on mobile. These probes do not certify authenticated browser acceptance, provider delivery, screen readers, native zoom or remote CI.
+- No full-backend rerun, new dependency audit or PHP 8.5/remote CI result is claimed. The temporary server and initially stopped isolated test database/cache were stopped after verification; development services and public/hot were preserved.
+
+See [TASKS](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-19) for restart scope and persistent user preferences.
+
 ## Appearance verification — 2026-11-18
 
 Theme implementation checks: 920 PostgreSQL tests/9749 assertions for appearance and team authorization;
@@ -21,7 +35,7 @@ see the [current handoff](BOOTSTRAP.md#ui-branch-handoff--2026-11-18).
 
 ## Last verified state at session close — 2026-11-17
 
-This is the current verification handoff; earlier closing summaries below are historical. The user is stopping during UI review, with functional security/billing work suspended. See [TASKS](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) for scope and restart instructions. No test, formatter, build or audit is rerun for this Markdown-only close.
+Historical verification handoff, superseded by the November 19 summary above. The user is stopping during UI review, with functional security/billing work suspended. See [TASKS](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-17) for scope and restart instructions. No test, formatter, build or audit is rerun for this Markdown-only close.
 
 - Backend, earlier today after dashboard route/CSP corrections: **3652 Pest tests / 24942 assertions, 555.75 s, exit 0**; PHP-CS-Fixer and Larastan level 8 passed. Backend was not repeated for the later frontend-only changes.
 - Shared form refactor: **493 DOM tests / 42 files, 122.99 s, exit 0**, lint/format/TypeScript, **6 quality tests**, production audit with zero vulnerabilities and build passed.

@@ -164,3 +164,19 @@ test('opens through click-only activation without relying on native OS picker pl
     fireEvent.click(screen.getByRole('combobox'));
     expect(screen.getByRole('listbox', { name: 'Service' })).toBeInTheDocument();
 });
+
+test('keeps custom options inside their native modal so they remain interactive above the backdrop', async () => {
+    const user = userEvent.setup();
+    render(
+        <dialog open aria-label="Modal editor">
+            <Fixture />
+        </dialog>,
+    );
+    const modal = screen.getByRole('dialog', { name: 'Modal editor' });
+    await user.click(within(modal).getByRole('combobox', { name: 'Service' }));
+    const options = within(modal).getByRole('listbox', { name: 'Service' });
+    expect(modal).toContainElement(options);
+    await user.click(within(options).getByRole('option', { name: 'Beta' }));
+    expect(within(modal).getByRole('combobox', { name: 'Service' })).toHaveValue('beta');
+    expect(within(modal).queryByRole('listbox')).not.toBeInTheDocument();
+});

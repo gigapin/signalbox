@@ -104,40 +104,44 @@ export default function ChannelRow({
     }
 
     return (
-        <li hidden={hidden} className="ui-operation-row">
+        <li
+            id={`channel-${channel.id}`}
+            tabIndex={-1}
+            aria-labelledby={`channel-${channel.id}-heading`}
+            hidden={hidden}
+            className="ui-panel ui-channel-card"
+        >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-medium">
+                <h3 id={`channel-${channel.id}-heading`} className="ui-channel-name">
                     {channel.name}{' '}
-                    <span className="text-sm text-[var(--color-ui-muted)]">
-                        · {type?.label ?? channel.type}
-                    </span>
-                </p>
-                <p className="text-sm">{channelStateLabel(channel)}</p>
+                    <span className="ui-channel-family">· {type?.label ?? channel.type}</span>
+                </h3>
+                <p className="text-base">{channelStateLabel(channel)}</p>
             </div>
-            <p className="text-sm text-[var(--color-ui-text)]">{channel.hint}</p>
-            <p className="text-xs text-[var(--color-ui-muted)]">
+            <p className="ui-channel-destination">{channel.hint}</p>
+            <p className="text-base text-[var(--color-ui-muted)]">
                 {channel.quietHours === null
                     ? 'No quiet hours.'
                     : `Quiet hours daily: ${channel.quietHours.start}–${channel.quietHours.end} (${channel.quietHours.timezone}).`}
             </p>
             {channel.verifiedAt !== null && (
-                <p className="text-xs text-[var(--color-ui-muted)]">
+                <p className="text-base text-[var(--color-ui-muted)]">
                     Verified {formatInstant(channel.verifiedAt, '')}
                 </p>
             )}
             {channel.isStub && (
-                <p className="text-xs text-ui-warning">
+                <p className="text-base text-ui-warning">
                     Stub channel: deliveries are recorded but never sent.
                 </p>
             )}
-            <p className="text-xs text-[var(--color-ui-muted)]">
+            <p className="text-base text-[var(--color-ui-muted)]">
                 {channel.usedBy.length === 0
                     ? 'Not used by any escalation policy.'
                     : `Used by: ${channel.usedBy.join(', ')}`}
             </p>
 
             {canManage && (
-                <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                <div className="mt-3 flex flex-wrap gap-3 text-base">
                     <Button type="button" disabled={blocked} onClick={sendCode} variant="secondary">
                         {channel.verificationPending ? 'Send a new code' : 'Send verification code'}
                     </Button>

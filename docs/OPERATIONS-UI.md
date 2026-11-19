@@ -20,9 +20,8 @@ behavior. Submenu toggling itself does not navigate or discard drafts.
 | Assign a policy to a monitor | `/assignments` | Notifications/Assignments |
 
 The original `/notifications` remains a 200 Channels alias, and the old frontend Index export remains
-available for existing history entries. ConfigurationPage composes the established ChannelForm,
-ChannelRow, PolicyForm and PolicyRow, mounting only the requested section. Each has its own local
-search and page lifecycle; filtering still hides rows without unmounting editors, while navigation
+available for existing history entries. ChannelsPage composes ChannelForm/ChannelRow with shared Modal/SearchPicker/Pagination;
+ConfigurationPage now owns only the existing PolicyForm/PolicyRow workflow. Each has its own local search and page lifecycle; filtering still hides rows without unmounting editors, while navigation
 between pages uses the existing unsaved-draft guard. The four old in-content workflow links are
 removed. The bounded safe channel/policy projection is reused for compatibility and policy editing.
 
@@ -32,6 +31,20 @@ than introducing a bulk mutation or new permission. Read navigation uses the sha
 lifecycle; the default/override semantics, refusal handling and form protection are unchanged.
 Monitor configuration, channel credentials and foreign identities are never projected by this page.
 No migration, package, provider call or development data change is required.
+
+## Channel collection presentation — 2026-11-19
+
+Channel creation is a heading action opening the shared native Modal, with the same ChannelForm and
+mutation endpoints. Ordinary close retains the draft; pending work prevents dismissal; confirmed
+acceptance closes/resets the editor. Form failures remain visible in the dialog. The shared Select
+portal stays inside its nearest open dialog instead of the inert background document body.
+
+The heading SearchPicker replaces the old search card, offers safe channel-name suggestions on
+focus/click and navigates locally to the chosen card. Each channel uses a larger-text .ui-panel card.
+The existing bounded channel projection remains unchanged. Local ten-item pagination appears only
+for more than ten matching channels; hidden rows stay mounted to preserve drafts and verification
+values. Search/page changes do not issue HTTP requests or change the domain permission/quota rules.
+The First add a channel introduction has been removed. Policies retains its existing workflow.
 
 ## Routes, permissions and navigation
 

@@ -1,8 +1,8 @@
 /** Exercise the notification settings page, monitor escalation choice and delivery log through actual Inertia components. */
 import { router } from '@inertiajs/react';
-import { fireEvent, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import EscalationPanel from '../../resources/js/components/notifications/EscalationPanel';
 import DeliveryLog from '../../resources/js/components/notifications/DeliveryLog';
 import QuietHoursForm from '../../resources/js/components/notifications/QuietHoursForm';
@@ -10,6 +10,7 @@ import { delayLabel } from '../../resources/js/components/notifications/labels';
 import type { ChannelView, PolicyView } from '../../resources/js/components/notifications/types';
 import Index from '../../resources/js/pages/Notifications/Index';
 import Policies from '../../resources/js/pages/Notifications/Policies';
+import { installDialogSupport } from './dialogSupport';
 import { renderInertia } from './renderInertia';
 
 /** Route team of every synthetic page. */
@@ -35,7 +36,16 @@ const limits = {
     codeLength: 6,
 };
 
+/** Restore native dialog prototypes after each isolated page fixture. */
+let restoreDialogs: () => void = () => undefined;
+
+beforeEach(() => {
+    restoreDialogs = installDialogSupport();
+});
+
 afterEach(() => {
+    cleanup();
+    restoreDialogs();
     vi.restoreAllMocks();
 });
 
@@ -143,8 +153,8 @@ test('creates a channel with the fields of the chosen type and announces field e
     });
 
     renderInertia('Signalbox', Index, pageProps(true));
-    const form = screen.getByRole('heading', { name: 'Add a channel' })
-        .parentElement as HTMLElement;
+    await user.click(screen.getByRole('button', { name: 'Add channel' }));
+    const form = screen.getByRole('dialog', { name: 'Add a channel' });
     await user.selectOptions(within(form).getByLabelText('Channel type'), 'telegram');
     expect(within(form).getByLabelText('Bot token')).toHaveAttribute('type', 'password');
 
@@ -504,39 +514,23 @@ test('activates channel verification from the keyboard without submitting a conf
     expect(post).toHaveBeenCalledTimes(1);
 });
 
-test('protects a channel draft when leaving for the policy submenu page', async () => {
-    const show = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'showModal');
-    const close = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'close');
-    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
-        configurable: true,
-        value: function (this: HTMLDialogElement): void {
-            this.setAttribute('open', '');
-        },
-    });
-    Object.defineProperty(HTMLDialogElement.prototype, 'close', {
-        configurable: true,
-        value: function (this: HTMLDialogElement): void {
-            this.removeAttribute('open');
-        },
-    });
-    try {
-        const user = userEvent.setup();
-        const visit = vi.spyOn(router, 'visit').mockImplementation(() => undefined);
-        renderInertia('Signalbox', Index, pageProps(true));
-        const form = screen.getByRole('heading', { name: 'Add a channel' }).parentElement!;
-        const name = within(form).getByLabelText('Name');
-        await user.type(name, 'Unsaved channel');
-        const navigation = screen.getByRole('navigation', { name: 'Team navigation' });
-        await user.click(within(navigation).getByRole('link', { name: 'Escalation policies' }));
-        expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeVisible();
-        expect(visit).not.toHaveBeenCalled();
-        await user.click(screen.getByRole('button', { name: 'Stay' }));
-        expect(name).toHaveValue('Unsaved channel');
-        expect(visit).not.toHaveBeenCalled();
-    } finally {
-        if (show) Object.defineProperty(HTMLDialogElement.prototype, 'showModal', show);
-        else Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
-        if (close) Object.defineProperty(HTMLDialogElement.prototype, 'close', close);
-        else Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
-    }
+test('protects a retained creation draft when leaving for the policy submenu page', async () => {
+    const user = userEvent.setup();
+    const visit = vi.spyOn(router, 'visit').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Index, pageProps(true));
+    await user.click(screen.getByRole('button', { name: 'Add channel' }));
+    const modal = screen.getByRole('dialog', { name: 'Add a channel' });
+    const name = within(modal).getByLabelText('Name');
+    await user.type(name, 'Unsaved channel');
+    await user.click(within(modal).getByRole('button', { name: 'Close' }));
+    const navigation = screen.getByRole('navigation', { name: 'Team navigation' });
+    await user.click(within(navigation).getByRole('link', { name: 'Escalation policies' }));
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeVisible();
+    expect(visit).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Stay' }));
+    await user.click(screen.getByRole('button', { name: 'Add channel' }));
+    expect(
+        within(screen.getByRole('dialog', { name: 'Add a channel' })).getByLabelText('Name'),
+    ).toHaveValue('Unsaved channel');
+    expect(visit).not.toHaveBeenCalled();
 });

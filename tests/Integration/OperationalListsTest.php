@@ -44,7 +44,7 @@ function operationalFixtures(Team $team, int $count = 1): Monitor
             ]);
             NotificationLog::factory()->create([
                 'incident_id' => $incident->id, 'channel_id' => $channel->id,
-                'dedupe_key' => 'private-key-'.$index, 'destination_hash' => 'private-destination',
+                'dedupe_key' => 'private-key-'.$monitor->id.'-'.$index, 'destination_hash' => 'private-destination',
                 'message_payload' => ['secret' => 'private-payload'],
             ]);
         }
@@ -112,7 +112,7 @@ it('paginates deterministically without reading private delivery columns', funct
 it('drops invalid controls without redirects or reflecting their values', function (string $path): void {
     $team = Team::factory()->create();
     $this->actingAs($team->owner)->get("/teams/{$team->id}/{$path}?q[]=invalid&state[]=bad&page=9999999999")
-        ->assertOk()->assertJsonPath('props.filters', ['q' => '', 'state' => null])
+        ->assertOk()->assertJsonPath('props.filters', $path === 'maintenance' ? ['q' => '', 'state' => null, 'monitorId' => null] : ['q' => '', 'state' => null])
         ->assertJsonPath('props.rejectedFilters', ['q', 'state', 'page'])
         ->assertJsonPath('props.listing.currentPage', 1);
     $this->get("/teams/{$team->id}/{$path}?page=3")->assertOk()->assertJsonPath('props.listing.data', [])
@@ -166,3 +166,31 @@ it('keeps relation query counts constant as visible rows grow', function (string
         expect($counts[0])->toBe($counts[1])->toBe($family === 'maintenance' ? 3 : 5);
     });
 })->with(['maintenance', 'deliveries']);
+
+
+it('offers only safe team monitors and filters duplicate names by exact identity', function (): void {
+    $team = Team::factory()->create();
+    $other = Team::factory()->create();
+    $first = operationalFixtures($team);
+    $second = operationalFixtures($team);
+    $foreign = operationalFixtures($other);
+    $unused = app(TenantContext::class)->run($team->id, fn () => Monitor::factory()->create(['name' => 'No windows']));
+    $response = $this->actingAs($team->owner)->get("/teams/{$team->id}/maintenance?monitor_id={$second->id}")
+        ->assertOk()->assertJsonPath('props.listing.total', 1)
+        ->assertJsonPath('props.listing.data.0.monitor.id', $second->id)
+        ->assertJsonPath('props.filters.monitorId', $second->id)
+        ->assertJsonCount(3, 'props.monitorOptions');
+    expect(array_column($response->json('props.monitorOptions'), 'id'))->toContain($first->id, $second->id, $unused->id)->not->toContain($foreign->id);
+    foreach ($response->json('props.monitorOptions') as $option) {
+        expect(array_keys($option))->toBe(['id', 'name']);
+    }
+    $this->get("/teams/{$team->id}/maintenance?monitor_id={$foreign->id}")->assertOk()->assertJsonPath('props.listing.total', 0);
+    $this->get("/teams/{$team->id}/maintenance?monitor_id={$unused->id}")->assertOk()->assertJsonPath('props.listing.total', 0);
+});
+
+it('rejects malformed monitor selectors without exposing their values', function (string $query): void {
+    $team = Team::factory()->create();
+    $this->actingAs($team->owner)->get("/teams/{$team->id}/maintenance?{$query}")
+        ->assertOk()->assertJsonPath('props.filters.monitorId', null)
+        ->assertJsonPath('props.rejectedFilters', ['monitor_id']);
+})->with(['monitor_id[]=secret', 'monitor_id=0', 'monitor_id=-1', 'monitor_id=9999999999999999999', 'monitor_id=1.5']);

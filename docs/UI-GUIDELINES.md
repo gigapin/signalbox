@@ -87,8 +87,13 @@ limits: [SETTINGS-UI.md](SETTINGS-UI.md); actual gates: TASKS. UI.06 retains bro
 ## Operational maintenance and notification views — UI.04.2
 
 Maintenance is now a real team navigation destination, shared by desktop and mobile. Maintenance and
-Notification deliveries use bounded native tables, explicit snapshot time/refresh, canonical GET
-filters and previous/next pagination. Management links enter the existing monitor or incident workflow.
+Notification deliveries use bounded native tables, canonical GET filters and previous/next pagination.
+Maintenance uses DataTable compact, omits the team subtitle, introductory monitor link and snapshot
+summary, and portals its list-owned Refresh button (decorative icon plus label) into the authorized
+PageHeading actions. Single-page pagination is hidden; multi-page and out-of-range recovery remain.
+Its Monitor name field is a shared SelectField populated from safe team monitor IDs/names, including
+monitors without windows. Selection uses monitor_id, preserving accepted filters for refresh and
+pagination. Deliveries retain the existing text search, snapshot summary and inline refresh. Management links enter the existing monitor or incident workflow.
 Notifications offers in-page channel/policy navigation, delivery access and guided setup; local name
 filters hide rows without unmounting drafts. Channel, policy and quiet-hour forms reuse the shared
 owned mutation feedback and input freeze. Native destructive confirmations remain. Secret rotation

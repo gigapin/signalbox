@@ -22,6 +22,10 @@ const list = {
 /** Single real-shaped window at the fixed snapshot, with a next page. */
 const maintenanceProps = {
     ...list,
+    monitorOptions: [
+        { id: 2, name: 'API' },
+        { id: 3, name: 'Worker' },
+    ],
     states: ['upcoming', 'ongoing', 'finished'],
     listing: {
         data: [
@@ -102,6 +106,53 @@ test('maintenance enters existing monitor management and preserves filters in bo
     expect(screen.queryByRole('button', { name: 'Delete window' })).not.toBeInTheDocument();
 });
 
+test('maintenance removes redundant text and mounts its icon refresh in the heading', () => {
+    renderInertia('Signalbox', Maintenance, {
+        ...maintenanceProps,
+        filters: { q: '', state: null, monitorId: null },
+        listing: { ...maintenanceProps.listing, total: 1, lastPage: 1 },
+    });
+    const header = screen.getByRole('heading', { level: 1, name: 'Maintenance' }).closest('header');
+    expect(header?.querySelector('.ui-description')).toBeNull();
+    const refresh = within(header!).getByRole('button', { name: 'Refresh results' });
+    expect(refresh.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByText(/Maintenance prevents new incidents/)).not.toBeInTheDocument();
+    expect(
+        screen.queryByRole('link', { name: 'Choose a monitor to schedule maintenance' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/results. Updated/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Page 1 of 1')).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Maintenance' }).querySelector('caption')).toHaveClass(
+        'sr-only',
+    );
+    expect(screen.getByText('Scroll horizontally to view all columns when needed.')).toHaveClass(
+        'sr-only',
+    );
+});
+
+test('maintenance selects an exact team monitor and preserves its ID in page links', async () => {
+    const user = userEvent.setup();
+    const read = vi.spyOn(router, 'get').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Maintenance, {
+        ...maintenanceProps,
+        filters: { q: '', state: null, monitorId: 2 },
+    });
+    const picker = screen.getByRole('combobox', { name: 'Monitor name' });
+    expect(picker).toHaveValue('2');
+    expect(screen.getByRole('link', { name: 'Clear filters' })).toHaveAttribute(
+        'href',
+        '/teams/7/maintenance',
+    );
+    expect(screen.getByRole('link', { name: 'Next' })).toHaveAttribute(
+        'href',
+        '/teams/7/maintenance?monitor_id=2&page=2',
+    );
+    await user.selectOptions(picker, '3');
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    expect(read.mock.calls[0]?.[0]).toBe('/teams/7/maintenance?monitor_id=3');
+});
+
 test('a failed filter read retains rows and selection until explicit retry', async () => {
     const user = userEvent.setup();
     let callbacks: NonNullable<Parameters<typeof router.get>[2]> | undefined;
@@ -132,7 +183,7 @@ test('refresh reads the accepted page and does not submit unaccepted search text
         ...maintenanceProps,
         listing: { ...maintenanceProps.listing, currentPage: 2 },
     });
-    await user.type(screen.getByLabelText('Monitor name'), ' draft');
+    await user.selectOptions(screen.getByLabelText('Monitor name'), '3');
     await user.click(screen.getByRole('button', { name: 'Refresh results' }));
     expect(read.mock.calls[0]?.[0]).toBe('/teams/7/maintenance?q=API&page=2');
 });

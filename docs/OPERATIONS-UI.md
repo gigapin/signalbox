@@ -21,6 +21,29 @@ Viewers inspect the same detail without mutation controls. No team-wide scheduli
 Delivery rows link their actual incident for its timeline and detailed recorded outcomes. A deleted
 channel retains its family and history. No retry-delivery or test-notification action is offered.
 
+## Maintenance selector and compact presentation — 2026-11-19
+
+The Maintenance page omits the redundant subtitle, introduction/link and result timestamp summary.
+It uses the shared compact DataTable presentation, preserving the accessible table/scroll-region name
+and keyboard scrolling. Refresh is a list-owned Button with a decorative SVG in PageHeading's action
+slot; its portal remains within the removable authorized page lifecycle. It refreshes the accepted
+selection and current page, never an unapplied draft. Single-page pagination is omitted; previous/next
+and out-of-range recovery remain. Delivery views retain their existing presentation.
+
+MaintenancePageController projects `monitorOptions` as sorted `{id, name}` pairs for every monitor of
+the authorized route team, including those without windows, with explicit team predicates and
+TeamScope. No configuration or secret is selected. The Monitor name SelectField offers All monitors
+and filters by `monitor_id`, avoiding ambiguity for duplicate names. `monitor_id` accepts a positive
+decimal string of at most 18 digits, is parsed by OperationalListFilter only when enabled by
+ListMaintenanceRequest, and is returned as `filters.monitorId`. Invalid values are ignored/reported by
+name; a valid ID for another team yields no rows and exposes no foreign names. MaintenanceListing
+conjoins the exact ID with the existing tenant/name/state predicates.
+
+Existing `q` bookmarks remain supported: the picker shows their accepted search as a temporary option
+until the user selects a monitor or All monitors. Selecting a monitor clears the old name query;
+refresh, pagination, errors and explicit filter clearing preserve the same owned-read semantics.
+Delivery filtering is unchanged. No migration, dependency or application-service restart is required.
+
 ## Bounded reads and snapshot semantics
 
 MaintenanceListing and DeliveryListing each return twenty rows and an exact total. Both add explicit

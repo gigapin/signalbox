@@ -32,6 +32,6 @@ final class ListMaintenanceRequest extends FormRequest
     /** @return OperationalListFilter Accepted controls and rejected field names. */
     public function filter(): OperationalListFilter
     {
-        return OperationalListFilter::fromInput($this->query->all(), self::STATES);
+        return OperationalListFilter::fromInput($this->query->all(), self::STATES, withMonitor: true);
     }
 }

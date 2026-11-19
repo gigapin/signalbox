@@ -123,6 +123,31 @@ test('updates an actual monitor table from authoritative data and preserves an u
     expect(read).toHaveBeenCalledTimes(1);
 });
 
+test.each([
+    { patch: { can: { create: false } }, message: 'Your role has read-only access to monitors.' },
+    {
+        patch: { usage: { ...base.usage, used: 5, full: true } },
+        message: 'Your plan allows 5 monitors. Delete a monitor or upgrade to add another.',
+    },
+])(
+    'refreshes the heading creation control from live permissions and quota: $message',
+    async ({ patch, message }) => {
+        const read = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(response('Monitors/Index', { ...base, ...patch }));
+        vi.stubGlobal('fetch', read);
+        renderInertia('Signalbox', Index, base);
+        expect(screen.getByRole('link', { name: 'New monitor' })).toBeInTheDocument();
+
+        act(() => streams[0]?.signals.subscribed());
+        await advance();
+
+        expect(screen.queryByRole('link', { name: 'New monitor' })).not.toBeInTheDocument();
+        expect(screen.getByText(message)).toBeInTheDocument();
+        expect(streams).toHaveLength(1);
+    },
+);
+
 test.each(['team', 'account'])(
     'disposes the old %s connection and rejects a late snapshot during a same-component visit',
     async (change) => {

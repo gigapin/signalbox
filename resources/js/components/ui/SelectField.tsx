@@ -28,6 +28,7 @@ export default function SelectField({
         <FormField
             id={id}
             label={label}
+            required={props.required}
             hint={hint}
             error={error}
             wrapperClassName={wrapperClassName}

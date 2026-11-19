@@ -1,5 +1,8 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
+import { createPortal } from 'react-dom';
+import FieldRequirements, { RequiredIndicator } from '../ui/FieldRequirements';
 import InputField from '../ui/InputField';
+import RepeaterRow from '../ui/RepeaterRow';
 import TextareaField from '../ui/TextareaField';
 import SelectField from '../ui/SelectField';
 import ChoiceField from '../ui/ChoiceField';
@@ -8,7 +11,7 @@ import Button from '../ui/Button';
 import MutationFeedback from '../MutationFeedback';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import { Link, useForm } from '@inertiajs/react';
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
     buildPayload,
     HTTP_TYPES,
@@ -44,6 +47,8 @@ interface MonitorFormProps {
     reviewUrl: string;
     /** Existing GET destination for explicit cancellation, subject to the departure guard. */
     cancelUrl: string;
+    /** Optional heading destination; null waits for mounting, undefined keeps footer actions. */
+    actionsTarget?: HTMLElement | null;
 }
 
 /** Inputs for one labelled text-like field. */
@@ -154,6 +159,7 @@ function MonitorSelectField({
     return (
         <SelectField
             label={label}
+            required
             error={error}
             id={name}
             name={name}
@@ -231,7 +237,9 @@ export default function MonitorForm({
     submitLabel,
     reviewUrl,
     cancelUrl,
+    actionsTarget,
 }: MonitorFormProps) {
+    const formId = useId();
     const form = useForm<MonitorFormData>(initial);
     useFormProtection(form);
     const mutation = useOwnedMutation();
@@ -324,7 +332,7 @@ export default function MonitorForm({
     function setHeader(index: number, row: HeaderRow) {
         form.setData(
             'headers',
-            data.headers.map((current, position) => (position === index ? row : current)),
+            headerRows.map((current, position) => (position === index ? row : current)),
         );
     }
 
@@ -341,237 +349,257 @@ export default function MonitorForm({
         );
     }
 
+    /** Append an empty HTTP header without changing any existing draft values. */
+    function addHeader(): void {
+        form.setData('headers', [...headerRows, { name: '', value: '' }]);
+    }
+
+    /** Append an empty expected DNS value while preserving the required first row. */
+    function addDnsValue(): void {
+        form.setData('dns_expected_values', [...data.dns_expected_values, '']);
+    }
+
+    const headerRows = data.headers.length > 0 ? data.headers : [{ name: '', value: '' }];
+
     const showUrl = isHttp && (mustSendSecrets || data.replace_url);
     const showHeaders = isHttp && (mustSendSecrets || data.replace_headers);
     const showBody = isHttp && (mustSendSecrets || data.replace_body);
 
-    return (
-        <form
-            ref={formElement}
-            onSubmit={submit}
-            className="ui-monitor-form"
-            noValidate
-            aria-busy={mutation.phase === 'pending'}
-        >
-            <MutationFeedback
-                phase={mutation.phase}
-                reviewUrl={reviewUrl}
-                success="Monitor saved"
-                onReviewed={mutation.acknowledge}
-            />
-            <fieldset
-                className="ui-monitor-form-fields"
-                disabled={mutation.phase === 'pending' || form.processing}
+    const actions = (
+        <div className="ui-actions">
+            <Link className="ui-button" data-variant="secondary" href={cancelUrl}>
+                Cancel
+            </Link>
+            <Button
+                type="submit"
+                form={formId}
+                busy={mutation.phase === 'pending' || form.processing}
+                busyLabel="Saving…"
+                disabled={mutation.locked}
             >
-                <legend className="sr-only">Monitor configuration</legend>
-                {general.length > 0 && (
-                    <div
-                        role="alert"
-                        tabIndex={-1}
-                        data-form-alert
-                        className="rounded border border-red-800 p-3 text-ui-danger"
-                    >
-                        {general.map(([key, message]) => (
-                            <p key={key}>{message}</p>
-                        ))}
-                    </div>
-                )}
+                {submitLabel}
+            </Button>
+        </div>
+    );
 
-                <Section legend="General">
-                    <Field
-                        name="name"
-                        label="Name"
-                        value={data.name}
-                        onChange={bind('name')}
-                        error={errors.name}
-                        required
-                    />
-                    <MonitorSelectField
-                        name="type"
-                        label="Type"
-                        value={data.type}
-                        values={options.types}
-                        format={typeLabel}
-                        onChange={bind('type')}
-                        error={errors.type}
-                    />
-                    {originalType !== null && data.type !== originalType && (
-                        <p className="text-sm text-ui-warning">
-                            Changing the type discards the previous type&apos;s settings; enter the
-                            complete new configuration.
-                        </p>
-                    )}
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Field
-                            name="interval_seconds"
-                            label="Interval (seconds)"
-                            value={data.interval_seconds}
-                            onChange={(value) => {
-                                form.clearErrors('interval_seconds');
-                                form.setData('interval_seconds', value);
-                            }}
-                            error={intervalError ?? errors.interval_seconds}
-                            hint={`Your plan allows at least ${usage.minimumIntervalSeconds} seconds.`}
-                            numeric
-                            required
-                        />
-                        <Field
-                            name="timeout_ms"
-                            label="Timeout (milliseconds)"
-                            value={data.timeout_ms}
-                            onChange={bind('timeout_ms')}
-                            error={errors.timeout_ms}
-                            numeric
-                            required
-                        />
-                        <Field
-                            name="confirmation_threshold"
-                            label="Failures before alerting"
-                            value={data.confirmation_threshold}
-                            onChange={bind('confirmation_threshold')}
-                            error={errors.confirmation_threshold}
-                            numeric
-                            required
-                        />
-                    </div>
-                    <fieldset aria-describedby={errors.regions ? 'regions-error' : undefined}>
-                        <legend className="mb-2 text-sm font-medium">Regions</legend>
-                        <div className="flex flex-wrap gap-4">
-                            {options.regions.map((region) => (
-                                <ChoiceField
-                                    label={regionLabel(region)}
-                                    key={region}
-                                    type="checkbox"
-                                    name="regions"
-                                    value={region}
-                                    checked={data.regions.includes(region)}
-                                    onChange={(event) => toggleRegion(region, event.target.checked)}
-                                />
+    return (
+        <FieldRequirements hasOptionalFields={data.type !== 'heartbeat'}>
+            <form
+                id={formId}
+                ref={formElement}
+                onSubmit={submit}
+                className="ui-monitor-form"
+                noValidate
+                aria-busy={mutation.phase === 'pending'}
+            >
+                {/* Keep an in-form submit control for implicit Enter submission when actions live in the heading. */}
+                {actionsTarget !== undefined && (
+                    <input type="submit" hidden aria-hidden="true" tabIndex={-1} />
+                )}
+                <MutationFeedback
+                    phase={mutation.phase}
+                    reviewUrl={reviewUrl}
+                    success="Monitor saved"
+                    onReviewed={mutation.acknowledge}
+                />
+                <fieldset
+                    className="ui-monitor-form-fields"
+                    disabled={mutation.phase === 'pending' || form.processing}
+                >
+                    <legend className="sr-only">Monitor configuration</legend>
+                    {general.length > 0 && (
+                        <div
+                            role="alert"
+                            tabIndex={-1}
+                            data-form-alert
+                            className="rounded border border-red-800 p-3 text-ui-danger"
+                        >
+                            {general.map(([key, message]) => (
+                                <p key={key}>{message}</p>
                             ))}
                         </div>
-                        {nestedErrors(errors, 'regions').map((message) => (
-                            <p
-                                key={message}
-                                id="regions-error"
-                                role="alert"
-                                className="ui-field-error"
-                            >
-                                {message}
-                            </p>
-                        ))}
-                    </fieldset>
-                </Section>
+                    )}
 
-                {isHttp && (
-                    <Section legend={data.type === 'keyword' ? 'Keyword request' : 'HTTP request'}>
-                        {storedHttp && (
-                            <p className="text-sm text-ui-muted">
-                                Stored URL: <code>{stored.url}</code> (query values hidden).
+                    <Section legend="General">
+                        <Field
+                            name="name"
+                            label="Name"
+                            value={data.name}
+                            onChange={bind('name')}
+                            error={errors.name}
+                            required
+                        />
+                        <MonitorSelectField
+                            name="type"
+                            label="Type"
+                            value={data.type}
+                            values={options.types}
+                            format={typeLabel}
+                            onChange={bind('type')}
+                            error={errors.type}
+                        />
+                        {originalType !== null && data.type !== originalType && (
+                            <p className="text-sm text-ui-warning">
+                                Changing the type discards the previous type&apos;s settings; enter
+                                the complete new configuration.
                             </p>
                         )}
-                        {!mustSendSecrets && (
-                            <ChoiceField
-                                label="Replace URL"
-                                type="checkbox"
-                                checked={data.replace_url}
-                                onChange={(event) =>
-                                    form.setData('replace_url', event.target.checked)
-                                }
-                            />
-                        )}
-                        {showUrl && (
+                        <div className="grid gap-4 md:grid-cols-3">
                             <Field
-                                name="url"
-                                label="URL"
-                                value={data.url}
-                                onChange={bind('url')}
-                                error={errors.url}
+                                name="interval_seconds"
+                                label="Interval (seconds)"
+                                value={data.interval_seconds}
+                                onChange={(value) => {
+                                    form.clearErrors('interval_seconds');
+                                    form.setData('interval_seconds', value);
+                                }}
+                                error={intervalError ?? errors.interval_seconds}
+                                hint={`Your plan allows at least ${usage.minimumIntervalSeconds} seconds.`}
+                                numeric
                                 required
                             />
-                        )}
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <MonitorSelectField
-                                name="method"
-                                label="Method"
-                                value={data.method}
-                                values={options.methods}
-                                onChange={bind('method')}
-                                error={errors.method}
+                            <Field
+                                name="timeout_ms"
+                                label="Timeout (milliseconds)"
+                                value={data.timeout_ms}
+                                onChange={bind('timeout_ms')}
+                                error={errors.timeout_ms}
+                                numeric
+                                required
                             />
                             <Field
-                                name="expected_status"
-                                label="Expected status"
-                                value={data.expected_status}
-                                onChange={bind('expected_status')}
-                                error={errors.expected_status}
+                                name="confirmation_threshold"
+                                label="Failures before alerting"
+                                value={data.confirmation_threshold}
+                                onChange={bind('confirmation_threshold')}
+                                error={errors.confirmation_threshold}
                                 numeric
                                 required
                             />
                         </div>
-                        <ChoiceField
-                            label="Follow redirects"
-                            type="checkbox"
-                            checked={data.follow_redirects}
-                            onChange={(event) =>
-                                form.setData('follow_redirects', event.target.checked)
-                            }
-                        />
+                        <fieldset aria-describedby={errors.regions ? 'regions-error' : undefined}>
+                            <legend className="mb-2 text-sm font-medium">
+                                Regions
+                                <RequiredIndicator required />
+                            </legend>
+                            <div className="flex flex-wrap gap-4">
+                                {options.regions.map((region) => (
+                                    <ChoiceField
+                                        label={regionLabel(region)}
+                                        key={region}
+                                        type="checkbox"
+                                        name="regions"
+                                        value={region}
+                                        checked={data.regions.includes(region)}
+                                        onChange={(event) =>
+                                            toggleRegion(region, event.target.checked)
+                                        }
+                                    />
+                                ))}
+                            </div>
+                            {nestedErrors(errors, 'regions').map((message) => (
+                                <p
+                                    key={message}
+                                    id="regions-error"
+                                    role="alert"
+                                    className="ui-field-error"
+                                >
+                                    {message}
+                                </p>
+                            ))}
+                        </fieldset>
+                    </Section>
 
-                        {storedHttp && (
-                            <p className="text-sm text-ui-muted">
-                                Stored headers:{' '}
-                                {stored.header_names && stored.header_names.length > 0
-                                    ? `${stored.header_names.join(', ')} (values hidden)`
-                                    : 'none'}
-                                .
-                            </p>
-                        )}
-                        {!mustSendSecrets && (
+                    {isHttp && (
+                        <Section
+                            legend={data.type === 'keyword' ? 'Keyword request' : 'HTTP request'}
+                        >
+                            {storedHttp && (
+                                <p className="text-sm text-ui-muted">
+                                    Stored URL: <code>{stored.url}</code> (query values hidden).
+                                </p>
+                            )}
+                            {!mustSendSecrets && (
+                                <ChoiceField
+                                    label="Replace URL"
+                                    type="checkbox"
+                                    checked={data.replace_url}
+                                    onChange={(event) =>
+                                        form.setData('replace_url', event.target.checked)
+                                    }
+                                />
+                            )}
+                            {showUrl && (
+                                <Field
+                                    name="url"
+                                    label="URL"
+                                    value={data.url}
+                                    onChange={bind('url')}
+                                    error={errors.url}
+                                    required
+                                />
+                            )}
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <MonitorSelectField
+                                    name="method"
+                                    label="Method"
+                                    value={data.method}
+                                    values={options.methods}
+                                    onChange={bind('method')}
+                                    error={errors.method}
+                                />
+                                <Field
+                                    name="expected_status"
+                                    label="Expected status"
+                                    value={data.expected_status}
+                                    onChange={bind('expected_status')}
+                                    error={errors.expected_status}
+                                    numeric
+                                    required
+                                />
+                            </div>
                             <ChoiceField
-                                label="Replace all headers"
+                                label="Follow redirects"
                                 type="checkbox"
-                                checked={data.replace_headers}
+                                checked={data.follow_redirects}
                                 onChange={(event) =>
-                                    form.setData('replace_headers', event.target.checked)
+                                    form.setData('follow_redirects', event.target.checked)
                                 }
                             />
-                        )}
-                        {showHeaders && (
-                            <fieldset>
-                                <legend className="mb-2 text-sm font-medium">Headers</legend>
-                                {data.headers.length === 0 && (
-                                    <p className="text-sm text-ui-muted">No headers.</p>
-                                )}
-                                {data.headers.map((row, index) => (
-                                    <div
-                                        key={index}
-                                        className="mb-2 grid gap-2 md:grid-cols-[1fr_2fr_auto]"
-                                    >
-                                        <InputField
-                                            labelHidden
-                                            label={`Header ${index + 1} name`}
-                                            value={row.name}
-                                            onChange={(event) =>
-                                                setHeader(index, {
-                                                    ...row,
-                                                    name: event.target.value,
-                                                })
+
+                            {storedHttp && (
+                                <p className="text-sm text-ui-muted">
+                                    Stored headers:{' '}
+                                    {stored.header_names && stored.header_names.length > 0
+                                        ? `${stored.header_names.join(', ')} (values hidden)`
+                                        : 'none'}
+                                    .
+                                </p>
+                            )}
+                            {!mustSendSecrets && (
+                                <ChoiceField
+                                    label="Replace all headers"
+                                    type="checkbox"
+                                    checked={data.replace_headers}
+                                    onChange={(event) =>
+                                        form.setData('replace_headers', event.target.checked)
+                                    }
+                                />
+                            )}
+                            {showHeaders && (
+                                <fieldset>
+                                    <legend className="mb-2 text-sm font-medium">Headers</legend>
+                                    {headerRows.map((row, index) => (
+                                        <RepeaterRow
+                                            key={index}
+                                            addLabel="Add header"
+                                            onAdd={
+                                                index === headerRows.length - 1
+                                                    ? addHeader
+                                                    : undefined
                                             }
-                                        />
-                                        <InputField
-                                            labelHidden
-                                            label={`Header ${index + 1} value`}
-                                            value={row.value}
-                                            onChange={(event) =>
-                                                setHeader(index, {
-                                                    ...row,
-                                                    value: event.target.value,
-                                                })
-                                            }
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
+                                            removeLabel={`Remove header ${index + 1}`}
+                                            onRemove={() =>
                                                 form.setData(
                                                     'headers',
                                                     data.headers.filter(
@@ -580,224 +608,221 @@ export default function MonitorForm({
                                                 )
                                             }
                                         >
-                                            Remove header {index + 1}
-                                        </button>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        form.setData('headers', [
-                                            ...data.headers,
-                                            { name: '', value: '' },
-                                        ])
+                                            <InputField
+                                                labelHidden
+                                                label={`Header ${index + 1} name`}
+                                                required={row.name !== '' || row.value !== ''}
+                                                value={row.name}
+                                                onChange={(event) =>
+                                                    setHeader(index, {
+                                                        ...row,
+                                                        name: event.target.value,
+                                                    })
+                                                }
+                                            />
+                                            <InputField
+                                                labelHidden
+                                                label={`Header ${index + 1} value`}
+                                                value={row.value}
+                                                onChange={(event) =>
+                                                    setHeader(index, {
+                                                        ...row,
+                                                        value: event.target.value,
+                                                    })
+                                                }
+                                            />
+                                        </RepeaterRow>
+                                    ))}
+                                    {nestedErrors(errors, 'headers').map((message) => (
+                                        <p key={message} role="alert" className="ui-field-error">
+                                            {message}
+                                        </p>
+                                    ))}
+                                </fieldset>
+                            )}
+
+                            {storedHttp && (
+                                <p className="text-sm text-ui-muted">
+                                    Stored body:{' '}
+                                    {stored.body?.present
+                                        ? `${stored.body.bytes} bytes (content hidden)`
+                                        : 'none'}
+                                    .
+                                </p>
+                            )}
+                            {!mustSendSecrets && (
+                                <ChoiceField
+                                    label="Replace or clear body"
+                                    type="checkbox"
+                                    checked={data.replace_body}
+                                    onChange={(event) =>
+                                        form.setData('replace_body', event.target.checked)
                                     }
-                                    className="ui-button"
-                                    data-variant="secondary"
-                                >
-                                    Add header
-                                </button>
-                                {nestedErrors(errors, 'headers').map((message) => (
+                                />
+                            )}
+                            {showBody && (
+                                <Field
+                                    name="body"
+                                    label="Body"
+                                    value={data.body}
+                                    onChange={bind('body')}
+                                    error={errors.body}
+                                    hint="Leave empty to send no body."
+                                    multiline
+                                />
+                            )}
+
+                            {data.type === 'keyword' && (
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <Field
+                                        name="expected_keyword"
+                                        label="Keyword"
+                                        value={data.expected_keyword}
+                                        onChange={bind('expected_keyword')}
+                                        error={errors.expected_keyword}
+                                        hint="Matched exactly, including spaces and case."
+                                        required
+                                    />
+                                    <MonitorSelectField
+                                        name="keyword_mode"
+                                        label="Keyword must be"
+                                        value={data.keyword_mode}
+                                        values={options.keywordModes}
+                                        onChange={bind('keyword_mode')}
+                                        error={errors.keyword_mode}
+                                    />
+                                </div>
+                            )}
+                        </Section>
+                    )}
+
+                    {data.type === 'tls' && (
+                        <Section legend="TLS certificate">
+                            <Field
+                                name="tls_host"
+                                label="Host"
+                                value={data.tls_host}
+                                onChange={bind('tls_host')}
+                                error={errors.tls_host}
+                                required
+                            />
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <Field
+                                    name="tls_port"
+                                    label="Port"
+                                    value={data.tls_port}
+                                    onChange={bind('tls_port')}
+                                    error={errors.tls_port}
+                                    numeric
+                                    required
+                                />
+                                <Field
+                                    name="tls_expiry_warning_days"
+                                    label="Expiry warning (days)"
+                                    value={data.tls_expiry_warning_days}
+                                    onChange={bind('tls_expiry_warning_days')}
+                                    error={errors.tls_expiry_warning_days}
+                                    hint="Optional. Leave empty for no early warning."
+                                    numeric
+                                />
+                            </div>
+                        </Section>
+                    )}
+
+                    {data.type === 'dns' && (
+                        <Section legend="DNS record">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <Field
+                                    name="dns_name"
+                                    label="Query name"
+                                    value={data.dns_name}
+                                    onChange={bind('dns_name')}
+                                    error={errors.dns_name}
+                                    required
+                                />
+                                <MonitorSelectField
+                                    name="dns_record_type"
+                                    label="Record type"
+                                    value={data.dns_record_type}
+                                    values={options.dnsRecordTypes}
+                                    onChange={bind('dns_record_type')}
+                                    error={errors.dns_record_type}
+                                />
+                            </div>
+                            <fieldset>
+                                <legend className="mb-2 text-sm font-medium">
+                                    Expected values
+                                    <RequiredIndicator required />
+                                </legend>
+                                {data.dns_expected_values.map((value, index) => (
+                                    <RepeaterRow
+                                        key={index}
+                                        addLabel="Add value"
+                                        onAdd={
+                                            index === data.dns_expected_values.length - 1
+                                                ? addDnsValue
+                                                : undefined
+                                        }
+                                        removeLabel={`Remove value ${index + 1}`}
+                                        onRemove={
+                                            data.dns_expected_values.length > 1
+                                                ? () =>
+                                                      form.setData(
+                                                          'dns_expected_values',
+                                                          data.dns_expected_values.filter(
+                                                              (_, position) => position !== index,
+                                                          ),
+                                                      )
+                                                : undefined
+                                        }
+                                    >
+                                        <InputField
+                                            labelHidden
+                                            label={`Expected value ${index + 1}`}
+                                            required
+                                            value={value}
+                                            onChange={(event) =>
+                                                setDnsValue(index, event.target.value)
+                                            }
+                                        />
+                                    </RepeaterRow>
+                                ))}
+                                {nestedErrors(errors, 'dns_expected_values').map((message) => (
                                     <p key={message} role="alert" className="ui-field-error">
                                         {message}
                                     </p>
                                 ))}
                             </fieldset>
-                        )}
-
-                        {storedHttp && (
-                            <p className="text-sm text-ui-muted">
-                                Stored body:{' '}
-                                {stored.body?.present
-                                    ? `${stored.body.bytes} bytes (content hidden)`
-                                    : 'none'}
-                                .
-                            </p>
-                        )}
-                        {!mustSendSecrets && (
-                            <ChoiceField
-                                label="Replace or clear body"
-                                type="checkbox"
-                                checked={data.replace_body}
-                                onChange={(event) =>
-                                    form.setData('replace_body', event.target.checked)
-                                }
-                            />
-                        )}
-                        {showBody && (
                             <Field
-                                name="body"
-                                label="Body"
-                                value={data.body}
-                                onChange={bind('body')}
-                                error={errors.body}
-                                hint="Leave empty to send no body."
-                                multiline
+                                name="dns_resolver"
+                                label="Resolver"
+                                value={data.dns_resolver}
+                                onChange={bind('dns_resolver')}
+                                error={errors.dns_resolver}
+                                hint="Optional public IP address. Leave empty for the default resolver."
                             />
-                        )}
+                        </Section>
+                    )}
 
-                        {data.type === 'keyword' && (
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <Field
-                                    name="expected_keyword"
-                                    label="Keyword"
-                                    value={data.expected_keyword}
-                                    onChange={bind('expected_keyword')}
-                                    error={errors.expected_keyword}
-                                    hint="Matched exactly, including spaces and case."
-                                />
-                                <MonitorSelectField
-                                    name="keyword_mode"
-                                    label="Keyword must be"
-                                    value={data.keyword_mode}
-                                    values={options.keywordModes}
-                                    onChange={bind('keyword_mode')}
-                                    error={errors.keyword_mode}
-                                />
-                            </div>
-                        )}
-                    </Section>
-                )}
-
-                {data.type === 'tls' && (
-                    <Section legend="TLS certificate">
-                        <Field
-                            name="tls_host"
-                            label="Host"
-                            value={data.tls_host}
-                            onChange={bind('tls_host')}
-                            error={errors.tls_host}
-                            required
-                        />
-                        <div className="grid gap-4 md:grid-cols-2">
+                    {data.type === 'heartbeat' && (
+                        <Section legend="Heartbeat">
                             <Field
-                                name="tls_port"
-                                label="Port"
-                                value={data.tls_port}
-                                onChange={bind('tls_port')}
-                                error={errors.tls_port}
+                                name="heartbeat_grace_seconds"
+                                label="Grace period (seconds)"
+                                value={data.heartbeat_grace_seconds}
+                                onChange={bind('heartbeat_grace_seconds')}
+                                error={errors.heartbeat_grace_seconds}
+                                hint="Extra time allowed after each interval before the heartbeat counts as missed."
                                 numeric
                                 required
                             />
-                            <Field
-                                name="tls_expiry_warning_days"
-                                label="Expiry warning (days)"
-                                value={data.tls_expiry_warning_days}
-                                onChange={bind('tls_expiry_warning_days')}
-                                error={errors.tls_expiry_warning_days}
-                                hint="Optional. Leave empty for no early warning."
-                                numeric
-                            />
-                        </div>
-                    </Section>
-                )}
-
-                {data.type === 'dns' && (
-                    <Section legend="DNS record">
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <Field
-                                name="dns_name"
-                                label="Query name"
-                                value={data.dns_name}
-                                onChange={bind('dns_name')}
-                                error={errors.dns_name}
-                                required
-                            />
-                            <MonitorSelectField
-                                name="dns_record_type"
-                                label="Record type"
-                                value={data.dns_record_type}
-                                values={options.dnsRecordTypes}
-                                onChange={bind('dns_record_type')}
-                                error={errors.dns_record_type}
-                            />
-                        </div>
-                        <fieldset>
-                            <legend className="mb-2 text-sm font-medium">Expected values</legend>
-                            {data.dns_expected_values.map((value, index) => (
-                                <div key={index} className="mb-2 flex gap-2">
-                                    <InputField
-                                        labelHidden
-                                        label={`Expected value ${index + 1}`}
-                                        wrapperClassName="min-w-0 flex-1"
-                                        value={value}
-                                        onChange={(event) => setDnsValue(index, event.target.value)}
-                                    />
-                                    {data.dns_expected_values.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                form.setData(
-                                                    'dns_expected_values',
-                                                    data.dns_expected_values.filter(
-                                                        (_, position) => position !== index,
-                                                    ),
-                                                )
-                                            }
-                                        >
-                                            Remove value {index + 1}
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    form.setData('dns_expected_values', [
-                                        ...data.dns_expected_values,
-                                        '',
-                                    ])
-                                }
-                                className="ui-button"
-                                data-variant="secondary"
-                            >
-                                Add value
-                            </button>
-                            {nestedErrors(errors, 'dns_expected_values').map((message) => (
-                                <p key={message} role="alert" className="ui-field-error">
-                                    {message}
-                                </p>
-                            ))}
-                        </fieldset>
-                        <Field
-                            name="dns_resolver"
-                            label="Resolver"
-                            value={data.dns_resolver}
-                            onChange={bind('dns_resolver')}
-                            error={errors.dns_resolver}
-                            hint="Optional public IP address. Leave empty for the default resolver."
-                        />
-                    </Section>
-                )}
-
-                {data.type === 'heartbeat' && (
-                    <Section legend="Heartbeat">
-                        <Field
-                            name="heartbeat_grace_seconds"
-                            label="Grace period (seconds)"
-                            value={data.heartbeat_grace_seconds}
-                            onChange={bind('heartbeat_grace_seconds')}
-                            error={errors.heartbeat_grace_seconds}
-                            hint="Extra time allowed after each interval before the heartbeat counts as missed."
-                            numeric
-                            required
-                        />
-                    </Section>
-                )}
-            </fieldset>
-            <div className="ui-actions">
-                <Button
-                    type="submit"
-                    busy={mutation.phase === 'pending' || form.processing}
-                    busyLabel="Saving…"
-                    disabled={mutation.locked}
-                >
-                    {submitLabel}
-                </Button>
-                <Link className="ui-button" data-variant="secondary" href={cancelUrl}>
-                    Cancel
-                </Link>
-            </div>
-        </form>
+                        </Section>
+                    )}
+                </fieldset>
+                {actionsTarget === undefined
+                    ? actions
+                    : actionsTarget && createPortal(actions, actionsTarget)}
+            </form>
+        </FieldRequirements>
     );
 }

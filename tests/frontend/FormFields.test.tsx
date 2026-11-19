@@ -6,6 +6,9 @@ import { expect, test, vi } from 'vitest';
 import ChoiceField from '../../resources/js/components/ui/ChoiceField';
 import SelectField from '../../resources/js/components/ui/SelectField';
 import TextareaField from '../../resources/js/components/ui/TextareaField';
+import FieldRequirements from '../../resources/js/components/ui/FieldRequirements';
+import InputField from '../../resources/js/components/ui/InputField';
+import RepeaterRow from '../../resources/js/components/ui/RepeaterRow';
 import FormField from '../../resources/js/components/ui/FormField';
 
 test('preserves multiline drafts and ref while updating accessible validation', async () => {
@@ -132,3 +135,70 @@ test('supports composed controls and hidden labels without unsafe error markup',
     expect(screen.getByRole('alert').querySelector('script')).toBeNull();
     expect(screen.getByRole('textbox', { name: 'Compact notes' })).toBeInTheDocument();
 });
+
+test('shares full-width repeated fields and icon actions while respecting a disabled form group', async () => {
+    const user = userEvent.setup();
+    const add = vi.fn();
+    const remove = vi.fn();
+    const view = render(
+        <RepeaterRow addLabel="Add entry" onAdd={add} removeLabel="Remove entry" onRemove={remove}>
+            <InputField label="Entry" defaultValue="preserved" />
+        </RepeaterRow>,
+    );
+    const row = screen.getByLabelText('Entry').closest('.ui-repeater-row');
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Add entry' }));
+    expect(row).toContainElement(screen.getByRole('button', { name: 'Remove entry' }));
+    expect(screen.getByRole('button', { name: 'Add entry' })).toHaveTextContent('');
+    await user.click(screen.getByRole('button', { name: 'Add entry' }));
+    await user.click(screen.getByRole('button', { name: 'Remove entry' }));
+    expect(add).toHaveBeenCalledOnce();
+    expect(remove).toHaveBeenCalledOnce();
+    view.rerender(
+        <fieldset disabled>
+            <RepeaterRow
+                addLabel="Add entry"
+                onAdd={add}
+                removeLabel="Remove entry"
+                onRemove={remove}
+            >
+                <InputField label="Entry" defaultValue="preserved" />
+            </RepeaterRow>
+        </fieldset>,
+    );
+    expect(screen.getByRole('button', { name: 'Add entry' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove entry' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Add entry' }));
+    expect(add).toHaveBeenCalledOnce();
+});
+
+test.each([true, false])(
+    'shares required markers across field wrappers only for mixed forms: %s',
+    (hasOptionalFields) => {
+        render(
+            <FieldRequirements hasOptionalFields={hasOptionalFields}>
+                <InputField label="Required text" required />
+                <InputField label="Optional text" />
+                <TextareaField label="Required notes" required />
+                <SelectField label="Required choice" required>
+                    <option value="one">One</option>
+                </SelectField>
+                <ChoiceField label="Required consent" required />
+            </FieldRequirements>,
+        );
+        for (const label of [
+            'Required text',
+            'Required notes',
+            'Required choice',
+            'Required consent',
+        ]) {
+            const input = screen.getByLabelText<HTMLInputElement>(label);
+            expect(input).toBeRequired();
+            const marker = input.labels?.[0]?.querySelector('.ui-required-indicator');
+            if (hasOptionalFields) expect(marker).toHaveAttribute('aria-hidden', 'true');
+            else expect(marker).toBeNull();
+        }
+        const optional = screen.getByLabelText<HTMLInputElement>('Optional text');
+        expect(optional).not.toBeRequired();
+        expect(optional.labels?.[0]?.querySelector('.ui-required-indicator')).toBeNull();
+    },
+);

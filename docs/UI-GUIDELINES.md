@@ -411,3 +411,19 @@ La creazione riusa ChannelForm nel componente Modal nativo. Focus iniziale al pr
 Ogni ChannelRow è una card .ui-panel nominata e focalizzabile programmaticamente: nome 20px, destinazione mascherata 18px, metadati/stato 16px. La collezione server resta limitata a 25; paginazione locale di 10 card solo quando i risultati filtrati superano 10. Pagination riusa lo stesso componente delle liste monitor/incidents, con strategia alternativa a pulsanti locali, mantenendo invariati i link delle liste server. Le righe filtrate/fuori pagina sono hidden, senza smontare editor, codici o quiet hours: nessuna perdita di bozze; ricerca/paginazione restano bloccate durante lavoro foreground.
 
 Channels separa le card visibili con un gap di 24px nel contenitore condiviso ui-channel-list, indipendente dalle righe hidden. Lo stato usa Badge a 16px: Active/success verde, Paused/warning ambra, Waiting for code/info blu, Not verified/danger rosso. Le label rimangono presenti, quindi il colore non è l’unico segnale; palette light/dark condivisa senza nuovi colori fissi.
+
+
+## Notifications — componenti comuni nelle quattro pagine, 2026-11-19
+
+NotificationCollection è condiviso da Channels e Policies: SearchPicker e creazione nel titolo,
+Modal con bozze conservate e Pagination locale da 10. PolicyRow usa card con nome 20px, testo 16px,
+gap 24px e badge default/custom. Deliveries usa OperationalList con controlsTarget per filtri compatti
+e Refresh con icona nello stesso slot del titolo; card con dati 16px/nome canale 18px, pagine server
+da 10 e navigazione solo quando necessaria. DeliveryStatusBadge condivide i colori anche nel dettaglio
+incidente. Nessuna sostituzione del testo dei pulsanti durante letture: PageLoader centrale.
+
+Assignments usa SearchPicker dei monitor nel titolo e la stessa Modal per EscalationEditor,
+esportato dal pannello monitor per evitare duplicazione delle regole di assegnazione. Card del monitor
+con policy effettiva leggibile e badge: assente danger, default success, override info. Permessi e
+protezione delle bozze governano anche i controlli portati nel titolo. I layout compatti vanno a capo
+su mobile mantenendo campi e pulsanti accessibili, senza allargare il documento.

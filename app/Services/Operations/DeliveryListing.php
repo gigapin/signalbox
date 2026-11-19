@@ -37,7 +37,7 @@ final readonly class DeliveryListing
             $query->where('status', $filter->state);
         }
 
-        return $query->orderByRaw('created_at DESC NULLS LAST')->orderByDesc('id')->paginate(20, [
+        return $query->orderByRaw('created_at DESC NULLS LAST')->orderByDesc('id')->paginate(10, [
             'id', 'team_id', 'incident_id', 'channel_id', 'channel_type', 'kind', 'step_index',
             'status', 'attempts', 'response', 'sent_at', 'created_at',
         ], 'page', $filter->page);

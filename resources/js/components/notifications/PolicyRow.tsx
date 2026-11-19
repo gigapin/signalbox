@@ -1,4 +1,5 @@
 /** Show one escalation policy with its steps and offer editing and deletion to managers. */
+import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
@@ -57,19 +58,25 @@ export default function PolicyRow({
     }
 
     return (
-        <li hidden={hidden} className="ui-operation-row">
-            <p className="font-medium">
+        <li
+            id={`policy-${policy.id}`}
+            tabIndex={-1}
+            aria-labelledby={`policy-${policy.id}-heading`}
+            hidden={hidden}
+            className="ui-panel ui-notification-card"
+        >
+            <h3 id={`policy-${policy.id}-heading`} className="ui-notification-name">
                 {policy.name}
-                {policy.isDefault && (
-                    <span className="ml-2 text-sm text-ui-success">Team default</span>
-                )}
-            </p>
-            <p className="text-xs text-[var(--color-ui-muted)]">
+                <Badge tone={policy.isDefault ? 'success' : 'info'}>
+                    {policy.isDefault ? 'Team default' : 'Custom policy'}
+                </Badge>
+            </h3>
+            <p className="text-base text-[var(--color-ui-muted)]">
                 {policy.monitorCount === 0
                     ? 'No monitor chose it explicitly.'
                     : `Chosen by ${policy.monitorCount} monitor${policy.monitorCount === 1 ? '' : 's'}.`}
             </p>
-            <ol className="mt-2 grid gap-1 text-sm" aria-label={`Steps of ${policy.name}`}>
+            <ol className="mt-3 grid gap-2 text-base" aria-label={`Steps of ${policy.name}`}>
                 {policy.steps.map((step, index) => (
                     <li key={index}>
                         <span className="text-[var(--color-ui-text)]">
@@ -119,7 +126,7 @@ export default function PolicyRow({
             )}
             <MutationFeedback
                 phase={mutation.phase}
-                reviewUrl={path.split('/escalation-policies')[0] + '/notifications'}
+                reviewUrl={path.split('/escalation-policies')[0] + '/notifications/policies'}
                 success="Request accepted"
                 onReviewed={mutation.acknowledge}
             />

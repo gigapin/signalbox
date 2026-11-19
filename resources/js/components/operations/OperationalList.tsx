@@ -21,7 +21,7 @@ export interface OperationalFilters {
     state: string | null;
 }
 
-/** Shared safe response envelope for a fixed twenty-row page. */
+/** Shared safe response envelope for a bounded server page. */
 export interface OperationalPageProps<T> extends MonitorPageProps {
     /** Current bounded collection and exact pagination metadata. */
     listing: { data: T[]; currentPage: number; lastPage: number; total: number };
@@ -41,6 +41,8 @@ interface ListProps {
     monitorOptions?: { id: number; name: string }[];
     /** Heading destination owned by the authorized shell; null waits for mounting. */
     refreshTarget?: HTMLElement | null;
+    /** Optional heading destination for compact filter controls. */
+    controlsTarget?: HTMLElement | null;
     /** Hide redundant snapshot text and single-page pagination. */
     compact?: boolean;
     /** Application-built collection path. */
@@ -79,6 +81,7 @@ export default function OperationalList({
     generatedAt,
     monitorOptions,
     refreshTarget,
+    controlsTarget,
     compact = false,
     children,
 }: ListProps) {
@@ -141,80 +144,95 @@ export default function OperationalList({
         </Button>
     );
 
-    return (
-        <>
-            <PageLoader active={read.loading} />
-            <form
-                aria-label="Filter results"
-                onSubmit={submit}
-                className="ui-panel ui-incident-filters"
-            >
-                {monitorOptions === undefined ? (
-                    <InputField
-                        label="Monitor name"
-                        id="operations-q"
-                        maxLength={100}
-                        disabled={read.loading}
-                        value={draft.q}
-                        onChange={(event) => setDraft({ ...draft, q: event.target.value })}
-                    />
-                ) : (
-                    <SelectField
-                        label="Monitor name"
-                        id="operations-monitor"
-                        disabled={read.loading}
-                        value={monitorSelection}
-                        onChange={(event) =>
-                            setDraft({
-                                ...draft,
-                                q: event.target.value.startsWith('q:') ? draft.q : '',
-                                monitorId:
-                                    event.target.value === '' || event.target.value.startsWith('q:')
-                                        ? null
-                                        : Number(event.target.value),
-                            })
-                        }
-                    >
-                        <option value="">All monitors</option>
-                        {draft.q && !draft.monitorId && (
-                            <option value={`q:${draft.q}`}>Search: {draft.q}</option>
-                        )}
-                        {draft.monitorId &&
-                            !monitorOptions.some((monitor) => monitor.id === draft.monitorId) && (
-                                <option value={draft.monitorId}>Unavailable monitor</option>
-                            )}
-                        {monitorOptions.map((monitor) => (
-                            <option key={monitor.id} value={monitor.id}>
-                                {monitor.name}
-                            </option>
-                        ))}
-                    </SelectField>
-                )}
-                <SelectField
-                    label="State"
-                    id="operations-state"
+    const combinedControls = controlsTarget !== undefined && refreshTarget === controlsTarget;
+    const controls = (
+        <form
+            aria-label="Filter results"
+            onSubmit={submit}
+            className={
+                controlsTarget === undefined
+                    ? 'ui-panel ui-incident-filters'
+                    : 'ui-notification-filters'
+            }
+        >
+            {monitorOptions === undefined ? (
+                <InputField
+                    label="Monitor name"
+                    labelHidden={controlsTarget !== undefined}
+                    placeholder="Find monitors"
+                    id="operations-q"
+                    maxLength={100}
                     disabled={read.loading}
-                    value={draft.state ?? ''}
-                    onChange={(event) => setDraft({ ...draft, state: event.target.value || null })}
+                    value={draft.q}
+                    onChange={(event) => setDraft({ ...draft, q: event.target.value })}
+                />
+            ) : (
+                <SelectField
+                    label="Monitor name"
+                    id="operations-monitor"
+                    disabled={read.loading}
+                    value={monitorSelection}
+                    onChange={(event) =>
+                        setDraft({
+                            ...draft,
+                            q: event.target.value.startsWith('q:') ? draft.q : '',
+                            monitorId:
+                                event.target.value === '' || event.target.value.startsWith('q:')
+                                    ? null
+                                    : Number(event.target.value),
+                        })
+                    }
                 >
-                    <option value="">Any</option>
-                    {states.map((state) => (
-                        <option key={state} value={state}>
-                            {state.charAt(0).toUpperCase() + state.slice(1)}
+                    <option value="">All monitors</option>
+                    {draft.q && !draft.monitorId && (
+                        <option value={`q:${draft.q}`}>Search: {draft.q}</option>
+                    )}
+                    {draft.monitorId &&
+                        !monitorOptions.some((monitor) => monitor.id === draft.monitorId) && (
+                            <option value={draft.monitorId}>Unavailable monitor</option>
+                        )}
+                    {monitorOptions.map((monitor) => (
+                        <option key={monitor.id} value={monitor.id}>
+                            {monitor.name}
                         </option>
                     ))}
                 </SelectField>
-                <div className="ui-actions">
-                    <Button type="submit" disabled={read.loading}>
-                        Apply filters
-                    </Button>
-                    {(filters.q || filters.state || filters.monitorId) && (
-                        <Link className="ui-button" data-variant="secondary" href={path}>
-                            Clear filters
-                        </Link>
-                    )}
-                </div>
-            </form>
+            )}
+            <SelectField
+                label="State"
+                labelHidden={controlsTarget !== undefined}
+                id="operations-state"
+                disabled={read.loading}
+                value={draft.state ?? ''}
+                onChange={(event) => setDraft({ ...draft, state: event.target.value || null })}
+            >
+                <option value="">Any state</option>
+                {states.map((state) => (
+                    <option key={state} value={state}>
+                        {state.charAt(0).toUpperCase() + state.slice(1)}
+                    </option>
+                ))}
+            </SelectField>
+            <div className="ui-actions">
+                <Button type="submit" disabled={read.loading}>
+                    Apply filters
+                </Button>
+                {(filters.q || filters.state || filters.monitorId) && (
+                    <Link className="ui-button" data-variant="secondary" href={path}>
+                        Clear filters
+                    </Link>
+                )}
+            </div>
+            {combinedControls && refresh}
+        </form>
+    );
+
+    return (
+        <>
+            <PageLoader active={read.loading} />
+            {controlsTarget === undefined
+                ? controls
+                : controlsTarget && createPortal(controls, controlsTarget)}
             {rejectedFilters.length > 0 && (
                 <Alert title="Some filters were ignored" tone="warning" announce="assertive">
                     Invalid controls: {rejectedFilters.join(', ')}.
@@ -237,7 +255,7 @@ export default function OperationalList({
                     {refreshTarget === undefined && refresh}
                 </div>
             )}
-            {refreshTarget && createPortal(refresh, refreshTarget)}
+            {refreshTarget && !combinedControls && createPortal(refresh, refreshTarget)}
             <section aria-label="Results" aria-busy={read.loading}>
                 {children}
             </section>

@@ -26,7 +26,7 @@ between pages uses the existing unsaved-draft guard. The four old in-content wor
 removed. The bounded safe channel/policy projection is reused for compatibility and policy editing.
 
 Assignments exposes safe local monitor choices and loads one selected monitor's existing
-monitorEscalation projection. It reuses EscalationPanel and the existing monitor PATCH action rather
+monitorEscalation projection. It reuses EscalationEditor in the shared Modal and the existing monitor PATCH action rather
 than introducing a bulk mutation or new permission. Read navigation uses the shared PageLoader/error
 lifecycle; the default/override semantics, refusal handling and form protection are unchanged.
 Monitor configuration, channel credentials and foreign identities are never projected by this page.
@@ -44,7 +44,7 @@ focus/click and navigates locally to the chosen card. Each channel uses a larger
 The existing bounded channel projection remains unchanged. Local ten-item pagination appears only
 for more than ten matching channels; hidden rows stay mounted to preserve drafts and verification
 values. Search/page changes do not issue HTTP requests or change the domain permission/quota rules.
-The First add a channel introduction has been removed. Policies retains its existing workflow.
+The First add a channel introduction has been removed. Policies shares the same NotificationCollection workflow, preserving its existing PolicyForm/PolicyRow mutations.
 
 ## Routes, permissions and navigation
 
@@ -74,7 +74,7 @@ selection and current page, never an unapplied draft. Apply filters and Refresh 
 a shared PageLoader portal shows a spinner at the viewport center, outside document flow. Results
 remain mounted, and preserveState/preserveScroll remain enabled. TeamSwitcher announces the request lock without inserting a visible header row, avoiding
 a busy-state layout shift. Single-page pagination is omitted; previous/next
-and out-of-range recovery remain. Delivery views retain their existing presentation.
+and out-of-range recovery remain. Delivery views use the compact heading variant described below.
 
 MaintenancePageController projects `monitorOptions` as sorted `{id, name}` pairs for every monitor of
 the authorized route team, including those without windows, with explicit team predicates and
@@ -92,9 +92,9 @@ Delivery filtering is unchanged. No migration, dependency or application-service
 
 ## Bounded reads and snapshot semantics
 
-MaintenanceListing and DeliveryListing each return twenty rows and an exact total. Both add explicit
+MaintenanceListing returns twenty rows per page; DeliveryListing returns ten. Both include an exact total. Both add explicit
 team predicates alongside TeamScope and constrain related incident/monitor identities. Eager relations
-contain identities/names only. Relation query counts stay constant with one versus twenty visible rows:
+contain identities/names only. Relation query counts stay constant with one versus a full page of visible rows:
 three queries for the maintenance service and five for deliveries, as asserted by isolated PostgreSQL
 tests. These service counts exclude controller, authentication and shared navigation work; they are not
 production latency or load measurements.
@@ -151,3 +151,31 @@ never automatically replayed. This flow is separate from retryable notification 
 No migration, dependency, environment setting, provider call or worker restart is required. Rebuild the
 normal frontend assets and reload the application. Browser/VoiceOver/native zoom, real sessions and
 provider delivery require their separate acceptance evidence; DOM/HTTP doubles do not certify them.
+
+## Consistent notification destinations — 2026-11-19
+
+NotificationCollection now owns the shared heading SearchPicker, guarded creation Modal and local
+Pagination for both Channels and Policies. Rows remain mounted while filtered or off-page; ordinary
+modal dismissal retains drafts, confirmed acceptance resets them, and quota/permission loss removes
+the create editor. Policies retain the configured maximum of ten; pagination appears only if the
+matching collection exceeds ten. Policy cards use the same 24px spacing and readable typography,
+with explicit Team default (success) and Custom policy (info) badges. Redundant introduction text
+and the separate search/create cards are removed.
+
+Deliveries uses OperationalList's optional controlsTarget to put compact monitor-name and state
+filters, Apply filters and the existing icon Refresh in PageHeading. Compact mode removes snapshot
+summary text and single-page navigation. Server pages contain ten redacted records, ordered as before;
+bounded previous/next links and out-of-range recovery remain. Cards retain incident links, channel
+history, reason, attempts, local timestamps and redacted response. The timestamp label explicitly says
+Accepted by provider rather than implying recipient reading. DeliveryStatusBadge is shared with the
+incident DeliveryLog: pending warning, sent success, failed danger, suppressed info, unknown neutral.
+Refresh retains accepted filters/current page; requests use the existing central loader and keep rows
+mounted on failure. Maintenance retains its existing filter-card presentation and twenty-row pages.
+
+Assignments places the existing safe team-monitor choices in a heading SearchPicker. Selection loads
+one exact monitor through the existing guarded GET; search alone does not change assignments. A
+readable card shows the effective policy and No notifications / Team default / Monitor override badge.
+Authorized monitor managers open Assign policy in the shared Modal; the existing EscalationEditor
+retains clean-baseline synchronization, dirty protection, unavailable-policy validation and PATCH
+endpoint. Dismissal preserves the unsent choice; pending work prevents close; field refusals remain
+in the dialog and accepted saves close it. Viewers retain only the current card and monitor search.

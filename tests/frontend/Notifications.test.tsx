@@ -1,6 +1,6 @@
 /** Exercise the notification settings page, monitor escalation choice and delivery log through actual Inertia components. */
 import { router } from '@inertiajs/react';
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import EscalationPanel from '../../resources/js/components/notifications/EscalationPanel';
@@ -131,7 +131,7 @@ test('shows masked channels and policies on separate read-only member pages', ()
     expect(screen.queryByRole('button', { name: 'Edit policy' })).not.toBeInTheDocument();
 });
 
-test('shows each configuration empty state on its dedicated page', () => {
+test('shows each configuration empty state on its dedicated page', async () => {
     const props = pageProps(true, { channels: [], policies: [], unnotifiedMonitors: 3 });
     const view = renderInertia('Signalbox', Index, props);
     expect(screen.getByText('No channels yet.')).toBeInTheDocument();
@@ -140,7 +140,12 @@ test('shows each configuration empty state on its dedicated page', () => {
     view.unmount();
     renderInertia('Signalbox', Policies, props);
     expect(screen.getByText('No escalation policies yet.')).toBeInTheDocument();
-    expect(screen.getByText('Create a channel first.')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Add policy' }));
+    expect(
+        within(screen.getByRole('dialog', { name: 'Add a policy' })).getByText(
+            'Create a channel first.',
+        ),
+    ).toBeInTheDocument();
 });
 
 test('creates a channel with the fields of the chosen type and announces field errors', async () => {
@@ -300,7 +305,8 @@ test('builds policy steps with increasing delays and submits integers', async ()
         'Step 2 must wait longer than the step before it.',
     );
 
-    const form = screen.getByRole('heading', { name: 'Add a policy' }).parentElement as HTMLElement;
+    await user.click(screen.getByRole('button', { name: 'Add policy' }));
+    const form = screen.getByRole('dialog', { name: 'Add a policy' });
     await user.type(within(form).getByLabelText('Policy name'), 'Night shift');
     await user.click(within(form).getByLabelText(/Team default/));
     const steps = within(form).getByRole('list', { name: 'Escalation steps' });
@@ -547,4 +553,65 @@ test.each([
     );
     expect(badge).toHaveClass('ui-badge');
     expect(badge).toHaveAttribute('data-tone', tone);
+});
+
+test('policy creation preserves a dismissed draft and resets after confirmed acceptance', async () => {
+    const user = userEvent.setup();
+    let visit: NonNullable<Parameters<typeof router.visit>[1]> | undefined;
+    vi.spyOn(router, 'visit').mockImplementation((_url, options) => {
+        visit = options;
+    });
+    renderInertia('Signalbox', Policies, pageProps(true));
+    const trigger = screen.getByRole('button', { name: 'Add policy' });
+    expect(trigger.closest('header')).toBe(
+        screen.getByRole('heading', { level: 1 }).closest('header'),
+    );
+    await user.click(trigger);
+    let modal = screen.getByRole('dialog', { name: 'Add a policy' });
+    await user.type(within(modal).getByLabelText('Policy name'), 'Night shift');
+    await user.click(within(modal).getByRole('button', { name: 'Close' }));
+    await user.click(trigger);
+    modal = screen.getByRole('dialog', { name: 'Add a policy' });
+    expect(within(modal).getByLabelText('Policy name')).toHaveValue('Night shift');
+    await user.click(within(modal).getByRole('button', { name: 'Add policy' }));
+    expect(within(modal).getByRole('button', { name: 'Close' })).toBeDisabled();
+    fireEvent(modal, new Event('cancel', { bubbles: true, cancelable: true }));
+    expect(modal).toHaveAttribute('open');
+    act(() => {
+        visit?.onError?.({ name: 'Name refused' });
+        visit?.onFinish?.({} as never);
+    });
+    expect(within(modal).getByText('Name refused')).toBeInTheDocument();
+    await user.click(within(modal).getByRole('button', { name: 'Add policy' }));
+    act(() => {
+        visit?.onSuccess?.({} as never);
+        visit?.onFinish?.({} as never);
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(trigger);
+    expect(
+        within(screen.getByRole('dialog', { name: 'Add a policy' })).getByLabelText('Policy name'),
+    ).toHaveValue('');
+});
+
+test('policy search hides cards without discarding an unsent editor', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Policies, pageProps(true));
+    const row = screen.getByRole('list', { name: 'Escalation policies' }).firstElementChild!;
+    expect(row).toHaveClass('ui-panel', 'ui-notification-card');
+    expect(within(row as HTMLElement).getByText('Team default')).toHaveAttribute(
+        'data-tone',
+        'success',
+    );
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Edit policy' }));
+    const name = within(row as HTMLElement).getByLabelText('Policy name');
+    await user.type(name, ' draft');
+    const search = screen.getByRole('combobox', { name: 'Find escalation policies' });
+    await user.type(search, 'missing');
+    expect(row).toHaveAttribute('hidden');
+    expect(screen.getByText('No escalation policies match this search.')).toBeInTheDocument();
+    await user.clear(search);
+    expect(row).not.toHaveAttribute('hidden');
+    expect(name).toHaveValue('Primary draft');
+    expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
 });

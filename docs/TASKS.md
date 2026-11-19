@@ -1,5 +1,11 @@
 # Signalbox — Piano dei task
 
+## UI — Spaziatura e badge stato canali — 2026-11-19
+
+- [x] Completato: ui-channel-list separa le card visibili con gap 24px e azzera i loro margini concorrenti, mantenendo il padding esterno 12px. Le righe hidden non lasciano spazi vuoti. ChannelRow riusa Badge a 16px: Active verde/success, Paused ambra/warning, Waiting for code blu/info, Not verified rosso/danger. Label testuali e semantica di stato preesistente preservate; palette light/dark condivisa, nessun colore fisso aggiunto.
+- File: resources/js/components/notifications/ChannelRow.tsx e ChannelsPage.tsx, resources/css/app.css, tests/frontend/Notifications.test.tsx, docs/UI-GUIDELINES.md e questo piano. Aggiunta matrice dei quattro stati e toni con Badge reale; tipo union chiuso per rendere esaustiva la mappa dei colori.
+- Verifiche: **41/41 test in 3 file, 9,15 s** (Notifications/ChannelsPage/UiPrimitives), npm run check **exit 0** (ESLint/Prettier/TypeScript e 6 qualità), build **exit 0**. Non ripetuti suite frontend integrale (560/560 prima di questa modifica), browser, backend/PHP-CS-Fixer/Larastan, audit e CI remota per la rifinitura locale di presentazione. Nessuna dipendenza, migration, dato, .env o servizio applicativo modificato; public/hot preservato, asset ricostruiti. Git/gh non eseguiti. Prossimo passo: controllo visivo dell’utente ed eventuali altre rifiniture.
+
 ## UI — Channels: modal, ricerca e card — 2026-11-19
 
 - [x] Completato: Add channel nello slot azioni accanto al titolo apre un Modal nativo condiviso; la barra SearchPicker sta alla sua sinistra senza card Find channels. Focus/click apre suggerimenti di soli nomi canale, filtrati durante digitazione; frecce/Enter/Escape e scelta puntatore, selezione che rivela e focalizza la card anche oltre la prima pagina. Rimosso First add a channel e il resto dell’introduzione. Card ChannelRow separate con nome 20px, destinazione 18px, metadati/stato 16px.

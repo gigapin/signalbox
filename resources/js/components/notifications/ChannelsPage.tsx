@@ -120,7 +120,7 @@ function Workspace({ actionsTarget }: WorkspaceProps) {
                 {channels.length > 0 && matching.length === 0 && (
                     <p role="status">No channels match this search.</p>
                 )}
-                <ul aria-label="Notification channels">
+                <ul aria-label="Notification channels" className="ui-channel-list">
                     {channels.map((channel) => (
                         <ChannelRow
                             key={channel.id}

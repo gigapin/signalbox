@@ -1,5 +1,6 @@
 /** Show one notification channel with its verification state and the changes its state admits. */
 import Button from '../ui/Button';
+import Badge, { type Tone } from '../ui/Badge';
 import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
@@ -30,11 +31,22 @@ interface ChannelRowProps {
     codeLength: number;
 }
 
+/** Human-readable channel lifecycle states, independent of provider configuration. */
+type ChannelStateLabel = 'Active' | 'Paused' | 'Waiting for code' | 'Not verified';
+
+/** Distinct semantic colors complement the required textual status labels. */
+const STATE_TONES: Record<ChannelStateLabel, Tone> = {
+    Active: 'success',
+    Paused: 'warning',
+    'Waiting for code': 'info',
+    'Not verified': 'danger',
+};
+
 /**
  * @param channel Displayed channel.
  * @returns Readable state combining verification and activation.
  */
-export function channelStateLabel(channel: ChannelView): string {
+export function channelStateLabel(channel: ChannelView): ChannelStateLabel {
     if (channel.isActive) {
         return 'Active';
     }
@@ -67,6 +79,7 @@ export default function ChannelRow({
     const guard = useNavigationGuard();
     const blocked = mutation.locked || guard.busy;
     const codeId = `channel-${channel.id}-code`;
+    const state = channelStateLabel(channel);
 
     function sendCode() {
         if (blocked) return;
@@ -116,7 +129,7 @@ export default function ChannelRow({
                     {channel.name}{' '}
                     <span className="ui-channel-family">· {type?.label ?? channel.type}</span>
                 </h3>
-                <p className="text-base">{channelStateLabel(channel)}</p>
+                <Badge tone={STATE_TONES[state]}>{state}</Badge>
             </div>
             <p className="ui-channel-destination">{channel.hint}</p>
             <p className="text-base text-[var(--color-ui-muted)]">

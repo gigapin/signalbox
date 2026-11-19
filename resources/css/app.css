@@ -1555,6 +1555,21 @@
         background: var(--color-ui-raised);
     }
 
+    /* A fixed list gap separates visible cards even when intervening rows are hidden. */
+    .ui-channel-list {
+        display: grid;
+        gap: var(--spacing-ui-6);
+        padding-block: var(--spacing-ui-3);
+    }
+
+    .ui-channel-list > .ui-channel-card {
+        margin-block: 0;
+    }
+
+    .ui-channel-card .ui-badge {
+        font-size: 1rem;
+    }
+
     .ui-channel-card {
         font-size: 1rem;
         line-height: 1.6;

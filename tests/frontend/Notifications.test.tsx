@@ -534,3 +534,17 @@ test('protects a retained creation draft when leaving for the policy submenu pag
     ).toHaveValue('Unsaved channel');
     expect(visit).not.toHaveBeenCalled();
 });
+
+test.each([
+    ['Active', { isActive: true, verifiedAt: '2026-11-19T10:00:00Z' }, 'success'],
+    ['Paused', { isActive: false, verifiedAt: '2026-11-19T10:00:00Z' }, 'warning'],
+    ['Waiting for code', { isActive: false, verifiedAt: null, verificationPending: true }, 'info'],
+    ['Not verified', { isActive: false, verifiedAt: null, verificationPending: false }, 'danger'],
+] as const)('shows %s in a distinct semantic channel-state badge', (label, state, tone) => {
+    renderInertia('Signalbox', Index, pageProps(false, { channels: [channel(1, state)] }));
+    const badge = within(screen.getByRole('list', { name: 'Notification channels' })).getByText(
+        label,
+    );
+    expect(badge).toHaveClass('ui-badge');
+    expect(badge).toHaveAttribute('data-tone', tone);
+});

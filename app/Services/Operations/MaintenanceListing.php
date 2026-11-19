@@ -27,6 +27,10 @@ final readonly class MaintenanceListing
             ->with('monitor:id,team_id,name')
             ->whereHas('monitor', function (Builder $monitor) use ($teamId, $filter): void {
                 $monitor->where('team_id', $teamId);
+                if ($filter->monitorId !== null) {
+                    $monitor->whereKey($filter->monitorId);
+                }
+
                 if ($filter->q !== '') {
                     // strpos treats percent and underscore as literal search characters.
                     $monitor->whereRaw('strpos(lower(name), lower(?)) > 0', [$filter->q]);

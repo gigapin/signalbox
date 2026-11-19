@@ -22,6 +22,10 @@ const list = {
 /** Single real-shaped window at the fixed snapshot, with a next page. */
 const maintenanceProps = {
     ...list,
+    monitorOptions: [
+        { id: 2, name: 'API' },
+        { id: 3, name: 'Worker' },
+    ],
     states: ['upcoming', 'ongoing', 'finished'],
     listing: {
         data: [
@@ -102,6 +106,53 @@ test('maintenance enters existing monitor management and preserves filters in bo
     expect(screen.queryByRole('button', { name: 'Delete window' })).not.toBeInTheDocument();
 });
 
+test('maintenance removes redundant text and mounts its icon refresh in the heading', () => {
+    renderInertia('Signalbox', Maintenance, {
+        ...maintenanceProps,
+        filters: { q: '', state: null, monitorId: null },
+        listing: { ...maintenanceProps.listing, total: 1, lastPage: 1 },
+    });
+    const header = screen.getByRole('heading', { level: 1, name: 'Maintenance' }).closest('header');
+    expect(header?.querySelector('.ui-description')).toBeNull();
+    const refresh = within(header!).getByRole('button', { name: 'Refresh results' });
+    expect(refresh.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByText(/Maintenance prevents new incidents/)).not.toBeInTheDocument();
+    expect(
+        screen.queryByRole('link', { name: 'Choose a monitor to schedule maintenance' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/results. Updated/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Page 1 of 1')).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Maintenance' }).querySelector('caption')).toHaveClass(
+        'sr-only',
+    );
+    expect(screen.getByText('Scroll horizontally to view all columns when needed.')).toHaveClass(
+        'sr-only',
+    );
+});
+
+test('maintenance selects an exact team monitor and preserves its ID in page links', async () => {
+    const user = userEvent.setup();
+    const read = vi.spyOn(router, 'get').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Maintenance, {
+        ...maintenanceProps,
+        filters: { q: '', state: null, monitorId: 2 },
+    });
+    const picker = screen.getByRole('combobox', { name: 'Monitor name' });
+    expect(picker).toHaveValue('2');
+    expect(screen.getByRole('link', { name: 'Clear filters' })).toHaveAttribute(
+        'href',
+        '/teams/7/maintenance',
+    );
+    expect(screen.getByRole('link', { name: 'Next' })).toHaveAttribute(
+        'href',
+        '/teams/7/maintenance?monitor_id=2&page=2',
+    );
+    await user.selectOptions(picker, '3');
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    expect(read.mock.calls[0]?.[0]).toBe('/teams/7/maintenance?monitor_id=3');
+});
+
 test('a failed filter read retains rows and selection until explicit retry', async () => {
     const user = userEvent.setup();
     let callbacks: NonNullable<Parameters<typeof router.get>[2]> | undefined;
@@ -114,6 +165,9 @@ test('a failed filter read retains rows and selection until explicit retry', asy
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
     expect(read.mock.calls[0]?.[0]).toBe('/teams/7/maintenance?q=API&state=finished');
     expect(screen.getByLabelText('State')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Apply filters' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Loading…' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading results…' })).toHaveClass('ui-page-loader');
     act(() => {
         callbacks?.onError?.({ filter: 'Refused' });
         callbacks?.onFinish?.({} as never);
@@ -132,10 +186,68 @@ test('refresh reads the accepted page and does not submit unaccepted search text
         ...maintenanceProps,
         listing: { ...maintenanceProps.listing, currentPage: 2 },
     });
-    await user.type(screen.getByLabelText('Monitor name'), ' draft');
+    await user.selectOptions(screen.getByLabelText('Monitor name'), '3');
     await user.click(screen.getByRole('button', { name: 'Refresh results' }));
     expect(read.mock.calls[0]?.[0]).toBe('/teams/7/maintenance?q=API&page=2');
 });
+
+test.each(['success', 'error', 'cancel'])(
+    'refresh shows a stable loader and keeps header notices out of flow until %s',
+    async (outcome) => {
+        const user = userEvent.setup();
+        let callbacks: NonNullable<Parameters<typeof router.get>[2]> | undefined;
+        const read = vi.spyOn(router, 'get').mockImplementation((_url, _data, options) => {
+            callbacks = options;
+            options?.onStart?.({} as never);
+        });
+        renderInertia('Signalbox', Maintenance, {
+            ...maintenanceProps,
+            auth: { user: { name: 'Owner', email: 'owner@example.test' } },
+            teamNavigation: {
+                selectedTeamId: 7,
+                teams: [{ id: 7, name: 'Synthetic team', role: 'owner' }],
+            },
+        });
+        const refresh = screen.getByRole('button', { name: 'Refresh results' });
+        const label = refresh.textContent;
+        const table = screen.getByRole('table', { name: 'Maintenance' });
+        await user.dblClick(refresh);
+        expect(read).toHaveBeenCalledOnce();
+        expect(read.mock.calls[0]?.[2]).toEqual(
+            expect.objectContaining({ preserveState: true, preserveScroll: true }),
+        );
+        expect(refresh.textContent).toBe(label);
+        expect(refresh).toBeDisabled();
+        expect(refresh.querySelector('.animate-spin')).toBeNull();
+        const loader = screen.getByRole('status', { name: 'Loading results…' });
+        expect(loader).toHaveClass('ui-page-loader');
+        expect(loader.parentElement).toBe(document.body);
+        expect(loader.querySelector('.animate-spin')).not.toBeNull();
+        expect(screen.getByRole('button', { name: 'Apply filters' })).toBeDisabled();
+        expect(screen.queryByRole('button', { name: 'Loading…' })).not.toBeInTheDocument();
+        expect(screen.getByRole('table', { name: 'Maintenance' })).toBe(table);
+        const notice = screen.getByText('Finish the current request before switching teams.');
+        expect(notice).toHaveClass('sr-only');
+        expect(screen.getByRole('button', { name: 'Switch team' })).toHaveAccessibleDescription(
+            notice.textContent,
+        );
+        act(() => {
+            if (outcome === 'error') callbacks?.onError?.({ filter: 'Refused' });
+            if (outcome === 'cancel') callbacks?.onCancel?.();
+            callbacks?.onFinish?.({} as never);
+        });
+        expect(refresh).toBeEnabled();
+        expect(screen.queryByRole('status', { name: 'Loading results…' })).not.toBeInTheDocument();
+        expect(refresh.querySelector('.animate-spin')).toBeNull();
+        expect(refresh.textContent).toBe(label);
+        expect(
+            screen.queryByText('Finish the current request before switching teams.'),
+        ).not.toBeInTheDocument();
+        expect(screen.getByRole('table', { name: 'Maintenance' })).toBe(table);
+        if (outcome !== 'success')
+            expect(screen.getByText('Results could not be loaded')).toBeInTheDocument();
+    },
+);
 
 test('out-of-range and invalid lists offer a safe first page and name rejected controls', () => {
     renderInertia('Signalbox', Maintenance, {

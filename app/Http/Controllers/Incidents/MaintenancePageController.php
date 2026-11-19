@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Presenters\Incidents\MaintenanceWindowPresenter;
 use App\Http\Requests\Operations\ListMaintenanceRequest;
 use App\Models\MaintenanceWindow;
+use App\Models\Monitor;
 use App\Models\Team;
 use App\Services\Operations\MaintenanceListing;
 use Carbon\CarbonImmutable;
@@ -47,7 +48,10 @@ final class MaintenancePageController extends Controller
                 'lastPage' => $page->lastPage(),
                 'total' => $page->total(),
             ],
-            'filters' => ['q' => $filter->q, 'state' => $filter->state],
+            'filters' => ['q' => $filter->q, 'state' => $filter->state, 'monitorId' => $filter->monitorId],
+            'monitorOptions' => Monitor::query()->where('team_id', $team)
+                ->orderBy('name')->orderBy('id')->get(['id', 'name'])
+                ->map(static fn (Monitor $monitor): array => ['id' => $monitor->id, 'name' => $monitor->name])->all(),
             'rejectedFilters' => $filter->rejected,
             'states' => ListMaintenanceRequest::STATES,
             'generatedAt' => $now->toIso8601String(),

@@ -13,18 +13,20 @@ final readonly class OperationalListFilter
      * @param string $q Trimmed search term, at most 100 characters.
      * @param string|null $state Accepted domain state or no restriction.
      * @param int $page One-based page with at most nine digits.
+     * @param int|null $monitorId Exact monitor identity for maintenance, independent of possibly duplicated names.
      * @param list<string> $rejected Invalid input names, never their values.
      */
-    private function __construct(public string $q, public ?string $state, public int $page, public array $rejected)
+    private function __construct(public string $q, public ?string $state, public int $page, public array $rejected, public ?int $monitorId = null)
     {
     }
 
     /**
      * @param array<array-key, mixed> $input Raw query controls.
      * @param list<string> $states States offered by this domain list.
+     * @param bool $withMonitor Whether this list supports an exact monitor selection.
      * @return self Accepted selection independent of the route tenant.
      */
-    public static function fromInput(array $input, array $states): self
+    public static function fromInput(array $input, array $states, bool $withMonitor = false): self
     {
         $rejected = [];
         $q = $input['q'] ?? '';
@@ -45,6 +47,16 @@ final readonly class OperationalListFilter
             $rejected[] = 'page';
         }
 
-        return new self(trim($q), $state, (int) $page, $rejected);
+        $monitorId = null;
+        if ($withMonitor && array_key_exists('monitor_id', $input)) {
+            $monitor = $input['monitor_id'];
+            if (!is_string($monitor) || preg_match('/^[1-9][0-9]{0,17}$/D', $monitor) !== 1) {
+                $rejected[] = 'monitor_id';
+            } else {
+                $monitorId = (int) $monitor;
+            }
+        }
+
+        return new self(trim($q), $state, (int) $page, $rejected, $monitorId);
     }
 }

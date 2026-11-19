@@ -36,6 +36,7 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
     const operation = useRef<AbortController | null>(null);
     const alive = useRef(false);
     const fieldId = useId();
+    const busyDescriptionId = useId();
 
     useEffect(() => {
         alive.current = true;
@@ -153,11 +154,19 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
                 variant="secondary"
                 busy={phase === 'pending'}
                 busyLabel="Switching team…"
+                aria-describedby={guard.busy ? busyDescriptionId : undefined}
+                title={
+                    guard.busy ? 'Finish the current request before switching teams.' : undefined
+                }
                 disabled={guard.busy || choice === '' || choice === String(activeTeamId)}
             >
                 Switch team
             </Button>
-            {guard.busy && <p role="status">Finish the current request before switching teams.</p>}
+            {guard.busy && (
+                <p id={busyDescriptionId} role="status" className="sr-only">
+                    Finish the current request before switching teams.
+                </p>
+            )}
             {phase === 'pending' && <p role="status">Switching team…</p>}
         </form>
     );

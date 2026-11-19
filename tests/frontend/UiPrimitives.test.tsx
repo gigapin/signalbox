@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import Alert from '../../resources/js/components/ui/Alert';
 import Badge from '../../resources/js/components/ui/Badge';
+import PageLoader from '../../resources/js/components/ui/PageLoader';
 import Button from '../../resources/js/components/ui/Button';
 import DataTable from '../../resources/js/components/ui/DataTable';
 import InputField from '../../resources/js/components/ui/InputField';
@@ -245,4 +246,73 @@ test('keeps table caption, column headers and links accessible inside the keyboa
     expect(region).toHaveFocus();
     await user.tab();
     expect(screen.getByRole('link', { name: 'API' })).toHaveFocus();
+});
+
+test('keeps a busy indicator button label and icon slot stable while suppressing repeated clicks', async () => {
+    const user = userEvent.setup();
+    const click = vi.fn();
+    const icon = (
+        <svg aria-hidden="true">
+            <path d="M1 1h2" />
+        </svg>
+    );
+    const view = render(
+        <Button busyMode="indicator" icon={icon} onClick={click}>
+            Refresh
+        </Button>,
+    );
+    const button = screen.getByRole('button', { name: 'Refresh' });
+    const slot = button.querySelector('.ui-button-icon');
+    expect(slot).not.toBeNull();
+    view.rerender(
+        <Button busy busyMode="indicator" icon={icon} onClick={click}>
+            Refresh
+        </Button>,
+    );
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBe(button);
+    expect(button.querySelector('.ui-button-icon')).toBe(slot);
+    expect(button.querySelector('svg')).toHaveClass('animate-spin', 'motion-reduce:animate-none');
+    expect(button).toHaveAttribute('aria-busy', 'true');
+    expect(button).toBeDisabled();
+    await user.click(button);
+    expect(click).not.toHaveBeenCalled();
+    view.rerender(
+        <Button busyMode="indicator" icon={icon} onClick={click}>
+            Refresh
+        </Button>,
+    );
+    expect(button).toBeEnabled();
+    expect(button.querySelector('.animate-spin')).toBeNull();
+    expect(button.querySelector('.ui-button-icon')).toBe(slot);
+});
+
+test('mounts the page loader outside layout and preserves focus on the existing control', () => {
+    const view = render(
+        <>
+            <button>Existing control</button>
+            <PageLoader active={false} />
+        </>,
+    );
+    const button = screen.getByRole('button', { name: 'Existing control' });
+    button.focus();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    view.rerender(
+        <>
+            <button>Existing control</button>
+            <PageLoader active />
+        </>,
+    );
+    const loader = screen.getByRole('status', { name: 'Loading results…' });
+    expect(loader.parentElement).toBe(document.body);
+    expect(loader.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(loader.querySelector('svg')).toHaveClass('motion-reduce:animate-none');
+    expect(button).toHaveFocus();
+    view.rerender(
+        <>
+            <button>Existing control</button>
+            <PageLoader active={false} />
+        </>,
+    );
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
 });

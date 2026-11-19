@@ -1,5 +1,12 @@
 # Signalbox — Piano dei task
 
+## UI — Pulizia lista Incidents — 2026-11-19
+
+- [x] Completato: rimossi sottotitolo team e riepilogo numerico/range tra filtri e tabella. IncidentTable inoltra l’opzione compact al DataTable condiviso: caption Incidents e istruzioni di scorrimento restano disponibili agli screen reader. Gli altri utilizzi della tabella mantengono il default. Nella griglia filtri esistente align-items:end allinea Apply/Clear filters ai select; i campi riusano FormField senza modifiche locali alle loro dimensioni.
+- File: resources/js/pages/Incidents/Index.tsx, resources/js/components/incidents/IncidentTable.tsx, resources/css/app.css, tests/frontend/Incidents.test.tsx, IncidentWorkflows.test.tsx, docs/UI-GUIDELINES.md e questo piano. Test di regressione su testo rimosso, compact/accessibilità tabella e controlli; copertura esistente su filtri/loading/errori/paginazione e workflow preservata.
+- Verifiche: **37/37 test in 3 file, 9,03 s**, npm run check **exit 0** (lint/formato/TypeScript e 6 qualità), build **exit 0**. Firefox fixture sintetica SSR con componenti SelectField/Button e CSS compilato a **1280×600 e 390×600**, screenshot ispezionati: controlli desktop allineati, filtri impilati e azioni affiancate su mobile. SSR segnala socket HMR negato dalla sandbox ma produce HTML; screenshot Firefox con timeout 25s riusciti.
+- Non eseguiti: browser autenticato, suite frontend integrale, backend/PHP-CS-Fixer/Larastan, audit e CI remota per modifica locale di presentazione. Nessuna dipendenza, migration, dato, .env o servizio applicativo modificato; asset ricostruiti e public/hot preservato. Git/gh non eseguiti. Prossimo passo: controllo utente e ulteriori rifiniture.
+
 ## UI — Etichetta Save creazione monitor — 2026-11-19
 
 - [x] Corretto su indicazione esplicita dell’utente: submit creazione Save; ordine Back/Cancel/Save. Titolo e link New monitor conservati.

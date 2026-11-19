@@ -14,8 +14,10 @@ interface IncidentTableProps {
     teamId: number;
     /** Rows to render; callers handle the empty state. */
     incidents: IncidentSummary[];
-    /** Visible table caption and accessible scroll-region name. */
+    /** Table caption and accessible scroll-region name. */
     caption: string;
+    /** Visually omit redundant caption and scrolling guidance while retaining accessible labels. */
+    compact?: boolean;
     /** Whether to show the monitor column, redundant on a monitor's own page. */
     showMonitor: boolean;
     /** Accepted list context, preserved when opening an incident. */
@@ -27,11 +29,12 @@ export default function IncidentTable({
     teamId,
     incidents,
     caption,
+    compact = false,
     showMonitor,
     returnTo,
 }: IncidentTableProps) {
     return (
-        <DataTable caption={caption}>
+        <DataTable caption={caption} compact={compact}>
             <thead>
                 <tr className="border-b border-ui-control-border">
                     <th scope="col">Incident</th>

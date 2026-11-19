@@ -60,11 +60,13 @@ function PageContent() {
         read(incidentsPath(team.id), incidentListQuery(next), { preserveState: true });
     }
 
+    /** Apply the current draft without losing its accepted navigation context. */
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         navigate(draft);
     }
 
+    /** Restore the unrestricted list through the same owned GET navigation. */
     function clear() {
         const empty: IncidentFilters = { state: null, severity: null };
         setDraft(empty);
@@ -151,14 +153,6 @@ function PageContent() {
                 </Alert>
             )}
             <section aria-label="Incident results" aria-busy={loading} className="mt-6">
-                <p aria-live="polite" className="mb-3 text-sm text-ui-muted">
-                    {incidents.total === 1 ? '1 incident' : `${incidents.total} incidents`}
-                    {incidents.from !== null && incidents.to !== null
-                        ? `, showing ${incidents.from}–${incidents.to}`
-                        : ''}
-                    .
-                </p>
-
                 {incidents.data.length === 0 && !filtered && incidents.currentPage === 1 && (
                     <p className="rounded border border-ui-control-border p-6 text-ui-muted">
                         No incidents yet. An incident opens when a monitor&apos;s failure is
@@ -182,7 +176,8 @@ function PageContent() {
                     <IncidentTable
                         teamId={team.id}
                         incidents={incidents.data}
-                        caption={`Incidents of ${team.name}`}
+                        caption="Incidents"
+                        compact
                         showMonitor
                         returnTo={incidentListUrl(team.id, filters, incidents.currentPage)}
                     />
@@ -202,12 +197,7 @@ function PageContent() {
 export default function Page() {
     const { team } = usePage<IndexProps>().props;
     return (
-        <AppLayout
-            team={team}
-            section="incidents"
-            title="Incidents"
-            description={`Incidents of ${team.name}.`}
-        >
+        <AppLayout team={team} section="incidents" title="Incidents">
             <PageContent />
         </AppLayout>
     );

@@ -1123,6 +1123,11 @@
         min-width: 0;
         overflow-wrap: anywhere;
     }
+    /* Filter actions share the controls' bottom edge rather than the label baseline. */
+    .ui-incident-filters {
+        align-items: end;
+    }
+
     .ui-incident-filters input,
     .ui-incident-editor-fields select,
     .ui-incident-editor-fields textarea {

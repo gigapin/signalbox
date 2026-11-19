@@ -46,16 +46,35 @@ afterEach(() => {
 test('lets keyboard users focus the incident table viewport and then open its first incident', async () => {
     const user = userEvent.setup();
     renderInertia('Signalbox', Index, indexProps([row(42)]));
-    const viewport = screen.getByRole('region', { name: 'Incidents of Synthetic team' });
+    const viewport = screen.getByRole('region', { name: 'Incidents' });
 
     for (let step = 0; step < 20 && document.activeElement !== viewport; step++) {
         await user.tab();
     }
 
     expect(viewport).toHaveFocus();
-    expect(within(viewport).getByRole('table')).toHaveAccessibleName('Incidents of Synthetic team');
+    expect(within(viewport).getByRole('table')).toHaveAccessibleName('Incidents');
     await user.tab();
     expect(screen.getByRole('link', { name: 'Incident #42' })).toHaveFocus();
+});
+
+test('omits redundant list descriptions and reuses the compact accessible table', () => {
+    renderInertia('Signalbox', Index, indexProps([row(42)]));
+    const heading = screen.getByRole('heading', { level: 1, name: 'Incidents' });
+    expect(heading.closest('header')?.querySelector('.ui-description')).toBeNull();
+    expect(screen.queryByText(/Incidents of Synthetic team/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/showing 1/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^1 incident[,.]/)).not.toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Incidents' }).querySelector('caption')).toHaveClass(
+        'sr-only',
+    );
+    expect(screen.getByText('Scroll horizontally to view all columns when needed.')).toHaveClass(
+        'sr-only',
+    );
+    expect(screen.getByRole('region', { name: 'Incidents' })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('form', { name: 'Filter incidents' })).toContainElement(
+        screen.getByRole('button', { name: 'Apply filters' }),
+    );
 });
 
 /**
@@ -266,7 +285,7 @@ test('lists incidents as text badges with links and submits filters with a loadi
     });
 
     renderInertia('Signalbox', Index, indexProps([row(42), row(41, 'resolved')]));
-    const table = screen.getByRole('table', { name: 'Incidents of Synthetic team' });
+    const table = screen.getByRole('table', { name: 'Incidents' });
     expect(within(table).getByRole('link', { name: 'Incident #42' })).toHaveAttribute(
         'href',
         '/teams/7/incidents/42',

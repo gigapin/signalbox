@@ -55,7 +55,7 @@ test('list rows preserve accepted filters and pagination in their detail links',
     expect(new URL(href, location.href).searchParams.get('returnTo')).toBe(
         workflowProps.incidentListUrl,
     );
-    expect(screen.getByRole('table', { name: 'Incidents of Synthetic team' })).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Incidents' })).toBeInTheDocument();
 });
 
 test('a refused filter read retains the selection and rows and allows an explicit retry', async () => {

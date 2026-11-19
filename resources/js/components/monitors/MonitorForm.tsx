@@ -1,5 +1,7 @@
 /** Shared create/edit form with type-specific sections and explicit replacement of stored secrets. */
+import { createPortal } from 'react-dom';
 import InputField from '../ui/InputField';
+import RepeaterRow from '../ui/RepeaterRow';
 import TextareaField from '../ui/TextareaField';
 import SelectField from '../ui/SelectField';
 import ChoiceField from '../ui/ChoiceField';
@@ -8,7 +10,7 @@ import Button from '../ui/Button';
 import MutationFeedback from '../MutationFeedback';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import { Link, useForm } from '@inertiajs/react';
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import {
     buildPayload,
     HTTP_TYPES,
@@ -44,6 +46,8 @@ interface MonitorFormProps {
     reviewUrl: string;
     /** Existing GET destination for explicit cancellation, subject to the departure guard. */
     cancelUrl: string;
+    /** Optional heading destination; null waits for mounting, undefined keeps footer actions. */
+    actionsTarget?: HTMLElement | null;
 }
 
 /** Inputs for one labelled text-like field. */
@@ -231,7 +235,9 @@ export default function MonitorForm({
     submitLabel,
     reviewUrl,
     cancelUrl,
+    actionsTarget,
 }: MonitorFormProps) {
+    const formId = useId();
     const form = useForm<MonitorFormData>(initial);
     useFormProtection(form);
     const mutation = useOwnedMutation();
@@ -341,18 +347,50 @@ export default function MonitorForm({
         );
     }
 
+    /** Append an empty HTTP header without changing any existing draft values. */
+    function addHeader(): void {
+        form.setData('headers', [...data.headers, { name: '', value: '' }]);
+    }
+
+    /** Append an empty expected DNS value while preserving the required first row. */
+    function addDnsValue(): void {
+        form.setData('dns_expected_values', [...data.dns_expected_values, '']);
+    }
+
     const showUrl = isHttp && (mustSendSecrets || data.replace_url);
     const showHeaders = isHttp && (mustSendSecrets || data.replace_headers);
     const showBody = isHttp && (mustSendSecrets || data.replace_body);
 
+    const actions = (
+        <div className="ui-actions">
+            <Button
+                type="submit"
+                form={formId}
+                busy={mutation.phase === 'pending' || form.processing}
+                busyLabel="Saving…"
+                disabled={mutation.locked}
+            >
+                {submitLabel}
+            </Button>
+            <Link className="ui-button" data-variant="secondary" href={cancelUrl}>
+                Cancel
+            </Link>
+        </div>
+    );
+
     return (
         <form
+            id={formId}
             ref={formElement}
             onSubmit={submit}
             className="ui-monitor-form"
             noValidate
             aria-busy={mutation.phase === 'pending'}
         >
+            {/* Keep an in-form submit control for implicit Enter submission when actions live in the heading. */}
+            {actionsTarget !== undefined && (
+                <input type="submit" hidden aria-hidden="true" tabIndex={-1} />
+            )}
             <MutationFeedback
                 phase={mutation.phase}
                 reviewUrl={reviewUrl}
@@ -543,9 +581,23 @@ export default function MonitorForm({
                                     <p className="text-sm text-ui-muted">No headers.</p>
                                 )}
                                 {data.headers.map((row, index) => (
-                                    <div
+                                    <RepeaterRow
                                         key={index}
-                                        className="mb-2 grid gap-2 md:grid-cols-[1fr_2fr_auto]"
+                                        addLabel="Add header"
+                                        onAdd={
+                                            index === data.headers.length - 1
+                                                ? addHeader
+                                                : undefined
+                                        }
+                                        removeLabel={`Remove header ${index + 1}`}
+                                        onRemove={() =>
+                                            form.setData(
+                                                'headers',
+                                                data.headers.filter(
+                                                    (_, position) => position !== index,
+                                                ),
+                                            )
+                                        }
                                     >
                                         <InputField
                                             labelHidden
@@ -569,34 +621,11 @@ export default function MonitorForm({
                                                 })
                                             }
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                form.setData(
-                                                    'headers',
-                                                    data.headers.filter(
-                                                        (_, position) => position !== index,
-                                                    ),
-                                                )
-                                            }
-                                        >
-                                            Remove header {index + 1}
-                                        </button>
-                                    </div>
+                                    </RepeaterRow>
                                 ))}
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        form.setData('headers', [
-                                            ...data.headers,
-                                            { name: '', value: '' },
-                                        ])
-                                    }
-                                    className="ui-button"
-                                    data-variant="secondary"
-                                >
-                                    Add header
-                                </button>
+                                {data.headers.length === 0 && (
+                                    <RepeaterRow addLabel="Add header" onAdd={addHeader} />
+                                )}
                                 {nestedErrors(errors, 'headers').map((message) => (
                                     <p key={message} role="alert" className="ui-field-error">
                                         {message}
@@ -715,44 +744,35 @@ export default function MonitorForm({
                         <fieldset>
                             <legend className="mb-2 text-sm font-medium">Expected values</legend>
                             {data.dns_expected_values.map((value, index) => (
-                                <div key={index} className="mb-2 flex gap-2">
+                                <RepeaterRow
+                                    key={index}
+                                    addLabel="Add value"
+                                    onAdd={
+                                        index === data.dns_expected_values.length - 1
+                                            ? addDnsValue
+                                            : undefined
+                                    }
+                                    removeLabel={`Remove value ${index + 1}`}
+                                    onRemove={
+                                        data.dns_expected_values.length > 1
+                                            ? () =>
+                                                  form.setData(
+                                                      'dns_expected_values',
+                                                      data.dns_expected_values.filter(
+                                                          (_, position) => position !== index,
+                                                      ),
+                                                  )
+                                            : undefined
+                                    }
+                                >
                                     <InputField
                                         labelHidden
                                         label={`Expected value ${index + 1}`}
-                                        wrapperClassName="min-w-0 flex-1"
                                         value={value}
                                         onChange={(event) => setDnsValue(index, event.target.value)}
                                     />
-                                    {data.dns_expected_values.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                form.setData(
-                                                    'dns_expected_values',
-                                                    data.dns_expected_values.filter(
-                                                        (_, position) => position !== index,
-                                                    ),
-                                                )
-                                            }
-                                        >
-                                            Remove value {index + 1}
-                                        </button>
-                                    )}
-                                </div>
+                                </RepeaterRow>
                             ))}
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    form.setData('dns_expected_values', [
-                                        ...data.dns_expected_values,
-                                        '',
-                                    ])
-                                }
-                                className="ui-button"
-                                data-variant="secondary"
-                            >
-                                Add value
-                            </button>
                             {nestedErrors(errors, 'dns_expected_values').map((message) => (
                                 <p key={message} role="alert" className="ui-field-error">
                                     {message}
@@ -785,19 +805,9 @@ export default function MonitorForm({
                     </Section>
                 )}
             </fieldset>
-            <div className="ui-actions">
-                <Button
-                    type="submit"
-                    busy={mutation.phase === 'pending' || form.processing}
-                    busyLabel="Saving…"
-                    disabled={mutation.locked}
-                >
-                    {submitLabel}
-                </Button>
-                <Link className="ui-button" data-variant="secondary" href={cancelUrl}>
-                    Cancel
-                </Link>
-            </div>
+            {actionsTarget === undefined
+                ? actions
+                : actionsTarget && createPortal(actions, actionsTarget)}
         </form>
     );
 }

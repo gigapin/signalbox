@@ -43,7 +43,7 @@ interface FormFieldProps extends FieldPresentation {
 
 /**
  * @param props Label, help, error and a typed control renderer; no domain effects are performed.
- * @returns Consistent field structure with stable IDs and a persistent polite error announcement region.
+ * @returns A content-sized field that resists grid stretching, with stable IDs and polite validation feedback.
  */
 export default function FormField({
     id,

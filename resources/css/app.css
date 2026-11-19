@@ -171,8 +171,11 @@
         overflow-wrap: anywhere;
     }
 
+    /* Each shared field sizes to its content instead of stretching controls to match a neighbour's hint. */
     .ui-field {
         display: grid;
+        align-self: start;
+        align-content: start;
         gap: var(--spacing-ui-field-gap);
         min-width: 0;
     }
@@ -1043,6 +1046,43 @@
     .ui-context-list {
         display: grid;
         gap: var(--spacing-ui-3);
+    }
+}
+
+/* Repeated fields fill their container; shared actions reserve only their touch-target width. */
+@layer components {
+    .ui-repeater-row {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-ui-2);
+        width: 100%;
+        min-width: 0;
+        margin-bottom: var(--spacing-ui-2);
+    }
+
+    .ui-repeater-fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+        gap: var(--spacing-ui-2);
+        min-width: 0;
+        flex: 1;
+    }
+
+    .ui-repeater-fields > .ui-field {
+        margin: 0;
+    }
+
+    .ui-repeater-actions {
+        display: flex;
+        flex: none;
+        gap: var(--spacing-ui-2);
+    }
+
+    .ui-icon-button {
+        width: var(--spacing-ui-control);
+        height: var(--spacing-ui-control);
+        padding: 0;
+        flex: none;
     }
 }
 

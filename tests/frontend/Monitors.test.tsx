@@ -434,6 +434,101 @@ function hidesCreationWhenNotAllowed(): void {
     expect(screen.queryByRole('link', { name: 'New monitor' })).not.toBeInTheDocument();
 }
 
+test('keeps creation actions and Back in the heading while submitting the associated form', async () => {
+    const user = userEvent.setup();
+    const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Create, { team, defaults, options, usage, maximumIntervalSeconds });
+    const header = screen.getByRole('heading', { level: 1, name: 'New monitor' }).closest('header');
+    expect(header).not.toBeNull();
+    const submit = within(header!).getByRole('button', { name: 'Create monitor' });
+    expect(within(header!).getByRole('link', { name: 'Cancel' })).toHaveAttribute(
+        'href',
+        '/teams/7/monitors',
+    );
+    expect(within(header!).getByRole('link', { name: 'Back' })).toHaveClass('ui-button');
+    expect(screen.queryByText('Add a monitor to Synthetic team.')).not.toBeInTheDocument();
+    expect((submit as HTMLButtonElement).form).toBe(screen.getByLabelText('Name').closest('form'));
+    const cadenceRow = screen.getByLabelText('Interval (seconds)').closest('.grid');
+    expect(cadenceRow).toContainElement(screen.getByLabelText('Interval (seconds)'));
+    expect(cadenceRow).toContainElement(screen.getByLabelText('Timeout (milliseconds)'));
+    expect(cadenceRow).toContainElement(screen.getByLabelText('Failures before alerting'));
+
+    await user.click(submit);
+    expect(post).toHaveBeenCalledOnce();
+    expect(within(header!).getByRole('button', { name: 'Saving…' })).toBeDisabled();
+});
+
+test('adds and removes DNS values with inline accessible icon buttons', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Create, {
+        team,
+        defaults: { ...defaults, type: 'dns' },
+        options,
+        usage,
+        maximumIntervalSeconds,
+    });
+    const add = screen.getByRole('button', { name: 'Add value' });
+    expect(add).toHaveTextContent('');
+    expect(add.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(add.closest('.ui-repeater-row')).toContainElement(
+        screen.getByLabelText('Expected value 1'),
+    );
+    await user.type(screen.getByLabelText('Expected value 1'), '192.0.2.1');
+    await user.click(add);
+    await user.type(screen.getByLabelText('Expected value 2'), '192.0.2.2');
+    const remove = screen.getByRole('button', { name: 'Remove value 1' });
+    expect(remove).toHaveTextContent('');
+    expect(remove.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(remove.closest('.ui-repeater-row')).toContainElement(
+        screen.getByLabelText('Expected value 1'),
+    );
+    remove.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByLabelText('Expected value 1')).toHaveValue('192.0.2.2');
+    expect(screen.queryByLabelText('Expected value 2')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remove value/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add value' })).toBeInTheDocument();
+});
+
+test.each(['http', 'keyword'])(
+    'uses shared inline header controls for %s creation',
+    async (type) => {
+        const user = userEvent.setup();
+        const post = vi.spyOn(router, 'post').mockImplementation(() => undefined);
+        renderInertia('Signalbox', Create, {
+            team,
+            defaults: { ...defaults, type },
+            options,
+            usage,
+            maximumIntervalSeconds,
+        });
+        const add = screen.getByRole('button', { name: 'Add header' });
+        expect(add).toHaveTextContent('');
+        await user.click(add);
+        await user.type(screen.getByLabelText('Header 1 name'), 'X-First');
+        await user.type(screen.getByLabelText('Header 1 value'), 'first');
+        const headerRow = screen.getByLabelText('Header 1 name').closest('.ui-repeater-row');
+        expect(headerRow).toContainElement(screen.getByRole('button', { name: 'Add header' }));
+        expect(headerRow).toContainElement(screen.getByRole('button', { name: 'Remove header 1' }));
+        await user.click(screen.getByRole('button', { name: 'Add header' }));
+        await user.type(screen.getByLabelText('Header 2 name'), 'X-Keep');
+        await user.type(screen.getByLabelText('Header 2 value'), 'preserved');
+        const remove = screen.getByRole('button', { name: 'Remove header 1' });
+        expect(remove).toHaveTextContent('');
+        await user.click(remove);
+        expect(screen.getByLabelText('Header 1 name')).toHaveValue('X-Keep');
+        await user.click(screen.getByRole('button', { name: 'Create monitor' }));
+        expect(post).toHaveBeenCalledWith(
+            '/teams/7/monitors',
+            expect.objectContaining({
+                type,
+                headers: { 'X-Keep': 'preserved' },
+            }),
+            expect.any(Object),
+        );
+    },
+);
+
 /** Switching type shows only that type's section and submits only its fields. */
 async function createsDnsMonitorWithRelevantFields(): Promise<void> {
     const user = userEvent.setup();
@@ -901,10 +996,7 @@ test('preserves list context on creation cancellation and editor return without 
         usage,
         maximumIntervalSeconds,
     });
-    expect(screen.getByRole('link', { name: 'Back to monitors' })).toHaveAttribute(
-        'href',
-        monitorListUrl,
-    );
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', monitorListUrl);
     view.unmount();
     const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
     renderInertia('Signalbox', Edit, {

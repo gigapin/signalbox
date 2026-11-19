@@ -1,4 +1,5 @@
 /** Create a monitor of any supported type within the route team. */
+import { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import AppLayout from '../../components/app/AppLayout';
 import MonitorForm from '../../components/monitors/MonitorForm';
@@ -23,17 +24,18 @@ interface CreateProps extends MonitorPageProps {
     maximumIntervalSeconds: number;
 }
 
+/** Destination of form-owned actions within the authorized page heading. */
+interface PageContentProps {
+    /** Null until the heading action container mounts. */
+    actionsTarget: HTMLDivElement | null;
+}
+
 /** Warn about a full quota up front; the server still decides and reports the refusal on submit. */
-function PageContent() {
+function PageContent({ actionsTarget }: PageContentProps) {
     const { team, defaults, options, usage, maximumIntervalSeconds, monitorListUrl } =
         usePage<CreateProps>().props;
     return (
         <>
-            <nav aria-label="Monitor navigation" className="ui-actions mb-6">
-                <Link className="ui-link" href={monitorListUrl ?? monitorsPath(team.id)}>
-                    Back to monitors
-                </Link>
-            </nav>
             {usage.full && (
                 <p className="mb-6 rounded border border-amber-700 p-3 text-ui-warning">
                     Your plan allows {usage.limit} monitors and all are in use. Saving will be
@@ -41,6 +43,7 @@ function PageContent() {
                 </p>
             )}
             <MonitorForm
+                actionsTarget={actionsTarget}
                 initial={initialFormData(defaults)}
                 originalType={null}
                 stored={null}
@@ -64,15 +67,27 @@ function PageContent() {
 /** Keep all page-owned forms and live sessions inside the removable authorized team boundary. */
 export default function Page() {
     const { team, monitorListUrl } = usePage<CreateProps>().props;
+    const [actionsTarget, setActionsTarget] = useState<HTMLDivElement | null>(null);
     return (
         <AppLayout
             team={team}
             section="monitors"
             ancestors={[{ label: 'Monitors', href: monitorListUrl ?? monitorsPath(team.id) }]}
             title="New monitor"
-            description={`Add a monitor to ${team.name}.`}
+            actions={
+                <>
+                    <div ref={setActionsTarget} className="contents" />
+                    <Link
+                        className="ui-button"
+                        data-variant="secondary"
+                        href={monitorListUrl ?? monitorsPath(team.id)}
+                    >
+                        Back
+                    </Link>
+                </>
+            }
         >
-            <PageContent />
+            <PageContent actionsTarget={actionsTarget} />
         </AppLayout>
     );
 }

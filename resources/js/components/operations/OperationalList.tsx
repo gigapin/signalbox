@@ -7,6 +7,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { useReadNavigation } from '../../hooks/useReadNavigation';
 import Alert from '../ui/Alert';
 import Button from '../ui/Button';
+import PageLoader from '../ui/PageLoader';
 import { formatInstant } from '../incidents/time';
 import type { MonitorPageProps } from '../monitors/types';
 
@@ -115,15 +116,7 @@ export default function OperationalList({
             variant="secondary"
             aria-label="Refresh results"
             disabled={read.loading}
-            onClick={() =>
-                read.navigate(
-                    operationalUrl(path, filters, listing.currentPage),
-                    {},
-                    { preserveState: true, preserveScroll: true },
-                )
-            }
-        >
-            {refreshTarget !== undefined && (
+            icon={
                 <svg
                     width="20"
                     height="20"
@@ -135,13 +128,22 @@ export default function OperationalList({
                 >
                     <path d="M20 7v5h-5M4 17v-5h5M6.1 8a7 7 0 0 1 11.6-2L20 9M4 15l2.3 3A7 7 0 0 0 17.9 16" />
                 </svg>
-            )}
+            }
+            onClick={() =>
+                read.navigate(
+                    operationalUrl(path, filters, listing.currentPage),
+                    {},
+                    { preserveState: true, preserveScroll: true },
+                )
+            }
+        >
             {refreshTarget === undefined ? 'Refresh results' : 'Refresh'}
         </Button>
     );
 
     return (
         <>
+            <PageLoader active={read.loading} />
             <form
                 aria-label="Filter results"
                 onSubmit={submit}
@@ -203,7 +205,7 @@ export default function OperationalList({
                     ))}
                 </SelectField>
                 <div className="ui-actions">
-                    <Button type="submit" busy={read.loading} busyLabel="Loading…">
+                    <Button type="submit" disabled={read.loading}>
                         Apply filters
                     </Button>
                     {(filters.q || filters.state || filters.monitorId) && (

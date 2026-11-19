@@ -1,5 +1,6 @@
 /** Provide native action buttons with consistent focus, pending and disabled states. */
-import type { ComponentPropsWithRef } from 'react';
+import LoadingSpinner from './LoadingSpinner';
+import type { ComponentPropsWithRef, ReactNode } from 'react';
 
 /** Native button attributes plus explicit presentation and request feedback. */
 interface ButtonProps extends ComponentPropsWithRef<'button'> {
@@ -9,6 +10,10 @@ interface ButtonProps extends ComponentPropsWithRef<'button'> {
     busy?: boolean;
     /** Visible pending action label; defaults to Working…. */
     busyLabel?: string;
+    /** Indicator mode preserves the label and swaps a fixed-size icon slot for the loading spinner. */
+    busyMode?: 'label' | 'indicator';
+    /** Optional decorative leading icon; ignored while label-only busy feedback is shown. */
+    icon?: ReactNode;
 }
 
 /**
@@ -20,6 +25,8 @@ export default function Button({
     variant = 'primary',
     busy = false,
     busyLabel = 'Working…',
+    busyMode = 'label',
+    icon,
     type = 'button',
     disabled,
     className = '',
@@ -35,7 +42,18 @@ export default function Button({
             data-variant={variant}
             className={`ui-button ${className}`.trim()}
         >
-            {busy ? busyLabel : children}
+            {busy && busyMode === 'label' ? (
+                busyLabel
+            ) : (
+                <>
+                    {(icon || busyMode === 'indicator') && (
+                        <span className="ui-button-icon" aria-hidden="true">
+                            {busy && busyMode === 'indicator' ? <LoadingSpinner /> : icon}
+                        </span>
+                    )}
+                    {children}
+                </>
+            )}
         </button>
     );
 }

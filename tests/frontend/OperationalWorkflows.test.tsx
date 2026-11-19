@@ -165,6 +165,9 @@ test('a failed filter read retains rows and selection until explicit retry', asy
     await user.click(screen.getByRole('button', { name: 'Apply filters' }));
     expect(read.mock.calls[0]?.[0]).toBe('/teams/7/maintenance?q=API&state=finished');
     expect(screen.getByLabelText('State')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Apply filters' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Loading…' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading results…' })).toHaveClass('ui-page-loader');
     act(() => {
         callbacks?.onError?.({ filter: 'Refused' });
         callbacks?.onFinish?.({} as never);
@@ -187,6 +190,64 @@ test('refresh reads the accepted page and does not submit unaccepted search text
     await user.click(screen.getByRole('button', { name: 'Refresh results' }));
     expect(read.mock.calls[0]?.[0]).toBe('/teams/7/maintenance?q=API&page=2');
 });
+
+test.each(['success', 'error', 'cancel'])(
+    'refresh shows a stable loader and keeps header notices out of flow until %s',
+    async (outcome) => {
+        const user = userEvent.setup();
+        let callbacks: NonNullable<Parameters<typeof router.get>[2]> | undefined;
+        const read = vi.spyOn(router, 'get').mockImplementation((_url, _data, options) => {
+            callbacks = options;
+            options?.onStart?.({} as never);
+        });
+        renderInertia('Signalbox', Maintenance, {
+            ...maintenanceProps,
+            auth: { user: { name: 'Owner', email: 'owner@example.test' } },
+            teamNavigation: {
+                selectedTeamId: 7,
+                teams: [{ id: 7, name: 'Synthetic team', role: 'owner' }],
+            },
+        });
+        const refresh = screen.getByRole('button', { name: 'Refresh results' });
+        const label = refresh.textContent;
+        const table = screen.getByRole('table', { name: 'Maintenance' });
+        await user.dblClick(refresh);
+        expect(read).toHaveBeenCalledOnce();
+        expect(read.mock.calls[0]?.[2]).toEqual(
+            expect.objectContaining({ preserveState: true, preserveScroll: true }),
+        );
+        expect(refresh.textContent).toBe(label);
+        expect(refresh).toBeDisabled();
+        expect(refresh.querySelector('.animate-spin')).toBeNull();
+        const loader = screen.getByRole('status', { name: 'Loading results…' });
+        expect(loader).toHaveClass('ui-page-loader');
+        expect(loader.parentElement).toBe(document.body);
+        expect(loader.querySelector('.animate-spin')).not.toBeNull();
+        expect(screen.getByRole('button', { name: 'Apply filters' })).toBeDisabled();
+        expect(screen.queryByRole('button', { name: 'Loading…' })).not.toBeInTheDocument();
+        expect(screen.getByRole('table', { name: 'Maintenance' })).toBe(table);
+        const notice = screen.getByText('Finish the current request before switching teams.');
+        expect(notice).toHaveClass('sr-only');
+        expect(screen.getByRole('button', { name: 'Switch team' })).toHaveAccessibleDescription(
+            notice.textContent,
+        );
+        act(() => {
+            if (outcome === 'error') callbacks?.onError?.({ filter: 'Refused' });
+            if (outcome === 'cancel') callbacks?.onCancel?.();
+            callbacks?.onFinish?.({} as never);
+        });
+        expect(refresh).toBeEnabled();
+        expect(screen.queryByRole('status', { name: 'Loading results…' })).not.toBeInTheDocument();
+        expect(refresh.querySelector('.animate-spin')).toBeNull();
+        expect(refresh.textContent).toBe(label);
+        expect(
+            screen.queryByText('Finish the current request before switching teams.'),
+        ).not.toBeInTheDocument();
+        expect(screen.getByRole('table', { name: 'Maintenance' })).toBe(table);
+        if (outcome !== 'success')
+            expect(screen.getByText('Results could not be loaded')).toBeInTheDocument();
+    },
+);
 
 test('out-of-range and invalid lists offer a safe first page and name rejected controls', () => {
     renderInertia('Signalbox', Maintenance, {

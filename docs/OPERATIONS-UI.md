@@ -27,7 +27,10 @@ The Maintenance page omits the redundant subtitle, introduction/link and result 
 It uses the shared compact DataTable presentation, preserving the accessible table/scroll-region name
 and keyboard scrolling. Refresh is a list-owned Button with a decorative SVG in PageHeading's action
 slot; its portal remains within the removable authorized page lifecycle. It refreshes the accepted
-selection and current page, never an unapplied draft. Single-page pagination is omitted; previous/next
+selection and current page, never an unapplied draft. Apply filters and Refresh disable their buttons without changing text or replacing their icons;
+a shared PageLoader portal shows a spinner at the viewport center, outside document flow. Results
+remain mounted, and preserveState/preserveScroll remain enabled. TeamSwitcher announces the request lock without inserting a visible header row, avoiding
+a busy-state layout shift. Single-page pagination is omitted; previous/next
 and out-of-range recovery remain. Delivery views retain their existing presentation.
 
 MaintenancePageController projects `monitorOptions` as sorted `{id, name}` pairs for every monitor of

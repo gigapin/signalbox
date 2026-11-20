@@ -280,6 +280,7 @@ test('invitation draft survives refusal, freezes during pending and clears only 
         callbacks = options;
     });
     renderInertia('Signalbox', Team, teamProps);
+    await user.click(screen.getByRole('button', { name: 'Add member' }));
     await user.type(screen.getByLabelText('Invitation email'), 'new@example.test');
     await user.dblClick(screen.getByRole('button', { name: 'Send invitation' }));
     expect(post).toHaveBeenCalledOnce();
@@ -302,6 +303,7 @@ test('management revocation removes role and invitation drafts and their departu
     renderInertia('Signalbox', Team, teamProps, { component: 'Teams/Show', url: '/teams/7' });
     await user.click(screen.getByRole('combobox', { name: 'Role for Operator' }));
     await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'viewer' }));
+    await user.click(screen.getByRole('button', { name: 'Add member' }));
     await user.type(screen.getByLabelText('Invitation email'), 'draft@example.test');
     await replace(
         { ...teamProps, roles: [], members: [{ ...member, manageable: false }] },
@@ -508,4 +510,23 @@ test('explicit logout removes revealed account credentials and private identity'
     expect(screen.queryByText('revealed-private-code')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Account menu' })).not.toBeInTheDocument();
     expect(screen.getByText('Private data hidden')).toBeInTheDocument();
+});
+
+/** Saving a role retains the accepted page/search so sibling drafts are not silently discarded. */
+test('retains server list context when saving a member role', async () => {
+    const user = userEvent.setup();
+    const patch = vi.spyOn(router, 'patch').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Team, {
+        ...teamProps,
+        query: 'Operator',
+        members: { data: [member], current_page: 2, last_page: 2 },
+    });
+    await user.click(screen.getByRole('combobox', { name: 'Role for Operator' }));
+    await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'viewer' }));
+    await user.click(screen.getByRole('button', { name: 'Save role for Operator' }));
+    expect(patch).toHaveBeenCalledWith(
+        '/teams/7/members/2?page=2&q=Operator',
+        expect.any(Object),
+        expect.any(Object),
+    );
 });

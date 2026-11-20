@@ -81,7 +81,6 @@ export function teamDestinations(teamId: number): TeamDestination[] {
         { section: 'maintenance', label: 'Maintenance', href: `${base}/maintenance` },
         { section: 'notifications', label: 'Notifications', href: `${base}/notifications` },
         { section: 'status-pages', label: 'Status pages', href: `${base}/status-pages` },
-        { section: 'team', label: 'Team', href: base },
     ];
 }
 

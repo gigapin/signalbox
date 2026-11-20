@@ -42,7 +42,11 @@ Route::middleware(NoStoreAuthentication::class)
                 Route::get('/teams', [TeamController::class, 'index'])
                     ->name('teams.index');
 
-                Route::get('/teams/{team}', [TeamController::class, 'show'])
+                Route::get('/teams/{team}/members', [TeamController::class, 'show'])
+                    ->middleware(EstablishTeamContext::class)->whereNumber('team')->name('teams.members.index');
+                Route::get('/teams/{team}/invitations', [TeamController::class, 'show'])
+                    ->middleware(EstablishTeamContext::class)->whereNumber('team')->name('teams.invitations.index');
+                Route::get('/teams/{team}', fn (int $team) => redirect()->route('teams.members.index', $team))
                     ->middleware(EstablishTeamContext::class)
                     ->whereNumber('team')
                     ->name('teams.show');

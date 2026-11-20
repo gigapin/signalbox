@@ -1,8 +1,11 @@
 /** Verify shared search, pagination and suspended results on the actual account teams page. */
-import { screen, within, waitFor } from '@testing-library/react';
+import { screen, within, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import Teams from '../../resources/js/pages/Teams/Index';
+import { installDialogSupport } from './dialogSupport';
+import { cleanup } from '@testing-library/react';
+import { router } from '@inertiajs/react';
 import { renderInertia } from './renderInertia';
 
 /** Create safe memberships without granting tenant management capabilities. */
@@ -84,4 +87,86 @@ test('suspends results and retains review controls after a refused team switch',
     );
     expect(screen.queryByRole('list', { name: 'Your teams' })).not.toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Find a team' })).toBeDisabled();
+});
+
+/** Card actions address the represented team without persisting a selection. */
+test('opens management panels for the card team and links to separate directories', async () => {
+    const user = userEvent.setup();
+    const get = vi.spyOn(router, 'get').mockImplementation(() => undefined);
+    renderTeams(1);
+    expect(screen.getByRole('link', { name: 'Members' })).toHaveAttribute(
+        'href',
+        '/teams/1/members',
+    );
+    expect(screen.getByRole('link', { name: 'Invitations' })).toHaveAttribute(
+        'href',
+        '/teams/1/invitations',
+    );
+    await user.click(screen.getByRole('button', { name: 'Plan and usage' }));
+    expect(get).toHaveBeenCalledWith('/teams', { team_id: '1', panel: 'plan' }, expect.any(Object));
+});
+
+/** The directory invite modal preserves the draft on dismissal and posts a closed return context. */
+test('shares the invitation modal on the team card', async () => {
+    const restore = installDialogSupport();
+    const user = userEvent.setup();
+    try {
+        renderInertia('Signalbox', Teams, {
+            teams: [{ id: 1, name: 'Alpha', role: 'owner' }],
+            currentTeamId: 1,
+            panel: {
+                kind: 'invite',
+                team: { id: 1, name: 'Alpha', ownerId: 1 },
+                actorId: 1,
+                roles: ['member', 'viewer'],
+                planSummary: null,
+            },
+        });
+        const dialog = screen.getByRole('dialog');
+        await user.type(within(dialog).getByLabelText('Invitation email'), 'member@example.test');
+        await user.click(within(dialog).getByRole('button', { name: 'Close' }));
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Invitation email')).toHaveValue('member@example.test');
+        await user.click(screen.getByRole('button', { name: 'Invite a member' }));
+        expect(within(screen.getByRole('dialog')).getByLabelText('Invitation email')).toHaveValue(
+            'member@example.test',
+        );
+    } finally {
+        cleanup();
+        restore();
+    }
+});
+
+/** Uncertain card invitations must offer the actual directory as their review destination. */
+test('reviews an uncertain card invitation on Teams without replaying the write', async () => {
+    const restore = installDialogSupport();
+    const user = userEvent.setup();
+    let callbacks: Parameters<typeof router.visit>[1];
+    const visit = vi.spyOn(router, 'visit').mockImplementation((_url, options) => {
+        callbacks = options;
+    });
+    try {
+        renderInertia('Signalbox', Teams, {
+            teams: [{ id: 1, name: 'Alpha', role: 'owner' }],
+            currentTeamId: 1,
+            panel: {
+                kind: 'invite',
+                team: { id: 1, name: 'Alpha', ownerId: 1 },
+                actorId: 1,
+                roles: ['member'],
+                planSummary: null,
+            },
+        });
+        await user.type(screen.getByLabelText('Invitation email'), 'member@example.test');
+        await user.click(screen.getByRole('button', { name: 'Send invitation' }));
+        act(() => callbacks?.onFinish?.({} as never));
+        expect(screen.getByRole('link', { name: 'Review saved data (new tab)' })).toHaveAttribute(
+            'href',
+            '/teams',
+        );
+        expect(visit).toHaveBeenCalledOnce();
+    } finally {
+        cleanup();
+        restore();
+    }
 });

@@ -39,7 +39,11 @@ export default function WorkspaceLinks({
                                 (
                                     href === '/admin/teams'
                                         ? path.startsWith('/admin/teams')
-                                        : path === href
+                                        : href === '/teams'
+                                          ? /^\/teams(?:$|\/\d+\/(?:members|invitations|ownership)(?:$|[?#]))/.test(
+                                                path,
+                                            )
+                                          : path === href
                                 )
                                     ? 'page'
                                     : undefined

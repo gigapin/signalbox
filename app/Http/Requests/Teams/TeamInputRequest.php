@@ -29,10 +29,11 @@ final class TeamInputRequest extends FormRequest
     {
         return match ($this->route()?->getName()) {
             'teams.invitations.store' => [
+                'return_context' => ['sometimes', 'in:teams,members,invitations'],
                 'email' => ['required', 'string', 'email', 'max:255'],
                 'role' => ['required', 'in:owner,admin,member,viewer']
             ],
-            'teams.members.update' => ['role' => ['required', 'in:owner,admin,member,viewer']],
+            'teams.members.update' => ['role' => ['required', 'in:owner,admin,member,viewer'], 'q' => ['sometimes', 'nullable', 'string', 'max:120'], 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000']],
             'teams.ownership.store' => ['user_id' => ['required', 'integer', 'min:1']],
             default => [],
         };

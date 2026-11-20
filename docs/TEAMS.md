@@ -106,3 +106,11 @@ The account Teams page places title search and the existing explicit team select
 ### Directory continuation after switching
 
 From `/teams`, the explicit switch still validates the canonical JSON dashboard acknowledgement returned after persistence, then performs a fresh GET of `/teams` with `preserveState: false`. The directory therefore reloads the current preference, selector and Current team badge. Other TeamSwitcher callers retain dashboard navigation. The continuation is a closed client option, not an arbitrary redirect or a change to the selection endpoint contract. Failed/uncertain requests still require explicit review without automatic replay.
+
+## Unified team management — 2026-11-20
+
+Teams is the single management entry. Each membership card links to Members and, for managers, Invitations; Plan and usage, Invite a member and Team access use shared native modals. The directory GET accepts validated team_id/panel (plan, invite, access), authorizes fresh membership/policy and enters a bounded tenant context for quota reads without changing the selected preference. Invite panels require an assignable role. No members or invitations of every team are embedded in the directory payload.
+
+GET /teams/{team}/members and /teams/{team}/invitations provide ten-row server pagination and bounded q search. Invitations requires owner/admin; member visibility and assignable roles remain unchanged. The old authorized GET /teams/{team} redirects to Members. Role/removal writes return to Members; resend/revoke to Invitations; acceptance to Members; departure and ownership transfer to Teams. Invitation creation validates a closed return_context (teams, members, invitations), defaulting to invitations, and never follows a submitted URL. Ownership keeps recent-password confirmation. Team is removed from desktop/mobile navigation; Teams remains active on management pages.
+
+The shared Management component retains owned mutations, role baselines, confirmations and protected drafts. Invite modal submissions share one form across all three entrypoints. Closing retains drafts; confirmed acceptance resets them; pending prevents dismissal and authoritative permission loss removes the form. No migration, dependency or development data rewrite is needed.

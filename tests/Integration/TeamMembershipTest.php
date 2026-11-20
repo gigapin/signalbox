@@ -42,7 +42,7 @@ it('sends a normalized hashed invitation with exact seven-day validity after com
     $team = Team::factory()->create();
     $this->actingAs($team->owner)
         ->post("/teams/{$team->id}/invitations", ['email' => ' INVITEE@EXAMPLE.TEST ', 'role' => 'member', 'team_id' => 999])
-        ->assertRedirect("/teams/{$team->id}");
+        ->assertRedirect("/teams/{$team->id}/invitations");
 
     $invitation = app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->sole());
     expect($invitation->email)->toBe('invitee@example.test')->and($invitation->team_id)->toBe($team->id)
@@ -51,7 +51,7 @@ it('sends a normalized hashed invitation with exact seven-day validity after com
     Notification::assertSentOnDemand(TeamInvitationNotification::class, function (TeamInvitationNotification $mail, array $channels, object $recipient) use ($invitation): bool {
         return $recipient->routes['mail'] === 'invitee@example.test' && !str_contains($mail->toMail($recipient)->actionUrl, $invitation->token_hash);
     });
-    $this->get("/teams/{$team->id}")->assertInertia(fn (AssertableInertia $page) => $page->has('invitations', 1)->missing('invitations.0.token_hash')->missing('invitations.0.token'));
+    $this->get("/teams/{$team->id}/members")->assertInertia(fn (AssertableInertia $page) => $page->has('invitations.data', 1)->missing('invitations.data.0.token_hash')->missing('invitations.data.0.token'));
 });
 
 it('rejects duplicate pending invites and rotates old links on resend', function (): void {
@@ -64,7 +64,7 @@ it('rejects duplicate pending invites and rotates old links on resend', function
     $this->actingAs($team->owner)
         ->post("/teams/{$team->id}/invitations", ['email' => 'INVITEE@example.test', 'role' => 'viewer'])
         ->assertSessionHasErrors('email');
-    $this->post("/teams/{$team->id}/invitations/{$fixture['invitation']->id}/resend")->assertRedirect("/teams/{$team->id}");
+    $this->post("/teams/{$team->id}/invitations/{$fixture['invitation']->id}/resend")->assertRedirect("/teams/{$team->id}/invitations");
     expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe(1)->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->token_hash)->not->toBe($oldHash)
         ->and(app(InvitationLinks::class)->resolve($fixture['invitation']->id, $oldHash))->toBeNull();
     $this->get('/invitations/accept')->assertInertia(fn (AssertableInertia $page) => $page->where('invitation', null));
@@ -80,10 +80,10 @@ it('accepts once with a verified matching identity and never upgrades an existin
     expect($team->users()->count())->toBe(1);
     $this->actingAs($user)
         ->post('/invitations/accept', ['role' => 'owner', 'team_id' => 999])
-        ->assertRedirect("/teams/{$team->id}");
+        ->assertRedirect("/teams/{$team->id}/members");
     expect($user->resolveCurrentTeam()?->id)->toBe($team->id)->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->accepted_at)->not->toBeNull();
     app(ManageTeamMembers::class)->changeRole($team->owner, $team->id, $user->id, TeamRole::Viewer);
-    $this->post('/invitations/accept')->assertRedirect("/teams/{$team->id}");
+    $this->post('/invitations/accept')->assertRedirect("/teams/{$team->id}/members");
     expect(Membership::query()->where('team_id', $team->id)->where('user_id', $user->id)->sole()->role)->toBe(TeamRole::Viewer)->and($team->users()->count())->toBe(2);
     app(ManageTeamMembers::class)->remove($team->owner, $team->id, $user->id);
     $this->post('/invitations/accept')->assertSessionHasErrors('invitation');
@@ -149,7 +149,7 @@ it('retains verification and explicit acceptance for invited registrations witho
     $verification = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), ['id' => $user->id, 'hash' => sha1($user->email)]);
     $this->get($verification)->assertRedirect('/invitations/accept');
     expect($team->users()->count())->toBe(1);
-    $this->post('/invitations/accept')->assertRedirect("/teams/{$team->id}");
+    $this->post('/invitations/accept')->assertRedirect("/teams/{$team->id}/members");
     expect($team->users()->count())->toBe(2)->and(Team::query()->count())->toBe(1);
 });
 
@@ -198,7 +198,7 @@ it('enforces the invitation hierarchy for every actor and target role', function
     $team->users()->attach($actor->id, ['role' => $actorRole]);
 
     $response = $this->actingAs($actor)->post("/teams/{$team->id}/invitations", ['email' => 'recipient@example.test', 'role' => $targetRole]);
-    $allowed ? $response->assertRedirect("/teams/{$team->id}") : $response->assertForbidden();
+    $allowed ? $response->assertRedirect("/teams/{$team->id}/invitations") : $response->assertForbidden();
     expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe($allowed ? 1 : 0);
 })->with([
     ['owner', 'owner', true], ['owner', 'admin', true], ['owner', 'member', true], ['owner', 'viewer', true],
@@ -236,7 +236,7 @@ it('protects the primary owner and permits explicit transfer to an existing owne
     $this->get("/teams/{$team->id}/ownership")->assertRedirect('/user/confirm-password');
     $this->post('/user/confirm-password', ['password' => 'password'])->assertRedirect("/teams/{$team->id}/ownership");
     $this->post("/teams/{$team->id}/ownership", ['user_id' => $team->owner_id])->assertSessionHasErrors('user_id');
-    $this->post("/teams/{$team->id}/ownership", ['user_id' => $successor->id])->assertRedirect("/teams/{$team->id}");
+    $this->post("/teams/{$team->id}/ownership", ['user_id' => $successor->id])->assertRedirect('/teams');
     expect($team->fresh()->owner_id)->toBe($successor->id)->and(Membership::query()->where('team_id', $team->id)->where('role', 'owner')->count())->toBe(2);
     $this->delete("/teams/{$team->id}/members/{$team->owner_id}")->assertRedirect('/teams');
     expect($team->users()->count())->toBe(1);
@@ -301,11 +301,11 @@ it('hides manager-only invitation data and rejects revoked memberships using sta
     $team->users()->attach($viewer->id, ['role' => 'viewer']);
     InvitationFixture::issue($team);
     $this->actingAs($viewer)
-        ->get("/teams/{$team->id}")
-        ->assertInertia(fn (AssertableInertia $page) => $page->has('roles', 0)->has('invitations', 0));
+        ->get("/teams/{$team->id}/members")
+        ->assertInertia(fn (AssertableInertia $page) => $page->has('roles', 0)->has('invitations.data', 0));
     $viewer->load('teams');
     $team->users()->detach($viewer->id);
-    $this->get("/teams/{$team->id}")->assertNotFound();
+    $this->get("/teams/{$team->id}/members")->assertNotFound();
     $this->post("/teams/{$team->id}/invitations", ['email' => 'another@example.test', 'role' => 'member'])->assertNotFound();
 });
 
@@ -435,7 +435,7 @@ it('accepts immediately before expiry but rejects a forged bearer token without 
     $this->get($fixture['url'])
         ->assertSessionHas('team_invitation.hash', $fixture['invitation']->token_hash)
         ->assertSessionMissing('team_invitation.token');
-    $this->actingAs($user)->post('/invitations/accept')->assertRedirect("/teams/{$team->id}");
+    $this->actingAs($user)->post('/invitations/accept')->assertRedirect("/teams/{$team->id}/members");
 });
 
 it('restricts admin resend and revoke to manageable invitation roles and team-local IDs', function (): void {
@@ -455,7 +455,7 @@ it('restricts admin resend and revoke to manageable invitation roles and team-lo
     $this->delete("/teams/{$team->id}/invitations/{$privileged['invitation']->id}")->assertForbidden();
     $this->post("/teams/{$team->id}/invitations/{$foreignInvite['invitation']->id}/resend")->assertNotFound();
     $this->delete("/teams/{$team->id}/invitations/{$foreignInvite['invitation']->id}")->assertNotFound();
-    $this->get("/teams/{$team->id}")->assertInertia(fn (AssertableInertia $page) => $page->has('invitations', 0));
+    $this->get("/teams/{$team->id}/members")->assertInertia(fn (AssertableInertia $page) => $page->has('invitations.data', 0));
 });
 
 it('renews an expired invitation without duplicating its team-email lifecycle', function (): void {
@@ -465,7 +465,7 @@ it('renews an expired invitation without duplicating its team-email lifecycle', 
     $this->travelTo($fixture['invitation']->expires_at);
     $this->actingAs($team->owner)
         ->post("/teams/{$team->id}/invitations", ['email' => 'invitee@example.test', 'role' => 'viewer'])
-        ->assertRedirect("/teams/{$team->id}");
+        ->assertRedirect("/teams/{$team->id}/invitations");
     expect(app(TenantContext::class)->run($team->id, fn () => TeamInvitation::query()->count()))->toBe(1)->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->role)->toBe(TeamRole::Viewer)
         ->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->token_hash)->not->toBe($fixture['invitation']->token_hash)
         ->and(app(TenantContext::class)->run($team->id, fn () => $fixture['invitation']->fresh())->expires_at->getTimestamp() - now()->getTimestamp())->toBe(7 * 86400);
@@ -511,4 +511,32 @@ it('requires a fresh password on transfer POSTs and rejects stale ownership retu
     $this->withSession(['url.intended' => 'https://untrusted.example/'])
         ->post('/user/confirm-password', ['password' => 'password'])
         ->assertRedirect('/account/security');
+});
+
+it('opens authorized directory panels without changing the selected preference', function (): void {
+    $team = Team::factory()->create();
+    $actor = $team->owner;
+    $before = $actor->current_team_id;
+    $this->actingAs($actor)->get('/teams?team_id='.$team->id.'&panel=plan')
+        ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+        ->component('Teams/Index')->where('panel.team.id', $team->id)->where('panel.kind', 'plan')->has('panel.planSummary.monitors'));
+    expect($actor->fresh()->current_team_id)->toBe($before);
+    $foreign = Team::factory()->create();
+    $this->get('/teams?team_id='.$foreign->id.'&panel=access')->assertNotFound();
+    $this->get('/teams?team_id='.$team->id.'&panel=unknown')->assertSessionHasErrors('panel');
+});
+
+it('paginates member reads and validates closed invitation return contexts', function (): void {
+    $team = Team::factory()->create();
+    foreach (User::factory()->count(11)->create() as $member) {
+        $team->users()->attach($member->id, ['role' => TeamRole::Member]);
+    }
+    $this->actingAs($team->owner)->get('/teams/'.$team->id.'/members')
+        ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->has('members.data', 10)->where('members.total', 12));
+    $this->get('/teams/'.$team->id.'/members?page=2')
+        ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->has('members.data', 2));
+    $this->post('/teams/'.$team->id.'/invitations', ['email' => 'new@example.test', 'role' => 'member', 'return_context' => 'teams'])->assertRedirect('/teams');
+    $this->post('/teams/'.$team->id.'/invitations', ['email' => 'invalid@example.test', 'role' => 'member', 'return_context' => 'https://example.test'])->assertSessionHasErrors('return_context');
+    $this->get('/teams/'.$team->id)->assertRedirect('/teams/'.$team->id.'/members');
+    $this->patch('/teams/'.$team->id.'/members/'.$member->id.'?page=2&q=Member', ['role' => 'viewer'])->assertRedirect('/teams/'.$team->id.'/members?page=2&q=Member');
 });

@@ -17,6 +17,11 @@ Route::get('/teams/{team}/dashboard', DashboardController::class)
     ->whereNumber('team')
     ->name('teams.dashboard');
 
+Route::get('/teams/{team}/reports', [MonthlyReportController::class, 'index'])
+    ->middleware(['auth', 'verified', EstablishTeamContext::class, NoStoreAuthentication::class])
+    ->whereNumber('team')
+    ->name('teams.reports.index');
+
 // Rendering a document is expensive, so downloads have their own limit per user.
 Route::get('/teams/{team}/reports/{month}', MonthlyReportController::class)
     ->middleware(['auth', 'verified', EstablishTeamContext::class, NoStoreAuthentication::class, 'throttle:reports'])

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import TimeSeriesChart from '../../resources/js/components/dashboard/TimeSeriesChart';
 import type { DashboardView } from '../../resources/js/components/dashboard/types';
+import MonitorOverview from '../../resources/js/components/dashboard/MonitorOverview';
 import Show from '../../resources/js/pages/Dashboard/Show';
 import { openTeamStream } from '../../resources/js/realtime/teamStream';
 import type { TeamStreamCallbacks } from '../../resources/js/realtime/types';
@@ -26,8 +27,8 @@ test('renders operational summaries and explicit unavailable uptime coverage and
     renderDashboard();
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Response time series' })).toBeInTheDocument();
-    expect(screen.getByText('No open incidents.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Checkout API' })).toHaveAttribute(
+    expect(screen.queryByText('No open incidents.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open monitor details' })).toHaveAttribute(
         'href',
         '/teams/7/monitors/11',
     );
@@ -72,7 +73,7 @@ test('provides bounded page and chart selection links without changing the route
             ],
         },
     };
-    renderDashboard(next);
+    renderInertia('Signalbox', () => <MonitorOverview team={identity.team} dashboard={next} />);
     expect(screen.getByRole('link', { name: 'View charts for Other monitor' })).toHaveAttribute(
         'href',
         '/teams/7/dashboard?page=2&monitor=12',
@@ -94,7 +95,7 @@ test('offers usable empty page and no-monitor states and reports invalid filter 
         },
         ['monitor'],
     );
-    expect(screen.getByText(/No monitors yet/)).toBeInTheDocument();
+    expect(screen.getByText('0 monitors')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('invalid and ignored: monitor');
     expect(screen.getByRole('link', { name: 'Manage monitors' })).toHaveAttribute(
         'href',
@@ -166,7 +167,9 @@ test('recovers check-driven numeric payloads and reconnects without polling or d
         await vi.advanceTimersByTimeAsync(0);
     });
     act(() => signals?.event('CheckCompleted', contract.CheckCompleted));
-    expect(screen.getByText('Up', { selector: 'span' })).toBeInTheDocument();
+    expect(
+        screen.getByRole('link', { name: 'Up' }).closest('dt')?.parentElement?.querySelector('dd'),
+    ).toHaveTextContent('1');
     next = {
         ...dashboard,
         can: { create: false },
@@ -179,7 +182,12 @@ test('recovers check-driven numeric payloads and reconnects without polling or d
     await act(async () => {
         await vi.advanceTimersByTimeAsync(250);
     });
-    expect(screen.getByText('Down', { selector: 'span' })).toBeInTheDocument();
+    expect(
+        screen
+            .getByRole('link', { name: 'Down' })
+            .closest('dt')
+            ?.parentElement?.querySelector('dd'),
+    ).toHaveTextContent('1');
     expect(screen.queryByRole('link', { name: 'New monitor' })).not.toBeInTheDocument();
     expect(read).toHaveBeenCalledTimes(2);
     expect(read.mock.calls[0]?.[1]?.headers).toMatchObject({
@@ -300,7 +308,7 @@ test('links disjoint team counters to matching active or operational filters', (
         '/teams/7/incidents?state=open',
     );
     expect(counts.getByText('5')).toBeInTheDocument();
-    expect(screen.getByText(/active monitors. Paused and suspended/)).toBeInTheDocument();
+    expect(screen.queryByText(/active monitors. Paused and suspended/)).not.toBeInTheDocument();
 });
 
 test('offers creation only with fresh permission and available plan capacity', () => {
@@ -309,9 +317,7 @@ test('offers creation only with fresh permission and available plan capacity', (
         'href',
         '/teams/7/monitors/create',
     );
-    expect(screen.getByText(/Plan usage: 1 of 5 monitors/)).toHaveTextContent(
-        'Minimum check interval: 300 seconds',
-    );
+    expect(screen.queryByText(/Plan usage:/)).not.toBeInTheDocument();
 });
 
 test.each([
@@ -337,7 +343,7 @@ test.each([
 test.each([true, false])(
     'explains the first monitor and role-aware next step with create permission %s',
     (create) => {
-        renderDashboard({
+        const view = {
             ...dashboard,
             can: { create },
             usage: { used: 0, limit: 5, minimumIntervalSeconds: 300, full: false },
@@ -352,7 +358,8 @@ test.each([true, false])(
             },
             monitors: { ...dashboard.monitors, total: 0, data: [] },
             selectedMonitor: null,
-        });
+        };
+        renderInertia('Signalbox', () => <MonitorOverview team={identity.team} dashboard={view} />);
         expect(screen.getByRole('heading', { name: 'No monitors yet' })).toBeInTheDocument();
         expect(screen.getByText(/No checks or uptime data exist/)).toBeInTheDocument();
         expect(
@@ -363,7 +370,7 @@ test.each([true, false])(
     },
 );
 
-test('separates projection generation and actual last-check timestamps without inventing a team percentage', () => {
+test('shows snapshot time and selected-monitor metrics without rendering the monitor table', () => {
     const checked = '2026-10-30T11:53:00Z';
     renderDashboard({
         ...dashboard,
@@ -376,8 +383,9 @@ test('separates projection generation and actual last-check timestamps without i
         'dateTime',
         dashboard.generatedAt,
     );
-    const table = screen.getByRole('table', { name: 'Monitors of Synthetic team' });
-    expect(table.querySelector('time')).toHaveAttribute('dateTime', checked);
+    expect(
+        screen.queryByRole('table', { name: 'Monitors of Synthetic team' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/Metrics for this monitor only/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open monitor details' })).toHaveAttribute(
         'href',
@@ -385,16 +393,21 @@ test('separates projection generation and actual last-check timestamps without i
     );
 });
 
-test('keeps incident review before monitors and reports independent missing checks', () => {
+test('removes introductory text and list/report panels while preserving summary and charts', () => {
     renderDashboard();
-    const headings = screen
-        .getAllByRole('heading', { level: 2 })
-        .map((element) => element.textContent);
-    expect(headings.indexOf('Open incidents')).toBeLessThan(headings.indexOf('Monitors'));
-    expect(
-        screen.getByText(/Monitor status and incident confirmation are separate/),
-    ).toBeInTheDocument();
-    expect(screen.getByText('No check recorded')).toBeInTheDocument();
+    for (const name of ['Open incidents', 'Monitors', 'Monthly reports']) {
+        expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByText(/application monitoring/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Up, Down and Unknown count/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Plan usage:/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Monthly report' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Monthly reports' })).toHaveAttribute(
+        'href',
+        '/teams/7/reports',
+    );
+    expect(screen.getByLabelText('Monitor states')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Response time series' })).toBeInTheDocument();
 });
 
 test('preserves an explicit chart selection when recovering from an empty monitor page', () => {
@@ -402,10 +415,7 @@ test('preserves an explicit chart selection when recovering from an empty monito
         ...dashboard,
         monitors: { ...dashboard.monitors, data: [], currentPage: 9, lastPage: 2 },
     });
-    expect(screen.getByRole('link', { name: 'Back to the first page' })).toHaveAttribute(
-        'href',
-        '/teams/7/dashboard?monitor=11',
-    );
+    expect(screen.queryByRole('link', { name: 'Back to the first page' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open monitor details' })).toHaveAttribute(
         'href',
         '/teams/7/monitors/11',

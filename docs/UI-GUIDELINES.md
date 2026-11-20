@@ -447,3 +447,7 @@ The former Team menu is removed. Team cards offer Members, Invitations (managers
 ## Team card heading badges — 2026-11-20
 
 Teams, Members and Invitations share CardHeading: the existing title remains first in reading order, while static badges align at the right edge of the same heading row. The badge column is bounded to 60%, and 35% on small screens and wraps within that column, keeping long names readable and status labels visually separate from the action row. Badge colors, labels and noninteractive semantics remain unchanged.
+
+## Dashboard cleanup and Monthly reports — 2026-11-20
+
+Dashboard omits its page subtitle, the Up/Down/Unknown explanation, plan usage paragraph and the two list panels for incidents/monitors. Summary counts and charts remain; quota refusal guidance stays actionable. Monthly reports has its own team page and shared desktop/mobile menu entry, with the existing month selector and native PDF link. Historical dashboard monitor/page URLs remain accepted by the server. Realtime acceptance checks now observe the visible counters rather than removed table rows.

@@ -717,3 +717,7 @@ Rebuild/deploy client assets normally to adopt the shared Select component acros
 ## Unified team management — 2026-11-20
 
 Deploy application PHP and rebuilt browser assets together. Teams is the sole management menu; cards open plan/invite/access modals and link to dedicated Members/Invitations directories. Existing authorized /teams/{team} links redirect to Members. No migration, dependency, environment variable or worker restart is introduced. Verification uses only isolated storage and synthetic fixtures; TASKS and TESTING record actual checks and remaining browser-acceptance limits.
+
+## Dedicated monthly reports page — 2026-11-20
+
+Deploy PHP and rebuilt client assets together. The dashboard keeps summary counters and charts; report export is now at /teams/{team}/reports with a team menu entry. Existing dated PDF URLs, report timezone and authorization remain unchanged. No migration, package, environment variable or worker change is introduced. TASKS records verification and browser-fixture limits.

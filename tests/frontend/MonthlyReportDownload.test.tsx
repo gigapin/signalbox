@@ -1,6 +1,8 @@
 /** Verify report month options and the download link, including the team timezone at a month boundary. */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import Reports from '../../resources/js/pages/Reports/Index';
+import { renderInertia } from './renderInertia';
 import { expect, test } from 'vitest';
 import MonthlyReportDownload, {
     reportMonths,
@@ -41,4 +43,21 @@ test('preselects the last complete month and follows the choice in a plain link'
     );
 
     expect(link).toHaveAttribute('href', `/teams/7/reports/${String(months[3]?.value)}`);
+});
+
+/** The dedicated team page preserves the real download control and marks its menu entry active. */
+test('offers reports on their dedicated authorized team page', () => {
+    renderInertia('Signalbox', Reports, {
+        team: { id: 7, name: 'Synthetic team' },
+        reportTimezone: 'Europe/Rome',
+    });
+    expect(screen.getByRole('heading', { name: 'Monthly reports' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Monthly reports' })).toHaveAttribute(
+        'aria-current',
+        'page',
+    );
+    expect(screen.getByRole('link', { name: 'Download PDF' })).toHaveAttribute(
+        'href',
+        `/teams/7/reports/${String(reportMonths('Europe/Rome')[1]?.value)}`,
+    );
 });

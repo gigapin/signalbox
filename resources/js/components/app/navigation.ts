@@ -2,6 +2,7 @@
 
 /** Implemented sections; billing and API are intentionally absent until their pages exist. */
 export type TeamSection =
+    | 'reports'
     | 'dashboard'
     | 'monitors'
     | 'incidents'
@@ -81,6 +82,7 @@ export function teamDestinations(teamId: number): TeamDestination[] {
         { section: 'maintenance', label: 'Maintenance', href: `${base}/maintenance` },
         { section: 'notifications', label: 'Notifications', href: `${base}/notifications` },
         { section: 'status-pages', label: 'Status pages', href: `${base}/status-pages` },
+        { section: 'reports', label: 'Monthly reports', href: `${base}/reports` },
     ];
 }
 

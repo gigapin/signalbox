@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Deliver a team's monthly report as a PDF download. */
+/** Present monthly report selection and deliver authorized PDF downloads. */
 
 namespace App\Http\Controllers\Reports;
 
@@ -13,11 +13,27 @@ use App\Http\Requests\Reports\ShowMonthlyReportRequest;
 use App\Models\Team;
 use App\Services\Reports\BuildMonthlyReport;
 use Carbon\CarbonImmutable;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /** Membership, verification and tenant context are established before the request and the services execute. */
 final class MonthlyReportController extends Controller
 {
+    /** Present the existing month selector without generating a PDF.
+     * @param ShowMonthlyReportRequest $request Authorized member read with established tenant context.
+     * @param int $team Explicit route team, independent of the account preference.
+     * @return InertiaResponse Minimal report calendar and identity projection.
+     */
+    public function index(ShowMonthlyReportRequest $request, int $team): InertiaResponse
+    {
+        $identity = Team::query()->findOrFail($team);
+        return Inertia::render('Reports/Index', [
+            'team' => ['id' => $identity->id, 'name' => $identity->name],
+            'reportTimezone' => $identity->timezone,
+        ]);
+    }
+
     /**
      * @param ShowMonthlyReportRequest $request Authorized read.
      * @param BuildMonthlyReport $reports Report contents.

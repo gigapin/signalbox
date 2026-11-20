@@ -230,7 +230,7 @@ test('unmounts the real dashboard subscription and aborts old reads before the s
         realtime: { key: 'public', host: 'localhost', port: 8080, scheme: 'http' },
     });
     expect(openTeamStream).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('link', { name: 'Checkout API' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Open monitor details' })).toBeVisible();
     act(() => callbacks?.subscribed());
     await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
     const oldRead = request.mock.calls[0]?.[1]?.signal;

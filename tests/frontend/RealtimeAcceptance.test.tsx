@@ -1,6 +1,6 @@
 /** Connect real Echo, private authorization, the scoped store and actual dashboard DOM using transport-only doubles. */
 import { router } from '@inertiajs/react';
-import { act, screen, within } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { beforeEach, afterEach, expect, test, vi } from 'vitest';
 import type { DashboardView } from '../../resources/js/components/dashboard/types';
 import type { IncidentSummary } from '../../resources/js/components/incidents/types';
@@ -136,20 +136,25 @@ test('authorizes the private native Echo channel and batches duplicate numeric c
         for (let i = 0; i < 50; i++)
             f.client.receive('private-team.7', 'CheckCompleted', contract.CheckCompleted);
     });
-    expect(screen.getByText('Up', { selector: 'span' })).toBeInTheDocument();
+    expect(
+        screen.getByRole('link', { name: 'Up' }).closest('dt')?.parentElement?.querySelector('dd'),
+    ).toHaveTextContent('1');
     await advance(250);
-    expect(screen.getByText('Down', { selector: 'span' })).toBeInTheDocument();
+    expect(
+        screen
+            .getByRole('link', { name: 'Down' })
+            .closest('dt')
+            ?.parentElement?.querySelector('dd'),
+    ).toHaveTextContent('1');
     expect(f.reads).toHaveLength(2);
     expect(
-        within(screen.getByRole('table', { name: 'Monitors of Synthetic team' })).getAllByRole(
-            'row',
-        ),
-    ).toHaveLength(2);
+        screen.queryByRole('table', { name: 'Monitors of Synthetic team' }),
+    ).not.toBeInTheDocument();
     await advance(60_000);
     expect(f.reads).toHaveLength(2);
 });
 
-test('treats repeated and reordered open resolved and reopen frames as invalidations without duplicating incident rows', async () => {
+test('treats repeated and reordered incident frames as invalidations without duplicating the open-incident count', async () => {
     const f = fixture();
     act(() => f.client.establish());
     await advance();
@@ -171,14 +176,21 @@ test('treats repeated and reordered open resolved and reopen frames as invalidat
     await advance(250);
     expect(f.reads).toHaveLength(2);
     expect(
-        within(screen.getByRole('table', { name: 'Latest open incidents' })).getAllByRole('row'),
-    ).toHaveLength(2);
-    expect(screen.getByRole('link', { name: 'Incident #31' })).toBeInTheDocument();
+        screen
+            .getByRole('link', { name: 'Open incidents' })
+            .closest('dt')
+            ?.parentElement?.querySelector('dd'),
+    ).toHaveTextContent('1');
     f.next(dashboard);
     act(() => f.client.receive('private-team.7', 'IncidentResolved', contract.IncidentResolved));
     await advance(250);
     expect(screen.queryByRole('table', { name: 'Latest open incidents' })).not.toBeInTheDocument();
-    expect(screen.getByText('No open incidents.')).toBeInTheDocument();
+    expect(
+        screen
+            .getByRole('link', { name: 'Open incidents' })
+            .closest('dt')
+            ?.parentElement?.querySelector('dd'),
+    ).toHaveTextContent('0');
 });
 
 test('ignores foreign/public lookalikes unsupported names and malformed frames at the real adapter boundary', async () => {
@@ -313,7 +325,12 @@ test.each(['missed', 'cancelled', 'infrastructure_failed'])(
         );
         await advance(250);
         expect(f.reads).toHaveLength(2);
-        expect(screen.getByText('Up', { selector: 'span' })).toBeInTheDocument();
+        expect(
+            screen
+                .getByRole('link', { name: 'Up' })
+                .closest('dt')
+                ?.parentElement?.querySelector('dd'),
+        ).toHaveTextContent('1');
         expect(screen.getAllByText('Unavailable')).toHaveLength(3);
     },
 );

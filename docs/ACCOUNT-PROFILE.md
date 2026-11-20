@@ -63,3 +63,9 @@ Actual test outcomes and outstanding browser acceptance are recorded in TASKS. B
 cover both themes, mobile, actual save/validation, file preview, recovery after uncertain writes and the
 end-to-end email flow. No live email delivery, exhaustive concurrent file-failure injection or new 2FA
 acceptance is implied by the initial automated results.
+
+## Heading save and synthetic names — 2026-11-20
+
+Save changes is in the account heading action slot, portaled from the removable profile form. Native form association and an internal hidden submit retain keyboard Enter behavior, validation, dirty/pending disabling, confirmation and owned mutations.
+
+The known IdentitySeeder labels now explicitly separate Synthetic / Owner (and the other role labels). Seeder reruns normalize only reserved fixture emails with the exact untouched display label, absent surname and absent/full-label first_name; customized profile fields are preserved. Real legacy names and registration inputs are not heuristically split. The account presenter always uses users.first_name/last_name, never the current team's name. The reported local owner fixture had Synthetic Owner copied wholesale into first_name by the historical migration; its two profile fields were repaired with a conditional, single-row update while preserving its display name, credentials and memberships.

@@ -1,6 +1,7 @@
 /** Edit optional private account details without altering team authorization or active email before verification. */
 import { Link, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 import type { AuthProps } from '../../components/auth/AuthLayout';
 import PrivateContextLayout from '../../components/app/PrivateContextLayout';
 import { useFormProtection } from '../../components/app/NavigationGuard';
@@ -19,7 +20,7 @@ interface ProfileProps extends AuthProps {
     hasPendingInvitation?: boolean;
 }
 /** One removable draft boundary for the current identity. */
-function ProfileForm() {
+function ProfileForm({ actionsTarget }: { actionsTarget: HTMLElement | null }) {
     const {
         profile = {},
         countries = [],
@@ -38,6 +39,7 @@ function ProfileForm() {
         remove_avatar: false,
         current_password: '',
     });
+    const formId = useId();
     const emailForm = useForm<Record<string, never>>({});
     const mutation = useOwnedMutation();
     useFormProtection(form);
@@ -81,6 +83,18 @@ function ProfileForm() {
     }
     return (
         <>
+            {actionsTarget &&
+                createPortal(
+                    <Button
+                        type="submit"
+                        form={formId}
+                        disabled={!form.isDirty || mutation.locked}
+                        busy={form.processing}
+                    >
+                        Save changes
+                    </Button>,
+                    actionsTarget,
+                )}
             {hasPendingInvitation && (
                 <p>
                     <Link href="/invitations/accept" className="ui-link">
@@ -122,7 +136,14 @@ function ProfileForm() {
                     {emailForm.errors['email']}
                 </p>
             )}
-            <form onSubmit={submit} className="ui-panel">
+            <form id={formId} onSubmit={submit} className="ui-panel">
+                <button
+                    type="submit"
+                    hidden
+                    disabled={!form.isDirty || mutation.locked}
+                    aria-hidden="true"
+                    tabIndex={-1}
+                />
                 <fieldset
                     disabled={mutation.locked}
                     className="grid items-start gap-4 md:grid-cols-2"
@@ -233,15 +254,6 @@ function ProfileForm() {
                             autoComplete="current-password"
                         />
                     )}
-                    <div className="ui-actions md:col-span-2">
-                        <Button
-                            type="submit"
-                            disabled={!form.isDirty || mutation.locked}
-                            busy={form.processing}
-                        >
-                            Save changes
-                        </Button>
-                    </div>
                 </fieldset>
             </form>
             {mutation.phase === 'uncertain' && (
@@ -256,9 +268,13 @@ function ProfileForm() {
 /** @returns Profile draft disposed whenever the authenticated account changes. */
 export default function Overview() {
     const { auth } = usePage<AuthProps>().props;
+    const [actionsTarget, setActionsTarget] = useState<HTMLDivElement | null>(null);
     return (
-        <PrivateContextLayout title="Your account">
-            <ProfileForm key={auth?.user?.email ?? 'none'} />
+        <PrivateContextLayout
+            title="Your account"
+            actions={<div ref={setActionsTarget} className="contents" />}
+        >
+            <ProfileForm key={auth?.user?.email ?? 'none'} actionsTarget={actionsTarget} />
         </PrivateContextLayout>
     );
 }

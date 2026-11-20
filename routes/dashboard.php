@@ -22,6 +22,12 @@ Route::get('/teams/{team}/reports', [MonthlyReportController::class, 'index'])
     ->whereNumber('team')
     ->name('teams.reports.index');
 
+// Custom periods retain the monthly endpoint's authorization and shared download budget.
+Route::get('/teams/{team}/reports/download', [MonthlyReportController::class, 'download'])
+    ->middleware(['auth', 'verified', EstablishTeamContext::class, NoStoreAuthentication::class, 'throttle:reports'])
+    ->whereNumber('team')
+    ->name('teams.reports.download');
+
 // Rendering a document is expensive, so downloads have their own limit per user.
 Route::get('/teams/{team}/reports/{month}', MonthlyReportController::class)
     ->middleware(['auth', 'verified', EstablishTeamContext::class, NoStoreAuthentication::class, 'throttle:reports'])

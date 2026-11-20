@@ -395,14 +395,14 @@ test('shows snapshot time and selected-monitor metrics without rendering the mon
 
 test('removes introductory text and list/report panels while preserving summary and charts', () => {
     renderDashboard();
-    for (const name of ['Open incidents', 'Monitors', 'Monthly reports']) {
+    for (const name of ['Open incidents', 'Monitors', 'Reports']) {
         expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument();
     }
     expect(screen.queryByText(/application monitoring/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Up, Down and Unknown count/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Plan usage:/)).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'Monthly report' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Monthly reports' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Reports' })).toHaveAttribute(
         'href',
         '/teams/7/reports',
     );

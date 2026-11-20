@@ -231,3 +231,9 @@ Durations cannot be rebuilt cheaply in SQL, so they are checked for adding up ra
 - The bundled DejaVu Sans font does not cover CJK text, which renders as empty boxes.
 - Latency percentiles are not included: rollup buckets are UTC, so they are not exact for a month in another timezone.
 
+
+## Custom report periods — 2026-11-20
+
+Reports now exports one aggregate PDF for inclusive `from`/`to` dates via GET `/teams/{team}/reports/download`. Dates are interpreted at local midnight in the team timezone; the exclusive UTC end is midnight after `to`, preserving DST. Only complete days through yesterday are admitted, within effective plan retention (90/365/730 days). ReportCalendar projects bounds and DownloadReportRequest rechecks them. SLA uses MonitorAvailability for the whole window; incident counts include starts in that window. Missing retained inputs still yield Unavailable. Existing monthly URLs, filenames and partial-month semantics remain compatible. The PDF labels custom periods with both inclusive dates and also states exact UTC-offset boundaries.
+
+The page uses a cancellable two-click calendar (the same day twice selects one day), Apply/Cancel, and a native download link beside the title. The field is full-width below 1024px and one third above it. No chart change, new persistence or background export queue.

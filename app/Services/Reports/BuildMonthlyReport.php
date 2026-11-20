@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-/** Gather a team's monthly report from the single SLA authority, adding no availability rule of its own. */
+/** Gather a team's report period from the single SLA authority, adding no availability rule of its own. */
 
 namespace App\Services\Reports;
 
 use App\Data\Reports\MonthlyReport;
 use App\Data\Reports\MonthlyReportRow;
 use App\Data\Reports\ReportMonth;
+use App\Data\Reports\ReportPeriod;
 use App\Models\Incident;
 use App\Models\Monitor;
 use App\Models\Team;
@@ -17,7 +18,7 @@ use Carbon\CarbonImmutable;
 
 /**
  * Runs inside the route team's context. Only names and metrics are read, never monitor configuration. Monitors deleted since
- * the month do not appear: deleting a monitor deletes its history.
+ * the period do not appear: deleting a monitor deletes its history.
  */
 final readonly class BuildMonthlyReport
 {
@@ -28,10 +29,10 @@ final readonly class BuildMonthlyReport
 
     /**
      * @param Team $team Authorized team, also the active tenant.
-     * @param ReportMonth $month Month in the team's timezone.
+     * @param ReportMonth|ReportPeriod $month Inclusive report period or compatible calendar month in the team's timezone.
      * @return MonthlyReport Report of all the team's monitors.
      */
-    public function build(Team $team, ReportMonth $month): MonthlyReport
+    public function build(Team $team, ReportMonth|ReportPeriod $month): MonthlyReport
     {
         $window = $month->window();
         $incidents = $this->incidentsPerMonitor($team->id, $window->start, $window->end);

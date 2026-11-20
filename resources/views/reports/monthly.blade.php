@@ -6,7 +6,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Monthly report — {{ $report->month->label() }}</title>
+    <title>Report — {{ $report->month->label() }}</title>
     <style>
         @page { margin: 18mm 14mm; }
         body { color: #1e293b; font-family: "DejaVu Sans", sans-serif; font-size: 9pt; }
@@ -23,13 +23,13 @@
     </style>
 </head>
 <body>
-    <h1>Monthly report — {{ $report->month->label() }}</h1>
+    <h1>Report — {{ $report->month->label() }}</h1>
     <p class="meta">Team: {{ $report->teamName }}</p>
     <p class="meta">Period: {{ $report->periodStart() }} to {{ $report->periodEnd() }} ({{ $report->month->timezone }})</p>
     <p class="meta">Generated: {{ $report->generated() }}</p>
 
     @if ($report->isPartial())
-        <p class="notice">This month is still in progress: values cover the period up to the generation time and can change.</p>
+        <p class="notice">This period is still in progress: values cover the period up to the generation time and can change.</p>
     @endif
 
     @if ($report->rows === [])

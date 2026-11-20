@@ -1716,3 +1716,63 @@
         }
     }
 }
+
+/* Date range field keeps the calendar within the viewport in both color themes. */
+.ui-report-field {
+    position: relative;
+    width: 100%;
+}
+.ui-report-calendar {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 30;
+    max-width: calc(100vw - 4rem);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    background: var(--color-ui-surface);
+    color: var(--color-ui-text);
+    border: 1px solid currentColor;
+    box-shadow: 0 12px 32px #0003;
+}
+.ui-report-calendar .rdp-root {
+    --rdp-accent-color: var(--color-ui-accent);
+    font-size: 0.875rem;
+}
+@media (min-width: 1024px) {
+    .ui-report-field {
+        width: 33.333333%;
+    }
+}
+
+/* Compact day cells fit narrow phone viewports without horizontal scrolling. */
+.ui-report-calendar .rdp-root {
+    --rdp-day-width: 32px;
+    --rdp-day-height: 36px;
+    --rdp-day_button-width: 30px;
+    --rdp-day_button-height: 34px;
+}
+@media (min-width: 1024px) {
+    .ui-report-calendar .rdp-root {
+        --rdp-day-width: 40px;
+        --rdp-day_button-width: 38px;
+    }
+}
+
+/* Calendar tables inherit the active theme rather than browser table colors. */
+.ui-report-calendar {
+    width: max-content;
+}
+.ui-report-calendar .rdp-month_grid {
+    color: var(--color-ui-text);
+}
+.ui-report-calendar .rdp-root {
+    --rdp-accent-background-color: var(--color-ui-raised);
+    --rdp-range_start-color: var(--color-ui-on-accent);
+    --rdp-range_end-color: var(--color-ui-on-accent);
+}
+@media (min-width: 1024px) {
+    .ui-report-calendar .rdp-months {
+        flex-wrap: nowrap;
+    }
+}

@@ -1,29 +1,49 @@
-/** Offer monthly PDF exports within the authorized team's standard workspace. */
+/** Offer date-range PDF exports within the authorized team's workspace. */
 import { usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import AppLayout from '../../components/app/AppLayout';
-import MonthlyReportDownload from '../../components/dashboard/MonthlyReportDownload';
+import ReportDownload, { type ReportCalendar } from '../../components/dashboard/ReportDownload';
 import type { AuthProps } from '../../components/auth/AuthLayout';
 
-/** Member-safe report calendar, with no report contents or billing credentials. */
+/** Minimal member-safe calendar projection. */
 interface ReportsProps extends AuthProps {
-    /** Explicit authorized route identity. */
+    /** Authorized route identity. */
     team: { id: number; name: string };
-    /** IANA timezone used by both month choices and the existing PDF endpoint. */
+    /** Team IANA timezone. */
     reportTimezone: string;
+    /** Complete selectable days and initial dates. */
+    reportCalendar: ReportCalendar;
 }
 
-/** Keep report controls inside the removable tenant boundary. */
-export default function Reports() {
-    const { team, reportTimezone } = usePage<ReportsProps>().props;
+/** Own the download state inside the removable tenant boundary. */
+function Content({ actionsTarget }: { actionsTarget: HTMLElement | null }) {
+    const { team, reportTimezone, reportCalendar, errors } = usePage<ReportsProps>().props;
     return (
-        <AppLayout title="Monthly reports" team={team} section="reports">
-            <div className="ui-panel">
-                <MonthlyReportDownload
-                    key={`${team.id}:${reportTimezone}`}
-                    teamId={team.id}
-                    timezone={reportTimezone}
-                />
-            </div>
+        <div className="ui-panel">
+            <ReportDownload
+                key={`${team.id}:${reportTimezone}:${reportCalendar.min}`}
+                teamId={team.id}
+                timezone={reportTimezone}
+                calendar={reportCalendar}
+                actionsTarget={actionsTarget}
+                errors={errors}
+            />
+        </div>
+    );
+}
+
+/** Place the authorized download action beside the page heading. */
+export default function Reports() {
+    const { team } = usePage<ReportsProps>().props;
+    const [actionsTarget, setActionsTarget] = useState<HTMLDivElement | null>(null);
+    return (
+        <AppLayout
+            title="Reports"
+            team={team}
+            section="reports"
+            actions={<div ref={setActionsTarget} className="contents" />}
+        >
+            <Content actionsTarget={actionsTarget} />
         </AppLayout>
     );
 }

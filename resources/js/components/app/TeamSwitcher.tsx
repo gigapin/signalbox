@@ -1,15 +1,18 @@
 /** Switch an account preference once, then navigate only after a checked server acknowledgement. */
 import SelectField from '../ui/SelectField';
 import { Link, router } from '@inertiajs/react';
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { csrfHeader } from '../csrf';
 import Alert from '../ui/Alert';
+import PageLoader from '../ui/PageLoader';
 import Button from '../ui/Button';
 import { useLeaveProtection, useNavigationGuard } from './NavigationGuard';
 import type { TeamNavigationView } from './navigation';
 
 /** Membership choices and caller-controlled suspension of private page content. */
 interface TeamSwitcherProps {
+    /** Commit selection directly without an adjacent submit button in workspace headers. */
+    immediate?: boolean;
     /** Fresh explicit membership projection from a private page. */
     navigation: TeamNavigationView;
     /** Route team in team pages, valid preference in account pages, or null when not selected. */
@@ -33,6 +36,7 @@ export default function TeamSwitcher({
     activeTeamId,
     onSuspend,
     afterSwitch = 'dashboard',
+    immediate = false,
 }: TeamSwitcherProps) {
     const guard = useNavigationGuard();
     const [choice, setChoice] = useState(
@@ -40,6 +44,7 @@ export default function TeamSwitcher({
     );
     const [phase, setPhase] = useState<'idle' | 'pending' | 'error'>('idle');
     useLeaveProtection(false, phase === 'pending');
+    const admitting = useRef(false);
     const operation = useRef<AbortController | null>(null);
     const alive = useRef(false);
     const fieldId = useId();
@@ -54,12 +59,24 @@ export default function TeamSwitcher({
     }, []);
 
     /** Check acknowledgement before the read-only navigation; unmount and aborted requests cannot navigate. */
-    async function select(event: FormEvent<HTMLFormElement>): Promise<void> {
-        event.preventDefault();
-        const target = navigation.teams.find((team) => String(team.id) === choice);
-        if (!target || target.id === activeTeamId || operation.current || phase !== 'idle') return;
+    async function select(value: string): Promise<void> {
+        const target = navigation.teams.find((team) => String(team.id) === value);
+        if (
+            !target ||
+            target.id === activeTeamId ||
+            operation.current ||
+            admitting.current ||
+            guard.busy ||
+            phase !== 'idle'
+        )
+            return;
 
-        if (!(await guard.confirmLeave()) || !alive.current || operation.current) return;
+        admitting.current = true;
+        const allowed = await guard.confirmLeave();
+        if (!allowed || !alive.current || operation.current) {
+            admitting.current = false;
+            return;
+        }
 
         const controller = new AbortController();
         operation.current = controller;
@@ -93,12 +110,17 @@ export default function TeamSwitcher({
             if (!alive.current) return;
             if (controller.signal.aborted) throw new Error(FAILURE);
 
+            // Inertia may finish a successful visit before React unmounts the previous shell.
+            let navigated = false;
             guard.runAuthorizedNavigation(() =>
                 router.visit(afterSwitch === 'teams' ? '/teams' : destination, {
                     preserveState: false,
                     preserveScroll: false,
+                    onSuccess: () => {
+                        navigated = true;
+                    },
                     onFinish: () => {
-                        if (alive.current) setPhase('error');
+                        if (alive.current && !navigated) setPhase('error');
                     },
                 }),
             );
@@ -106,6 +128,7 @@ export default function TeamSwitcher({
             if (alive.current) setPhase('error');
         } finally {
             window.clearTimeout(timeout);
+            admitting.current = false;
         }
     }
 
@@ -132,49 +155,67 @@ export default function TeamSwitcher({
     }
 
     return (
-        <form
-            className="ui-team-switcher"
-            onSubmit={(event) => {
-                void select(event);
-            }}
-            aria-busy={phase === 'pending'}
-        >
-            <SelectField
-                labelHidden
-                label="Team"
-                id={fieldId}
-                value={choice}
-                disabled={phase === 'pending'}
-                onChange={(event) => setChoice(event.target.value)}
+        <>
+            <PageLoader active={phase === 'pending'} label="Switching team…" />
+            <form
+                className="ui-team-switcher"
+                data-immediate={immediate || undefined}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!immediate) void select(choice);
+                }}
+                aria-busy={phase === 'pending'}
             >
-                <option value="" disabled>
-                    Choose a team
-                </option>
-                {navigation.teams.map((team) => (
-                    <option key={team.id} value={team.id}>
-                        {team.name} · {team.role}
+                <SelectField
+                    labelHidden
+                    label="Team"
+                    id={fieldId}
+                    value={choice}
+                    disabled={phase === 'pending' || (immediate && guard.busy)}
+                    aria-describedby={immediate && guard.busy ? busyDescriptionId : undefined}
+                    title={
+                        immediate && guard.busy
+                            ? 'Finish the current request before switching teams.'
+                            : undefined
+                    }
+                    onChange={(event) => {
+                        const value = event.target.value;
+                        if (immediate) void select(value);
+                        else setChoice(value);
+                    }}
+                >
+                    <option value="" disabled>
+                        Choose a team
                     </option>
-                ))}
-            </SelectField>
-            <Button
-                type="submit"
-                variant="secondary"
-                busy={phase === 'pending'}
-                busyLabel="Switching team…"
-                aria-describedby={guard.busy ? busyDescriptionId : undefined}
-                title={
-                    guard.busy ? 'Finish the current request before switching teams.' : undefined
-                }
-                disabled={guard.busy || choice === '' || choice === String(activeTeamId)}
-            >
-                Switch team
-            </Button>
-            {guard.busy && (
-                <p id={busyDescriptionId} role="status" className="sr-only">
-                    Finish the current request before switching teams.
-                </p>
-            )}
-            {phase === 'pending' && <p role="status">Switching team…</p>}
-        </form>
+                    {navigation.teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                            {team.name} · {team.role}
+                        </option>
+                    ))}
+                </SelectField>
+                {!immediate && (
+                    <Button
+                        type="submit"
+                        variant="secondary"
+                        busy={phase === 'pending'}
+                        busyLabel="Switching team…"
+                        aria-describedby={guard.busy ? busyDescriptionId : undefined}
+                        title={
+                            guard.busy
+                                ? 'Finish the current request before switching teams.'
+                                : undefined
+                        }
+                        disabled={guard.busy || choice === '' || choice === String(activeTeamId)}
+                    >
+                        Switch team
+                    </Button>
+                )}
+                {guard.busy && (
+                    <p id={busyDescriptionId} role="status" className="sr-only">
+                        Finish the current request before switching teams.
+                    </p>
+                )}
+            </form>
+        </>
     );
 }

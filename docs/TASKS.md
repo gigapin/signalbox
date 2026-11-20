@@ -1,5 +1,25 @@
 # Signalbox — Piano dei task
 
+## UI — Loader durante cambio team — 2026-11-20
+
+- [x] Completato e verificato. TeamSwitcher riusa PageLoader centrale dalla partenza del POST alla sostituzione della pagina; rimosso lo status pendente separato. AppLayout distingue sospensione transitoria da accesso non disponibile: il solo cambio team non monta Team selection/Team data hidden, mentre le negazioni reali conservano la schermata di recupero. Nome team e titolo documento non diventano messaggi di errore durante il caricamento; vecchi dati/ruolo/sidebar/realtime restano smontati.
+- Corretta anche la finestra onFinish: Inertia onSuccess registra la navigazione riuscita prima del callback finale, impedendo il passaggio a phase=error prima che React smonti il selettore precedente. Trasporto fallito/HTTP/timeout o navigazione non riuscita mantengono il review alert e rimuovono il loader; nessun retry automatico.
+- File: components/app/AppLayout e TeamSwitcher, frontend/TeamSwitcher; UI-GUIDELINES/TEAMS e piano. Test aggiornati per portal del loader, assenza di alert/recovery heading durante pending, permanenza fino allo smontaggio dopo onSuccess/onFinish, rimozione su errore e mantenimento delle protezioni esistenti.
+- Mirato TeamSwitcher/NavigationGuard/AppLayout/Teams/TeamsDirectory72/72 in5 file,15,45s,exit0. Check finale ESLint/Prettier/TypeScript e6 qualità exit0; build exit0. Una successiva aggiunta di solo commento inglese è stata verificata con Prettier. Integrale frontend finale586/586 in48 file,137,70s,exit0.
+- Firefox fixture reale Dashboard/AppLayout con fetch mantenuto pendente esclusivamente in memoria: screenshot1280×1000 e390×1000 ispezionati, spinner al centro senza alert e senza dati del vecchio tenant. Nessun POST reale; server temporaneo arrestato, fixture/screenshot in /tmp. Non è sessione autenticata, VoiceOver o zoom nativo.
+- Nessun backend/PHP formatter/Larastan, audit o CI remota ripetuto per modifica esclusivamente frontend. Nessuna dipendenza, migration, .env, dato o servizio applicativo modificato; public/hot non modificato manualmente, asset ricostruiti. Git/gh non eseguiti. Prossimo passo: controllo utente dello switch reale.
+
+
+## UI — Switch immediato nell’header — 2026-11-20
+
+- [x] Completato e verificato: nell’header il team si seleziona direttamente dal select senza pulsante. TeamSwitcher supporta immediate opt-in da AppLayout; scelta puntatore o Enter confermato avvia il POST esistente. Esplorazione frecce, apertura menu e scelta team attuale non scrivono. Conferma bozze, blocco pending, CSRF, verifica risposta, abort/smontaggio dati privati e no-replay preservati. Il selettore nella pagina Teams conserva lo switch esplicito e il ritorno alla lista.
+- Protezioni: ammissione fenced prima di attendere la guardia; Stay mantiene valori e selezione corrente. Controllo immediato disabilitato durante richieste foreground/pending, aria-describedby sul select e messaggi status sr-only; nessuna riga visibile aggiunta all’header. CSS a colonna singola e larghezza adattiva mobile. Nessun contratto backend o permesso modificato.
+- File: components/app/TeamSwitcher e AppLayout, app.css; frontend TeamSwitcher/NavigationGuard/OperationalWorkflows; UI-GUIDELINES/TEAMS e questo piano. Nuovi test puntatore/tastiera/no-op, casi guard/pending/cancellazione/revoca e selettori espliciti aggiornati senza indebolire le verifiche di sicurezza.
+- Verifiche:65/65 test in5 file,16,39s; npm run check finale exit0 (lint/formato/TypeScript e6 qualità); build exit0. Primo nuovo test puntatore interrogava sia option nativa sia option del popup: query limitata al listbox reale, poi mirato verde. Integrale finale586/586 in48 file,136,84s,exit0.
+- Firefox fixture sintetica Dashboard/AppLayout con due team:1280×1000 e390×1000 screenshot ispezionati, header con solo select e nessun pulsante/spazio vuoto, larghezza piena su mobile. Comportamento di rete/guardia verificato dai test DOM; non è sessione autenticata o test provider/VoiceOver/zoom nativo. Server temporaneo arrestato; fixture in /tmp.
+- Non ripetuti backend/PHP-CS-Fixer/Larastan, audit e CI remota per modifica esclusivamente frontend. Nessuna dipendenza, migration, .env, dato o servizio applicativo modificato; public/hot non modificato manualmente, asset ricostruiti. Git/gh non eseguiti. Prossimo passo: controllo dell’utente sullo switch reale.
+
+
 ## UI — Pulizia Dashboard e pagina Monthly reports — 2026-11-20
 
 - [x] Completato e verificato: rimossi sottotitolo e testi Up/Down/Unknown e Plan usage, pannelli liste Open incidents/Monitors e report dalla dashboard. Conservati contatori (incluso quello incidenti), grafici, realtime e avviso effettivo di quota esaurita. Rimossa anche l’istruzione ormai errata sui check mostrati nella lista sottostante.

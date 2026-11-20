@@ -451,3 +451,13 @@ Teams, Members and Invitations share CardHeading: the existing title remains fir
 ## Dashboard cleanup and Monthly reports — 2026-11-20
 
 Dashboard omits its page subtitle, the Up/Down/Unknown explanation, plan usage paragraph and the two list panels for incidents/monitors. Summary counts and charts remain; quota refusal guidance stays actionable. Monthly reports has its own team page and shared desktop/mobile menu entry, with the existing month selector and native PDF link. Historical dashboard monitor/page URLs remain accepted by the server. Realtime acceptance checks now observe the visible counters rather than removed table rows.
+
+## Immediate header team selection — 2026-11-20
+
+AppLayout opts TeamSwitcher into immediate mode. Pointer selection or keyboard Enter on a highlighted option starts the existing confirmed switch without an adjacent button. Merely opening/exploring the picker or choosing the current team does not write. The control keeps the current accepted value until navigation, and cancellation of the dirty-draft guard retains it. The initial admission is fenced before awaiting the guard, preventing duplicate confirmations/writes. Busy foreground work and pending selection disable the immediate control; the pending announcement is sr-only to preserve header geometry. CSS uses one select column on desktop/mobile. The Teams page's explicit selector retains its button and list continuation.
+
+The same CSRF POST, canonical acknowledgement validation, private-data suspension/read cancellation, timeout, no-replay failure/review and unmount fencing apply to both modes. No new backend contract or automatic fallback is introduced.
+
+## Team-switch loading presentation — 2026-11-20
+
+TeamSwitcher reuses PageLoader from accepted switch initiation through destination navigation. The transient suspended state unmounts previous tenant content and live effects, but does not render Team selection/Team data hidden recovery messages. Those remain for authoritative access denial; switch transport/navigation failures retain the explicit Check current teams alert and remove the loader. Inertia onSuccess records successful handoff so onFinish cannot briefly display a false error while React is still unmounting the old shell. The page title and safe team identity remain stable while switching; no new visible status row is inserted.

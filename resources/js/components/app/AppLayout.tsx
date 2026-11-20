@@ -5,6 +5,7 @@ import { useCallback, useId, useState, type ReactNode } from 'react';
 import type { AuthProps } from '../auth/AuthLayout';
 import LiveUpdates from '../LiveUpdates';
 import Alert from '../ui/Alert';
+
 import { PageHeading } from '../ui/Panel';
 import AccountMenu from './AccountMenu';
 import WorkspaceLinks from './WorkspaceLinks';
@@ -65,13 +66,14 @@ function TeamShell({
     const deny = useCallback(() => setRevoked(true), []);
     const membership = teamNavigation?.teams.find((choice) => choice.id === team.id);
     const inaccessible = teamNavigation != null && membership === undefined;
-    const hidden = suspended || inaccessible || accessDenied || revoked || auth?.user === null;
+    const unavailable = inaccessible || accessDenied || revoked || auth?.user === null;
+    const hidden = suspended || unavailable;
     const user = auth?.user;
 
     return (
         <TeamAccessContext.Provider value={deny}>
             <div className="ui-theme ui-app-shell">
-                <Head title={hidden ? 'Team selection' : title} />
+                <Head title={unavailable ? 'Team selection' : title} />
                 <a className="ui-skip-link ui-link" href={`#${mainId}`}>
                     Skip to content
                 </a>
@@ -85,7 +87,7 @@ function TeamShell({
                     <div className="ui-team-identity">
                         <span className="ui-help">Current team</span>
                         <p className="ui-team-name">
-                            {hidden ? 'Team content unavailable' : team.name}
+                            {unavailable ? 'Team content unavailable' : team.name}
                         </p>
                     </div>
                     {!hidden && !desktop && (
@@ -104,6 +106,7 @@ function TeamShell({
                             key={`${team.id}:${user?.email ?? ''}`}
                             navigation={teamNavigation}
                             activeTeamId={team.id}
+                            immediate
                             onSuspend={() => setSuspended(true)}
                         />
                     )}
@@ -133,7 +136,7 @@ function TeamShell({
                         </aside>
                     )}
                     <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">
-                        {hidden ? (
+                        {unavailable && (
                             <>
                                 <h1 className="ui-page-title">Team selection</h1>
                                 {(accessDenied || revoked) && (
@@ -146,7 +149,8 @@ function TeamShell({
                                     </Link>
                                 </Alert>
                             </>
-                        ) : (
+                        )}
+                        {!hidden && (
                             <>
                                 <nav aria-label="Breadcrumb" className="ui-breadcrumb">
                                     <ol>

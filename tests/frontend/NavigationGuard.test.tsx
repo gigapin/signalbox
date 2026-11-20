@@ -166,11 +166,11 @@ test('changing team asks once and sends no POST until Discard is explicitly chos
     renderInertia('Signalbox', TeamFixture, identity);
     await user.type(screen.getByLabelText('Draft message'), 'Team-specific draft');
     await user.selectOptions(screen.getByRole('combobox'), '13');
-    await user.click(screen.getByRole('button', { name: 'Switch team' }));
     expect(request).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Stay' }));
     expect(screen.getByLabelText('Draft message')).toHaveValue('Team-specific draft');
-    await user.click(screen.getByRole('button', { name: 'Switch team' }));
+    expect(screen.getByRole('combobox')).toHaveValue('12');
+    await user.selectOptions(screen.getByRole('combobox'), '13');
     await user.click(screen.getByRole('button', { name: 'Discard and leave' }));
     await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
     expect(screen.queryByLabelText('Draft message')).not.toBeInTheDocument();
@@ -187,7 +187,7 @@ test('pending domain submission blocks navigation and team selection without rep
     await user.type(screen.getByLabelText('Draft message'), 'Sending');
     await user.click(screen.getByRole('button', { name: 'Save draft' }));
     expect(post).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Switch team' })).toBeDisabled();
+    expect(screen.getByRole('combobox')).toBeDisabled();
     await user.click(screen.getByRole('link', { name: 'Leave draft' }));
     expect(screen.getByText('Finish the current request before leaving this page.')).toBeVisible();
     expect(visit).not.toHaveBeenCalled();

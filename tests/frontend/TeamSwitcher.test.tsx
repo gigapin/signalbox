@@ -1,6 +1,6 @@
 /** Verify confirmed team selection, private-content suspension and transport lifecycle boundaries. */
 import { router, usePage } from '@inertiajs/react';
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import AppLayout from '../../resources/js/components/app/AppLayout';
@@ -54,18 +54,19 @@ function AccountSelectorFixture() {
     );
 }
 
-/** Choose Beta through the native form, without assuming a mutation occurs when changing the select. */
+/** Commit Beta through the header select, retaining explicit-submit support for standalone selectors. */
 async function chooseBeta(): Promise<void> {
     const user = userEvent.setup();
     await user.selectOptions(screen.getByRole('combobox', { name: 'Team' }), '13');
-    await user.click(screen.getByRole('button', { name: 'Switch team' }));
+    const submit = screen.queryByRole('button', { name: 'Switch team' });
+    if (submit) await user.click(submit);
 }
 
 test('shows the route membership role even when the saved team has stronger privileges', () => {
     renderInertia('Signalbox', LayoutFixture, { auth, teamNavigation: navigation });
     expect(screen.getByText('Role: viewer')).toBeVisible();
     expect(screen.getByRole('combobox', { name: 'Team' })).toHaveValue('12');
-    expect(screen.getByRole('button', { name: 'Switch team' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Switch team' })).not.toBeInTheDocument();
     expect(screen.queryByText('Role: owner')).not.toBeInTheDocument();
 });
 
@@ -85,8 +86,15 @@ test('hides old private data immediately and sends a single CSRF-protected POST 
     expect(screen.queryByRole('navigation', { name: 'Team navigation' })).not.toBeInTheDocument();
     expect(screen.getByRole('combobox')).toBeDisabled();
     expect(visit).not.toHaveBeenCalled();
-    const pending = screen.getByRole('button', { name: 'Switching team…' });
-    await userEvent.setup().click(pending);
+    expect(screen.getByText('Switching team…')).toHaveClass('sr-only');
+    expect(screen.getByRole('status', { name: 'Switching team…' })).toHaveClass('ui-page-loader');
+    expect(screen.getByRole('status', { name: 'Switching team…' }).parentElement).toBe(
+        document.body,
+    );
+    expect(screen.queryByText('Team data hidden')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Team selection' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '13' } });
     expect(request).toHaveBeenCalledTimes(1);
     const headers = new Headers(request.mock.calls[0]?.[1]?.headers);
     expect(headers.get('X-XSRF-TOKEN')).toBe('synthetic');
@@ -109,6 +117,13 @@ test('hides old private data immediately and sends a single CSRF-protected POST 
         '/teams/13/dashboard',
         expect.objectContaining({ preserveState: false, preserveScroll: false }),
     );
+    act(() => {
+        const options = visit.mock.calls[0]?.[1];
+        options?.onSuccess?.({} as never);
+        options?.onFinish?.({} as never);
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Switching team…' })).toBeInTheDocument();
 });
 
 test.each([403, 404, 419, 500])(
@@ -119,6 +134,7 @@ test.each([403, 404, 419, 500])(
         renderInertia('Signalbox', LayoutFixture, { auth, teamNavigation: navigation });
         await chooseBeta();
         expect(await screen.findByRole('alert')).toHaveTextContent('could not be confirmed');
+        expect(screen.queryByRole('status', { name: 'Switching team…' })).not.toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Check current teams' })).toHaveAttribute(
             'href',
             '/teams',
@@ -278,10 +294,48 @@ test('bounds a hanging request and offers recovery without replay after timeout'
     );
     renderInertia('Signalbox', LayoutFixture, { auth, teamNavigation: navigation });
     fireEvent.change(screen.getByRole('combobox'), { target: { value: '13' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Switch team' }));
     await act(async () => {
         await vi.advanceTimersByTimeAsync(10_000);
     });
     expect(screen.getByRole('alert')).toHaveTextContent('could not be confirmed');
     expect(request).toHaveBeenCalledTimes(1);
+});
+
+/** Pointer choice is the only action needed to activate a different header team. */
+test('switches directly from the header option without a submit button', async () => {
+    const user = userEvent.setup();
+    const request = vi
+        .mocked(fetch)
+        .mockResolvedValue(
+            new Response(JSON.stringify({ destination: '/teams/13/dashboard' }), { status: 200 }),
+        );
+    const visit = vi.spyOn(router, 'visit').mockImplementation(() => undefined);
+    renderInertia('Signalbox', LayoutFixture, { auth, teamNavigation: navigation });
+    expect(screen.queryByRole('button', { name: 'Switch team' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'Team' }));
+    await user.click(
+        within(screen.getByRole('listbox', { name: 'Team' })).getByRole('option', {
+            name: 'Beta · owner',
+        }),
+    );
+    expect(request).toHaveBeenCalledOnce();
+    expect(visit).toHaveBeenCalledWith('/teams/13/dashboard', expect.any(Object));
+});
+
+/** Exploring options is not a write; Enter explicitly commits the highlighted choice. */
+test('commits a header team with the keyboard and ignores the current team', async () => {
+    const user = userEvent.setup();
+    const request = vi
+        .mocked(fetch)
+        .mockImplementation(() => new Promise<Response>(() => undefined));
+    renderInertia('Signalbox', LayoutFixture, { auth, teamNavigation: navigation });
+    const select = screen.getByRole('combobox', { name: 'Team' });
+    fireEvent.change(select, { target: { value: '12' } });
+    expect(request).not.toHaveBeenCalled();
+    select.focus();
+    await user.keyboard('{Enter}{ArrowDown}');
+    expect(request).not.toHaveBeenCalled();
+    await user.keyboard('{Enter}');
+    expect(request).toHaveBeenCalledOnce();
+    expect(select).toBeDisabled();
 });

@@ -134,10 +134,12 @@ it('applies fresh policies for all roles without treating preference as authorit
         ->and($policy->manageRole($actor, $team, TeamRole::Admin))->toBe($role === 'owner')
         ->and($policy->removeMember($actor, $team, $actor))->toBeTrue()
         ->and($policy->transferOwnership($actor, $team))->toBeFalse();
-    $this->actingAs($actor)->get("/teams/{$team->id}")->assertOk();
+    $this->actingAs($actor)->get("/teams/{$team->id}")->assertRedirect("/teams/{$team->id}/members");
+    $this->get("/teams/{$team->id}/members")->assertOk();
     $team->users()->detach($actor->id);
     expect(fn () => $policy->view($actor, $team))->toThrow(ModelNotFoundException::class);
     $this->get("/teams/{$team->id}")->assertNotFound();
+    $this->get("/teams/{$team->id}/members")->assertNotFound();
 })->with(['owner', 'admin', 'member', 'viewer']);
 
 it('executes serialized jobs in one worker without leaking context after failures or foreign IDs', function (): void {

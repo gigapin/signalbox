@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## CI — Aspettative rotte gestione team — 2026-11-20
+
+- [x] Corrette le sei regressioni CI segnalate: AbsoluteLinkOriginTest e TransactionalMessageAbuseTest ora attendono il ritorno a /teams/{team}/invitations. TenantIsolationTest verifica sia il redirect legacy a Members sia la risposta200 della directory e, dopo revoca,404 su entrambi i percorsi per tutti e quattro i ruoli. Conservate tutte le verifiche di origine HTTPS e contenuto email; nessuna modifica applicativa o attenuazione delle protezioni.
+- File: tests/Integration/AbsoluteLinkOriginTest.php, TenantIsolationTest.php, TransactionalMessageAbuseTest.php e questo piano. Ricerca sull’intera cartella tests non trova altri assertRedirect al vecchio indirizzo team senza suffisso né assertOk diretti su quel percorso.
+- Verifiche PostgreSQL/Redis isolati: tre suite complete44/44,297 asserzioni,8,60s,exit0, con fail-on-skipped/fail-on-warning. PHP-CS-Fixer fix0/3 e dry-run0/3,exit0. Non ripetuti suite backend integrale o CI remota, Larastan (sorgenti applicativi invariati), frontend/build/browser per correzione limitata alle aspettative dei test. Il risultato CI3753 PASS/6 FAIL riportato dall’utente resta storico, non sostituito da un integrale locale inventato.
+- Servizi PostgreSQL/Redis di test inizialmente spenti, avviati e poi fermati; dati/processi di sviluppo, .env, dipendenze, schema e public/hot preservati. Git/gh non eseguiti. Prossimo passo: rilanciare CI dal lato utente.
+
+
 ## UI — Badge nelle intestazioni Teams — 2026-11-20
 
 - [x] Completato: badge a destra del titolo nelle card Teams, Members e Invitations, separati visivamente dalle azioni. Nuovo CardHeading condiviso mantiene titolo per primo nel DOM e colonna badge a destra, con wrapping limitato al60% e al35% sotto480px. Nome/email e stati non sono pulsanti; palette e significato dei badge preservati.

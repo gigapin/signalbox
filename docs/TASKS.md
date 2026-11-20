@@ -1,5 +1,16 @@
 # Signalbox — Piano dei task
 
+## Chiusura sessione e ripartenza — 2026-11-20
+
+- [x] Handoff aggiornato su richiesta dell’utente dopo il riscontro positivo sulla pagina Reports. Questo riepilogo sostituisce le indicazioni di ripartenza del 19 novembre; i risultati dettagliati rimangono nelle sezioni della singola modifica.
+- **Punto raggiunto:** rifinite Status pages, Teams e gestione membri/inviti, Account, Dashboard, cambio team nell’header e Reports. Il cambio team è immediato dal select e usa il loader condiviso senza alert transitorio. Reports è una pagina dedicata con download nel titolo e calendario per intervalli inclusivi anche su più mesi. Il default è il mese precedente; selezionabili solo giorni conclusi fino a ieri nella timezone del team, entro retention del piano effettivo. React DayPicker10.0.2 è l’unica nuova libreria per questo intervento; non è una scelta per i grafici.
+- **Ultime verifiche:** report backend44/44 e matrice report42/42; Larastan8, formatter, controlli frontend e build verdi. I dettagli e le esecuzioni frontend mirate sono nella sezione Reports sottostante. L’ultima suite frontend integrale586/586 precede il calendario: non attribuirla al codice finale Reports. Nessuna nuova suite backend integrale o CI remota verificata durante la rifinitura Reports.
+- **Browser:** fixture sintetiche Firefox desktop1280 dark e mobile390 light, calendario aperto e layout ispezionati. Il riscontro positivo dell’utente non viene interpretato come prova di download autenticato, provider reali, screen reader o CSP in browser.
+- **Stato ambiente lasciato:** asset ricostruiti; server di preview arrestato e servizi PostgreSQL/Redis di test riportati a spenti. Nessuna modifica a .env, public/hot o migration per Reports; servizi applicativi preservati. Fixture/log/screenshot in /tmp sono temporanei e non necessari per ripartire. Git/gh non eseguiti; branch, commit e stato remoto non verificati.
+- **Domani:** leggere questo handoff, UI-GUIDELINES e METRIC-ROLLUPS; ripartire dalle ulteriori rifiniture UI indicate dall’utente. Reports ha ricevuto riscontro positivo e non richiede di rifare l’implementazione. Eventuali anomalie nel download reale o nella selezione date si verificano partendo dai test esistenti. La revisione UI generale resta aperta; non scegliere autonomamente una nuova sezione o avviare funzionalità ulteriori.
+- **Decisioni ancora valide:** grafici sospesi fino alla scelta esplicita della relativa libreria; lavoro funzionale SEC/billing sospeso, SEC.06 rinviato e M9.01 non avviato. Preservare le protezioni tenant e i componenti UI condivisi; eseguire suite PostgreSQL in sequenza sul database di test condiviso.
+- **Questa chiusura:** solo TASKS, BOOTSTRAP e TESTING; controllo dei riferimenti e del testo, nessuna nuova esecuzione applicativa o operazione sui servizi.
+
 ## UI — Reports per intervallo — 2026-11-20
 
 - [x] Implementato e verificato: Reports nel titolo/menu, campo un terzo su desktop e pieno su mobile, Download PDF nel titolo attraverso portal nel confine tenant. Calendario React DayPicker10.0.2 con draft Apply/Cancel/Escape, due mesi desktop/uno mobile, stesso giorno selezionabile con due click. Periodi inclusivi nella timezone team, solo fino a ieri e dentro retention del piano effettivo.

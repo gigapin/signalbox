@@ -1,5 +1,13 @@
 # Application bootstrap reference
 
+## Session close and restart — 2026-11-20
+
+Read the [current handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-20) first. It supersedes the November19 restart directions below. The user gave positive feedback after Reports gained an inclusive date-range calendar and a heading download action. Team switching now uses the shared loader; Teams, Account and Dashboard refinements are recorded in TASKS. Resume with the user's next UI refinement rather than repeating Reports or automatically choosing a new section.
+
+Reports requires the updated PHP code and rebuilt assets, with npm dependencies from the lockfile (`@daypicker/react`10.0.2); no new migration or environment variable is needed. Preserve existing `.env`, `public/hot`, development data and application services. The preview server was stopped and isolated test PostgreSQL/Redis were returned to stopped; verify actual state if needed on restart. Temporary `/tmp` fixtures are not required. All Git/gh operations remain user-managed; no branch/commit/remote state has been verified.
+
+See [TESTING](TESTING.md#last-verified-state-at-session-close--2026-11-20) for evidence and unrun checks. Calendar-library authorization does not authorize a chart library: chart replacement remains suspended pending the user's choice, alongside the previously paused functional security/billing work. This documentation-only close runs no new tests or environment operations.
+
 ## Session close and restart — 2026-11-19
 
 Read the [current handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-19) before resuming; it supersedes the November 17–18 restart notes below. The session closes after the Monitors, Incidents, Maintenance and four Notifications destinations were refined. Notifications now shares collection search/create modals, readable cards, badges and guarded editors; deliveries use ten-row server pages. See [UI-GUIDELINES](UI-GUIDELINES.md), [OPERATIONS-UI](OPERATIONS-UI.md) and [NOTIFICATIONS](NOTIFICATIONS.md) for the component contracts.

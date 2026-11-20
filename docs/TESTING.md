@@ -1,5 +1,16 @@
 # Test infrastructure
 
+## Last verified state at session close — 2026-11-20
+
+The authoritative restart summary is the [November20 handoff](TASKS.md#chiusura-sessione-e-ripartenza--2026-11-20). This documentation-only close introduces no code or additional test run.
+
+- Final report backend checks: MonthlyReportTest plus ReportMonthTest44/44 (124 assertions), followed sequentially by report-filtered TeamAuthorizationMatrixTest42/42 (498 assertions). Coverage includes multi-month dates, inclusive end dates, plan bounds, invalid/current/future dates, monthly compatibility and tenant authorization.
+- Frontend checks: Reports/Dashboard/AppLayout44/44 before the final additional calendar case; final calendar3/3, including cross-month navigation and disabled future dates. Earlier calendar/TeamSwitcher22/22 also passed. ESLint/Prettier/TypeScript, six quality checks, production build and Larastan8 passed; PHP-CS-Fixer dry-run found0/721 files. Installation audit reported zero vulnerabilities.
+- The last full frontend586/586 predates the calendar change. Full frontend/backend suites and remote CI were not rerun for final Reports. Do not describe targeted green checks as a complete regression gate.
+- Real React calendar fixtures were inspected in Firefox at1280 desktop/dark and390 mobile/light. Corrected stacked desktop months and insufficient dark calendar text contrast. These checks do not establish authenticated PDF download, screen-reader accessibility, real-provider behavior or browser CSP acceptance.
+- Avoid simultaneous PostgreSQL suites on the shared isolated database. An initial overlapping run was interrupted; the final passing runs were sequential, after clearing only the isolated test cache. Plan fixtures use forceFill for protected plan attributes and an ended trial.
+- Test PostgreSQL/Redis and the temporary preview server were stopped after verification; development services and data were preserved. No checks are repeated merely to close this session.
+
 ## Last verified state at session close — 2026-11-19
 
 Current verification handoff for the UI review; earlier dated summaries below are historical.

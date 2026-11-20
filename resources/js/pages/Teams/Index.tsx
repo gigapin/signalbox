@@ -37,6 +37,7 @@ function PageContent({ actionsTarget }: { actionsTarget: HTMLElement | null }) {
                         key={currentTeamId}
                         navigation={{ teams, selectedTeamId: currentTeamId }}
                         activeTeamId={currentTeamId}
+                        afterSwitch="teams"
                         onSuspend={() => setSuspended(true)}
                     />
                 )

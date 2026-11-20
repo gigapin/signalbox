@@ -102,3 +102,7 @@ The client suspends old private content and its live session before switching, c
 ## Directory presentation — 2026-11-20
 
 The account Teams page places title search and the existing explicit team selector beside Your teams. Search suggestions contain only authorized membership names, and selection reveals the matching card without writing the preference. Cards retain dashboard links and show role and Current team badges; local pagination uses ten results. Filtering does not alter membership or the selected preference. Once an explicit switch starts, old results are removed and directory search stays disabled until the existing navigation/review flow resolves. Failed acknowledgement retains Check current teams. The shared settings collection now supports lists without creation capabilities; no team creation route, quota or mutation is added. The separate Team membership/invitation screen retains its existing flows.
+
+### Directory continuation after switching
+
+From `/teams`, the explicit switch still validates the canonical JSON dashboard acknowledgement returned after persistence, then performs a fresh GET of `/teams` with `preserveState: false`. The directory therefore reloads the current preference, selector and Current team badge. Other TeamSwitcher callers retain dashboard navigation. The continuation is a closed client option, not an arbitrary redirect or a change to the selection endpoint contract. Failed/uncertain requests still require explicit review without automatic replay.

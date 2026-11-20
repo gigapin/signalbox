@@ -40,7 +40,7 @@ async function switchesTeam(): Promise<void> {
         '/teams/13/select',
         expect.objectContaining({ method: 'POST' }),
     );
-    expect(visit).toHaveBeenCalledWith('/teams/13/dashboard', expect.any(Object));
+    expect(visit).toHaveBeenCalledWith('/teams', expect.objectContaining({ preserveState: false }));
     expect(screen.getByRole('button', { name: 'Switching team…' })).toBeDisabled();
 }
 

@@ -1,5 +1,12 @@
 # Signalbox — Piano dei task
 
+## UI — Switch dalla lista Teams — 2026-11-20
+
+- [x] Corretto su richiesta: dopo lo switch esplicito da /teams ricaricare /teams con preferenza aggiornata. Gli altri selettori mantengono la dashboard. Validazione acknowledgement server e protezioni esistenti preservate.
+- TeamSwitcher introduce afterSwitch chiuso dashboard/teams, default dashboard; la lista Teams opta per teams. Si valida ancora la destinazione dashboard del server e soltanto dopo si esegue il GET locale scelto, preserveState:false per ricaricare selettore/badge e azzerare sospensione. Nessuna modifica al backend.
+- File: components/app/TeamSwitcher, pages/Teams/Index, frontend/Teams.test; TEAMS/UI-GUIDELINES e questo piano. Mirato Teams/TeamsDirectory/TeamSwitcher32/32,8,40s,exit0. Build exit0; check statico finale exit0 (ESLint/Prettier/TypeScript e6 qualità). Non ripetuti integrale frontend (577/577 prima di questa correzione), backend/PHP-CS-Fixer/Larastan, browser, audit e CI remota per modifica circoscritta alla continuazione client. Nessun dato, .env, servizio o public/hot modificato; Git/gh non eseguiti. Prossimo passo: controllo dello switch nella sessione reale.
+
+
 ## UI — Lista Teams — 2026-11-20
 
 - [x] Completato e verificato: riallineamento della lista /teams ai criteri condivisi. Ricerca e selettore nel titolo, card gap24px e badge ruolo/team corrente. Nessun flusso di creazione team disponibile: non introdotto; gestione membri/inviti separata. Dipendenze UI e SettingsCollection disponibili.

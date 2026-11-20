@@ -20,6 +20,8 @@ interface ContextLayoutProps {
     context?: 'account' | 'platform';
     /** Safe explanation of the current screen. */
     description?: string;
+    /** Heading controls; callers keep state within the removable identity boundary. */
+    actions?: ReactNode;
     /** Existing private forms and content. */
     children: ReactNode;
 }
@@ -28,7 +30,13 @@ interface ContextLayoutProps {
  * @param props Account or operator workspace and page content.
  * @returns The shared private visual shell with a context-specific navigation.
  */
-function ContextShell({ title, context = 'account', description, children }: ContextLayoutProps) {
+function ContextShell({
+    title,
+    context = 'account',
+    description,
+    actions,
+    children,
+}: ContextLayoutProps) {
     const { appName, auth, status, teamNavigation } = usePage<AuthProps>().props;
     const [denied, setDenied] = useState(false);
     const deny = useCallback(() => setDenied(true), []);
@@ -90,6 +98,7 @@ function ContextShell({ title, context = 'account', description, children }: Con
                     )}
                     <main id={mainId} tabIndex={-1} data-suspended={hidden} className="ui-app-main">
                         <PageHeading
+                            actions={hidden ? undefined : actions}
                             title={hidden ? deniedTitle : title}
                             {...(hidden || description === undefined ? {} : { description })}
                         />

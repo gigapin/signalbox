@@ -1518,6 +1518,10 @@
         flex-wrap: wrap;
     }
 
+    .ui-channel-toolbar > form {
+        margin-block: 0;
+    }
+
     .ui-search-picker {
         position: relative;
         width: 18rem;

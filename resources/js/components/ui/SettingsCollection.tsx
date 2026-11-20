@@ -7,7 +7,7 @@ import Modal from '../ui/Modal';
 import SearchPicker, { type SearchChoice } from '../ui/SearchPicker';
 import Pagination from '../monitors/Pagination';
 
-/** Local collections are bounded by the team's existing configuration limits. */
+/** Display at most ten matching items while retaining the complete authorized collection. */
 const PAGE_SIZE = 10;
 
 /** Domain renderers retain ownership of mutations and row drafts. */
@@ -15,25 +15,29 @@ interface CollectionProps<T extends { id: number }> {
     /** Searchable display label without changing domain projections. */
     itemLabel: (item: T) => string;
     /** Authoritative quota consumption. */
-    usedCount: number;
+    usedCount?: number;
     /** Domain-specific quota explanation. */
-    limitMessage: string;
+    limitMessage?: string;
     /** Domain-specific read-only explanation. */
-    readOnlyMessage: string;
+    readOnlyMessage?: string;
+    /** Optional existing controls displayed beside search. */
+    extraControls?: ReactNode;
+    /** Hide private results while an explicit context change is unconfirmed. */
+    suspended?: boolean;
     /** Team-local safe identities. */
     items: T[];
     /** Heading action destination inside the authorized shell. */
     actionsTarget: HTMLElement | null;
     /** Server-projected management permission. */
-    canManage: boolean;
+    canManage?: boolean;
     /** Maximum permitted collection size. */
-    limit: number;
+    limit?: number;
     /** Accessible search name. */
     searchLabel: string;
     /** Heading creation action. */
-    addLabel: string;
+    addLabel?: string;
     /** Creation dialog heading. */
-    modalTitle: string;
+    modalTitle?: string;
     /** Accessible collection name. */
     listLabel: string;
     /** Stable prefix of focusable row IDs. */
@@ -45,22 +49,24 @@ interface CollectionProps<T extends { id: number }> {
     /** Mounted row renderer; hidden rows preserve drafts. */
     renderItem: (item: T, hidden: boolean) => ReactNode;
     /** Creation renderer; only confirmed acceptance should call onSaved. */
-    renderCreate: (onSaved: () => void) => ReactNode;
+    renderCreate?: (onSaved: () => void) => ReactNode;
 }
 
 /** Keep editors mounted across filtering, pagination and ordinary dialog dismissal. */
 export default function SettingsCollection<T extends { id: number }>({
     items,
+    extraControls,
+    suspended = false,
     itemLabel,
-    usedCount,
+    usedCount = 0,
     limitMessage,
     readOnlyMessage,
     actionsTarget,
-    canManage,
-    limit,
+    canManage = false,
+    limit = 0,
     searchLabel,
     addLabel,
-    modalTitle,
+    modalTitle = 'Add item',
     listLabel,
     cardPrefix,
     emptyText,
@@ -124,11 +130,12 @@ export default function SettingsCollection<T extends { id: number }>({
                 label={searchLabel}
                 query={search}
                 choices={matching.map((item) => ({ id: item.id, label: itemLabel(item) }))}
-                disabled={guard.busy}
+                disabled={guard.busy || suspended}
                 onQueryChange={searchFor}
                 onSelect={selectItem}
             />
-            {canManage && (
+            {extraControls}
+            {canManage && renderCreate && (
                 <Button
                     disabled={guard.busy || !canCreate}
                     onClick={() => {
@@ -146,29 +153,39 @@ export default function SettingsCollection<T extends { id: number }>({
     return (
         <>
             {actionsTarget && createPortal(controls, actionsTarget)}
-            {items.length === 0 && <p>{emptyText}</p>}
-            {items.length > 0 && matching.length === 0 && <p role="status">{noMatchText}</p>}
-            <ul aria-label={listLabel} className="ui-channel-list ui-notification-list">
-                {items.map((item) => renderItem(item, !visible.has(item.id)))}
-            </ul>
-            <Pagination
-                current={current}
-                last={last}
-                disabled={guard.busy}
-                onPageChange={setPage}
-            />
-            {canManage && !canCreate && <p className="ui-help">{limitMessage}</p>}
-            {!canManage && <p className="ui-help">{readOnlyMessage}</p>}
-            <Modal
-                open={creating && canCreate}
-                title={modalTitle}
-                onRequestClose={closeCreation}
-                closeDisabled={guard.busy}
-            >
-                {canCreate && creationStarted && (
-                    <div key={creationVersion}>{renderCreate(saved)}</div>
-                )}
-            </Modal>
+            {!suspended && (
+                <>
+                    {items.length === 0 && <p>{emptyText}</p>}
+                    {items.length > 0 && matching.length === 0 && (
+                        <p role="status">{noMatchText}</p>
+                    )}
+                    <ul aria-label={listLabel} className="ui-channel-list ui-notification-list">
+                        {items.map((item) => renderItem(item, !visible.has(item.id)))}
+                    </ul>
+                    <Pagination
+                        current={current}
+                        last={last}
+                        disabled={guard.busy}
+                        onPageChange={setPage}
+                    />
+                    {canManage && !canCreate && limitMessage && (
+                        <p className="ui-help">{limitMessage}</p>
+                    )}
+                    {!canManage && readOnlyMessage && <p className="ui-help">{readOnlyMessage}</p>}
+                </>
+            )}
+            {renderCreate && (
+                <Modal
+                    open={creating && canCreate}
+                    title={modalTitle}
+                    onRequestClose={closeCreation}
+                    closeDisabled={guard.busy}
+                >
+                    {canCreate && creationStarted && renderCreate && (
+                        <div key={creationVersion}>{renderCreate(saved)}</div>
+                    )}
+                </Modal>
+            )}
         </>
     );
 }

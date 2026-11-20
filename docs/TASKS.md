@@ -1,5 +1,15 @@
 # Signalbox — Piano dei task
 
+## UI — Lista Teams — 2026-11-20
+
+- [x] Completato e verificato: riallineamento della lista /teams ai criteri condivisi. Ricerca e selettore nel titolo, card gap24px e badge ruolo/team corrente. Nessun flusso di creazione team disponibile: non introdotto; gestione membri/inviti separata. Dipendenze UI e SettingsCollection disponibili.
+- Implementazione: SettingsCollection supporta liste senza creazione, controlli aggiuntivi nel titolo e sospensione dei risultati. PrivateContextLayout espone actions protetto dallo stesso confine account. Teams riusa ricerca per nome/suggerimenti/focus e paginazione locale da10, card20px e badge16px role info/Current team success. Il selettore conserva POST esplicito, CSRF, conferma delle bozze, validazione acknowledgement e review su errore; all’avvio risultati rimossi e ricerca disabilitata. Nessuna nuova autorizzazione o mutazione.
+- File: pages/Teams/Index, components/ui/SettingsCollection, components/app/PrivateContextLayout, app.css; nuovo frontend/TeamsDirectory.test.tsx; UI-GUIDELINES, TEAMS e questo piano. Quattro test nuovi: toolbar/badge/link, ricerca/pagine senza cambiare preferenza, suggerimento oltre pagina1/focus, switch rifiutato con risultati rimossi e review disponibile.
+- Mirato79/79 in7 file,21,05s: Teams/TeamsDirectory/TeamSwitcher, StatusPages/ChannelsPage/Notifications/WorkspaceLayout. Suite frontend completa577/577 in48 file,142,52s,exit0. Check finale ESLint/Prettier/TypeScript e6 qualità exit0; build definitiva exit0. Dopo il solo aggiustamento CSS della toolbar, Prettier CSS exit0 e screenshot mobile ricatturato/ispezionato. Nessun errore intermedio nei test. Browser Firefox con12 appartenenze sintetiche,1280×1000 e390×1000 dark/light ispezionati; ridotto il margine del form selettore nella toolbar condivisa per uniformare lo spazio mobile. Non equivale a sessione autenticata. Server temporaneo arrestato, fixture/screenshot solo in /tmp.
+- Nessun PHP, route, schema, dipendenza, .env, public/hot, dato di sviluppo o servizio applicativo modificato. Non eseguiti backend/PHP-CS-Fixer/Larastan per modifica frontend, audit, CI remota, autenticazione reale/VoiceOver/zoom nativo. Git/gh non eseguiti. Prossimo passo: controllo dell’utente sulla lista Teams ed eventuali rifiniture.
+
+
+
 ## UI — Gestione Status pages — 2026-11-20
 
 - [x] Implementazione e verifiche completate: ricerca e creazione nel titolo, card e badge condivisi, creazione/modifica/dominio in modal. Dipendenze UI del 19 novembre disponibili; pagina pubblica rinviata alla revisione successiva. Nessuna modifica ai contratti backend.

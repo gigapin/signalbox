@@ -54,13 +54,16 @@ export default function EscalationPanel({
 }
 
 /** Only authorized editors own a form and its departure registration. */
-type EditorProps = Pick<EscalationPanelProps, 'action' | 'escalation'>;
+type EditorProps = Pick<EscalationPanelProps, 'action' | 'escalation'> & {
+    /** Close a containing dialog only after the server accepts the assignment. */
+    onSaved?: () => void;
+};
 
 /**
  * @param props Current saved policy and team-local options.
  * @returns A stable editor that accepts clean server changes while preserving an unsent selection.
  */
-function EscalationEditor({ action, escalation }: EditorProps) {
+export function EscalationEditor({ action, escalation, onSaved }: EditorProps) {
     const form = useForm({
         escalation_policy_id: escalation.policyId === null ? '' : String(escalation.policyId),
     });
@@ -87,7 +90,7 @@ function EscalationEditor({ action, escalation }: EditorProps) {
             escalation_policy_id:
                 data.escalation_policy_id === '' ? null : Number(data.escalation_policy_id),
         }));
-        form.patch(action, { preserveScroll: true });
+        form.patch(action, { preserveScroll: true, onSuccess: () => onSaved?.() });
     }
 
     if (escalation.options.length === 0 && !form.isDirty) return null;
@@ -104,6 +107,8 @@ function EscalationEditor({ action, escalation }: EditorProps) {
             )}
             <form onSubmit={submit} noValidate className="mt-3 flex flex-wrap items-end gap-3">
                 <SelectField
+                    wrapperClassName="flex-1 min-w-0"
+                    error={form.errors.escalation_policy_id}
                     label="Escalation policy"
                     id="monitor-escalation"
                     value={form.data.escalation_policy_id}

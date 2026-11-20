@@ -1,14 +1,16 @@
 /** Exercise the notification settings page, monitor escalation choice and delivery log through actual Inertia components. */
 import { router } from '@inertiajs/react';
-import { fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import EscalationPanel from '../../resources/js/components/notifications/EscalationPanel';
 import DeliveryLog from '../../resources/js/components/notifications/DeliveryLog';
 import QuietHoursForm from '../../resources/js/components/notifications/QuietHoursForm';
 import { delayLabel } from '../../resources/js/components/notifications/labels';
 import type { ChannelView, PolicyView } from '../../resources/js/components/notifications/types';
 import Index from '../../resources/js/pages/Notifications/Index';
+import Policies from '../../resources/js/pages/Notifications/Policies';
+import { installDialogSupport } from './dialogSupport';
 import { renderInertia } from './renderInertia';
 
 /** Route team of every synthetic page. */
@@ -34,7 +36,16 @@ const limits = {
     codeLength: 6,
 };
 
+/** Restore native dialog prototypes after each isolated page fixture. */
+let restoreDialogs: () => void = () => undefined;
+
+beforeEach(() => {
+    restoreDialogs = installDialogSupport();
+});
+
 afterEach(() => {
+    cleanup();
+    restoreDialogs();
     vi.restoreAllMocks();
 });
 
@@ -101,39 +112,40 @@ function pageProps(manage: boolean, extra: Record<string, unknown> = {}) {
     };
 }
 
-test('shows masked channels and policies read-only to members', () => {
-    renderInertia(
-        'Signalbox',
-        Index,
-        pageProps(false, { channels: [channel(1, { editable: null })] }),
-    );
-
+test('shows masked channels and policies on separate read-only member pages', () => {
+    const props = pageProps(false, { channels: [channel(1, { editable: null })] });
+    const view = renderInertia('Signalbox', Index, props);
     const list = screen.getByRole('list', { name: 'Notification channels' });
     expect(within(list).getByText('o•••@example.test')).toBeInTheDocument();
     expect(within(list).getByText('Not verified')).toBeInTheDocument();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(within(list).queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Channel type')).not.toBeInTheDocument();
-    expect(
-        screen.getByText('Only owners and admins can change channels and escalation policies.'),
-    ).toBeInTheDocument();
-
+    expect(screen.queryByRole('list', { name: 'Steps of Primary' })).not.toBeInTheDocument();
+    view.unmount();
+    renderInertia('Signalbox', Policies, props);
+    expect(screen.queryByRole('list', { name: 'Notification channels' })).not.toBeInTheDocument();
     const steps = screen.getByRole('list', { name: 'Steps of Primary' });
     const [first, second] = within(steps).getAllByRole('listitem');
     expect(first).toHaveTextContent('Immediately: Channel 1');
     expect(second).toHaveTextContent('After 30 min: Channel 2 (not active)');
+    expect(screen.queryByRole('button', { name: 'Edit policy' })).not.toBeInTheDocument();
 });
 
-test('shows empty states and warns when monitors notify nobody', () => {
-    renderInertia(
-        'Signalbox',
-        Index,
-        pageProps(true, { channels: [], policies: [], unnotifiedMonitors: 3 }),
-    );
-
+test('shows each configuration empty state on its dedicated page', async () => {
+    const props = pageProps(true, { channels: [], policies: [], unnotifiedMonitors: 3 });
+    const view = renderInertia('Signalbox', Index, props);
     expect(screen.getByText('No channels yet.')).toBeInTheDocument();
-    expect(screen.getByText('No escalation policies yet.')).toBeInTheDocument();
+    expect(screen.queryByText('No escalation policies yet.')).not.toBeInTheDocument();
     expect(screen.getByText(/3 monitors notify nobody/)).toBeInTheDocument();
-    expect(screen.getByText('Create a channel first.')).toBeInTheDocument();
+    view.unmount();
+    renderInertia('Signalbox', Policies, props);
+    expect(screen.getByText('No escalation policies yet.')).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Add policy' }));
+    expect(
+        within(screen.getByRole('dialog', { name: 'Add a policy' })).getByText(
+            'Create a channel first.',
+        ),
+    ).toBeInTheDocument();
 });
 
 test('creates a channel with the fields of the chosen type and announces field errors', async () => {
@@ -146,8 +158,8 @@ test('creates a channel with the fields of the chosen type and announces field e
     });
 
     renderInertia('Signalbox', Index, pageProps(true));
-    const form = screen.getByRole('heading', { name: 'Add a channel' })
-        .parentElement as HTMLElement;
+    await user.click(screen.getByRole('button', { name: 'Add channel' }));
+    const form = screen.getByRole('dialog', { name: 'Add a channel' });
     await user.selectOptions(within(form).getByLabelText('Channel type'), 'telegram');
     expect(within(form).getByLabelText('Bot token')).toHaveAttribute('type', 'password');
 
@@ -286,14 +298,15 @@ test('builds policy steps with increasing delays and submits integers', async ()
 
     renderInertia(
         'Signalbox',
-        Index,
+        Policies,
         pageProps(true, { errors: { policy: 'Step 2 must wait longer than the step before it.' } }),
     );
     expect(screen.getByRole('alert')).toHaveTextContent(
         'Step 2 must wait longer than the step before it.',
     );
 
-    const form = screen.getByRole('heading', { name: 'Add a policy' }).parentElement as HTMLElement;
+    await user.click(screen.getByRole('button', { name: 'Add policy' }));
+    const form = screen.getByRole('dialog', { name: 'Add a policy' });
     await user.type(within(form).getByLabelText('Policy name'), 'Night shift');
     await user.click(within(form).getByLabelText(/Team default/));
     const steps = within(form).getByRole('list', { name: 'Escalation steps' });
@@ -505,4 +518,100 @@ test('activates channel verification from the keyboard without submitting a conf
     expect(send).toBeDisabled();
     await user.keyboard(' ');
     expect(post).toHaveBeenCalledTimes(1);
+});
+
+test('protects a retained creation draft when leaving for the policy submenu page', async () => {
+    const user = userEvent.setup();
+    const visit = vi.spyOn(router, 'visit').mockImplementation(() => undefined);
+    renderInertia('Signalbox', Index, pageProps(true));
+    await user.click(screen.getByRole('button', { name: 'Add channel' }));
+    const modal = screen.getByRole('dialog', { name: 'Add a channel' });
+    const name = within(modal).getByLabelText('Name');
+    await user.type(name, 'Unsaved channel');
+    await user.click(within(modal).getByRole('button', { name: 'Close' }));
+    const navigation = screen.getByRole('navigation', { name: 'Team navigation' });
+    await user.click(within(navigation).getByRole('link', { name: 'Escalation policies' }));
+    expect(screen.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeVisible();
+    expect(visit).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Stay' }));
+    await user.click(screen.getByRole('button', { name: 'Add channel' }));
+    expect(
+        within(screen.getByRole('dialog', { name: 'Add a channel' })).getByLabelText('Name'),
+    ).toHaveValue('Unsaved channel');
+    expect(visit).not.toHaveBeenCalled();
+});
+
+test.each([
+    ['Active', { isActive: true, verifiedAt: '2026-11-19T10:00:00Z' }, 'success'],
+    ['Paused', { isActive: false, verifiedAt: '2026-11-19T10:00:00Z' }, 'warning'],
+    ['Waiting for code', { isActive: false, verifiedAt: null, verificationPending: true }, 'info'],
+    ['Not verified', { isActive: false, verifiedAt: null, verificationPending: false }, 'danger'],
+] as const)('shows %s in a distinct semantic channel-state badge', (label, state, tone) => {
+    renderInertia('Signalbox', Index, pageProps(false, { channels: [channel(1, state)] }));
+    const badge = within(screen.getByRole('list', { name: 'Notification channels' })).getByText(
+        label,
+    );
+    expect(badge).toHaveClass('ui-badge');
+    expect(badge).toHaveAttribute('data-tone', tone);
+});
+
+test('policy creation preserves a dismissed draft and resets after confirmed acceptance', async () => {
+    const user = userEvent.setup();
+    let visit: NonNullable<Parameters<typeof router.visit>[1]> | undefined;
+    vi.spyOn(router, 'visit').mockImplementation((_url, options) => {
+        visit = options;
+    });
+    renderInertia('Signalbox', Policies, pageProps(true));
+    const trigger = screen.getByRole('button', { name: 'Add policy' });
+    expect(trigger.closest('header')).toBe(
+        screen.getByRole('heading', { level: 1 }).closest('header'),
+    );
+    await user.click(trigger);
+    let modal = screen.getByRole('dialog', { name: 'Add a policy' });
+    await user.type(within(modal).getByLabelText('Policy name'), 'Night shift');
+    await user.click(within(modal).getByRole('button', { name: 'Close' }));
+    await user.click(trigger);
+    modal = screen.getByRole('dialog', { name: 'Add a policy' });
+    expect(within(modal).getByLabelText('Policy name')).toHaveValue('Night shift');
+    await user.click(within(modal).getByRole('button', { name: 'Add policy' }));
+    expect(within(modal).getByRole('button', { name: 'Close' })).toBeDisabled();
+    fireEvent(modal, new Event('cancel', { bubbles: true, cancelable: true }));
+    expect(modal).toHaveAttribute('open');
+    act(() => {
+        visit?.onError?.({ name: 'Name refused' });
+        visit?.onFinish?.({} as never);
+    });
+    expect(within(modal).getByText('Name refused')).toBeInTheDocument();
+    await user.click(within(modal).getByRole('button', { name: 'Add policy' }));
+    act(() => {
+        visit?.onSuccess?.({} as never);
+        visit?.onFinish?.({} as never);
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(trigger);
+    expect(
+        within(screen.getByRole('dialog', { name: 'Add a policy' })).getByLabelText('Policy name'),
+    ).toHaveValue('');
+});
+
+test('policy search hides cards without discarding an unsent editor', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', Policies, pageProps(true));
+    const row = screen.getByRole('list', { name: 'Escalation policies' }).firstElementChild!;
+    expect(row).toHaveClass('ui-panel', 'ui-notification-card');
+    expect(within(row as HTMLElement).getByText('Team default')).toHaveAttribute(
+        'data-tone',
+        'success',
+    );
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Edit policy' }));
+    const name = within(row as HTMLElement).getByLabelText('Policy name');
+    await user.type(name, ' draft');
+    const search = screen.getByRole('combobox', { name: 'Find escalation policies' });
+    await user.type(search, 'missing');
+    expect(row).toHaveAttribute('hidden');
+    expect(screen.getByText('No escalation policies match this search.')).toBeInTheDocument();
+    await user.clear(search);
+    expect(row).not.toHaveAttribute('hidden');
+    expect(name).toHaveValue('Primary draft');
+    expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
 });

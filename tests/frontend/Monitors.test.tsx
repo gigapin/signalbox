@@ -212,7 +212,10 @@ test('lets keyboard users reach the monitor table viewport before its monitor li
     renderInertia('Signalbox', Index, indexProps([row(11, 'Checkout API')]));
     const viewport = screen.getByRole('region', { name: 'Monitors' });
 
-    for (let step = 0; step < 20 && document.activeElement !== viewport; step++) {
+    const focusableCount = document.querySelectorAll(
+        'a[href], button, input, select, textarea, [tabindex="0"]',
+    ).length;
+    for (let step = 0; step <= focusableCount && document.activeElement !== viewport; step++) {
         await user.tab();
     }
 
@@ -857,7 +860,7 @@ async function showsDetailAndConfirmsDeletion(): Promise<void> {
     });
     expect(screen.getByText('https://example.invalid/health?key=[REDACTED]')).toBeInTheDocument();
     expect(screen.getByText('authorization (values hidden)')).toBeInTheDocument();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('main')).queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Edit monitor' })).not.toBeInTheDocument();
     view.unmount();
 

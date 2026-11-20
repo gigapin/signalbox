@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import Maintenance from '../../resources/js/pages/Maintenance/Index';
 import Deliveries from '../../resources/js/pages/Notifications/Deliveries';
+import Policies from '../../resources/js/pages/Notifications/Policies';
 import Notifications from '../../resources/js/pages/Notifications/Index';
 import { renderInertia } from './renderInertia';
 
@@ -297,7 +298,13 @@ test('delivery rows link actual incidents and distinguish absent send time from 
     );
     expect(screen.getByText('Deleted email channel')).toBeInTheDocument();
     expect(screen.getByText('Not recorded')).toBeInTheDocument();
-    expect(screen.getByText(/provider acceptance, not recipient reading/)).toBeInTheDocument();
+    expect(screen.getByText('Accepted by provider (local)')).toBeInTheDocument();
+    expect(
+        within(
+            screen.getByRole('list', { name: 'Notification deliveries, newest first' }),
+        ).getByText('Failed'),
+    ).toHaveAttribute('data-tone', 'danger');
+    expect(screen.queryByRole('navigation', { name: 'Pagination' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Retry delivery/ })).not.toBeInTheDocument();
 });
 
@@ -313,10 +320,10 @@ test('configuration links to deliveries and retains hidden editor drafts while f
         screen.getByRole('list', { name: 'Notification channels' }),
     ).getByLabelText('Incoming webhook URL');
     await user.type(secret, 'https://hooks.slack.com/services/synthetic');
-    await user.type(screen.getByLabelText('Find channels or policies'), 'missing');
+    await user.type(screen.getByLabelText('Find channels'), 'missing');
     expect(screen.getByText('No channels match this search.')).toBeVisible();
     expect(secret).not.toBeVisible();
-    await user.clear(screen.getByLabelText('Find channels or policies'));
+    await user.clear(screen.getByLabelText('Find channels'));
     expect(secret).toHaveValue('https://hooks.slack.com/services/synthetic');
 });
 
@@ -349,7 +356,7 @@ test('uncertain policy outcome preserves its name and requires review before man
     const visit = vi.spyOn(router, 'visit').mockImplementation((_url, options) => {
         callbacks = options;
     });
-    renderInertia('Signalbox', Notifications, configuration);
+    renderInertia('Signalbox', Policies, configuration);
     await user.click(screen.getByRole('button', { name: 'Edit policy' }));
     const name = screen.getByDisplayValue('Primary');
     await user.type(name, ' draft');
@@ -417,4 +424,45 @@ test('a failed secret rotation blocks further writes and never exposes response 
     expect(screen.getByRole('button', { name: 'Create new signing secret' })).toBeDisabled();
     expect(screen.queryByText('private transport detail')).not.toBeInTheDocument();
     expect(request).toHaveBeenCalledOnce();
+});
+
+test('delivery heading owns filters and stable refresh while loading preserves the cards', async () => {
+    const user = userEvent.setup();
+    let options: NonNullable<Parameters<typeof router.get>[2]> | undefined;
+    const read = vi.spyOn(router, 'get').mockImplementation((_path, _data, supplied) => {
+        options = supplied;
+    });
+    renderInertia('Signalbox', Deliveries, {
+        ...list,
+        states: ['pending', 'sent', 'failed', 'suppressed'],
+        listing: { data: [], total: 11, currentPage: 1, lastPage: 2 },
+    });
+    const header = screen.getByRole('heading', { level: 1 }).closest('header')!;
+    const search = within(header).getByLabelText('Monitor name');
+    expect(search.closest('.ui-panel')).toBeNull();
+    await user.clear(search);
+    await user.type(search, 'Worker');
+    await user.click(within(header).getByRole('button', { name: 'Apply filters' }));
+    expect(read).toHaveBeenCalledWith(
+        '/teams/7/notifications/deliveries?q=Worker',
+        {},
+        expect.any(Object),
+    );
+    act(() => options?.onStart?.({} as never));
+    expect(screen.getByRole('status', { name: 'Loading results…' })).toBeInTheDocument();
+    const refresh = within(header).getByRole('button', { name: 'Refresh results' });
+    expect(refresh).toHaveTextContent('Refresh');
+    expect(refresh).toBeDisabled();
+    expect(refresh.querySelector('svg')).not.toBeNull();
+    expect(screen.getByRole('link', { name: 'Next' })).toHaveAttribute(
+        'href',
+        '/teams/7/notifications/deliveries?q=API&page=2',
+    );
+    act(() => {
+        options?.onError?.({});
+        options?.onFinish?.({} as never);
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Results could not be loaded');
+    expect(search).toHaveValue('Worker');
+    expect(screen.queryByRole('status', { name: 'Loading results…' })).not.toBeInTheDocument();
 });

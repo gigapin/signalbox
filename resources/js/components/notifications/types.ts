@@ -135,7 +135,7 @@ export interface MonitorEscalationView {
     options: { id: number; name: string; isDefault: boolean }[];
 }
 
-/** Response of NotificationPageController::index. */
+/** Safe configuration response shared by the dedicated Channels/Policies pages and the original entry alias. */
 export interface NotificationsPageProps extends MonitorPageProps {
     /** Channels ordered by label. */
     channels: ChannelView[];

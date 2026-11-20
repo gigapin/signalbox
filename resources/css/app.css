@@ -548,6 +548,41 @@
         text-decoration: none;
     }
 
+    .ui-nav-parent {
+        display: flex;
+        align-items: center;
+    }
+
+    .ui-nav-parent > .ui-shell-link {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ui-navigation-toggle.ui-button {
+        flex: none;
+        width: var(--spacing-ui-control);
+        padding: 0;
+        background: transparent;
+        border-color: transparent;
+    }
+
+    .ui-notification-submenu {
+        display: grid;
+        gap: var(--spacing-ui-2);
+        margin-top: var(--spacing-ui-2);
+        margin-left: var(--spacing-ui-3);
+        padding-left: var(--spacing-ui-2);
+        border-left: 1px solid var(--color-ui-border);
+    }
+
+    .ui-notification-submenu[hidden] {
+        display: none;
+    }
+
+    .ui-shell-link[data-active='true'] {
+        font-weight: 700;
+    }
+
     .ui-shell-link:hover,
     .ui-shell-link[aria-current='page'] {
         background: var(--color-ui-raised);
@@ -1440,4 +1475,192 @@
             min-height: 44px;
         }
     }
+}
+
+/* Shared modal editors and local search keep page-owned controls keyboard-operable at every width. */
+@layer components {
+    .ui-modal {
+        width: min(44rem, calc(100vw - 2rem));
+        max-height: calc(100dvh - 2rem);
+        margin: auto;
+        padding: var(--spacing-ui-6);
+        border: 1px solid var(--color-ui-control-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-surface);
+        color: var(--color-ui-text);
+        overflow-y: auto;
+    }
+
+    .ui-modal::backdrop {
+        background: rgb(0 0 0 / 65%);
+    }
+
+    .ui-modal-heading,
+    .ui-channel-toolbar {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-ui-3);
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .ui-modal-heading {
+        justify-content: space-between;
+        margin-bottom: var(--spacing-ui-4);
+    }
+
+    .ui-channel-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .ui-search-picker {
+        position: relative;
+        width: 18rem;
+        max-width: 100%;
+        min-width: 0;
+        flex: 1 1 10rem;
+    }
+
+    .ui-search-picker > .ui-field {
+        margin: 0;
+    }
+
+    .ui-search-suggestions {
+        position: absolute;
+        inset-inline: 0;
+        top: calc(100% + var(--spacing-ui-1));
+        z-index: 30;
+        max-height: 18rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        margin: 0;
+        padding: var(--spacing-ui-1);
+        border: 1px solid var(--color-ui-control-border);
+        border-radius: var(--radius-ui);
+        background: var(--color-ui-surface);
+        color: var(--color-ui-text);
+        list-style: none;
+    }
+
+    .ui-search-suggestion {
+        min-height: var(--spacing-ui-control);
+        padding: var(--spacing-ui-2) var(--spacing-ui-3);
+        border-radius: var(--radius-ui);
+        cursor: pointer;
+        overflow-wrap: anywhere;
+    }
+
+    .ui-search-suggestion[aria-selected='true'],
+    .ui-search-suggestion:hover {
+        background: var(--color-ui-raised);
+    }
+
+    /* A fixed list gap separates visible cards even when intervening rows are hidden. */
+    .ui-channel-list {
+        display: grid;
+        gap: var(--spacing-ui-6);
+        padding-block: var(--spacing-ui-3);
+    }
+
+    .ui-channel-list > .ui-channel-card {
+        margin-block: 0;
+    }
+
+    .ui-channel-card .ui-badge {
+        font-size: 1rem;
+    }
+
+    .ui-channel-card {
+        font-size: 1rem;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .ui-channel-card[hidden] {
+        display: none;
+    }
+
+    .ui-channel-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .ui-channel-family {
+        font-size: 1rem;
+        font-weight: 400;
+        color: var(--color-ui-muted);
+    }
+
+    .ui-channel-destination {
+        font-size: 1.125rem;
+    }
+}
+
+/* Notification destinations share card spacing, typography and compact heading controls. */
+.ui-notification-list {
+    display: grid;
+    gap: var(--spacing-ui-6);
+    padding-block: var(--spacing-ui-3);
+}
+.ui-notification-list > .ui-notification-card {
+    margin-block: 0;
+}
+.ui-notification-card {
+    font-size: 1rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+.ui-notification-card[hidden] {
+    display: none;
+}
+.ui-notification-card .ui-badge {
+    font-size: 1rem;
+}
+.ui-notification-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-ui-3);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.ui-notification-primary {
+    font-size: 1.125rem;
+}
+.ui-notification-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--spacing-ui-3);
+}
+.ui-notification-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: var(--spacing-ui-4);
+    margin-top: var(--spacing-ui-4);
+}
+.ui-notification-details dt {
+    color: var(--color-ui-muted);
+}
+.ui-notification-details dd {
+    margin: 0;
+}
+.ui-notification-filters {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-ui-3);
+    min-width: 0;
+    max-width: 100%;
+}
+.ui-notification-filters .ui-actions {
+    margin: 0;
+}
+.ui-notification-filters .ui-field {
+    margin: 0;
+    min-width: 0;
+    width: 9rem;
+    flex: 1 1 9rem;
 }

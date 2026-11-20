@@ -96,6 +96,9 @@ Steps reference channels by identity in JSON, as in the specification. Channel d
 | Route | Method and URL | Roles |
 |---|---|---|
 | teams.notifications.index | GET /teams/{team}/notifications (no-store) | all members |
+| teams.notifications.channels | GET /teams/{team}/notifications/channels (no-store) | all members |
+| teams.notifications.policies | GET /teams/{team}/notifications/policies (no-store) | all members |
+| teams.notifications.assignments | GET /teams/{team}/notifications/assignments (no-store) | all members |
 | teams.notifications.deliveries | GET /teams/{team}/notifications/deliveries (no-store) | all members |
 | teams.notification-channels.store | POST /teams/{team}/notification-channels | owner, admin |
 | teams.notification-channels.update | PATCH …/notification-channels/{channel} | owner, admin |
@@ -109,10 +112,11 @@ Steps reference channels by identity in JSON, as in the specification. Channel d
 | teams.escalation-policies.destroy | DELETE …/escalation-policies/{policy} | owner, admin |
 | teams.monitors.escalation-policy | PATCH /teams/{team}/monitors/{monitor}/escalation-policy | owner, admin, member |
 
-- `Notifications/Index` lists channels (state, masked hint, verification expiry, policies using them) and policies (steps with delays and inactive channels marked), with empty states, a warning when monitors notify nobody, and the create/edit forms for managers. Bounds come from `config/notifications.php` through the `limits` prop.
+- `Notifications/Channels` and `Notifications/Policies` are separate pages composed from the existing shared channel/policy editors. The original `/notifications` entry and frontend Index export remain compatible Channels aliases. Each page mounts its own workflow and local name filter, preserving hidden editor drafts and the shared departure guard. Channels uses a heading SearchPicker, ten-card local pagination, larger-text channel cards and a heading-triggered native creation modal; Policies shares NotificationCollection with Channels: heading search, retained cards, ten-item local pagination and guarded creation modal. Bounds still come from `config/notifications.php` through `limits`.
+- The shared Notifications submenu links those two pages, the existing `Notifications/Deliveries`, and `Notifications/Assignments`. Assignments chooses one local monitor by bounded optional `monitor_id`, then reuses the existing effective-policy projection, the shared EscalationEditor in a native modal and monitor PATCH endpoint. Owner/admin/member can assign; viewers inspect only. Invalid/foreign selections fail closed. No domain mutation, provider integration or permission is duplicated. See [OPERATIONS-UI.md](OPERATIONS-UI.md#notifications-submenu-and-dedicated-pages--2026-11-19).
 - The monitor detail page has a **Notifications** section (`EscalationPanel`) with the effective policy and, for monitor managers, a selector whose empty value follows the team default.
 - The incident detail page has a **Notifications sent** table (`DeliveryLog`, at most 100 rows, oldest first) without dedupe keys; a deleted channel shows its family only.
-- Links to the page were added to the team and monitor list navigation.
+- Team navigation exposes the four concrete workflow pages on desktop and mobile; old in-content workflow anchors are removed.
 
 ## Provider adapters (M5.02)
 

@@ -40,6 +40,8 @@ interface Picker {
     height: number;
     /** Existing document CSP nonce, absent only in non-CSP test fixtures. */
     nonce: string | undefined;
+    /** Keep custom options inside the active native modal's top layer, otherwise use the document body. */
+    portalTarget: HTMLElement;
 }
 
 /**
@@ -96,7 +98,9 @@ export default function Select({
         const selected = choices.findIndex(
             (choice) => choice.value === element.value && !choice.disabled,
         );
+        const modal = element.closest('dialog[open]');
         const state: Picker = {
+            portalTarget: modal instanceof HTMLDialogElement ? modal : document.body,
             choices,
             active: selected >= 0 ? selected : choices.findIndex((choice) => !choice.disabled),
             selected: element.value,
@@ -314,7 +318,7 @@ export default function Select({
                             ))}
                         </div>
                     </>,
-                    document.body,
+                    picker.portalTarget,
                 )}
         </>
     );

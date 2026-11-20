@@ -1,5 +1,6 @@
 /** Show one notification channel with its verification state and the changes its state admits. */
 import Button from '../ui/Button';
+import Badge, { type Tone } from '../ui/Badge';
 import InputField from '../ui/InputField';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
@@ -30,11 +31,22 @@ interface ChannelRowProps {
     codeLength: number;
 }
 
+/** Human-readable channel lifecycle states, independent of provider configuration. */
+type ChannelStateLabel = 'Active' | 'Paused' | 'Waiting for code' | 'Not verified';
+
+/** Distinct semantic colors complement the required textual status labels. */
+const STATE_TONES: Record<ChannelStateLabel, Tone> = {
+    Active: 'success',
+    Paused: 'warning',
+    'Waiting for code': 'info',
+    'Not verified': 'danger',
+};
+
 /**
  * @param channel Displayed channel.
  * @returns Readable state combining verification and activation.
  */
-export function channelStateLabel(channel: ChannelView): string {
+export function channelStateLabel(channel: ChannelView): ChannelStateLabel {
     if (channel.isActive) {
         return 'Active';
     }
@@ -67,6 +79,7 @@ export default function ChannelRow({
     const guard = useNavigationGuard();
     const blocked = mutation.locked || guard.busy;
     const codeId = `channel-${channel.id}-code`;
+    const state = channelStateLabel(channel);
 
     function sendCode() {
         if (blocked) return;
@@ -104,40 +117,44 @@ export default function ChannelRow({
     }
 
     return (
-        <li hidden={hidden} className="ui-operation-row">
+        <li
+            id={`channel-${channel.id}`}
+            tabIndex={-1}
+            aria-labelledby={`channel-${channel.id}-heading`}
+            hidden={hidden}
+            className="ui-panel ui-channel-card"
+        >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-medium">
+                <h3 id={`channel-${channel.id}-heading`} className="ui-channel-name">
                     {channel.name}{' '}
-                    <span className="text-sm text-[var(--color-ui-muted)]">
-                        · {type?.label ?? channel.type}
-                    </span>
-                </p>
-                <p className="text-sm">{channelStateLabel(channel)}</p>
+                    <span className="ui-channel-family">· {type?.label ?? channel.type}</span>
+                </h3>
+                <Badge tone={STATE_TONES[state]}>{state}</Badge>
             </div>
-            <p className="text-sm text-[var(--color-ui-text)]">{channel.hint}</p>
-            <p className="text-xs text-[var(--color-ui-muted)]">
+            <p className="ui-channel-destination">{channel.hint}</p>
+            <p className="text-base text-[var(--color-ui-muted)]">
                 {channel.quietHours === null
                     ? 'No quiet hours.'
                     : `Quiet hours daily: ${channel.quietHours.start}–${channel.quietHours.end} (${channel.quietHours.timezone}).`}
             </p>
             {channel.verifiedAt !== null && (
-                <p className="text-xs text-[var(--color-ui-muted)]">
+                <p className="text-base text-[var(--color-ui-muted)]">
                     Verified {formatInstant(channel.verifiedAt, '')}
                 </p>
             )}
             {channel.isStub && (
-                <p className="text-xs text-ui-warning">
+                <p className="text-base text-ui-warning">
                     Stub channel: deliveries are recorded but never sent.
                 </p>
             )}
-            <p className="text-xs text-[var(--color-ui-muted)]">
+            <p className="text-base text-[var(--color-ui-muted)]">
                 {channel.usedBy.length === 0
                     ? 'Not used by any escalation policy.'
                     : `Used by: ${channel.usedBy.join(', ')}`}
             </p>
 
             {canManage && (
-                <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                <div className="mt-3 flex flex-wrap gap-3 text-base">
                     <Button type="button" disabled={blocked} onClick={sendCode} variant="secondary">
                         {channel.verificationPending ? 'Send a new code' : 'Send verification code'}
                     </Button>

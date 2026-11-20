@@ -8,6 +8,7 @@ import type {
     AppTeam,
     BreadcrumbAncestor,
     TeamSection,
+    NotificationSection,
 } from '../../resources/js/components/app/navigation';
 import type { AuthProps } from '../../resources/js/components/auth/AuthLayout';
 import Button from '../../resources/js/components/ui/Button';
@@ -19,6 +20,8 @@ interface FixtureProps extends AuthProps {
     team: AppTeam;
     /** Current section, including the section of nested detail pages. */
     section: TeamSection;
+    /** Optional notification child supplied by its dedicated page. */
+    notificationSection?: NotificationSection;
     /** Optional trusted breadcrumb ancestors. */
     ancestors?: BreadcrumbAncestor[];
 }
@@ -27,13 +30,14 @@ interface FixtureProps extends AuthProps {
  * @returns A real shell with one heading/action and a deliberately independent local form draft.
  */
 function LayoutFixture() {
-    const { team, section, ancestors } = usePage<FixtureProps>().props;
+    const { team, section, ancestors, notificationSection } = usePage<FixtureProps>().props;
 
     return (
         <AppLayout
             title="API details"
             team={team}
             section={section}
+            {...(notificationSection === undefined ? {} : { notificationSection })}
             ancestors={ancestors ?? []}
             description="Authorized route resource"
             actions={<Button>Edit monitor</Button>}
@@ -213,4 +217,46 @@ test('renders safe shared acknowledgements while keeping the current page visibl
     renderInertia('Signalbox', LayoutFixture, { ...identity, status: 'Monitor saved.' });
     expect(screen.getByRole('status')).toHaveTextContent('Monitor saved.');
     expect(screen.getByRole('main')).toContainElement(screen.getByLabelText('Private draft'));
+});
+
+test.each([
+    ['channels', 'Channels'],
+    ['policies', 'Escalation policies'],
+    ['deliveries', 'Notification deliveries'],
+    ['assignments', 'Assign a policy to a monitor'],
+] as const)(
+    'marks the current %s notification child in an expanded submenu',
+    (notificationSection, label) => {
+        renderInertia('Signalbox', LayoutFixture, {
+            ...identity,
+            section: 'notifications',
+            notificationSection,
+        });
+        const navigation = screen.getByRole('navigation', { name: 'Team navigation' });
+        expect(
+            within(navigation).getByRole('button', { name: 'Toggle Notifications submenu' }),
+        ).toHaveAttribute('aria-expanded', 'true');
+        const active = within(navigation).getByRole('link', { current: 'page' });
+        expect(active).toHaveAccessibleName(label);
+        expect(active).toHaveAttribute('href', `/teams/12/notifications/${notificationSection}`);
+        expect(within(navigation).getAllByRole('link', { current: 'page' })).toHaveLength(1);
+    },
+);
+
+test('opens and closes the Notifications submenu by keyboard without navigating', async () => {
+    const user = userEvent.setup();
+    renderInertia('Signalbox', LayoutFixture, identity);
+    const navigation = screen.getByRole('navigation', { name: 'Team navigation' });
+    const toggle = within(navigation).getByRole('button', { name: 'Toggle Notifications submenu' });
+    expect(within(navigation).queryByRole('link', { name: 'Channels' })).not.toBeInTheDocument();
+    toggle.focus();
+    await user.keyboard('{Enter}');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(within(navigation).getByRole('link', { name: 'Channels' })).toHaveAttribute(
+        'href',
+        '/teams/12/notifications/channels',
+    );
+    await user.keyboard(' ');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(within(navigation).queryByRole('link', { name: 'Channels' })).not.toBeInTheDocument();
 });

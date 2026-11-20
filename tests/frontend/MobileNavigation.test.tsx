@@ -276,3 +276,25 @@ test('uses the dashboard mobile menu for platform pages without selecting an ins
     fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     expect(trigger).toHaveFocus();
 });
+
+test('exposes the same four Notifications destinations inside the mobile dialog', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(router, 'visit').mockImplementation(() => undefined);
+    mountLayout();
+    await user.click(screen.getByRole('button', { name: 'Open navigation' }));
+    const dialog = screen.getByRole('dialog', { name: 'Navigation' });
+    await user.click(within(dialog).getByRole('button', { name: 'Toggle Notifications submenu' }));
+    for (const [label, path] of [
+        ['Channels', 'channels'],
+        ['Escalation policies', 'policies'],
+        ['Notification deliveries', 'deliveries'],
+        ['Assign a policy to a monitor', 'assignments'],
+    ] as const) {
+        expect(within(dialog).getByRole('link', { name: label })).toHaveAttribute(
+            'href',
+            `/teams/12/notifications/${path}`,
+        );
+    }
+    await user.click(within(dialog).getByRole('link', { name: 'Channels' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});

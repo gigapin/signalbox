@@ -96,11 +96,12 @@ it('paginates deterministically without reading private delivery columns', funct
         $queries[] = $event->sql;
     });
     $first = $this->actingAs($team->owner)->get("/teams/{$team->id}/{$path}")
-        ->assertOk()->assertJsonPath('props.listing.total', 21)->assertJsonCount(20, 'props.listing.data')
+        ->assertOk()->assertJsonPath('props.listing.total', 21)->assertJsonCount($path === 'maintenance' ? 20 : 10, 'props.listing.data')
         ->assertDontSee('private-key-', false)->assertDontSee('private-destination', false)->assertDontSee('private-payload', false);
-    $second = $this->get("/teams/{$team->id}/{$path}?page=2")->assertJsonCount(1, 'props.listing.data');
+    $second = $this->get("/teams/{$team->id}/{$path}?page=2")->assertJsonCount($path === 'maintenance' ? 1 : 10, 'props.listing.data');
     expect(array_intersect(array_column($first->json('props.listing.data'), 'id'), array_column($second->json('props.listing.data'), 'id')))->toBe([]);
     if ($path === 'notifications/deliveries') {
+        $this->get("/teams/{$team->id}/{$path}?page=3")->assertJsonCount(1, 'props.listing.data');
         $reads = array_filter($queries, static fn (string $sql): bool => str_contains($sql, 'from "notification_logs"') && !str_contains($sql, 'count(*)'));
         expect($reads)->not->toBeEmpty();
         foreach ($reads as $sql) {
@@ -161,7 +162,7 @@ it('keeps relation query counts constant as visible rows grow', function (string
             $page = $family === 'maintenance' ? $listing->page($team->id, $filter, $now) : $listing->page($team->id, $filter);
             $counts[] = count(DB::getQueryLog());
             DB::disableQueryLog();
-            expect($page->count())->toBe($q === '' ? 20 : 1);
+            expect($page->count())->toBe($q === '' ? ($family === 'maintenance' ? 20 : 10) : 1);
         }
         expect($counts[0])->toBe($counts[1])->toBe($family === 'maintenance' ? 3 : 5);
     });

@@ -37,6 +37,9 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 | teams.monitors.maintenance.update | PATCH | 302 | 302 | 302 | 403 |
 | teams.monitors.maintenance.destroy | DELETE | 302 | 302 | 302 | 403 |
 | teams.notifications.index | GET | 200 | 200 | 200 | 200 |
+| teams.notifications.channels | GET | 200 | 200 | 200 | 200 |
+| teams.notifications.policies | GET | 200 | 200 | 200 | 200 |
+| teams.notifications.assignments | GET | 200 | 200 | 200 | 200 |
 | teams.notification-channels.store | POST | 302 | 302 | 403 | 403 |
 | teams.notification-channels.update | PATCH | 302 | 302 | 403 | 403 |
 | teams.notification-channels.destroy | DELETE | 302 | 302 | 403 | 403 |
@@ -178,3 +181,18 @@ Maintenance actions still use each monitor's existing policy and endpoints; no p
 from the list link. Delivery rows expose only safe outcomes and actual incident/monitor identities,
 never recipient payloads, destination hashes, dedupe keys or attempt fences. Dedicated PostgreSQL tests
 cover pagination, literal monitor-name search, half-open maintenance phases and deleted-channel history.
+
+## Dedicated notification workflow reads — 2026-11-19
+
+Channels, policies and assignments have separate GET routes under `/teams/{team}/notifications`,
+registered in TeamRouteMatrix with the existing auth/verified/team/no-store gates. The original
+`notifications.index` remains a compatible alias for Channels. Delivery permissions are unchanged.
+All current roles may inspect the pages; channel/policy management remains owner/admin-only, while
+assignment uses the existing monitor update policy (owner/admin/member; viewers inspect only).
+
+Assignments selects a single monitor by optional bounded `monitor_id`. Malformed or foreign IDs
+return 404. Choices contain local IDs/names only, and the selected projection contains the existing
+effective-policy view and current `canAssign`. Saving still uses the lock-authorized existing PATCH
+endpoint and returns to the assignment page. Tests include all roles, absent/foreign selection,
+malformed IDs, safe projections and saving from the new route. The exhaustive matrix covers guest,
+unverified, foreign and revoked membership on every new GET as well.

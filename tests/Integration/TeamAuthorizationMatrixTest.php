@@ -298,9 +298,11 @@ it('enforces route role and membership boundaries without hidden cross-team effe
                 ->where('team.id', $fixture->team->id)
                 ->where('listing.data', []));
             break;
+        case 'teams.notifications.policies':
+        case 'teams.notifications.channels':
         case 'teams.notifications.index':
             $response->assertInertia(fn (AssertableInertia $page) => $page
-                ->component('Notifications/Index')
+                ->component($name === 'teams.notifications.policies' ? 'Notifications/Policies' : 'Notifications/Channels')
                 ->where('team.id', $fixture->team->id)
                 ->where('channels.0.id', $fixture->channel->id)
                 ->where('channels.0.editable', in_array($role, ['owner', 'admin'], true) ? [] : null)
@@ -309,6 +311,14 @@ it('enforces route role and membership boundaries without hidden cross-team effe
                 ->where('can.manage', in_array($role, ['owner', 'admin'], true)));
             $response->assertDontSee($fixture->channel->config_json['signing_secret'], false)
                 ->assertDontSee('hooks.example.test/signalbox', false);
+            break;
+        case 'teams.notifications.assignments':
+            $response->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('Notifications/Assignments')
+                ->where('team.id', $fixture->team->id)
+                ->has('monitors', 1)
+                ->where('monitors.0.id', $fixture->monitor->id)
+                ->where('selectedMonitor', null));
             break;
         case 'teams.notification-channels.store':
             $created = app(TenantContext::class)->run($fixture->team->id, fn () => NotificationChannel::query()->where('name', 'Matrix created channel')->sole());

@@ -1,8 +1,8 @@
 /** List the notification deliveries recorded for one incident. */
 import DataTable from '../ui/DataTable';
-import Badge from '../ui/Badge';
+import DeliveryStatusBadge from './DeliveryStatusBadge';
 import { formatInstant } from '../incidents/time';
-import { deliveryKindLabel, deliveryStatusLabel } from './labels';
+import { deliveryKindLabel } from './labels';
 import type { DeliveryView } from './types';
 
 /** Log inputs. */
@@ -53,11 +53,7 @@ export default function DeliveryLog({ deliveries }: DeliveryLogProps) {
                                         : ` · step ${delivery.stepIndex + 1}`}
                                 </td>
                                 <td>
-                                    <Badge
-                                        tone={delivery.status === 'sent' ? 'success' : 'neutral'}
-                                    >
-                                        {deliveryStatusLabel(delivery.status)}
-                                    </Badge>
+                                    <DeliveryStatusBadge status={delivery.status} />
                                 </td>
                                 <td>{delivery.attempts}</td>
                                 <td>{formatInstant(delivery.sentAt, 'Not recorded')}</td>

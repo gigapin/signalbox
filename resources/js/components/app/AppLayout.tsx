@@ -13,7 +13,12 @@ import TeamSwitcher from './TeamSwitcher';
 import TeamLinks from './TeamLinks';
 import MobileNavigation from './MobileNavigation';
 import { useDesktopNavigation } from './useDesktopNavigation';
-import { type AppTeam, type BreadcrumbAncestor, type TeamSection } from './navigation';
+import {
+    type AppTeam,
+    type BreadcrumbAncestor,
+    type NotificationSection,
+    type TeamSection,
+} from './navigation';
 
 /** Inputs deliberately supplied by an authorized team page instead of global preference inference. */
 interface AppLayoutProps {
@@ -23,6 +28,8 @@ interface AppLayoutProps {
     team: AppTeam;
     /** Current page family, including detail and edit pages. */
     section: TeamSection;
+    /** Current notification workflow, when rendering a notification child page. */
+    notificationSection?: NotificationSection;
     /** Additional context such as a redacted destination. */
     description?: string;
     /** Application-built ancestors between the team and current page; default empty. */
@@ -43,6 +50,7 @@ function TeamShell({
     title,
     team,
     section,
+    notificationSection,
     description,
     ancestors = [],
     accessDenied = false,
@@ -85,6 +93,7 @@ function TeamShell({
                             key={`mobile:${team.id}`}
                             teamId={team.id}
                             section={section}
+                            notificationSection={notificationSection}
                             mainId={mainId}
                             workspaceNavigation
                         />
@@ -114,7 +123,11 @@ function TeamShell({
                     {!hidden && desktop && (
                         <aside className="ui-sidebar">
                             <div className="ui-sidebar-navigation">
-                                <TeamLinks teamId={team.id} section={section} />
+                                <TeamLinks
+                                    teamId={team.id}
+                                    section={section}
+                                    notificationSection={notificationSection}
+                                />
                                 <WorkspaceLinks includeDashboard={false} />
                             </div>
                         </aside>

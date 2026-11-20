@@ -395,3 +395,35 @@ Button offre `icon` decorativa e `busyMode="indicator"`: lo slot `.ui-button-ico
 Il messaggio busy di TeamSwitcher resta annunciato via role=status e associato al pulsante via aria-describedby/title, ma usa sr-only: il blocco di navigazione continua a funzionare senza aggiungere una riga all’header durante ogni richiesta. La comparsa/scomparsa di quella riga causava un cambiamento nell’altezza del contenitore condiviso.
 
 PageLoader è il componente condiviso per il caricamento centrale: portal su document.body, overlay position:fixed/inset:0 e spinner al centro della viewport. Non entra nel flusso, non blocca lo scroll e non sposta il focus; role=status annuncia Loading results… ai lettori di schermo. Non sostituisce la tabella con contenuti di altezza diversa e si smonta al termine, errore o annullamento della richiesta.
+
+## Navigazione Notifications — pagine separate, 2026-11-19
+
+TeamLinks riusa notificationDestinations per sidebar e dialog mobile. Notifications mantiene l’ingresso Channels e un pulsante separato per espandere quattro link: Channels, Escalation policies, Notification deliveries, Assign a policy to a monitor. Il gruppo è aperto nelle pagine Notifications, i link nascosti non entrano nel tab order, il figlio attivo ha aria-current=page. AppLayout e MobileNavigation inoltrano l’identità esplicita notificationSection; cambio team/account e diniego mantengono il confine rimovibile esistente.
+
+Channels e Policies sono pagine indipendenti costruite da ConfigurationPage e dai form condivisi; nessun editor dell’altra sezione viene montato. Ricerca locale per sezione e protezione delle bozze preservate. Deliveries resta la pagina operativa esistente e ha il suo figlio attivo. Assignments mostra select dei monitor locali, una sola assegnazione per volta ed EscalationPanel esistente, con permessi di modifica monitor (diversi dai permessi di gestione canali/policy). I vecchi quattro link prima della card sono rimossi. Contratti e compatibilità in OPERATIONS-UI; autorizzazioni in AUTHORIZATION-MATRIX.
+
+## Channels — toolbar, modal e card, 2026-11-19
+
+ChannelsPage compone il workspace dei canali con i componenti condivisi. SearchPicker e il pulsante Add channel sono nello slot actions di PageHeading (ricerca a sinistra); non esiste più la card Find channels né il testo First add a channel. SearchPicker apre al focus/click un listbox locale di nomi disponibili, filtra i suggerimenti durante la digitazione e supporta frecce, Enter, Escape e scelta con puntatore. La selezione rivela/focalizza la card del canale, anche se era su un’altra pagina. Nessun valore di configurazione entra nella ricerca.
+
+La creazione riusa ChannelForm nel componente Modal nativo. Focus iniziale al primo campo, contenimento nativo del focus, ripristino del focus all’origine e delle esatte proprietà di scroll/gutter alla chiusura. Escape/Close sono disabilitati durante richieste pendenti. La normale chiusura mantiene il draft montato; solo il salvataggio confermato chiude e resetta il form. Errori/rifiuti mantengono aperto il modal e conservano i valori. I cambi autorevoli di permesso/quota rimuovono il form non più consentito. Select mantiene il popup nel dialog aperto più vicino, per conservarne interattività e posizione nel top layer nativo; fuori dai modal continua a usare document.body e la nonce CSP esistente.
+
+Ogni ChannelRow è una card .ui-panel nominata e focalizzabile programmaticamente: nome 20px, destinazione mascherata 18px, metadati/stato 16px. La collezione server resta limitata a 25; paginazione locale di 10 card solo quando i risultati filtrati superano 10. Pagination riusa lo stesso componente delle liste monitor/incidents, con strategia alternativa a pulsanti locali, mantenendo invariati i link delle liste server. Le righe filtrate/fuori pagina sono hidden, senza smontare editor, codici o quiet hours: nessuna perdita di bozze; ricerca/paginazione restano bloccate durante lavoro foreground.
+
+Channels separa le card visibili con un gap di 24px nel contenitore condiviso ui-channel-list, indipendente dalle righe hidden. Lo stato usa Badge a 16px: Active/success verde, Paused/warning ambra, Waiting for code/info blu, Not verified/danger rosso. Le label rimangono presenti, quindi il colore non è l’unico segnale; palette light/dark condivisa senza nuovi colori fissi.
+
+
+## Notifications — componenti comuni nelle quattro pagine, 2026-11-19
+
+NotificationCollection è condiviso da Channels e Policies: SearchPicker e creazione nel titolo,
+Modal con bozze conservate e Pagination locale da 10. PolicyRow usa card con nome 20px, testo 16px,
+gap 24px e badge default/custom. Deliveries usa OperationalList con controlsTarget per filtri compatti
+e Refresh con icona nello stesso slot del titolo; card con dati 16px/nome canale 18px, pagine server
+da 10 e navigazione solo quando necessaria. DeliveryStatusBadge condivide i colori anche nel dettaglio
+incidente. Nessuna sostituzione del testo dei pulsanti durante letture: PageLoader centrale.
+
+Assignments usa SearchPicker dei monitor nel titolo e la stessa Modal per EscalationEditor,
+esportato dal pannello monitor per evitare duplicazione delle regole di assegnazione. Card del monitor
+con policy effettiva leggibile e badge: assente danger, default success, override info. Permessi e
+protezione delle bozze governano anche i controlli portati nel titolo. I layout compatti vanno a capo
+su mobile mantenendo campi e pulsanti accessibili, senza allargare il documento.

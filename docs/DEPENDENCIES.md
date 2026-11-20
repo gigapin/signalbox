@@ -331,3 +331,7 @@ Applicability to Signalbox, assessed by reading the code and not by exploiting e
 - `CVE-2026-118514` and the serializer and filesystem advisories were not analysed one by one; the update removes them regardless.
 
 SEC.14 subsequently updates the npm lock and adds the production audit gate; see the current npm security section above.
+
+## Report calendar — 2026-11-20
+
+Added exact runtime pin `@daypicker/react` 10.0.2 with npm lockfile. This is the upstream v10 package name, wrapping react-day-picker 10.0.2 and its date utilities. Official package metadata supports React >=16.8 and Node >=18, compatible with this project's React19/Node22. Calendar range selection, keyboard navigation and TZDate avoid a bespoke calendar engine. Styles are bundled locally; no remote assets, inline style overrides, animation injection or CSP relaxation. Sources: https://daypicker.dev/start and https://daypicker.dev/localization/setting-time-zone . Installation audit reported zero vulnerabilities.

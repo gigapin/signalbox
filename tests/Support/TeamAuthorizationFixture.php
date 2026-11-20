@@ -195,6 +195,12 @@ final readonly class TeamAuthorizationFixture
     {
         $parameters = ['team' => $foreignTeam ? $this->foreign->id : $this->team->id];
 
+        if ($route === 'teams.reports.download') {
+            $date = \Carbon\CarbonImmutable::now($this->team->timezone)->subDays(2)->toDateString();
+            $parameters['from'] = $date;
+            $parameters['to'] = $date;
+        }
+
         // A month long past, so it has started whatever the date of the run.
         if ($route === 'teams.reports.monthly') {
             $parameters['month'] = '2026-01';

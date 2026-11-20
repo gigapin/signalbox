@@ -160,6 +160,7 @@ it('enforces route role and membership boundaries without hidden cross-team effe
         case 'teams.reports.index':
             $response->assertInertia(fn (AssertableInertia $page) => $page->component('Reports/Index')->where('team.id', $fixture->team->id)->where('reportTimezone', $fixture->team->timezone)->missing('dashboard'));
             break;
+        case 'teams.reports.download':
         case 'teams.reports.monthly':
             expect($response->headers->get('Content-Type'))->toBe('application/pdf')
                 ->and(str_starts_with((string) $response->getContent(), '%PDF-'))->toBeTrue();

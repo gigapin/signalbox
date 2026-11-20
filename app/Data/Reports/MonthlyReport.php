@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Everything a monthly report document states, already restricted to one team. */
+/** Everything a report document states, already restricted to one team. */
 
 namespace App\Data\Reports;
 
@@ -12,13 +12,13 @@ final readonly class MonthlyReport
 {
     /**
      * @param string $teamName Team named on the document.
-     * @param ReportMonth $month Reported month and its timezone.
+     * @param ReportMonth|ReportPeriod $month Reported dates or legacy month and its timezone.
      * @param CarbonImmutable $generatedAt Instant of generation, which also ends a month still in progress.
      * @param list<MonthlyReportRow> $rows Monitors ordered by name.
      */
     public function __construct(
         public string $teamName,
-        public ReportMonth $month,
+        public ReportMonth|ReportPeriod $month,
         public CarbonImmutable $generatedAt,
         public array $rows,
     ) {

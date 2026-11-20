@@ -91,7 +91,7 @@ test.each([
     ['maintenance', 'Maintenance'],
     ['notifications', 'Notifications'],
     ['status-pages', 'Status pages'],
-    ['reports', 'Monthly reports'],
+    ['reports', 'Reports'],
 ] as const)('marks only the current %s section including nested pages', (section, label) => {
     renderInertia('Signalbox', LayoutFixture, { ...identity, section });
     const navigation = screen.getByRole('navigation', { name: 'Team navigation' });

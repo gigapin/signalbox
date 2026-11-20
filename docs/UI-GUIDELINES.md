@@ -461,3 +461,5 @@ The same CSRF POST, canonical acknowledgement validation, private-data suspensio
 ## Team-switch loading presentation — 2026-11-20
 
 TeamSwitcher reuses PageLoader from accepted switch initiation through destination navigation. The transient suspended state unmounts previous tenant content and live effects, but does not render Team selection/Team data hidden recovery messages. Those remain for authoritative access denial; switch transport/navigation failures retain the explicit Check current teams alert and remove the loader. Inertia onSuccess records successful handoff so onFinish cannot briefly display a false error while React is still unmounting the old shell. The page title and safe team identity remain stable while switching; no new visible status row is inserted.
+
+Reports uses the page title action slot for Download PDF and a Report period field (one-third width on desktop, full-width on mobile). React DayPicker opens with two months on desktop and one on mobile, preserving keyboard selection and an explicit Apply/Cancel draft. Calendar colors use shared theme tokens. Date bounds come from the server, not the browser clock.

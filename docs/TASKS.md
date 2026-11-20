@@ -1,5 +1,15 @@
 # Signalbox — Piano dei task
 
+## UI — Reports per intervallo — 2026-11-20
+
+- [x] Implementato e verificato: Reports nel titolo/menu, campo un terzo su desktop e pieno su mobile, Download PDF nel titolo attraverso portal nel confine tenant. Calendario React DayPicker10.0.2 con draft Apply/Cancel/Escape, due mesi desktop/uno mobile, stesso giorno selezionabile con due click. Periodi inclusivi nella timezone team, solo fino a ieri e dentro retention del piano effettivo.
+- Backend: ReportPeriod e ReportCalendar, nuova Form Request DownloadReportRequest e GET teams.reports.download. Aggregazione sull’intera finestra tramite MonitorAvailability e conteggio incidenti iniziati nel periodo; vecchio endpoint mensile, filename e comportamento parziale preservati. Nessuna migration o modifica ai grafici.
+- File: Reports/Index, nuovo dashboard/ReportDownload, navigation e app.css; DTO/servizi report, controller/request, routes/dashboard e template PDF. Test report frontend/backend, matrice route e fixture; documenti METRIC-ROLLUPS, DEPENDENCIES, AUTHORIZATION-MATRIX, UI-GUIDELINES, DASHBOARD e piano.
+- Verifiche finali: backend report+ReportMonth44/44,124 asserzioni,7.91s; matrice filtrata reports42/42,498 asserzioni,12.32s. Larastan8 senza errori; PHP-CS-Fixer dry-run0/721. Frontend mirato3 file44/44 prima del terzo test calendario; finale calendario3/3 e precedente coppia calendario/TeamSwitcher22/22. npm run check e build verdi; npm install audit0 vulnerabilità.
+- Correzioni durante verifica: esecuzione backend concorrente interrotta e ripetuta in sequenza dopo pulizia della sola cache isolata; fixture piano protetto corretta con forceFill e trial concluso. Screenshot Firefox con componente reale e dati sintetici: corretti contrasto tabella dark e mesi desktop inizialmente a colonna. Preview desktop1280 dark e mobile390 light ispezionate, senza overflow; server temporaneo arrestato; non è sessione autenticata, test screen reader o verifica CSP in browser. Integrazione non introduce override inline o allentamenti CSP.
+- Non eseguiti integrali backend/frontend, CI remota o benchmark PDF su1000 monitor. Servizi PostgreSQL/Redis di test ripristinati a spenti; processi applicativi e dati sviluppo preservati. Git/gh non eseguiti. Prossimo passo: verifica utente del nuovo calendario.
+
+
 ## UI — Loader durante cambio team — 2026-11-20
 
 - [x] Completato e verificato. TeamSwitcher riusa PageLoader centrale dalla partenza del POST alla sostituzione della pagina; rimosso lo status pendente separato. AppLayout distingue sospensione transitoria da accesso non disponibile: il solo cambio team non monta Team selection/Team data hidden, mentre le negazioni reali conservano la schermata di recupero. Nome team e titolo documento non diventano messaggi di errore durante il caricamento; vecchi dati/ruolo/sidebar/realtime restano smontati.

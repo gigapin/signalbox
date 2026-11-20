@@ -297,3 +297,40 @@ it('limits downloads per user', function (): void {
 
     $this->actingAs($this->team->owner)->get($url)->assertTooManyRequests();
 });
+
+it('downloads a multi-month inclusive period and excludes incidents after its final day', function (): void {
+    $this->travelTo(CarbonImmutable::parse('2026-07-01T12:00:00Z'));
+    $monitor = reportMonitor($this->team, 'Period monitor', '2026-01-01T00:00:00Z');
+    reportIncident($monitor, '2026-06-25T21:59:00Z');
+    reportIncident($monitor, '2026-06-25T22:00:00Z');
+    $this->actingAs($this->team->owner)
+        ->get('/teams/'.$this->team->id.'/reports/download?from=2026-03-01&to=2026-06-25')
+        ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    expect($this->renderer->html)->toContain('2026-03-01 to 2026-06-25')
+        ->and($this->renderer->html)->toContain('2026-06-26 00:00 +02:00')
+        ->and($this->renderer->html)->not->toContain('still in progress');
+    $rows = app(TenantContext::class)->run($this->team->id, fn () => app(BuildMonthlyReport::class)->build($this->team, new \App\Data\Reports\ReportPeriod('2026-03-01', '2026-06-25', 'Europe/Rome'))->rows);
+    expect($rows[0]->incidents)->toBe(1);
+});
+
+it('rejects invalid, current, future and expired custom dates', function (string $from, string $to): void {
+    $this->actingAs($this->team->owner)->getJson('/teams/'.$this->team->id.'/reports/download?from='.$from.'&to='.$to)->assertUnprocessable();
+    expect($this->renderer->html)->toBeNull();
+})->with([
+    ['2026-03-20', '2026-03-20'],
+    ['2026-03-01', '2026-03-21'],
+    ['2026-03-10', '2026-03-01'],
+    ['2026-02-30', '2026-03-01'],
+    ['2020-01-01', '2026-03-01'],
+]);
+
+it('projects complete retained dates for the effective plan', function (\App\Enums\Billing\Plan $plan, int $days): void {
+    $this->team->forceFill(['plan' => $plan, 'trial_started_at' => CarbonImmutable::now('UTC')->subDays(30), 'trial_ends_at' => CarbonImmutable::now('UTC')->subDays(16)])->save();
+    $bounds = app(\App\Services\Reports\ReportCalendar::class)->forTeam($this->team->fresh());
+    expect($bounds['max'])->toBe('2026-03-19')
+        ->and($bounds['min'])->toBe(CarbonImmutable::now('UTC')->subDays($days)->setTimezone('Europe/Rome')->startOfDay()->addDay()->toDateString());
+})->with([
+    [\App\Enums\Billing\Plan::Free, 90],
+    [\App\Enums\Billing\Plan::Pro, 365],
+    [\App\Enums\Billing\Plan::Business, 730],
+]);

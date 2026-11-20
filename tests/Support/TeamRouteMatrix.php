@@ -11,6 +11,7 @@ final class TeamRouteMatrix
     public const array PRIVATE_ROUTES = [
         'teams.dashboard' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.reports.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
+        'teams.reports.download' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.reports.monthly' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.show' => ['method' => 'GET', 'status' => 302, 'roles' => ['owner', 'admin', 'member', 'viewer']],
         'teams.members.index' => ['method' => 'GET', 'status' => 200, 'roles' => ['owner', 'admin', 'member', 'viewer']],

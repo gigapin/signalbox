@@ -202,3 +202,5 @@ unverified, foreign and revoked membership on every new GET as well.
 ### Monthly reports page — 2026-11-20
 
 `teams.reports.index` (`GET /teams/{team}/reports`) is an authenticated, verified, tenant-bound, no-store member read for owner/admin/member/viewer. It reuses ShowMonthlyReportRequest and returns only explicit team identity and reportTimezone. Foreign/revoked membership is 404; guest/unverified gates precede projection. The existing monthly PDF route keeps its independent rendering throttle. The private route catalogue includes the new page.
+
+Custom report downloads: GET `/teams/{team}/reports/download?from=YYYY-MM-DD&to=YYYY-MM-DD` (`teams.reports.download`) uses auth, verified, EstablishTeamContext, NoStoreAuthentication and the existing reports throttle. All monitor-reading team roles can export; outsiders and revoked members fail closed. Query dates are revalidated against effective retention and yesterday in the team's timezone.

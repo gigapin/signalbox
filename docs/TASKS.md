@@ -1,5 +1,13 @@
 # Signalbox — Piano dei task
 
+## UI — Badge nelle intestazioni Teams — 2026-11-20
+
+- [x] Completato: badge a destra del titolo nelle card Teams, Members e Invitations, separati visivamente dalle azioni. Nuovo CardHeading condiviso mantiene titolo per primo nel DOM e colonna badge a destra, con wrapping limitato al60% e al35% sotto480px. Nome/email e stati non sono pulsanti; palette e significato dei badge preservati.
+- File: components/ui/CardHeading, pages/Teams/Index, components/teams/Management, app.css; UI-GUIDELINES e questo piano. Verifiche TeamsDirectory/Teams/SettingsWorkflows40/40,11,81s; npm run check exit0 (ESLint/Prettier/TypeScript e6 qualità); Prettier CSS finale e build finale exit0. Nessun test aggiunto per la sola disposizione visiva; regressioni esistenti e ispezione browser coprono il cambiamento.
+- Firefox fixture sintetica: Teams1280×1000, Teams/Members/Invitations390×1000 ispezionati; dopo la regolazione mobile ricatturati Teams e Invitations. Titoli e badge a destra senza sovrapposizioni; testi lunghi vanno a capo nei rispettivi spazi. Server temporaneo arrestato; fixture/screenshot soltanto in /tmp. Non è collaudo autenticato/VoiceOver/zoom nativo.
+- Non ripetuti integrale frontend, backend/PHP-CS-Fixer/Larastan, audit e CI remota per modifica esclusivamente frontend di presentazione. Nessuna dipendenza, migration, .env, dato o servizio applicativo modificato; public/hot non modificato manualmente, asset ricostruiti. Git/gh non eseguiti. Prossimo passo: verifica dell’utente ed eventuali altre rifiniture.
+
+
 ## UI — Gestione unificata Teams — 2026-11-20
 
 - [x] Completato e verificato: card con modal piano/invito/accesso, pagine Members e Invitations, rimozione menu Team. Nessuna modifica di scope o migration.

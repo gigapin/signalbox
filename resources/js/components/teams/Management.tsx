@@ -1,4 +1,5 @@
 /** Manage one authorized team's membership and invitation lifecycles. */
+import CardHeading from '../ui/CardHeading';
 import Badge from '../../components/ui/Badge';
 import SelectField from '../../components/ui/SelectField';
 import InputField from '../../components/ui/InputField';
@@ -139,10 +140,10 @@ function MemberRow({ member, teamId, roles, listQuery = '' }: MemberRowProps) {
 
     return (
         <li className="ui-panel ui-notification-card">
-            <p className="ui-notification-name">{member.name}</p>
-            <p className="ui-help">
-                {member.email} · <Badge tone="info">{member.role}</Badge>
-            </p>
+            <CardHeading badges={<Badge tone="info">{member.role}</Badge>}>
+                <p className="ui-notification-name">{member.name}</p>
+            </CardHeading>
+            <p className="ui-help">{member.email}</p>
             {member.manageable && (
                 <form onSubmit={submit} className="mt-3">
                     <fieldset disabled={blocked} className="ui-settings-fields">
@@ -210,20 +211,26 @@ function InvitationRow({ invitation, teamId }: InvitationRowProps) {
 
     return (
         <li className="ui-panel ui-notification-card">
-            <p>
-                {invitation.email} · <Badge tone="info">{invitation.role}</Badge> ·{' '}
-                <Badge
-                    tone={
-                        invitation.state === 'pending'
-                            ? 'warning'
-                            : invitation.state === 'expired'
-                              ? 'danger'
-                              : 'neutral'
-                    }
-                >
-                    {invitation.state}
-                </Badge>
-            </p>
+            <CardHeading
+                badges={
+                    <>
+                        <Badge tone="info">{invitation.role}</Badge>
+                        <Badge
+                            tone={
+                                invitation.state === 'pending'
+                                    ? 'warning'
+                                    : invitation.state === 'expired'
+                                      ? 'danger'
+                                      : 'neutral'
+                            }
+                        >
+                            {invitation.state}
+                        </Badge>
+                    </>
+                }
+            >
+                <p className="ui-notification-name">{invitation.email}</p>
+            </CardHeading>
             <p className="ui-help">
                 Expires: {formatInstant(invitation.expiresAt, 'Unknown')}. A resend replaces the
                 previous link.

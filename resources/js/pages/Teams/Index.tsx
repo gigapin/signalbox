@@ -13,6 +13,7 @@ import { InviteForm, LeaveTeam } from '../../components/teams/Management';
 import { useReadNavigation } from '../../hooks/useReadNavigation';
 import PageLoader from '../../components/ui/PageLoader';
 import { useNavigationGuard } from '../../components/app/NavigationGuard';
+import CardHeading from '../../components/ui/CardHeading';
 import Badge from '../../components/ui/Badge';
 
 /** Explicit memberships and preference, without tenant resources or creation capabilities. */
@@ -77,17 +78,22 @@ function PageContent({ actionsTarget }: { actionsTarget: HTMLElement | null }) {
                         aria-labelledby={`team-${team.id}-heading`}
                         className="ui-panel ui-notification-card"
                     >
-                        <h2 id={`team-${team.id}-heading`} className="ui-notification-name">
-                            <Link href={`/teams/${team.id}/dashboard`} className="ui-link">
-                                {team.name}
-                            </Link>
-                        </h2>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            <Badge tone="info">{team.role}</Badge>
-                            {team.id === currentTeamId && (
-                                <Badge tone="success">Current team</Badge>
-                            )}
-                        </div>
+                        <CardHeading
+                            badges={
+                                <>
+                                    <Badge tone="info">{team.role}</Badge>
+                                    {team.id === currentTeamId && (
+                                        <Badge tone="success">Current team</Badge>
+                                    )}
+                                </>
+                            }
+                        >
+                            <h2 id={`team-${team.id}-heading`} className="ui-notification-name">
+                                <Link href={`/teams/${team.id}/dashboard`} className="ui-link">
+                                    {team.name}
+                                </Link>
+                            </h2>
+                        </CardHeading>
                         <div className="ui-actions mt-4">
                             <Link
                                 className="ui-button"

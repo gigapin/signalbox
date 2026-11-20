@@ -6,6 +6,19 @@ import { expect, test, vi } from 'vitest';
 import Index from '../../resources/js/pages/Teams/Index';
 import Invitation from '../../resources/js/pages/Teams/Invitation';
 import Register from '../../resources/js/pages/Teams/Register';
+import { LeaveTeam } from '../../resources/js/pages/Teams/Show';
+import { installDialogSupport } from './dialogSupport';
+import { beforeEach, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+/** Native dialog lifecycle double for modal interactions. */
+let restore: () => void;
+beforeEach(() => {
+    restore = installDialogSupport();
+});
+afterEach(() => {
+    cleanup();
+    restore();
+});
 import Show from '../../resources/js/pages/Teams/Show';
 import Ownership from '../../resources/js/pages/Teams/Ownership';
 import { renderInertia } from './renderInertia';
@@ -40,7 +53,7 @@ async function switchesTeam(): Promise<void> {
         '/teams/13/select',
         expect.objectContaining({ method: 'POST' }),
     );
-    expect(visit).toHaveBeenCalledWith('/teams/13/dashboard', expect.any(Object));
+    expect(visit).toHaveBeenCalledWith('/teams', expect.objectContaining({ preserveState: false }));
     expect(screen.getByRole('button', { name: 'Switching team…' })).toBeDisabled();
 }
 
@@ -147,7 +160,7 @@ function respectsReadOnlyCapabilities(): void {
     expect(
         screen.queryByRole('link', { name: 'Transfer primary ownership' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Leave team' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to teams' })).toHaveAttribute('href', '/teams');
 }
 
 /** Admin invitation controls expose only permitted roles and disable repeated delivery attempts. */
@@ -165,12 +178,13 @@ async function invitesWithAllowedRoles(): Promise<void> {
         invitations: [],
     });
     expect(screen.queryByRole('option', { name: 'owner' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add member' }));
     await user.type(screen.getByLabelText('Invitation email'), 'new@example.test');
     await user.selectOptions(screen.getByLabelText('Invitation role'), 'viewer');
     await user.click(screen.getByRole('button', { name: 'Send invitation' }));
     expect(post).toHaveBeenCalledWith(
         '/teams/12/invitations',
-        { email: 'new@example.test', role: 'viewer' },
+        { email: 'new@example.test', role: 'viewer', return_context: 'members' },
         expect.any(Object),
     );
     expect(screen.getByRole('button', { name: 'Sending…' })).toBeDisabled();
@@ -183,7 +197,7 @@ async function confirmsDeparture(): Promise<void> {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
     const remove = vi.spyOn(router, 'delete').mockImplementation(() => undefined);
-    renderInertia('Signalbox', Show, { team, actorId: 3, roles: [], members: [], invitations: [] });
+    renderInertia('Signalbox', () => <LeaveTeam teamId={12} actorId={3} name={team.name} />);
     await user.click(screen.getByRole('button', { name: 'Leave team' }));
     expect(remove).not.toHaveBeenCalled();
     confirm.mockReturnValue(true);

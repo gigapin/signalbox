@@ -75,9 +75,8 @@ test('uses configured branding and only real route-team destinations despite a d
         '/teams/12/maintenance',
         '/teams/12/notifications',
         '/teams/12/status-pages',
-        '/teams/12',
     ]);
-    for (const absent of ['Billing', 'API']) {
+    for (const absent of ['Billing', 'API', 'Team']) {
         expect(within(navigation).queryByRole('link', { name: absent })).not.toBeInTheDocument();
     }
     expect(screen.getByText('Current team')).toBeVisible();
@@ -91,7 +90,6 @@ test.each([
     ['maintenance', 'Maintenance'],
     ['notifications', 'Notifications'],
     ['status-pages', 'Status pages'],
-    ['team', 'Team'],
 ] as const)('marks only the current %s section including nested pages', (section, label) => {
     renderInertia('Signalbox', LayoutFixture, { ...identity, section });
     const navigation = screen.getByRole('navigation', { name: 'Team navigation' });

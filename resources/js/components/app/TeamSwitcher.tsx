@@ -14,6 +14,8 @@ interface TeamSwitcherProps {
     navigation: TeamNavigationView;
     /** Route team in team pages, valid preference in account pages, or null when not selected. */
     activeTeamId: number | null;
+    /** Trusted local continuation after validating the server's canonical dashboard acknowledgement. */
+    afterSwitch?: 'dashboard' | 'teams';
     /** Remove old resource content and dispose its effects before sending the switch request. */
     onSuspend?: () => void;
 }
@@ -26,7 +28,12 @@ const FAILURE =
  * @param props Current memberships, active route/preference and private-content suspension callback.
  * @returns An explicit native selection form; failed requests are never automatically replayed.
  */
-export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: TeamSwitcherProps) {
+export default function TeamSwitcher({
+    navigation,
+    activeTeamId,
+    onSuspend,
+    afterSwitch = 'dashboard',
+}: TeamSwitcherProps) {
     const guard = useNavigationGuard();
     const [choice, setChoice] = useState(
         navigation.teams.some((team) => team.id === activeTeamId) ? String(activeTeamId) : '',
@@ -87,7 +94,7 @@ export default function TeamSwitcher({ navigation, activeTeamId, onSuspend }: Te
             if (controller.signal.aborted) throw new Error(FAILURE);
 
             guard.runAuthorizedNavigation(() =>
-                router.visit(destination, {
+                router.visit(afterSwitch === 'teams' ? '/teams' : destination, {
                     preserveState: false,
                     preserveScroll: false,
                     onFinish: () => {

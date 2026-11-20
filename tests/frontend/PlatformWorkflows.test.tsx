@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import Index from '../../resources/js/pages/Admin/Teams/Index';
 import Show from '../../resources/js/pages/Admin/Teams/Show';
-import Team from '../../resources/js/pages/Teams/Show';
 import AuditHistory from '../../resources/js/components/admin/AuditHistory';
 import TeamPlanPanel from '../../resources/js/components/billing/TeamPlanPanel';
 import { renderInertia } from './renderInertia';
@@ -380,7 +379,7 @@ test('audit renders known before/after fields and never stringifies arbitrary ne
 });
 
 test('ordinary team members see real plan and quotas without an Admin or payment action', () => {
-    renderInertia('Signalbox', Team, {
+    renderInertia('Signalbox', () => <TeamPlanPanel summary={plan} />, {
         auth: { user: { name: 'Viewer', email: 'viewer@example.test', isPlatformAdmin: false } },
         team: { id: 7, name: 'Member team', ownerId: 1 },
         actorId: 3,

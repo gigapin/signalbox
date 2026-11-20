@@ -120,7 +120,7 @@ final class InvitationController extends Controller
 
         $team = $accept($actor, $invitation->id, $invitation->token_hash);
 
-        return redirect()->route('teams.show', $team->id)->with('status', 'invitation-accepted');
+        return redirect()->route('teams.members.index', $team->id)->with('status', 'invitation-accepted');
     }
 
     /**
@@ -140,7 +140,11 @@ final class InvitationController extends Controller
             TeamRole::from($request->string('role')->toString()),
         );
 
-        return redirect()->route('teams.show', $team)->with('status', 'invitation-sent');
+        return redirect()->to(match ($request->input('return_context', 'invitations')) {
+            'teams' => route('teams.index'),
+            'members' => route('teams.members.index', $team),
+            default => route('teams.invitations.index', $team),
+        })->with('status', 'invitation-sent');
     }
 
     /**
@@ -165,7 +169,7 @@ final class InvitationController extends Controller
         Gate::authorize('manage', $existing);
         $issue($actor, $team, $existing->email, $existing->role, $existing->id);
 
-        return redirect()->route('teams.show', $team)->with('status', 'invitation-sent');
+        return redirect()->route('teams.invitations.index', $team)->with('status', 'invitation-sent');
     }
 
     /**
@@ -181,6 +185,6 @@ final class InvitationController extends Controller
         Gate::authorize('manage', TeamInvitation::query()->findOrFail($invitation));
         $issue->revoke($actor, $team, $invitation);
 
-        return redirect()->route('teams.show', $team)->with('status', 'invitation-revoked');
+        return redirect()->route('teams.invitations.index', $team)->with('status', 'invitation-revoked');
     }
 }

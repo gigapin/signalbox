@@ -433,3 +433,17 @@ su mobile mantenendo campi e pulsanti accessibili, senza allargare il documento.
 Status pages uses SettingsCollection, extracted from NotificationCollection, for heading search/Add status page, title-only suggestions, mounted hidden cards and ten-item local pagination. NotificationCollection remains a typed adapter for existing Channels/Policies callers. Quota admission uses the projected limits.used, including drafts. Only owners/admins see mutations.
 
 Cards reuse the shared 24px gap, 20px headings, 18px public addresses and 16px metadata/badges: Published success, Draft neutral, Password protected warning. Creation, page editing and custom hostname management use separate native Modal instances. Editors mount on first use and remain mounted across ordinary dismissal. Pending work blocks dismissal; accepted page writes close/reset the editor, while domain operations remain open for subsequent DNS steps. Password and component rules remain domain-owned. FieldRequirements decorates required labels in mixed forms. Public visitor pages retain their independent appearance.
+
+## Teams directory — 2026-11-20
+
+Your teams reuses SettingsCollection without creation capabilities: title search/suggestions and the existing TeamSwitcher share the heading action slot. PrivateContextLayout exposes an optional actions slot, hidden with denied account content. Membership cards use the shared 24px gap, 20px names and 16px badges (role info, Current team success). Dashboard links remain ordinary reads; only the explicit switch form persists a preference. Lists paginate locally at ten matches and retain card identities while filtering. A suggestion reveals/focuses its card. During an unconfirmed switch the directory is removed and search disabled, while the switcher's acknowledgement/error/review lifecycle remains mounted. No team creation or member-management capability is inferred from list membership.
+
+The Teams directory sets TeamSwitcher.afterSwitch to teams: an accepted switch reloads `/teams` rather than opening the dashboard. The shared selector defaults to dashboard elsewhere and always checks the canonical server acknowledgement before either continuation. Fresh navigation resets suspended list state and displays the persisted preference.
+
+## Unified Teams workspace — 2026-11-20
+
+The former Team menu is removed. Team cards offer Members, Invitations (managers), Plan and usage, Invite a member (managers) and Team access. Members/Invitations have dedicated pages with Back to teams and Add member/Invite a member next to the title, accessible search, server pagination and shared card/badge styling. Breadcrumbs identify the owning team. Plan and access use native modals; ownership retains its existing password-confirmed page. The same invite form serves the card and both directory pages. Panel reads use the owning card's explicit ID without switching the account preference, with PageLoader, owned GET lifecycle and safe failures. Ordinary modal close retains drafts; reopening the same selected panel happens locally.
+
+## Team card heading badges — 2026-11-20
+
+Teams, Members and Invitations share CardHeading: the existing title remains first in reading order, while static badges align at the right edge of the same heading row. The badge column is bounded to 60%, and 35% on small screens and wraps within that column, keeping long names readable and status labels visually separate from the action row. Badge colors, labels and noninteractive semantics remain unchanged.

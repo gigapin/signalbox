@@ -148,7 +148,7 @@ it('builds invitation links on the primary host despite forwarded host headers f
 
     $this->actingAs($team->owner)
         ->post("/teams/{$team->id}/invitations", ['email' => 'invitee@example.test', 'role' => 'member'], HOSTILE_FORWARDED_HEADERS)
-        ->assertRedirect("/teams/{$team->id}");
+        ->assertRedirect("/teams/{$team->id}/invitations");
 
     expectOnlyPrimaryHttpsLinks('/invitations/');
 });

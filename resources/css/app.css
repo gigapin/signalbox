@@ -1518,6 +1518,10 @@
         flex-wrap: wrap;
     }
 
+    .ui-channel-toolbar > form {
+        margin-block: 0;
+    }
+
     .ui-search-picker {
         position: relative;
         width: 18rem;
@@ -1668,4 +1672,34 @@
     min-width: 0;
     width: 9rem;
     flex: 1 1 9rem;
+}
+
+/* Card statuses stay beside the title, with bounded wrapping independent of action rows. */
+@layer components {
+    .ui-card-heading {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) fit-content(60%);
+        align-items: start;
+        gap: var(--spacing-ui-3);
+    }
+
+    .ui-card-heading > :first-child {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .ui-card-heading-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: var(--spacing-ui-2);
+    }
+}
+
+@layer components {
+    @media (max-width: 479px) {
+        .ui-card-heading {
+            grid-template-columns: minmax(0, 1fr) fit-content(35%);
+        }
+    }
 }

@@ -162,10 +162,14 @@ it('enforces route role and membership boundaries without hidden cross-team effe
                 ->and(str_starts_with((string) $response->getContent(), '%PDF-'))->toBeTrue();
             break;
         case 'teams.show':
+            $response->assertRedirect(route('teams.members.index', $fixture->team->id));
+            break;
+        case 'teams.members.index':
+        case 'teams.invitations.index':
             $response->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('team.id', $fixture->team->id)
                 ->where('actorId', $fixture->actor->id)
-                ->has('invitations', in_array($role, ['owner', 'admin'], true) ? 1 : 0)
+                ->has('invitations.data', in_array($role, ['owner', 'admin'], true) ? 1 : 0)
                 ->missing('team.owner.email'));
             break;
         case 'teams.select':
@@ -510,7 +514,7 @@ it('changes the selected team without carrying a previous teams role into the de
     $this->post("/teams/{$fixture->foreign->id}/invitations", ['email' => 'forged-manager@example.test', 'role' => 'member'])->assertForbidden();
     expect($fixture->snapshot())->toBe($before);
     Notification::assertNothingSent();
-    $this->get("/teams/{$fixture->team->id}")->assertOk();
+    $this->get("/teams/{$fixture->team->id}/members")->assertOk();
     expect($fixture->actor->resolveCurrentTeam()?->id)->toBe($fixture->foreign->id);
 });
 
@@ -524,11 +528,11 @@ it('does not turn a valid invitation capability into private team access', funct
         ->missing('invitation.id')
         ->missing('invitation.token_hash')
         ->missing('invitation.members'));
-    $this->get("/teams/{$fixture->team->id}")->assertNotFound();
+    $this->get("/teams/{$fixture->team->id}/members")->assertNotFound();
     expect($outsider->resolveCurrentTeam())->toBeNull();
-    $this->post('/invitations/accept')->assertRedirect("/teams/{$fixture->team->id}");
-    $this->get("/teams/{$fixture->team->id}")->assertOk();
-    $this->get("/teams/{$fixture->foreign->id}")->assertNotFound();
+    $this->post('/invitations/accept')->assertRedirect("/teams/{$fixture->team->id}/members");
+    $this->get("/teams/{$fixture->team->id}/members")->assertOk();
+    $this->get("/teams/{$fixture->foreign->id}/members")->assertNotFound();
 });
 
 it('rejects invitation ID and capability-token combinations taken from different teams', function (): void {

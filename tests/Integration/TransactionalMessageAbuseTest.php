@@ -223,7 +223,7 @@ it('renders a hostile legacy team name as literal single-line text in the invita
 
     $this->actingAs($team->owner)
         ->post("/teams/{$team->id}/invitations", ['email' => 'stranger@example.test', 'role' => 'member'])
-        ->assertRedirect("/teams/{$team->id}");
+        ->assertRedirect("/teams/{$team->id}/invitations");
 
     $transport = Mail::mailer('array')->getSymfonyTransport();
     expect($transport)->toBeInstanceOf(ArrayTransport::class);

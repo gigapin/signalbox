@@ -84,12 +84,12 @@ function PageContent() {
             ))}
             <MutationFeedback
                 phase={mutation.phase}
-                reviewUrl={`/teams/${team.id}`}
+                reviewUrl="/teams"
                 success="Ownership transfer accepted"
                 onReviewed={mutation.acknowledge}
             />
-            <Link className="mt-6 block text-ui-accent" href={`/teams/${team.id}`}>
-                Back to team
+            <Link className="mt-6 block text-ui-accent" href="/teams">
+                Back to teams
             </Link>
         </Panel>
     );

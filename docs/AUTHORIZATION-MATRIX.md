@@ -8,7 +8,9 @@ Owner scenarios below use the primary owner. Member mutations target another loc
 
 | Named route | Method | Owner | Admin | Member | Viewer |
 |---|---|---|---|---|---|
-| teams.show | GET | 200 | 200 | 200 | 200 |
+| teams.show | GET | 302 | 302 | 302 | 302 |
+| teams.members.index | GET | 200 | 200 | 200 | 200 |
+| teams.invitations.index | GET | 200 | 200 | 403 | 403 |
 | teams.select | POST | 302 | 302 | 302 | 302 |
 | teams.members.update | PATCH | 302 | 302 | 403 | 403 |
 | teams.members.destroy | DELETE | 302 | 302 | 403 | 403 |

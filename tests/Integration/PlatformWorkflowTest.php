@@ -43,18 +43,18 @@ it('projects current team plan and exact private usage for all membership roles'
     app(TenantContext::class)->run($other->id, fn () => Monitor::factory()->count(3)->create());
     app(ManagePlanOverrides::class)->grant($this->operator, $team->id, PlanOverrideKind::Comped, Plan::Pro, null, 'private-operator-justification');
     $actor->forceFill(['current_team_id' => $other->id])->save();
-    $this->actingAs($actor)->get("/teams/{$team->id}")->assertOk()
+    $this->actingAs($actor)->get("/teams?team_id={$team->id}&panel=plan")->assertOk()
         ->assertHeader('Cache-Control', 'no-store, private')
-        ->assertJsonPath('props.planSummary.effectivePlan', 'pro')
-        ->assertJsonPath('props.planSummary.source', 'comped_override')
-        ->assertJsonPath('props.planSummary.monitors', ['used' => 2, 'limit' => 50])
-        ->assertJsonPath('props.planSummary.statusPages', ['used' => 1, 'limit' => 3])
-        ->assertJsonMissingPath('props.planSummary.override')
+        ->assertJsonPath('props.panel.planSummary.effectivePlan', 'pro')
+        ->assertJsonPath('props.panel.planSummary.source', 'comped_override')
+        ->assertJsonPath('props.panel.planSummary.monitors', ['used' => 2, 'limit' => 50])
+        ->assertJsonPath('props.panel.planSummary.statusPages', ['used' => 1, 'limit' => 3])
+        ->assertJsonMissingPath('props.panel.planSummary.override')
         ->assertDontSee('private-operator-justification', false)
         ->assertDontSee($this->operator->email, false);
-    $this->get("/teams/{$other->id}")->assertNotFound();
+    $this->get("/teams?team_id={$other->id}&panel=plan")->assertNotFound();
     $team->users()->detach($actor->id);
-    $this->get("/teams/{$team->id}")->assertNotFound();
+    $this->get("/teams?team_id={$team->id}&panel=plan")->assertNotFound();
 })->with(['owner', 'admin', 'member', 'viewer']);
 
 it('uses authoritative precedence and exclusive trial or override boundaries', function (string $mode, string $plan, string $source, string $trial): void {
@@ -80,10 +80,10 @@ it('uses authoritative precedence and exclusive trial or override boundaries', f
             $this->travel(1)->seconds();
         }
     }
-    $this->actingAs($team->owner)->get("/teams/{$team->id}")
-        ->assertOk()->assertJsonPath('props.planSummary.effectivePlan', $plan)
-        ->assertJsonPath('props.planSummary.source', $source)
-        ->assertJsonPath('props.planSummary.trial.state', $trial);
+    $this->actingAs($team->owner)->get("/teams?team_id={$team->id}&panel=plan")
+        ->assertOk()->assertJsonPath('props.panel.planSummary.effectivePlan', $plan)
+        ->assertJsonPath('props.panel.planSummary.source', $source)
+        ->assertJsonPath('props.panel.planSummary.trial.state', $trial);
 })->with([
     ['free', 'free', 'free', 'ended'], ['trial', 'pro', 'trial', 'active'],
     ['trial-end', 'free', 'free', 'ended'], ['stored', 'business', 'subscription', 'ended'],
@@ -108,8 +108,8 @@ it('keeps plan projection query growth constant and omits its work from unrelate
         return $counts;
     });
     expect($counts)->toBe([3, 3]);
-    $this->actingAs($team->owner)->get("/teams/{$team->id}", ['X-Inertia-Partial-Component' => 'Teams/Show', 'X-Inertia-Partial-Data' => 'members'])
-        ->assertOk()->assertJsonMissingPath('props.planSummary');
+    $this->actingAs($team->owner)->get("/teams/{$team->id}/members", ['X-Inertia-Partial-Component' => 'Teams/Members', 'X-Inertia-Partial-Data' => 'members'])
+        ->assertOk()->assertJsonMissingPath('props.panel.planSummary');
 });
 
 it('preserves normalized directory context through accepted override writes', function (): void {

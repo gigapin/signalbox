@@ -8,6 +8,7 @@ use App\Actions\Identity\ManageTeamMembers;
 use App\Actions\Identity\SwitchTeam;
 use App\Enums\Identity\TeamRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Teams\ListTeamsRequest;
 use App\Http\Requests\Teams\TeamInputRequest;
 use App\Models\Team;
 use App\Models\TeamInvitation;
@@ -28,18 +29,20 @@ final class TeamController extends Controller
     /**
      * @param TeamAccess $access Shared fresh membership permissions.
      * @param TeamNavigation $navigation Safe membership selector projection.
+     * @param TeamPlanSummary $plans Member-safe quota projection.
+     * @param \App\Services\Tenancy\TenantContext $context Explicit bounded tenant identity.
      */
-    public function __construct(private readonly TeamAccess $access, private readonly TeamNavigation $navigation)
+    public function __construct(private readonly TeamAccess $access, private readonly TeamNavigation $navigation, private readonly TeamPlanSummary $plans, private readonly \App\Services\Tenancy\TenantContext $context)
     {
     }
 
     /**
      * List teams reached through the authenticated user's memberships.
      *
-     * @param Request $request Verified browser identity.
+     * @param ListTeamsRequest $request Validated verified browser identity.
      * @return Response Accessible teams and the valid current preference.
      */
-    public function index(Request $request): Response
+    public function index(ListTeamsRequest $request): Response
     {
         $actor = $this->authenticatedUser($request);
         $navigation = $this->navigation->forUser($actor);
@@ -47,18 +50,47 @@ final class TeamController extends Controller
         return Inertia::render('Teams/Index', [
             'teams' => $navigation['teams'],
             'currentTeamId' => $navigation['selectedTeamId'],
+            'panel' => $this->panel($request),
+        ]);
+    }
+
+    /** Read one explicitly authorized panel without changing the account preference.
+     * @param Request $request Validated browser query.
+     * @return array<string, mixed>|null Minimal selected-team panel.
+     */
+    private function panel(Request $request): ?array
+    {
+        $input = $request->validate([
+            'team_id' => ['required_with:panel', 'integer', 'min:1'],
+            'panel' => ['required_with:team_id', 'in:plan,invite,access'],
+        ]);
+        if (!isset($input['panel'])) {
+            return null;
+        }
+        $teamId = (int) $input['team_id'];
+        $actor = $this->authenticatedUser($request);
+        $role = $this->access->membership($actor, $teamId)->role;
+        $team = Team::query()->findOrFail($teamId);
+        Gate::authorize('view', $team);
+        $roles = $this->manageableRoles($role);
+        abort_if($input['panel'] === 'invite' && $roles === [], 403);
+        return $this->context->run($teamId, fn (): array => [
+            'kind' => $input['panel'],
+            'team' => ['id' => $teamId, 'name' => $team->name, 'ownerId' => $team->owner_id],
+            'actorId' => $actor->id,
+            'roles' => $roles,
+            'planSummary' => $input['panel'] === 'plan' ? $this->plans->forTeam($team) : null,
         ]);
     }
 
     /**
      * Show team members and only the invitations the actor may manage.
      *
-     * @param Request $request Verified browser identity.
-     * @param TeamPlanSummary $plans Member-safe effective plan and quota snapshot.
+     * @param ListTeamsRequest $request Validated verified browser identity.
      * @param int $team Explicit team ID, authorized before private data is loaded.
      * @return Response Member directory and permitted management controls.
      */
-    public function show(Request $request, TeamPlanSummary $plans, int $team): Response
+    public function show(ListTeamsRequest $request, int $team): Response
     {
         $actor = $this->authenticatedUser($request);
         $role = $this->access->membership($actor, $team)->role;
@@ -66,29 +98,33 @@ final class TeamController extends Controller
         Gate::authorize('view', $identity);
         $roles = $this->manageableRoles($role);
 
+        abort_if($request->routeIs('teams.invitations.index') && $roles === [], 403);
+
         $members = $identity->users()
-            ->orderBy('users.name')
-            ->get()
-            ->map(fn (User $member): array => $this->memberSummary($member, $identity, $role));
+            ->orderBy('users.name')->orderBy('users.id')
+            ->when($request->filled('q'), fn ($query) => $query->where(fn ($search) => $search->where('users.name', 'ilike', '%'.$request->string('q').'%')->orWhere('users.email', 'ilike', '%'.$request->string('q').'%')))
+            ->paginate(10)->withQueryString()
+            ->through(fn (User $member): array => $this->memberSummary($member, $identity, $role));
 
         $invitations = TeamInvitation::query()
             ->where('team_id', $team)
             ->whereNull('accepted_at')
             ->whereIn('role', $roles)
             ->orderBy('id')
-            ->get()
-            ->map(fn (TeamInvitation $invitation): array => $this->invitationSummary($invitation));
+            ->when($request->filled('q'), fn ($query) => $query->where('email', 'ilike', '%'.$request->string('q').'%'))
+            ->paginate(10)->withQueryString()
+            ->through(fn (TeamInvitation $invitation): array => $this->invitationSummary($invitation));
 
-        return Inertia::render('Teams/Show', [
+        return Inertia::render($request->routeIs('teams.invitations.index') ? 'Teams/Invitations' : 'Teams/Members', [
             'team' => [
                 'id' => $identity->id,
                 'name' => $identity->name,
                 'ownerId' => $identity->owner_id,
             ],
-            'planSummary' => fn (): array => $plans->forTeam($identity),
             'actorId' => $actor->id,
             'roles' => $roles,
             'members' => $members,
+            'query' => $request->string('q')->toString(),
             'invitations' => $invitations,
         ]);
     }
@@ -144,7 +180,7 @@ final class TeamController extends Controller
             TeamRole::from($request->string('role')->toString()),
         );
 
-        return redirect()->route('teams.show', $team)->with('status', 'member-updated');
+        return redirect()->route('teams.members.index', ['team' => $team] + $this->listingQuery($request))->with('status', 'member-updated');
     }
 
     /**
@@ -162,6 +198,7 @@ final class TeamController extends Controller
         int $member,
         ManageTeamMembers $members,
     ): RedirectResponse {
+        $request->validate(['q' => ['sometimes', 'nullable', 'string', 'max:120'], 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000']]);
         $actor = $this->authenticatedUser($request);
         Gate::authorize('removeMember', [Team::query()->findOrFail($team), User::query()->findOrFail($member)]);
         $members->remove($actor, $team, $member);
@@ -170,7 +207,7 @@ final class TeamController extends Controller
             return redirect()->route('teams.index')->with('status', 'member-removed');
         }
 
-        return redirect()->route('teams.show', $team)->with('status', 'member-removed');
+        return redirect()->route('teams.members.index', ['team' => $team] + $this->listingQuery($request))->with('status', 'member-removed');
     }
 
     /**
@@ -229,7 +266,23 @@ final class TeamController extends Controller
         Gate::authorize('transferOwnership', Team::query()->findOrFail($team));
         $members->transfer($this->authenticatedUser($request), $team, $request->integer('user_id'));
 
-        return redirect()->route('teams.show', $team)->with('status', 'ownership-transferred');
+        return redirect()->route('teams.index')->with('status', 'ownership-transferred');
+    }
+
+    /** Retain only validated directory filters after a membership write.
+     * @param Request $request Validated directory context, never an arbitrary redirect.
+     * @return array<string, int|string> Nonempty search and nondefault page.
+     */
+    private function listingQuery(Request $request): array
+    {
+        $query = [];
+        if ($request->integer('page', 1) > 1) {
+            $query['page'] = $request->integer('page');
+        }
+        if ($request->filled('q')) {
+            $query['q'] = $request->string('q')->toString();
+        }
+        return $query;
     }
 
     /**

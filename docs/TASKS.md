@@ -1,5 +1,15 @@
 # Signalbox — Piano dei task
 
+## UI — Salvataggio Account e profilo sintetico — 2026-11-20
+
+- [x] Completato: Save changes nel titolo, form e conferma esistenti preservati. Diagnosi read-only: owner@signalbox.test ha name e first_name entrambi Synthetic Owner, last_name null; nessun fallback dal team nel presenter o form. Corretti solo i profili sintetici riconoscibili nel seeder, senza separare arbitrariamente i nomi degli utenti reali.
+- UI: portal del submit nello slot actions di PrivateContextLayout, associazione nativa al form tramite useId e submit nascosto per Enter; draft dentro il confine account, dirty/pending/conferma e validazione preservati. Primo nome letto soltanto dal profilo, nessun fallback dal team.
+- Dati: IdentitySeeder normalizza solo email fixture note con name esatto Synthetic+ruolo, first_name null/etichetta intera e last_name null; conserva personalizzazioni, credenziali e logica dei team. Su richiesta dell’utente aggiornati localmente solo first_name/last_name dell’owner id15 con condizioni sull’intero stato precedente: UPDATE1, risultato Synthetic/Owner e name ancora Synthetic Owner. Non eseguito il seeder su sviluppo, per evitare effetti su ruoli/preferenza dei team.
+- File: Account/Overview, IdentitySeeder, frontend/AccountProfile e Integration/AccountProfileTest; ACCOUNT-PROFILE e questo piano. Copertura di posizione/associazione submit, conferma/doppio invio, Enter, separazione team/persona, nuove fixture, riparazione etichetta legacy e conservazione dati personalizzati.
+- Verifiche: backend15/15,98 asserzioni,5,47s su PostgreSQL isolato; frontend AccountProfile/SettingsWorkflows/WorkspaceLayout30/30,8,69s. Larastan8 e build verdi; PHP-CS-Fixer fix/dry-run0/2 verdi. Primo backend14/15: il test autenticava il modello ancora in memoria prima del seeder; ricaricato con refresh, nessuna correzione applicativa per quello scarto. Check frontend finale exit0 (ESLint/Prettier/TypeScript e6 controlli qualità).
+- Non ripetuti integrali frontend/backend, CI remota, audit o browser autenticato per modifica circoscritta. Nessuna migration, dipendenza, .env o credenziale modificata; asset ricostruiti e public/hot non modificato manualmente. Servizi isolati avviati e poi fermati; servizi applicativi preservati. Git/gh non eseguiti. Prossimo passo: ricaricare Account per leggere i dati corretti.
+
+
 ## CI — Aspettative rotte gestione team — 2026-11-20
 
 - [x] Corrette le sei regressioni CI segnalate: AbsoluteLinkOriginTest e TransactionalMessageAbuseTest ora attendono il ritorno a /teams/{team}/invitations. TenantIsolationTest verifica sia il redirect legacy a Members sia la risposta200 della directory e, dopo revoca,404 su entrambi i percorsi per tutti e quattro i ruoli. Conservate tutte le verifiche di origine HTTPS e contenuto email; nessuna modifica applicativa o attenuazione delle protezioni.

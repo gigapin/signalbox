@@ -35,6 +35,13 @@ class IdentitySeeder extends Seeder
                     ['email' => $key.'@signalbox.test'],
                     ['name' => 'Synthetic '.ucfirst($key), 'password' => 'password'],
                 );
+                $user = $users[$key];
+                $displayName = 'Synthetic '.ucfirst($key);
+                if ($user->name === $displayName && $user->last_name === null
+                    && ($user->first_name === null || $user->first_name === $displayName)) {
+                    // Only the known fixture label can be split safely; preserve customized profiles.
+                    $user->forceFill(['first_name' => 'Synthetic', 'last_name' => ucfirst($key)])->save();
+                }
             }
 
             /** @var string $slug Stable team fixture identifier for idempotent reruns. */

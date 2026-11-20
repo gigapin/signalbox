@@ -120,3 +120,14 @@ it('rejects oversized avatar dimensions before saving fields or files', function
         ->and($user->fresh()->first_name)->toBeNull()
         ->and(Storage::disk('local')->allFiles('account-avatars'))->toBe([]);
 })->with([[513, 512], [512, 513], [513, 513], [4096, 1], [1, 4096]]);
+
+it('seeds separate synthetic profile names and preserves customized profiles on reruns', function (): void {
+    $legacy = User::factory()->create(['email' => 'owner@signalbox.test', 'name' => 'Synthetic Owner', 'first_name' => 'Synthetic Owner']);
+    $this->seed(\Database\Seeders\IdentitySeeder::class);
+    expect($legacy->fresh()->first_name)->toBe('Synthetic')->and($legacy->fresh()->last_name)->toBe('Owner')->and($legacy->fresh()->name)->toBe('Synthetic Owner');
+    $this->actingAs($legacy->refresh())->get('/account')->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->where('profile.first_name', 'Synthetic')->where('profile.last_name', 'Owner'));
+    $legacy->forceFill(['first_name' => 'Ada', 'last_name' => 'Lovelace'])->save();
+    $this->seed(\Database\Seeders\IdentitySeeder::class);
+    expect($legacy->fresh()->first_name)->toBe('Ada')->and($legacy->fresh()->last_name)->toBe('Lovelace');
+    expect(User::query()->where('email', 'admin@signalbox.test')->sole()->first_name)->toBe('Synthetic');
+});

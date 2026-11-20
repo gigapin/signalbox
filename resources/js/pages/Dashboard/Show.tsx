@@ -4,13 +4,9 @@ import { useEffect, useState } from 'react';
 import AppLayout from '../../components/app/AppLayout';
 import Alert from '../../components/ui/Alert';
 import LiveUpdates from '../../components/LiveUpdates';
-import MonthlyReportDownload from '../../components/dashboard/MonthlyReportDownload';
 import TimeSeriesChart from '../../components/dashboard/TimeSeriesChart';
 import type { DashboardProps } from '../../components/dashboard/types';
 import OverviewSummary from '../../components/dashboard/OverviewSummary';
-import MonitorOverview from '../../components/dashboard/MonitorOverview';
-import Panel from '../../components/ui/Panel';
-import IncidentTable from '../../components/incidents/IncidentTable';
 import { monitorPath } from '../../components/monitors/urls';
 import { useLivePage } from '../../hooks/useLivePage';
 
@@ -37,13 +33,7 @@ export default function Show() {
     const { team } = usePage<DashboardProps>().props;
     const [accessDenied, setAccessDenied] = useState(false);
     return (
-        <AppLayout
-            title="Dashboard"
-            team={team}
-            section="dashboard"
-            accessDenied={accessDenied}
-            description={`${team.name} · application monitoring`}
-        >
+        <AppLayout title="Dashboard" team={team} section="dashboard" accessDenied={accessDenied}>
             <DashboardContent onAccessDenied={setAccessDenied} />
         </AppLayout>
     );
@@ -57,13 +47,13 @@ interface DashboardContentProps {
 
 /** Keep live reads inside the removable private-content boundary during a team switch. */
 function DashboardContent({ onAccessDenied }: DashboardContentProps) {
-    const { team, reportTimezone } = usePage<DashboardProps>().props;
+    const { team } = usePage<DashboardProps>().props;
     const live = useLivePage<DashboardProps>(team.id, 'Dashboard/Show');
     useEffect(() => {
         if (live.phase === 'denied') onAccessDenied(true);
     }, [live.phase, onAccessDenied]);
     const { dashboard, rejectedFilters } = live.props;
-    const { counts, selectedMonitor, latency, uptime } = dashboard;
+    const { selectedMonitor, latency, uptime } = dashboard;
 
     if (live.phase === 'denied') {
         return (
@@ -86,42 +76,6 @@ function DashboardContent({ onAccessDenied }: DashboardContentProps) {
             )}
             <div className="ui-dashboard-stack">
                 <OverviewSummary teamId={team.id} dashboard={dashboard} />
-                <Panel
-                    title="Open incidents"
-                    description="Most recent unresolved incidents. Review the timeline to investigate and coordinate a response."
-                >
-                    {dashboard.incidents.length === 0 ? (
-                        <>
-                            <p>No open incidents.</p>
-                            <p className="ui-help">
-                                Monitor status and incident confirmation are separate. Review Down
-                                and Unknown monitors even when no incident is open.
-                            </p>
-                        </>
-                    ) : (
-                        <IncidentTable
-                            teamId={team.id}
-                            incidents={dashboard.incidents}
-                            caption="Latest open incidents"
-                            showMonitor
-                        />
-                    )}
-                    {counts.openIncidents > dashboard.incidents.length && (
-                        <p className="ui-description">
-                            Showing {dashboard.incidents.length} of {counts.openIncidents} open
-                            incidents.
-                        </p>
-                    )}
-                    <Link href={`/teams/${team.id}/incidents?state=open`} className="ui-link">
-                        View all open incidents
-                    </Link>
-                </Panel>
-                <Panel
-                    title="Monitors"
-                    description="Current states and latest check times. Open a monitor for details or select its dashboard charts."
-                >
-                    <MonitorOverview team={team} dashboard={dashboard} />
-                </Panel>
                 {selectedMonitor !== null && (
                     <section aria-labelledby="selected-monitor-charts" className="ui-panel">
                         <h2 id="selected-monitor-charts" className="ui-section-title">
@@ -204,12 +158,6 @@ function DashboardContent({ onAccessDenied }: DashboardContentProps) {
                         )}
                     </section>
                 )}
-                <Panel
-                    title="Monthly reports"
-                    description="Export a monthly SLA report using the team's reporting timezone."
-                >
-                    <MonthlyReportDownload teamId={team.id} timezone={reportTimezone} />
-                </Panel>
             </div>
         </>
     );

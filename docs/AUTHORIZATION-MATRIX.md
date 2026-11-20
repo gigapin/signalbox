@@ -198,3 +198,7 @@ effective-policy view and current `canAssign`. Saving still uses the lock-author
 endpoint and returns to the assignment page. Tests include all roles, absent/foreign selection,
 malformed IDs, safe projections and saving from the new route. The exhaustive matrix covers guest,
 unverified, foreign and revoked membership on every new GET as well.
+
+### Monthly reports page — 2026-11-20
+
+`teams.reports.index` (`GET /teams/{team}/reports`) is an authenticated, verified, tenant-bound, no-store member read for owner/admin/member/viewer. It reuses ShowMonthlyReportRequest and returns only explicit team identity and reportTimezone. Foreign/revoked membership is 404; guest/unverified gates precede projection. The existing monthly PDF route keeps its independent rendering throttle. The private route catalogue includes the new page.

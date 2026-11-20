@@ -1703,3 +1703,16 @@
         }
     }
 }
+
+/* Immediate header selection needs one control column and no visible pending status row. */
+@layer components {
+    .ui-app-header .ui-team-switcher[data-immediate='true'] {
+        grid-template-columns: minmax(0, 15rem);
+    }
+
+    @media (max-width: 767px) {
+        .ui-app-header > .ui-team-switcher[data-immediate='true'] {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+}

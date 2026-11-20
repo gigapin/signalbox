@@ -208,7 +208,7 @@ Durations cannot be rebuilt cheaply in SQL, so they are checked for adding up ra
 
 ## Monthly PDF report (M7.05)
 
-`GET /teams/{team}/reports/{YYYY-MM}` downloads one team's report, chosen from the dashboard. Each monitor has SLA, observed uptime, coverage, down, unknown and excluded time, and the incidents that started in the period. Values come only from `MonitorAvailability`, which the report does not duplicate.
+`GET /teams/{team}/reports/{YYYY-MM}` downloads one team's report, chosen from the dedicated Monthly reports page at `GET /teams/{team}/reports`. Each monitor has SLA, observed uptime, coverage, down, unknown and excluded time, and the incidents that started in the period. Values come only from `MonitorAvailability`, which the report does not duplicate.
 
 | Rule | Behaviour |
 |---|---|

@@ -35,10 +35,6 @@ export default function OverviewSummary({ teamId, dashboard }: OverviewSummaryPr
                         Snapshot generated{' '}
                         <time dateTime={generatedAt}>{new Date(generatedAt).toLocaleString()}</time>
                     </p>
-                    <p className="ui-help">
-                        Latest check times are shown per monitor below. Times use your local
-                        timezone.
-                    </p>
                 </div>
                 <div className="ui-actions">
                     <Link
@@ -78,17 +74,6 @@ export default function OverviewSummary({ teamId, dashboard }: OverviewSummaryPr
                     </div>
                 ))}
             </dl>
-            <p className="ui-help">
-                Up, Down and Unknown count active monitors. Paused and suspended monitors are
-                counted separately. Unknown means no known current result.
-            </p>
-            {usage && (
-                <p className="ui-help">
-                    Plan usage: {usage.used} of {usage.limit} monitors · Minimum check interval:{' '}
-                    {usage.minimumIntervalSeconds} seconds. Paused and suspended monitors also use
-                    quota.
-                </p>
-            )}
             {can?.create === true && usage?.full === true && (
                 <p className="ui-description">
                     Monitor limit reached. Review your existing monitors before adding another.

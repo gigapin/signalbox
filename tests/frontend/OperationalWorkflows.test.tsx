@@ -229,7 +229,7 @@ test.each(['success', 'error', 'cancel'])(
         expect(screen.getByRole('table', { name: 'Maintenance' })).toBe(table);
         const notice = screen.getByText('Finish the current request before switching teams.');
         expect(notice).toHaveClass('sr-only');
-        expect(screen.getByRole('button', { name: 'Switch team' })).toHaveAccessibleDescription(
+        expect(screen.getByRole('combobox', { name: 'Team' })).toHaveAccessibleDescription(
             notice.textContent,
         );
         act(() => {

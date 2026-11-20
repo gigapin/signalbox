@@ -7,8 +7,8 @@
 | Area | Current behavior |
 |---|---|
 | Monitor states | Disjoint active up/down/unknown, paused and plan-suspended counts, plus total |
-| Incidents | Count all unresolved incidents; show at most five, newest first, with links to full history |
-| Monitor list | Stable name/ID ordering, 20 rows per page, same-team chart selection |
+| Incidents | Count unresolved incidents; the counter links to the incident list |
+| Monitor snapshot | Historical bounded selection remains in the read contract; the monitor list panel is no longer rendered |
 | Latency | Real hourly means and sample counts, separately for simulated EU/US, over a rolling 24-hour UTC slot window |
 | Availability | Time-weighted observed uptime, coverage, SLA and durations of the selected monitor over the same window, plus hourly observed uptime |
 | Live updates | Existing Echo subscription and bounded partial recovery; no periodic polling |
@@ -54,3 +54,9 @@ M6.03's validator mistakenly required UUID `execution_id` values while `CheckCom
 ## Verification
 
 `DashboardTest` covers empty/null states, disjoint counts, secret omission, pagination/selection, actual PostgreSQL means/gaps, region/tenant isolation, month/fractional-second boundaries, future recordings, malformed filters and partial reads after revocation. `teams.dashboard` joins the complete route × role × membership-state matrix and guest/unverified gates. Frontend tests exercise real page interactions, tables, gaps, future nullable metric rendering and numeric-event recovery. Actual gate results and unexecuted browser/live/CI checks are in [TASKS.md](TASKS.md).
+
+## Presentation cleanup and separate reports — 2026-11-20
+
+The dashboard keeps summary counters, permission/quota-aware creation actions, snapshot time and selected-monitor charts. Its page subtitle, active-state explanation and plan-usage paragraph are removed. The Open incidents and Monitors list panels are removed, along with the stale instruction referring to check timestamps below. Live invalidations still refresh counts and metrics. The existing bounded server projection and bookmarked page/monitor selection remain compatible; no chart library or metric computation changes.
+
+Monthly reports moves to GET /teams/{team}/reports (teams.reports.index), linked from shared desktop/mobile team navigation. The page projects only team identity and reportTimezone, then reuses MonthlyReportDownload. The existing /reports/{YYYY-MM} PDF endpoint, month options/default, timezone, throttle and read permissions are unchanged. The new page uses the same verified membership/tenant/no-store boundary and report Form Request; opening it does not build a PDF.

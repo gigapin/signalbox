@@ -199,3 +199,9 @@ The acceptance gate remains `./scripts/verify.sh`. It builds the assets, while C
 ```sh
 docker compose run --rm -v /var/www/html/public/build php-test vendor/bin/pest --fail-on-skipped
 ```
+
+## Management interface — 2026-11-20
+
+The private workspace offers title search with suggestions and Add status page beside the heading. Cards show publication/password badges, public address, grouped monitors and hostname summary. Only published primary addresses are links; drafts remain unreachable. Quota consumption includes drafts and uses the server-projected count.
+
+Creation, editing and hostname management each use the shared native modal. Closing preserves unsent drafts; pending requests prevent dismissal, and errors or uncertain outcomes preserve values for review. Confirmed page saves close/reset the editor; hostname claims and DNS verification remain in their dialog for the next step. Filtering and local pagination keep rows mounted. Owners/admins retain management access; other members see only summaries. These frontend changes introduce no route, schema or dependency changes.

@@ -7,6 +7,20 @@ import StatusPages from '../../resources/js/pages/StatusPages/Index';
 import Team from '../../resources/js/pages/Teams/Show';
 import Ownership from '../../resources/js/pages/Teams/Ownership';
 import Security from '../../resources/js/pages/Account/Security';
+import { installDialogSupport } from './dialogSupport';
+import { beforeEach, afterEach as afterDialog } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+/** Restore the native dialog test double after unmounting. */
+let restoreDialog: () => void;
+beforeEach(() => {
+    restoreDialog = installDialogSupport();
+});
+afterDialog(() => {
+    cleanup();
+    restoreDialog();
+});
+
 import { renderInertia } from './renderInertia';
 
 /** Safe account identity shared by settings responses. */
@@ -106,10 +120,13 @@ function deferredRead() {
 test('status search hides an editor without discarding its private password draft', async () => {
     const user = userEvent.setup();
     renderInertia('Signalbox', StatusPages, statusProps);
-    expect(screen.getByText(/Private management\. Draft addresses return 404/)).toBeInTheDocument();
+    expect(
+        screen.queryByText(/Private management\. Draft addresses return 404/),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Edit Service status' }));
     const password = screen.getByLabelText('New password');
     await user.type(password, 'synthetic-password');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
     await user.type(screen.getByLabelText('Find a status page'), 'missing');
     expect(password).not.toBeVisible();
     expect(screen.getByText('No status pages match this search.')).toBeVisible();
@@ -153,7 +170,7 @@ test('a saved status-page edit closes and clears its ephemeral password', async 
         callbacks?.onSuccess?.({} as never);
         callbacks?.onFinish?.({} as never);
     });
-    expect(screen.queryByLabelText('New password')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('New password')).not.toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Edit Service status' }));
     expect(screen.getByLabelText('New password')).toHaveValue('');
 });
@@ -164,6 +181,7 @@ test('a dirty hostname survives a different saved hostname while pristine fields
         component: 'StatusPages/Index',
         url: '/teams/7/status-pages',
     });
+    await user.click(screen.getByRole('button', { name: 'Custom domain' }));
     await user.clear(screen.getByLabelText('Hostname'));
     await user.type(screen.getByLabelText('Hostname'), 'draft.example.com');
     await replace(
@@ -177,6 +195,7 @@ test('a dirty hostname survives a different saved hostname while pristine fields
 });
 
 test('a pristine hostname follows a new server claim without an unsaved departure warning', async () => {
+    const user = userEvent.setup();
     renderInertia('Signalbox', StatusPages, statusProps, {
         component: 'StatusPages/Index',
         url: '/teams/7/status-pages',
@@ -188,6 +207,7 @@ test('a pristine hostname follows a new server claim without an unsaved departur
         },
         '/teams/7/status-pages',
     );
+    await user.click(screen.getByRole('button', { name: 'Custom domain' }));
     expect(screen.getByLabelText('Hostname')).toHaveValue('saved.example.com');
     const unload = new Event('beforeunload', { cancelable: true });
     fireEvent(window, unload);
@@ -202,6 +222,7 @@ test('domain removal refusal remains visible and duplicate hostname writes remai
         callbacks = options;
     });
     renderInertia('Signalbox', StatusPages, statusProps);
+    await user.click(screen.getByRole('button', { name: 'Custom domain' }));
     await user.dblClick(screen.getByRole('button', { name: 'Remove hostname' }));
     expect(visit).toHaveBeenCalledOnce();
     act(() => {

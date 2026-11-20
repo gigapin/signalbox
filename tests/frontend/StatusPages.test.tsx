@@ -1,12 +1,31 @@
 /** Exercise the status page settings, the public page and the password form through actual Inertia components. */
 import { router } from '@inertiajs/react';
-import { act, screen, within } from '@testing-library/react';
+import { act, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { ManagedStatusPage } from '../../resources/js/components/status-pages/types';
 import Index from '../../resources/js/pages/StatusPages/Index';
 import Public from '../../resources/js/pages/StatusPages/Public';
 import Unlock from '../../resources/js/pages/StatusPages/Unlock';
+import { installDialogSupport } from './dialogSupport';
+import { beforeEach, afterEach as afterDialog } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+/** Restore the native dialog test double after unmounting. */
+let restoreDialog: () => void;
+beforeEach(() => {
+    restoreDialog = installDialogSupport();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+        configurable: true,
+        value: vi.fn(),
+    });
+});
+afterDialog(() => {
+    cleanup();
+    restoreDialog();
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+});
+
 import { renderInertia } from './renderInertia';
 
 /** Bounds as projected by StatusPagePresenter::limits(). */
@@ -76,6 +95,7 @@ test('builds a page with components, using each monitor once', async () => {
     const user = userEvent.setup();
     const visit = spyOnVisits();
     renderSettings();
+    await user.click(screen.getByRole('button', { name: 'Add status page' }));
 
     await user.type(screen.getByLabelText('Title'), 'Acme status');
     await user.type(screen.getByLabelText('Public address'), 'acme-status');
@@ -98,7 +118,9 @@ test('builds a page with components, using each monitor once', async () => {
     expect(within(second).getByText('api-eu (in another component)')).toBeInTheDocument();
 
     await user.click(within(second).getByRole('checkbox', { name: 'web-eu' }));
-    await user.click(screen.getByRole('button', { name: 'Add status page' }));
+    await user.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Add status page' }),
+    );
 
     expect(visit).toHaveBeenCalledOnce();
     const [url, options] = visit.mock.calls[0] as [URL | string, Record<string, unknown>];
@@ -190,7 +212,7 @@ test('shows a domain refusal and the reached plan limit', () => {
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent('This address is already taken.');
-    expect(screen.queryByRole('button', { name: 'Add status page' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add status page' })).toBeDisabled();
     expect(screen.getByText(/reached its plan limit of 1/)).toBeInTheDocument();
 });
 
@@ -353,7 +375,65 @@ test.each([429, 503])(
     },
 );
 
-test('projects the twelve character minimum only onto new page passwords', () => {
+test('projects the twelve character minimum only onto new page passwords', async () => {
+    const user = userEvent.setup();
     renderSettings();
+    await user.click(screen.getByRole('button', { name: 'Add status page' }));
     expect(screen.getByLabelText('Password (optional)')).toHaveAttribute('minlength', '12');
+});
+
+/** Ordinary dismissal preserves creation state and returns focus to its trigger. */
+test('retains the creation draft across close and blocks dismissal during submission', async () => {
+    const user = userEvent.setup();
+    const visit = spyOnVisits();
+    renderSettings();
+    const trigger = screen.getByRole('button', { name: 'Add status page' });
+    await user.click(trigger);
+    await user.type(screen.getByLabelText('Title'), 'Draft title');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    expect(trigger).toHaveFocus();
+    await user.click(trigger);
+    expect(screen.getByLabelText('Title')).toHaveValue('Draft title');
+    await user.click(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Add status page' }),
+    );
+    expect(visit).toHaveBeenCalledOnce();
+    expect(
+        within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }),
+    ).toBeDisabled();
+});
+
+/** Domain operations stay separate from the page replacement payload. */
+test('retains the hostname draft in its dedicated modal', async () => {
+    const user = userEvent.setup();
+    renderSettings({ pages: [page], limits: { ...limits, used: 1 } });
+    await user.click(screen.getByRole('button', { name: 'Custom domain' }));
+    await user.type(screen.getByLabelText('Hostname'), 'status.example.test');
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByRole('button', { name: 'Custom domain' }));
+    expect(screen.getByLabelText('Hostname')).toHaveValue('status.example.test');
+    expect(screen.queryByRole('button', { name: 'Save page' })).not.toBeInTheDocument();
+});
+
+/** Search suggestions use public titles and reveal matching cards beyond the first local page. */
+test('searches titles and reveals a card from the second page', async () => {
+    const user = userEvent.setup();
+    renderSettings({
+        pages: Array.from({ length: 11 }, (_, index) => ({
+            ...page,
+            id: index + 1,
+            title: `Service ${index + 1}`,
+        })),
+        limits: { ...limits, used: 11, pages: 20 },
+    });
+    expect(
+        screen
+            .getByRole('list', { name: 'Status pages' })
+            .querySelectorAll(':scope > li:not([hidden])'),
+    ).toHaveLength(10);
+    await user.click(screen.getByRole('combobox', { name: 'Find a status page' }));
+    await user.click(screen.getByRole('option', { name: 'Service 11' }));
+    await waitFor(() => expect(document.getElementById('status-page-11')).toHaveFocus());
+    expect(document.getElementById('status-page-11')).toBeVisible();
+    expect(document.getElementById('status-page-1')).not.toBeVisible();
 });

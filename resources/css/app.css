@@ -1509,6 +1509,11 @@
         margin-bottom: var(--spacing-ui-4);
     }
 
+    .ui-modal-heading > .ui-button {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
     .ui-channel-toolbar {
         flex-wrap: wrap;
     }

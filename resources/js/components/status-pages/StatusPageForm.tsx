@@ -1,4 +1,5 @@
 /** Create or change a status page: address, texts, appearance, visibility, password and ordered components. */
+import FieldRequirements from '../ui/FieldRequirements';
 import FormField from '../ui/FormField';
 import InputField from '../ui/InputField';
 import TextareaField from '../ui/TextareaField';
@@ -156,6 +157,7 @@ export default function StatusPageForm({
         form.setData('components', reordered);
     }
 
+    /** Append an empty public component; server validation enforces the configured bounds. */
     function addComponent() {
         form.setData('components', [...form.data.components, { name: '', monitor_ids: [] }]);
     }
@@ -185,242 +187,252 @@ export default function StatusPageForm({
     }
 
     return (
-        <form onSubmit={submit} noValidate>
-            <fieldset disabled={blocked} className="grid min-w-0 gap-4">
-                <InputField
-                    label="Title"
-                    error={errors.title}
-                    id={`${idPrefix}-title`}
-                    required
-                    maxLength={limits.titleMaxLength}
-                    value={form.data.title}
-                    onChange={(event) => form.setData('title', event.target.value)}
-                />
-                <FormField
-                    id={`${idPrefix}-slug`}
-                    label="Public address"
-                    hint="3 to 63 lowercase letters, digits or inner hyphens."
-                    error={errors.slug}
-                >
-                    {(binding) => (
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm text-[var(--color-ui-muted)]">/status/</span>
-                            <input
-                                {...binding}
-                                className="ui-input"
-                                required
-                                maxLength={63}
-                                value={form.data.slug}
-                                onChange={(event) => form.setData('slug', event.target.value)}
-                            />
-                        </div>
-                    )}
-                </FormField>
-                <TextareaField
-                    label="Description (optional)"
-                    error={errors.description}
-                    id={`${idPrefix}-description`}
-                    rows={2}
-                    maxLength={limits.descriptionMaxLength}
-                    value={form.data.description}
-                    onChange={(event) => form.setData('description', event.target.value)}
-                />
-                <div className="flex flex-wrap gap-4">
-                    <SelectField
-                        label="Color scheme"
-                        id={`${idPrefix}-mode`}
-                        value={form.data.theme_mode}
-                        onChange={(event) => form.setData('theme_mode', event.target.value)}
-                    >
-                        {themeChoices.modes.map((mode) => (
-                            <option key={mode} value={mode}>
-                                {mode}
-                            </option>
-                        ))}
-                    </SelectField>
-                    <SelectField
-                        label="Accent"
-                        id={`${idPrefix}-accent`}
-                        value={form.data.theme_accent}
-                        onChange={(event) => form.setData('theme_accent', event.target.value)}
-                    >
-                        {themeChoices.accents.map((accent) => (
-                            <option key={accent} value={accent}>
-                                {accent}
-                            </option>
-                        ))}
-                    </SelectField>
-                </div>
-                <ChoiceField
-                    label="Published: anyone with the address can reach this page"
-                    id={`${idPrefix}-public`}
-                    type="checkbox"
-                    checked={form.data.is_public}
-                    onChange={(event) => form.setData('is_public', event.target.checked)}
-                />
-                <div>
+        <FieldRequirements hasOptionalFields>
+            <form onSubmit={submit} noValidate>
+                <fieldset disabled={blocked} className="grid min-w-0 gap-4">
                     <InputField
-                        label={page?.hasPassword === true ? 'New password' : 'Password (optional)'}
-                        error={errors.password}
-                        hint={
-                            page?.hasPassword === true
-                                ? 'Leave empty to keep the current one. A new password locks out visitors who had entered the old one.'
-                                : `At least ${limits.passwordMinLength} characters. Visitors must enter it to read the page.`
-                        }
-                        id={`${idPrefix}-password`}
-                        type="password"
-                        autoComplete="new-password"
-                        minLength={limits.passwordMinLength}
-                        disabled={form.data.remove_password}
-                        value={form.data.password}
-                        onChange={(event) => form.setData('password', event.target.value)}
+                        label="Title"
+                        error={errors.title}
+                        id={`${idPrefix}-title`}
+                        required
+                        maxLength={limits.titleMaxLength}
+                        value={form.data.title}
+                        onChange={(event) => form.setData('title', event.target.value)}
                     />
-                    {page?.hasPassword === true && (
-                        <ChoiceField
-                            label="Remove the password"
-                            wrapperClassName="mt-2"
-                            id={`${idPrefix}-remove-password`}
-                            type="checkbox"
-                            checked={form.data.remove_password}
-                            onChange={(event) => {
-                                form.setData({
-                                    ...form.data,
-                                    password: '',
-                                    remove_password: event.target.checked,
-                                });
-                            }}
-                        />
-                    )}
-                </div>
-
-                <ol className="grid gap-4" aria-label="Components">
-                    {form.data.components.map((component, index) => {
-                        const componentId = `${idPrefix}-component-${index}`;
-                        const nameError = errors[`components.${index}.name`];
-                        const monitorError = errors[`components.${index}.monitor_ids`];
-                        const elsewhere = form.data.components
-                            .filter((_, position) => position !== index)
-                            .flatMap((other) => other.monitor_ids);
-
-                        return (
-                            <li key={componentId} className="ui-panel">
-                                <fieldset>
-                                    <legend className="font-medium">Component {index + 1}</legend>
-                                    <InputField
-                                        label="Public name"
-                                        error={nameError}
-                                        id={`${componentId}-name`}
-                                        maxLength={limits.componentNameMaxLength}
-                                        value={component.name}
-                                        onChange={(event) =>
-                                            updateComponent(index, { name: event.target.value })
-                                        }
-                                    />
-                                    <fieldset
-                                        className="mt-3"
-                                        aria-describedby={`${componentId}-monitors-error`}
-                                    >
-                                        <legend className="text-sm">
-                                            Monitors in this component
-                                        </legend>
-                                        {monitors.length === 0 ? (
-                                            <p className="text-sm text-[var(--color-ui-muted)]">
-                                                Create a monitor first.
-                                            </p>
-                                        ) : (
-                                            monitors.map((monitor) => (
-                                                <ChoiceField
-                                                    label={
-                                                        <>
-                                                            {monitor.name}{' '}
-                                                            {elsewhere.includes(monitor.id)
-                                                                ? ' (in another component)'
-                                                                : ''}
-                                                        </>
-                                                    }
-                                                    key={monitor.id}
-                                                    id={`${componentId}-monitor-${monitor.id}`}
-                                                    type="checkbox"
-                                                    checked={component.monitor_ids.includes(
-                                                        monitor.id,
-                                                    )}
-                                                    disabled={elsewhere.includes(monitor.id)}
-                                                    onChange={() =>
-                                                        toggleMonitor(index, monitor.id)
-                                                    }
-                                                />
-                                            ))
-                                        )}
-                                        {monitorError && (
-                                            <p
-                                                id={`${componentId}-monitors-error`}
-                                                role="alert"
-                                                className="mt-1 text-ui-danger"
-                                            >
-                                                {monitorError}
-                                            </p>
-                                        )}
-                                    </fieldset>
-                                    <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                                        {index > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => moveComponent(index, -1)}
-                                                className="ui-link"
-                                            >
-                                                Move component {index + 1} up
-                                            </button>
-                                        )}
-                                        {index < form.data.components.length - 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => moveComponent(index, 1)}
-                                                className="ui-link"
-                                            >
-                                                Move component {index + 1} down
-                                            </button>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeComponent(index)}
-                                            className="text-ui-danger cursor-pointer"
-                                        >
-                                            Remove component {index + 1}
-                                        </button>
-                                    </div>
-                                </fieldset>
-                            </li>
-                        );
-                    })}
-                </ol>
-
-                <div className="flex flex-wrap gap-3">
-                    {form.data.components.length < limits.componentsPerPage && (
-                        <button
-                            type="button"
-                            onClick={addComponent}
-                            className="ui-button"
-                            data-variant="secondary"
+                    <FormField
+                        id={`${idPrefix}-slug`}
+                        label="Public address"
+                        required
+                        hint="3 to 63 lowercase letters, digits or inner hyphens."
+                        error={errors.slug}
+                    >
+                        {(binding) => (
+                            <div className="flex items-center gap-2">
+                                <span className="shrink-0 whitespace-nowrap text-sm text-[var(--color-ui-muted)]">
+                                    /status/
+                                </span>
+                                <input
+                                    {...binding}
+                                    className="ui-input"
+                                    required
+                                    maxLength={63}
+                                    value={form.data.slug}
+                                    onChange={(event) => form.setData('slug', event.target.value)}
+                                />
+                            </div>
+                        )}
+                    </FormField>
+                    <TextareaField
+                        label="Description (optional)"
+                        error={errors.description}
+                        id={`${idPrefix}-description`}
+                        rows={2}
+                        maxLength={limits.descriptionMaxLength}
+                        value={form.data.description}
+                        onChange={(event) => form.setData('description', event.target.value)}
+                    />
+                    <div className="flex flex-wrap gap-4">
+                        <SelectField
+                            label="Color scheme"
+                            id={`${idPrefix}-mode`}
+                            value={form.data.theme_mode}
+                            onChange={(event) => form.setData('theme_mode', event.target.value)}
                         >
-                            Add component
+                            {themeChoices.modes.map((mode) => (
+                                <option key={mode} value={mode}>
+                                    {mode}
+                                </option>
+                            ))}
+                        </SelectField>
+                        <SelectField
+                            label="Accent"
+                            id={`${idPrefix}-accent`}
+                            value={form.data.theme_accent}
+                            onChange={(event) => form.setData('theme_accent', event.target.value)}
+                        >
+                            {themeChoices.accents.map((accent) => (
+                                <option key={accent} value={accent}>
+                                    {accent}
+                                </option>
+                            ))}
+                        </SelectField>
+                    </div>
+                    <ChoiceField
+                        label="Published: anyone with the address can reach this page"
+                        id={`${idPrefix}-public`}
+                        type="checkbox"
+                        checked={form.data.is_public}
+                        onChange={(event) => form.setData('is_public', event.target.checked)}
+                    />
+                    <div>
+                        <InputField
+                            label={
+                                page?.hasPassword === true ? 'New password' : 'Password (optional)'
+                            }
+                            error={errors.password}
+                            hint={
+                                page?.hasPassword === true
+                                    ? 'Leave empty to keep the current one. A new password locks out visitors who had entered the old one.'
+                                    : `At least ${limits.passwordMinLength} characters. Visitors must enter it to read the page.`
+                            }
+                            id={`${idPrefix}-password`}
+                            type="password"
+                            autoComplete="new-password"
+                            minLength={limits.passwordMinLength}
+                            disabled={form.data.remove_password}
+                            value={form.data.password}
+                            onChange={(event) => form.setData('password', event.target.value)}
+                        />
+                        {page?.hasPassword === true && (
+                            <ChoiceField
+                                label="Remove the password"
+                                wrapperClassName="mt-2"
+                                id={`${idPrefix}-remove-password`}
+                                type="checkbox"
+                                checked={form.data.remove_password}
+                                onChange={(event) => {
+                                    form.setData({
+                                        ...form.data,
+                                        password: '',
+                                        remove_password: event.target.checked,
+                                    });
+                                }}
+                            />
+                        )}
+                    </div>
+
+                    <ol className="grid gap-4" aria-label="Components">
+                        {form.data.components.map((component, index) => {
+                            const componentId = `${idPrefix}-component-${index}`;
+                            const nameError = errors[`components.${index}.name`];
+                            const monitorError = errors[`components.${index}.monitor_ids`];
+                            const elsewhere = form.data.components
+                                .filter((_, position) => position !== index)
+                                .flatMap((other) => other.monitor_ids);
+
+                            return (
+                                <li key={componentId} className="ui-panel">
+                                    <fieldset>
+                                        <legend className="font-medium">
+                                            Component {index + 1}
+                                        </legend>
+                                        <InputField
+                                            label="Public name"
+                                            required
+                                            error={nameError}
+                                            id={`${componentId}-name`}
+                                            maxLength={limits.componentNameMaxLength}
+                                            value={component.name}
+                                            onChange={(event) =>
+                                                updateComponent(index, { name: event.target.value })
+                                            }
+                                        />
+                                        <fieldset
+                                            className="mt-3"
+                                            aria-describedby={`${componentId}-monitors-error`}
+                                        >
+                                            <legend className="text-sm">
+                                                Monitors in this component
+                                            </legend>
+                                            {monitors.length === 0 ? (
+                                                <p className="text-sm text-[var(--color-ui-muted)]">
+                                                    Create a monitor first.
+                                                </p>
+                                            ) : (
+                                                monitors.map((monitor) => (
+                                                    <ChoiceField
+                                                        label={
+                                                            <>
+                                                                {monitor.name}{' '}
+                                                                {elsewhere.includes(monitor.id)
+                                                                    ? ' (in another component)'
+                                                                    : ''}
+                                                            </>
+                                                        }
+                                                        key={monitor.id}
+                                                        id={`${componentId}-monitor-${monitor.id}`}
+                                                        type="checkbox"
+                                                        checked={component.monitor_ids.includes(
+                                                            monitor.id,
+                                                        )}
+                                                        disabled={elsewhere.includes(monitor.id)}
+                                                        onChange={() =>
+                                                            toggleMonitor(index, monitor.id)
+                                                        }
+                                                    />
+                                                ))
+                                            )}
+                                            {monitorError && (
+                                                <p
+                                                    id={`${componentId}-monitors-error`}
+                                                    role="alert"
+                                                    className="mt-1 text-ui-danger"
+                                                >
+                                                    {monitorError}
+                                                </p>
+                                            )}
+                                        </fieldset>
+                                        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                                            {index > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveComponent(index, -1)}
+                                                    className="ui-link"
+                                                >
+                                                    Move component {index + 1} up
+                                                </button>
+                                            )}
+                                            {index < form.data.components.length - 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => moveComponent(index, 1)}
+                                                    className="ui-link"
+                                                >
+                                                    Move component {index + 1} down
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => removeComponent(index)}
+                                                className="text-ui-danger cursor-pointer"
+                                            >
+                                                Remove component {index + 1}
+                                            </button>
+                                        </div>
+                                    </fieldset>
+                                </li>
+                            );
+                        })}
+                    </ol>
+
+                    <div className="flex flex-wrap gap-3">
+                        {form.data.components.length < limits.componentsPerPage && (
+                            <button
+                                type="button"
+                                onClick={addComponent}
+                                className="ui-button"
+                                data-variant="secondary"
+                            >
+                                Add component
+                            </button>
+                        )}
+                        <button disabled={form.processing} className="ui-button">
+                            {form.processing ? 'Saving…' : submitLabel}
                         </button>
+                    </div>
+                    {errors.components && (
+                        <p role="alert" className="text-ui-danger">
+                            {errors.components}
+                        </p>
                     )}
-                    <button disabled={form.processing} className="ui-button">
-                        {form.processing ? 'Saving…' : submitLabel}
-                    </button>
-                </div>
-                {errors.components && (
-                    <p role="alert" className="text-ui-danger">
-                        {errors.components}
-                    </p>
-                )}
-            </fieldset>
-            <MutationFeedback
-                phase={mutation.phase}
-                reviewUrl={action.split('/status-pages')[0] + '/status-pages'}
-                success="Status page saved"
-                onReviewed={mutation.acknowledge}
-            />
-        </form>
+                </fieldset>
+                <MutationFeedback
+                    phase={mutation.phase}
+                    reviewUrl={action.split('/status-pages')[0] + '/status-pages'}
+                    success="Status page saved"
+                    onReviewed={mutation.acknowledge}
+                />
+            </form>
+        </FieldRequirements>
     );
 }

@@ -63,7 +63,7 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
     }
 
     return (
-        <section aria-label="Custom domain" className="mt-4 ui-panel">
+        <section aria-label="Custom domain" className="grid min-w-0 gap-4">
             <h3 className="font-medium">Custom domain</h3>
             <form onSubmit={save} className="mt-2 grid gap-2">
                 <InputField
@@ -77,7 +77,7 @@ export default function StatusDomainForm({ path, domain, pageId }: StatusDomainF
                     autoComplete="off"
                     maxLength={1024}
                 />
-                <button type="submit" disabled={pending} className="w-fit cursor-pointer">
+                <button type="submit" disabled={pending} className="ui-button w-fit">
                     {claim.processing ? 'Saving domain…' : 'Save hostname'}
                 </button>
             </form>

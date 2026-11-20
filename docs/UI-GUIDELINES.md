@@ -427,3 +427,9 @@ esportato dal pannello monitor per evitare duplicazione delle regole di assegnaz
 con policy effettiva leggibile e badge: assente danger, default success, override info. Permessi e
 protezione delle bozze governano anche i controlli portati nel titolo. I layout compatti vanno a capo
 su mobile mantenendo campi e pulsanti accessibili, senza allargare il documento.
+
+## Status pages management — 2026-11-20
+
+Status pages uses SettingsCollection, extracted from NotificationCollection, for heading search/Add status page, title-only suggestions, mounted hidden cards and ten-item local pagination. NotificationCollection remains a typed adapter for existing Channels/Policies callers. Quota admission uses the projected limits.used, including drafts. Only owners/admins see mutations.
+
+Cards reuse the shared 24px gap, 20px headings, 18px public addresses and 16px metadata/badges: Published success, Draft neutral, Password protected warning. Creation, page editing and custom hostname management use separate native Modal instances. Editors mount on first use and remain mounted across ordinary dismissal. Pending work blocks dismissal; accepted page writes close/reset the editor, while domain operations remain open for subsequent DNS steps. Password and component rules remain domain-owned. FieldRequirements decorates required labels in mixed forms. Public visitor pages retain their independent appearance.

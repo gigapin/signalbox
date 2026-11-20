@@ -930,3 +930,9 @@ result is asserted. Initial frontend failures were two obsolete expectations for
 The first isolated PHP retry contended with a still-running matrix container after client interruption;
 the owned container was explicitly stopped and subsequent database runs were sequential. See TASKS
 for final check/build results and ACCOUNT-PROFILE for deployment requirements and remaining acceptance.
+
+## Status page management UI — 2026-11-20
+
+Final frontend suite: **573/573 in 47 files, 154.65 s, exit 0**, with no unhandled errors. `npm run check` passed ESLint, Prettier, TypeScript and six quality checks; production build passed. StatusPages now has thirteen tests covering modal creation, retained drafts/pending dismissal, hostname dialog separation and title search beyond the first local page, alongside the previous component/password/public workflows. SettingsWorkflows retains twenty-two cases including modal edits and domain baseline reconciliation. Channels/Policies continue exercising the extracted shared SettingsCollection through NotificationCollection.
+
+The first full run passed all assertions but exited with an asynchronous jsdom error: the new suggestion test needed a scrollIntoView double and an awaited animation-frame focus. The final run above includes that correction. Firefox synthetic React/Inertia fixtures were inspected at 1280×1000 for dark/light lists and 390×1000 for modal editors. URL prefix wrapping and Close-button shrinking were corrected and recaptured. The temporary server was stopped; fixtures are disposable files in /tmp. These checks do not certify authenticated acceptance, native zoom, screen readers, provider delivery or remote CI. PHP checks/backend tests were not repeated for this frontend-only change; no new audit is claimed.

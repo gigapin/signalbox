@@ -3,6 +3,9 @@ import { useFormProtection, useNavigationGuard } from '../app/NavigationGuard';
 import { useForm } from '@inertiajs/react';
 import { useOwnedMutation } from '../../hooks/useOwnedMutation';
 import MutationFeedback from '../MutationFeedback';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import Modal from '../ui/Modal';
 import { useState } from 'react';
 import StatusPageForm from './StatusPageForm';
 import StatusDomainForm from './StatusDomainForm';
@@ -36,7 +39,11 @@ export default function StatusPageRow({
     canManage,
     hidden = false,
 }: StatusPageRowProps) {
+    const [editStarted, setEditStarted] = useState(false);
+    const [domainStarted, setDomainStarted] = useState(false);
     const [editing, setEditing] = useState(false);
+    const [editVersion, setEditVersion] = useState(0);
+    const [domainOpen, setDomainOpen] = useState(false);
     const remove = useForm<Record<string, never>>({});
     useFormProtection(remove);
     const mutation = useOwnedMutation();
@@ -54,29 +61,33 @@ export default function StatusPageRow({
     }
 
     return (
-        <li hidden={hidden} className="ui-operation-row">
-            <p className="font-medium">
+        <li
+            id={`status-page-${page.id}`}
+            tabIndex={-1}
+            aria-labelledby={`status-page-${page.id}-heading`}
+            hidden={hidden}
+            className="ui-panel ui-notification-card"
+        >
+            <h3 id={`status-page-${page.id}-heading`} className="ui-notification-name">
                 {page.title}
-                <span className="ml-2 text-sm text-[var(--color-ui-text)]">
+            </h3>
+            <div className="flex flex-wrap gap-2">
+                <Badge tone={page.isPublic ? 'success' : 'neutral'}>
                     {page.isPublic ? 'Published' : 'Draft'}
-                </span>
-                {page.hasPassword && (
-                    <span className="ml-2 text-sm text-ui-warning">Password protected</span>
-                )}
-            </p>
+                </Badge>
+                {page.hasPassword && <Badge tone="warning">Password protected</Badge>}
+            </div>
             {page.isPublic ? (
-                <a href={page.path} className="text-sm text-ui-accent cursor-pointer">
+                <a href={page.path} className="ui-channel-destination ui-link">
                     Open public page · {page.path}
                 </a>
             ) : (
-                <p className="text-sm text-[var(--color-ui-muted)]">
-                    {page.path} (not reachable yet)
-                </p>
+                <p className="break-words text-ui-muted">{page.path} (not reachable yet)</p>
             )}
             {page.components.length === 0 ? (
                 <p className="mt-2 text-sm text-[var(--color-ui-muted)]">No components yet.</p>
             ) : (
-                <ol className="mt-2 grid gap-1 text-sm" aria-label={`Components of ${page.title}`}>
+                <ol className="mt-2 grid gap-1" aria-label={`Components of ${page.title}`}>
                     {page.components.map((component) => (
                         <li key={component.name}>
                             <span className="text-[var(--color-ui-text)]">{component.name}:</span>{' '}
@@ -87,48 +98,82 @@ export default function StatusPageRow({
                     ))}
                 </ol>
             )}
-            {canManage && (
-                <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                    <button
-                        type="button"
-                        disabled={blocked}
-                        onClick={() => setEditing(!editing)}
-                        aria-expanded={editing}
-                        className="ui-link"
-                    >
-                        {editing ? 'Close editor' : `Edit ${page.title}`}
-                    </button>
-                    <button
-                        type="button"
-                        disabled={blocked}
-                        onClick={destroy}
-                        className="text-ui-danger cursor-pointer"
-                    >
-                        Delete {page.title}
-                    </button>
-                </div>
-            )}
-            {canManage && editing && (
-                <div className="mt-4 ui-panel">
-                    <StatusPageForm
-                        idPrefix={`page-${page.id}`}
-                        action={path}
-                        method="patch"
-                        page={page}
-                        monitors={monitors}
-                        themeChoices={themeChoices}
-                        limits={limits}
-                        submitLabel="Save page"
-                        onSaved={() => setEditing(false)}
-                    />
-                </div>
-            )}
-            {canManage && <StatusDomainForm path={path} domain={page.domain} pageId={page.id} />}
-            {!canManage && page.domain && (
-                <p className="mt-2 text-sm">
-                    Custom domain: {page.domain.hostname} (
-                    {page.domain.verifiedUntil ? 'verified' : 'not verified'})
+            {page.domain && (
+                <p className="mt-3 break-words">
+                    Custom domain: {page.domain.hostname}{' '}
+                    <Badge tone={page.domain.verifiedUntil ? 'success' : 'warning'}>
+                        {page.domain.verifiedUntil ? 'Ownership verified' : 'Not verified'}
+                    </Badge>
                 </p>
+            )}
+            {canManage && (
+                <>
+                    <div className="ui-actions mt-4">
+                        <Button
+                            variant="secondary"
+                            disabled={blocked}
+                            onClick={() => {
+                                setEditStarted(true);
+                                setEditing(true);
+                            }}
+                            aria-haspopup="dialog"
+                        >
+                            Edit {page.title}
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            disabled={blocked}
+                            onClick={() => {
+                                setDomainStarted(true);
+                                setDomainOpen(true);
+                            }}
+                            aria-haspopup="dialog"
+                        >
+                            Custom domain
+                        </Button>
+                        <Button variant="danger" disabled={blocked} onClick={destroy}>
+                            Delete {page.title}
+                        </Button>
+                    </div>
+                    <Modal
+                        open={editing}
+                        title={`Edit ${page.title}`}
+                        closeDisabled={blocked}
+                        onRequestClose={() => {
+                            if (!blocked) setEditing(false);
+                        }}
+                    >
+                        {editStarted && (
+                            <StatusPageForm
+                                key={editVersion}
+                                idPrefix={`page-${page.id}`}
+                                action={path}
+                                method="patch"
+                                page={page}
+                                monitors={monitors}
+                                themeChoices={themeChoices}
+                                limits={limits}
+                                submitLabel="Save page"
+                                onSaved={() => {
+                                    setEditing(false);
+                                    setEditVersion((value) => value + 1);
+                                }}
+                            />
+                        )}
+                    </Modal>
+                    <Modal
+                        open={domainOpen}
+                        title={`Custom domain · ${page.title}`}
+                        closeDisabled={blocked}
+                        onRequestClose={() => {
+                            if (!blocked) setDomainOpen(false);
+                        }}
+                    >
+                        {domainStarted && (
+                            <StatusDomainForm path={path} domain={page.domain} pageId={page.id} />
+                        )}
+                    </Modal>
+                </>
             )}
             <MutationFeedback
                 phase={mutation.phase}
